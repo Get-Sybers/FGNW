@@ -2,3 +2,13 @@
 # Keep this short and explain every entry; an ignored link is a link nobody checks.
 # Example: a vendor portal that blocks bots
 # ^https://portal\.example-vendor\.com/
+# Placeholder hosts and RFC 5737 documentation addresses in the examples and the
+# range's Nexus mirror (192.0.2.2 stands in for the operator's).
+^https?://server:
+^https?://192\.0\.2\.
+^https?://198\.51\.100\.
+^https?://203\.0\.113\.
+^https?://github\.com/CHANGE-ME/
+# cyber.gov.au answers lychee with an HTTP/2 protocol error although the page
+# exists; the ACSC event-logging reference stays linked for readers.
+^https://www\.cyber\.gov\.au/
