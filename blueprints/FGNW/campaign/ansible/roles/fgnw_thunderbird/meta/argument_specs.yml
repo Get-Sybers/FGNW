@@ -1,0 +1,58 @@
+---
+argument_specs:
+  main:
+    short_description: Install + preconfigure Thunderbird on an FGNW workstation
+    description:
+      - Installs Thunderbird (chocolatey on Windows; pre-staged Homebrew cask on macOS)
+        and drops an enterprise policies.json that preconfigures the mail account against
+        the host's village mail server.
+      - Required vars (no defaults, by design) are the five identity + routing vars.
+    options:
+      fgnw_thunderbird_user:
+        type: str
+        required: true
+        description: "The sAMAccountName / mail account username (e.g. `naruto.uzumaki`)."
+      fgnw_thunderbird_display_name:
+        type: str
+        required: true
+        description: "Display name on outgoing mail (e.g. `Naruto Uzumaki`)."
+      fgnw_thunderbird_mail_domain:
+        type: str
+        required: true
+        description: "RHS of the account's email address (e.g. `konohagakure.fire.ninja`)."
+      fgnw_thunderbird_imap_server:
+        type: str
+        required: true
+        description: "IMAP server hostname (e.g. `konoha-mail.konohagakure.fire.ninja`)."
+      fgnw_thunderbird_smtp_server:
+        type: str
+        required: true
+        description: "SMTP server hostname."
+      fgnw_thunderbird_imap_port:
+        type: int
+        default: 143
+      fgnw_thunderbird_smtp_port:
+        type: int
+        default: 25
+      fgnw_thunderbird_socket_type:
+        type: str
+        default: plain
+        choices: [plain, SSL, STARTTLS]
+      fgnw_thunderbird_authentication:
+        type: str
+        default: password-cleartext
+      fgnw_thunderbird_choco_package:
+        type: str
+        default: thunderbird
+      fgnw_thunderbird_choco_version:
+        type: str
+        default: ""
+      fgnw_thunderbird_ignore_checksums:
+        type: bool
+        default: true
+      fgnw_thunderbird_win_distribution_dir:
+        type: str
+        default: 'C:\Program Files\Mozilla Thunderbird\distribution'
+      fgnw_thunderbird_mac_distribution_dir:
+        type: str
+        default: /Applications/Thunderbird.app/Contents/Resources/distribution

@@ -1,0 +1,17 @@
+---
+galaxy_info:
+  author: Get-Sybers
+  namespace: get_sybers
+  description: >-
+    Range lifecycle (S4): push a range configuration to Ludus idempotently.
+    Materialize the blueprint master into the CLI-wrapper's users/ root, preflight
+    that every referenced template is built, and run `range config set` only when
+    the live config actually differs. Drives the Ludus API only; touches no guest.
+  role_name: ludus_range_config
+  license: AGPL-3.0-only
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Debian
+      versions:
+        - all
+dependencies: []

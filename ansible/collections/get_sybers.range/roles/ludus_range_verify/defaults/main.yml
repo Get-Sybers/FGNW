@@ -1,0 +1,6 @@
+---
+ludus_range_verify_require_success: true
+ludus_range_verify_require_powered_on: true
+ludus_range_verify_require_ips: true
+ludus_range_verify_expect_vmcount: 0
+ludus_range_verify_bin: /usr/local/bin/ludus

@@ -1,0 +1,18 @@
+---
+galaxy_info:
+  author: Get-Sybers
+  namespace: get_sybers
+  description: >-
+    Range lifecycle (S4): put a range into contained (internet-blocked) testing mode
+    and open ONLY the required egress, idempotently — skip start if already enabled,
+    skip an allow entry already present. This is the "--testing = containment ON"
+    control. Never runs `testing stop` (which reverts every VM to snapshot). Drives
+    the Ludus API only; touches no guest.
+  role_name: ludus_testing
+  license: AGPL-3.0-only
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Debian
+      versions:
+        - all
+dependencies: []

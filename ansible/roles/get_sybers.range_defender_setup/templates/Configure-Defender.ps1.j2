@@ -1,0 +1,39 @@
+$ErrorActionPreference = 'Stop'
+Write-Host "Configuring Microsoft Defender..." -ForegroundColor Cyan
+$pref = Get-MpPreference
+$applied = @()
+if ($pref.DisableRealtimeMonitoring -ne $false) {
+    Set-MpPreference -DisableRealtimeMonitoring $false
+    $applied += 'RealtimeMonitoring'
+}
+if ([int]$pref.MAPSReporting -ne 2) {
+    Set-MpPreference -MAPSReporting Advanced
+    $applied += 'MAPSReporting'
+}
+if ([int]$pref.SubmitSamplesConsent -ne 3) {
+    Set-MpPreference -SubmitSamplesConsent SendAllSamples
+    $applied += 'SubmitSamplesConsent'
+}
+if ([int]$pref.EnableNetworkProtection -ne 1) {
+    Set-MpPreference -EnableNetworkProtection Enabled
+    $applied += 'NetworkProtection'
+}
+$qst = $pref.ScanScheduleQuickScanTime
+$qstMinutes = -1
+if ($qst -is [DateTime]) { $qstMinutes = $qst.TimeOfDay.TotalMinutes }
+elseif ($qst -is [TimeSpan]) { $qstMinutes = $qst.TotalMinutes }
+if ($qstMinutes -ne {{ range_defender_setup_quick_scan_time }}) {
+    Set-MpPreference -ScanScheduleQuickScanTime {{ range_defender_setup_quick_scan_time }}
+    $applied += 'ScanScheduleQuickScanTime'
+}
+if ($applied.Count -gt 0) {
+    Write-Output ("DEFENDER-CONFIG: CHANGED " + ($applied -join ','))
+} else {
+    Write-Output "DEFENDER-CONFIG: NOCHANGE"
+}
+Write-Host "Defender configuration complete!" -ForegroundColor Green
+Write-Host ""
+Write-Host "Next steps:" -ForegroundColor Yellow
+Write-Host "1. Download onboarding package from https://security.microsoft.com"
+Write-Host "2. Run the onboarding script on this server"
+Write-Host "3. Verify connection in Defender portal"

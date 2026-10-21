@@ -1,0 +1,43 @@
+---
+- name: "verify | Read status"
+  ansible.builtin.command:
+    argv: ["{{ ludus_testing_bin }}", testing, status]
+  environment:
+    LUDUS_API_KEY: "{{ __ludus_api_key }}"
+  register: __ludus_tv_status
+  changed_when: false
+  no_log: true
+- name: "verify | Read range state"
+  ansible.builtin.command:
+    argv: ["{{ ludus_testing_bin }}", range, list, --json]
+  environment:
+    LUDUS_API_KEY: "{{ __ludus_api_key }}"
+  register: __ludus_tv_list
+  changed_when: false
+  failed_when: false
+  no_log: true
+- name: "verify | Parse testingEnabled (guarded)"
+  ansible.builtin.set_fact:
+    __ludus_tv_on: >-
+      {{ ((__ludus_tv_list.stdout | from_json).testingEnabled | default(false))
+         if ((__ludus_tv_list.rc | default(1)) == 0
+             and (__ludus_tv_list.stdout | default('') | trim).startswith('{'))
+         else false }}
+- name: "verify | Positive: containment ON and allow-list complete"
+  ansible.builtin.assert:
+    that:
+      - __ludus_tv_on | bool
+      - ludus_testing_allow_domains | reject('in', __ludus_tv_status.stdout) | list | length == 0
+      - ludus_testing_allow_ips | reject('in', __ludus_tv_status.stdout) | list | length == 0
+    fail_msg: >-
+      Containment/allow-list not as expected. testingEnabled must be true and
+      every allowed domain/IP must appear in `ludus testing status`.
+    quiet: true
+- name: "verify | Negative control: an un-allowed probe domain is absent"
+  ansible.builtin.assert:
+    that: "'nonexistent-probe.invalid' not in (__ludus_tv_status.stdout | default(''))"
+    fail_msg: A domain never allowed appears in the allow-list — status is not trustworthy.
+    quiet: true
+- name: "verify | Report"
+  ansible.builtin.debug:
+    msg: "ludus_testing verified: contained, {{ ludus_testing_allow_domains | length }} domain / {{ ludus_testing_allow_ips | length }} IP allow(s) present."

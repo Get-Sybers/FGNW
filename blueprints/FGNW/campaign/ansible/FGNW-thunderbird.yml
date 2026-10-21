@@ -1,0 +1,103 @@
+---
+# Phase 4e — Mozilla Thunderbird mail-client stack for every workstation in the range.
+#
+# Konoha / Oto / Akatsuki workstations talk IMAP+SMTP to their village's Exchange server:
+# the first play below enables the Microsoft Exchange IMAP4 service on each Exchange host
+# and sets the login type to plain-text (required because the sealed range runs no TLS, and
+# Exchange's IMAP service refuses cleartext logons by default). The Sand workstation
+# (suna-ws1) talks to the Postfix/Dovecot stack `fgnw_mac_mail_server` stood up in Phase 4d.
+#
+# Per-host identity (user / display / domain) is read from `content/ghosts/persona-timelines.yml`
+# — the same source of truth GHOSTS uses — so a persona rename lands in both tools in one edit.
+# Per-village mail-server FQDNs live in `vars/FGNW-thunderbird-map.yml`.
+- name: Enable Exchange IMAP4 on each village Exchange server (Konoha / Oto / Akatsuki)
+  hosts: exchange_servers
+  gather_facts: false
+  tasks:
+    - name: "Imap: set MSExchangeIMAP4 / MSExchangeIMAP4BE to Automatic + started"
+      ansible.windows.win_service:
+        name: "{{ item }}"
+        start_mode: auto
+        state: started
+      loop:
+        - MSExchangeIMAP4
+        - MSExchangeIMAP4BE
+
+    - name: "Imap: set every ImapSettings server to PlainTextLogin (sealed-range cleartext over VLAN-local)"
+      ansible.windows.win_shell: |
+        Add-PSSnapin Microsoft.Exchange.Management.PowerShell.SnapIn
+        $servers = Get-ImapSettings
+        $changedAny = $false
+        foreach ($s in $servers) {
+          if ($s.LoginType -ne 'PlainTextLogin') {
+            Set-ImapSettings -Server $s.Server -LoginType PlainTextLogin
+            $changedAny = $true
+          }
+        }
+        if ($changedAny) { Write-Output 'IMAP_LOGIN_TYPE_SET' } else { Write-Output 'IMAP_LOGIN_TYPE_ALREADY_SET' }
+      register: __imap_login
+      changed_when: "'IMAP_LOGIN_TYPE_SET' in __imap_login.stdout"
+
+    - name: "Imap: restart the MSExchangeIMAP4 services if LoginType changed (so Thunderbird picks up PlainTextLogin on next connect)"
+      ansible.windows.win_service:
+        name: "{{ item }}"
+        state: restarted
+      loop:
+        - MSExchangeIMAP4
+        - MSExchangeIMAP4BE
+      when: "'IMAP_LOGIN_TYPE_SET' in __imap_login.stdout"
+
+- name: Thunderbird on every Windows workstation (IMAP+SMTP to its village Exchange)
+  hosts: ghosts_clients
+  gather_facts: true
+  vars_files:
+    - vars/FGNW-thunderbird-map.yml
+  tasks:
+    - name: "Tbird: load persona-timelines.yml (per-host persona lookup)"
+      ansible.builtin.include_vars:
+        file: "{{ playbook_dir }}/../content/ghosts/persona-timelines.yml"
+        name: __ptl
+
+    - name: "Tbird: resolve this host's persona and its village mail server"
+      ansible.builtin.set_fact:
+        __p: "{{ __ptl.ghosts_personas[inventory_hostname] }}"
+        __mail_fqdn: "{{ __fgnw_village_mail_fqdn[__ptl.ghosts_personas[inventory_hostname].ad_domain] }}"
+
+    - name: "Tbird: install + preconfigure Thunderbird for the persona {{ __p.sam }}"
+      ansible.builtin.include_role:
+        name: fgnw_thunderbird
+      vars:
+        fgnw_thunderbird_user: "{{ __p.sam }}"
+        fgnw_thunderbird_display_name: "{{ __p.character }}"
+        fgnw_thunderbird_mail_domain: "{{ __p.ad_domain }}"
+        fgnw_thunderbird_imap_server: "{{ __mail_fqdn }}"
+        fgnw_thunderbird_smtp_server: "{{ __mail_fqdn }}"
+
+- name: Thunderbird on the Sand macOS workstation (IMAP to Dovecot, SMTP to Postfix)
+  hosts: macos_dev
+  gather_facts: true
+  vars_files:
+    - vars/FGNW-thunderbird-map.yml
+  tasks:
+    - name: "Tbird: load persona-timelines.yml (per-host persona lookup)"
+      ansible.builtin.include_vars:
+        file: "{{ playbook_dir }}/../content/ghosts/persona-timelines.yml"
+        name: __ptl
+      when: inventory_hostname == 'suna-ws1'
+
+    - name: "Tbird: resolve this host's persona and its village mail server"
+      ansible.builtin.set_fact:
+        __p: "{{ __ptl.ghosts_personas[inventory_hostname] }}"
+        __mail_fqdn: "{{ __fgnw_village_mail_fqdn[__ptl.ghosts_personas[inventory_hostname].ad_domain] }}"
+      when: inventory_hostname == 'suna-ws1'
+
+    - name: "Tbird: install + preconfigure Thunderbird for the persona {{ __p.sam }}"
+      ansible.builtin.include_role:
+        name: fgnw_thunderbird
+      vars:
+        fgnw_thunderbird_user: "{{ __p.sam }}"
+        fgnw_thunderbird_display_name: "{{ __p.character }}"
+        fgnw_thunderbird_mail_domain: "{{ __p.ad_domain }}"
+        fgnw_thunderbird_imap_server: "{{ __mail_fqdn }}"
+        fgnw_thunderbird_smtp_server: "{{ __mail_fqdn }}"
+      when: inventory_hostname == 'suna-ws1'

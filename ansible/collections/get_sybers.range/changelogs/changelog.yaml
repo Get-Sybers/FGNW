@@ -1,0 +1,17 @@
+---
+ancestor: null
+releases:
+  0.1.0:
+    changes:
+      release_summary: >-
+        Initial collection. This entry was seeded by hand when antsibull-changelog
+        became the generator of ``CHANGELOG.md``; it carries the ``0.1.0`` notes of
+        the previously hand-written Keep a Changelog file. The date is the day the
+        collection landed in this repository at ``0.1.0``; no ``v0.1.0`` tag was cut.
+      added:
+        - >-
+          Initial collection: ``ludus_auth``, ``ludus_range_config``,
+          ``ludus_range_deploy``, ``ludus_testing``, ``ludus_range_verify``,
+          ``ludus_range_health``, ``ludus_range_teardown``, ``ghost9_ct``,
+          ``ghost9_server``, ``ghost9_template``.
+    release_date: '2026-08-20'

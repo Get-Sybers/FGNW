@@ -1,0 +1,28 @@
+---
+- name: Probe which in-scope computer objects already exist in the directory
+  ansible.windows.win_shell: |
+    $ErrorActionPreference = 'Stop'
+    if (Get-ADComputer -Identity '{{ item.value.hostname }}' -ErrorAction SilentlyContinue) {
+      'EXISTS'
+    } else {
+      'MISSING'
+    }
+  register: move_to_ou_probe
+  changed_when: false
+  when: >-
+    item.value.type != 'dc'
+    and member_domain == item.value.domain
+    and not (item.value.use_laps | default(false) | bool)
+  with_dict: "{{ hosts_dict }}"
+  loop_control:
+    label: "{{ item.value.hostname }}"
+- name: Relocate each existing computer object to its target OU
+  microsoft.ad.computer:
+    name: "{{ item.item.value.hostname }}"
+    identity: "{{ item.item.value.hostname }}$"
+    path: "{{ item.item.value.path | default('') }}"
+    state: present
+  when: item.stdout is defined and (item.stdout | trim) == 'EXISTS'
+  loop: "{{ move_to_ou_probe.results }}"
+  loop_control:
+    label: "{{ item.item.value.hostname }}"

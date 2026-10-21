@@ -1,0 +1,55 @@
+---
+- name: Plant campaign attack primitives in Konoha (Leaf)
+  hosts: konoha-dc1
+  gather_facts: false
+  vars:
+    leaf_domain: konohagakure.fire.ninja
+    leaf_admin: konohagakure.fire.ninja\Administrator
+    leaf_admin_password: password
+    svc_name: svc-missionboard
+    svc_password: Ichiraku2003
+    svc_spn: HTTP/missionboard.konohagakure.fire.ninja
+    asrep_user: konohamaru.sarutobi
+  tasks:
+    - name: Create the kerberoastable Leaf service account (SPN + weak password)
+      community.windows.win_domain_user:
+        name: "{{ svc_name }}"
+        upn: "{{ svc_name }}@{{ leaf_domain }}"
+        password: "{{ svc_password }}"
+        password_never_expires: true
+        description: Konoha mission-board service account
+        spn: "{{ svc_spn }}"
+        state: present
+        domain_username: "{{ leaf_admin }}"
+        domain_password: "{{ leaf_admin_password }}"
+      no_log: true
+      vars:
+        ansible_become: true
+        ansible_become_method: runas
+        ansible_become_user: "{{ leaf_admin }}"
+        ansible_become_password: "{{ leaf_admin_password }}"
+    - name: Read the AS-REP-roastable (DoesNotRequirePreAuth) flag on the Leaf account
+      ansible.windows.win_shell: |
+        $ErrorActionPreference = 'Stop'
+        [bool]((Get-ADUser -Identity "{{ asrep_user }}" -Properties userAccountControl).userAccountControl -band 4194304)
+      register: asrep_check
+      changed_when: false
+      no_log: true
+      vars:
+        ansible_become: true
+        ansible_become_method: runas
+        ansible_become_user: "{{ leaf_admin }}"
+        ansible_become_password: "{{ leaf_admin_password }}"
+    - name: Flag a Leaf account as AS-REP roastable (DoesNotRequirePreAuth)
+      ansible.windows.win_shell: |
+        $ErrorActionPreference = 'Stop'
+        Set-ADAccountControl -Identity "{{ asrep_user }}" -DoesNotRequirePreAuth $true
+      register: asrep_set
+      when: asrep_check.stdout | trim == 'False'
+      changed_when: true
+      no_log: true
+      vars:
+        ansible_become: true
+        ansible_become_method: runas
+        ansible_become_user: "{{ leaf_admin }}"
+        ansible_become_password: "{{ leaf_admin_password }}"

@@ -1,0 +1,100 @@
+---
+- name: Preflight
+  ansible.builtin.assert:
+    that: __ludus_api_key is defined
+    fail_msg: ludus_testing needs ludus_auth to have run.
+    quiet: true
+- name: Read current testing state
+  ansible.builtin.command:
+    argv: ["{{ ludus_testing_bin }}", range, list, --json]
+  environment:
+    LUDUS_API_KEY: "{{ __ludus_api_key }}"
+  register: __ludus_t_list
+  changed_when: false
+  failed_when: false
+  no_log: true
+- name: Parse testingEnabled
+  ansible.builtin.set_fact:
+    __ludus_testing_on: >-
+      {{ ((__ludus_t_list.stdout | from_json).testingEnabled | default(false))
+         if ((__ludus_t_list.rc | default(1)) == 0
+             and (__ludus_t_list.stdout | default('') | trim).startswith('{'))
+         else false }}
+- name: Enter containment (only if not already on)
+  when: not __ludus_testing_on | bool
+  block:
+    - name: Ludus testing start
+      ansible.builtin.command:
+        argv: ["{{ ludus_testing_bin }}", testing, start]
+      environment:
+        LUDUS_API_KEY: "{{ __ludus_api_key }}"
+      register: __ludus_t_start
+      changed_when: true
+      no_log: true
+    - name: Poll until testingEnabled=true
+      ansible.builtin.command:
+        argv: ["{{ ludus_testing_bin }}", range, list, --json]
+      environment:
+        LUDUS_API_KEY: "{{ __ludus_api_key }}"
+      register: __ludus_t_poll
+      changed_when: false
+      failed_when: false
+      no_log: true
+      retries: "{{ ludus_testing_poll_retries | int }}"
+      delay: "{{ ludus_testing_poll_delay | int }}"
+      until: >-
+        (__ludus_t_poll.rc | default(1)) == 0
+        and (__ludus_t_poll.stdout | default('') | trim).startswith('{')
+        and ((__ludus_t_poll.stdout | from_json).testingEnabled | default(false)) | bool
+    - name: Assert containment actually engaged (guarded)
+      ansible.builtin.assert:
+        that: >-
+          (__ludus_t_poll.stdout | default('') | trim).startswith('{')
+          and ((__ludus_t_poll.stdout | from_json).testingEnabled | default(false)) | bool
+        fail_msg: >-
+          testingEnabled never reached true after `ludus testing start`.
+          Check: `ludus testing status`.
+        quiet: true
+- name: Read the current allow-list status
+  ansible.builtin.command:
+    argv: ["{{ ludus_testing_bin }}", testing, status]
+  environment:
+    LUDUS_API_KEY: "{{ __ludus_api_key }}"
+  register: __ludus_t_status
+  changed_when: false
+  failed_when: false
+  no_log: true
+- name: Allow required domains (skip any already present)
+  ansible.builtin.command:
+    argv: ["{{ ludus_testing_bin }}", testing, allow, -d, "{{ item }}"]
+  environment:
+    LUDUS_API_KEY: "{{ __ludus_api_key }}"
+  loop: "{{ ludus_testing_allow_domains }}"
+  when: not (__ludus_t_status.stdout | default('') | regex_search('(?<![\\w.])' ~ (item | regex_escape) ~ '(?![\\w.])'))
+  register: __ludus_t_allow_d
+  changed_when: __ludus_t_allow_d is not skipped
+  no_log: true
+- name: Allow required IPs (skip any already present)
+  ansible.builtin.command:
+    argv: ["{{ ludus_testing_bin }}", testing, allow, -i, "{{ item }}"]
+  environment:
+    LUDUS_API_KEY: "{{ __ludus_api_key }}"
+  loop: "{{ ludus_testing_allow_ips }}"
+  when: not (__ludus_t_status.stdout | default('') | regex_search('(?<![\\w.])' ~ (item | regex_escape) ~ '(?![\\w.])'))
+  register: __ludus_t_allow_i
+  changed_when: __ludus_t_allow_i is not skipped
+  no_log: true
+- name: Final status
+  ansible.builtin.command:
+    argv: ["{{ ludus_testing_bin }}", testing, status]
+  environment:
+    LUDUS_API_KEY: "{{ __ludus_api_key }}"
+  register: __ludus_t_final
+  changed_when: false
+  failed_when: false
+  no_log: true
+- name: Report
+  ansible.builtin.debug:
+    msg: >-
+      Containment ON. Allowed domains: {{ ludus_testing_allow_domains | default([]) }};
+      allowed IPs: {{ ludus_testing_allow_ips | default([]) }}.

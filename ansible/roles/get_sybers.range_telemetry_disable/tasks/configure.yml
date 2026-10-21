@@ -1,0 +1,30 @@
+---
+- name: "configure | Apply the telemetry-disabling registry values"
+  ansible.windows.win_regedit:
+    path: "{{ item.path }}"
+    name: "{{ item.name }}"
+    data: "{{ item.data }}"
+    type: "{{ item.type }}"
+  loop: "{{ range_telemetry_registry }}"
+  loop_control:
+    label: "{{ item.path }}\\{{ item.name }} = {{ item.data }}"
+- name: "configure | Disable the telemetry scheduled tasks"
+  ansible.windows.win_powershell:
+    script: |
+      $ErrorActionPreference = 'Continue'
+      $paths = @(
+      {% for t in range_telemetry_scheduled_tasks %}
+        '{{ t }}'{{ "," if not loop.last else "" }}
+      {% endfor %}
+      )
+      $changed = $false
+      foreach ($full in $paths) {
+        $leaf = Split-Path $full -Leaf
+        $dir  = (Split-Path $full -Parent) + '\'
+        $t = Get-ScheduledTask -TaskPath $dir -TaskName $leaf -ErrorAction SilentlyContinue
+        if ($t -and $t.State -ne 'Disabled') {
+          Disable-ScheduledTask -TaskPath $dir -TaskName $leaf -ErrorAction SilentlyContinue | Out-Null
+          $changed = $true
+        }
+      }
+      $Ansible.Changed = $changed

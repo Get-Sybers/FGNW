@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  {{ ansible_managed }}
+  ACSC-Linux-Port-Sysmon — profile: {{ acsc_sysmon_profile }}
+  The Linux port of the ACSC "Windows Event Logging and Forwarding" Sysmon
+  baseline that get_sybers.sysmon applies to Windows range VMs
+  (files/acsc-sysmon-config.xml). Same intent, expressed in the event set that
+  Sysmon for Linux can actually observe.
+  WHAT DOES NOT PORT, AND WHY
+  Sysmon for Linux (github.com/Sysinternals/SysmonForLinux) is eBPF-based, so it
+  implements only the subset of the Windows schema the kernel can see. Per that
+  project's own fixture (test/rulestest/configs/23_all_event_types.xml) the
+  supported types are ProcessCreate, ProcessTerminate, FileCreate,
+  FileCreateTime, FileDelete, FileDeleteDetected, NetworkConnect, DnsQuery,
+  RawAccessRead, ProcessAccess. The Windows baseline's ImageLoad (3 rules),
+  RegistryEvent (2) and CreateRemoteThread (1) rules are still PARSED on Linux
+  but never fire — they are omitted here rather than carried as dead config that
+  reads like coverage.
+  Coverage that survives the port, mapped to the ACSC intent:
+    process lineage + full argv   -> ProcessCreate / ProcessTerminate
+    egress and C2                 -> NetworkConnect, DnsQuery
+    persistence and tampering     -> FileCreate / FileCreateTime / FileDelete
+    credential access             -> ProcessAccess
+    raw device reads              -> RawAccessRead
+  Retention is NOT set here — Sysmon for Linux writes to syslog, so the ACSC
+  ">= 18 months" target is a journald concern. See tasks/retention.yml.
+{% if acsc_sysmon_profile == 'hypervisor' %}
+  PROFILE hypervisor — PVE cluster nodes, not workstations. The two events that
+  would drown a node are NetworkConnect (Ceph OSD/MON and corosync chatter is
+  constant, and the storage mesh moves multiple Gb/s) and unfiltered FileCreate
+  (every VM disk write path, every template build). So NetworkConnect is
+  EXCLUDE-based and drops intra-cluster traffic — what survives is egress
+  leaving the cluster, which is the signal worth having on a hypervisor — and
+  FileCreate/FileDelete are INCLUDE-based on integrity-relevant paths only.
+  Complements auditd rather than duplicating it: auditd answers "who touched
+  this file / ran this tool" with login-uid attribution; Sysmon answers "what is
+  the process tree and where did it connect".
+{% else %}
+  PROFILE guest — infra VM guests and range Linux VMs. Event rates are low
+  enough that NetworkConnect is left unfiltered: on a range VM the whole point
+  is to see the lateral movement, and on an infra guest egress is meant to be
+  rare. FileCreate/FileDelete stay INCLUDE-based on the same integrity paths.
+{% endif %}
+-->
+<Sysmon schemaversion="{{ acsc_sysmon_schema_version }}">
+  <HashAlgorithms>{{ acsc_sysmon_hash_algorithms }}</HashAlgorithms>
+  <EventFiltering>
+    <!-- Process lineage is the primary value of Sysmon and the ACSC baseline's
+         highest-fidelity signal (the Windows equivalent is 4688 WITH full
+         command line). Unfiltered on every profile. -->
+    <RuleGroup name="process-create" groupRelation="or">
+      <ProcessCreate onmatch="exclude" />
+    </RuleGroup>
+    <RuleGroup name="process-terminate" groupRelation="or">
+      <ProcessTerminate onmatch="exclude" />
+    </RuleGroup>
+    <!-- Credential access: one process reading another's memory. -->
+    <RuleGroup name="process-access" groupRelation="or">
+      <ProcessAccess onmatch="exclude" />
+    </RuleGroup>
+    <!-- Raw device reads — disk-level access that bypasses the filesystem. -->
+    <RuleGroup name="raw-access-read" groupRelation="or">
+      <RawAccessRead onmatch="exclude" />
+    </RuleGroup>
+    <!-- DNS is the cheapest high-value egress signal on any profile. -->
+    <RuleGroup name="dns-query" groupRelation="or">
+      <DnsQuery onmatch="exclude" />
+    </RuleGroup>
+{% if acsc_sysmon_profile == 'hypervisor' %}
+    <!-- EXCLUDE-based: drop intra-cluster noise, keep egress leaving the
+         cluster. Prefix matches, so ordering is irrelevant. -->
+    <RuleGroup name="network-connect" groupRelation="or">
+      <NetworkConnect onmatch="exclude">
+{% for prefix in acsc_sysmon_excluded_dest_prefixes %}
+        <DestinationIp condition="begin with">{{ prefix }}</DestinationIp>
+{% endfor %}
+      </NetworkConnect>
+    </RuleGroup>
+{% else %}
+    <!-- Unfiltered: lateral movement and egress are the point on a guest. -->
+    <RuleGroup name="network-connect" groupRelation="or">
+      <NetworkConnect onmatch="exclude" />
+    </RuleGroup>
+{% endif %}
+    <!-- INCLUDE-based on both profiles: persistence and tampering live in a
+         small set of paths, and an unfiltered FileCreate is pure volume. -->
+    <RuleGroup name="file-create" groupRelation="or">
+      <FileCreate onmatch="include">
+{% for path in acsc_sysmon_watched_paths %}
+        <TargetFilename condition="begin with">{{ path }}</TargetFilename>
+{% endfor %}
+      </FileCreate>
+    </RuleGroup>
+    <!-- Timestomping on the same paths. -->
+    <RuleGroup name="file-create-time" groupRelation="or">
+      <FileCreateTime onmatch="include">
+{% for path in acsc_sysmon_watched_paths %}
+        <TargetFilename condition="begin with">{{ path }}</TargetFilename>
+{% endfor %}
+      </FileCreateTime>
+    </RuleGroup>
+    <RuleGroup name="file-delete" groupRelation="or">
+      <FileDelete onmatch="include">
+{% for path in acsc_sysmon_watched_paths %}
+        <TargetFilename condition="begin with">{{ path }}</TargetFilename>
+{% endfor %}
+      </FileDelete>
+    </RuleGroup>
+    <RuleGroup name="file-delete-detected" groupRelation="or">
+      <FileDeleteDetected onmatch="include">
+{% for path in acsc_sysmon_watched_paths %}
+        <TargetFilename condition="begin with">{{ path }}</TargetFilename>
+{% endfor %}
+      </FileDeleteDetected>
+    </RuleGroup>
+  </EventFiltering>
+</Sysmon>

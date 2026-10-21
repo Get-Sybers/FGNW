@@ -1,0 +1,48 @@
+---
+argument_specs:
+  main:
+    short_description: ENV-ONLY Ludus API auth check.
+    description:
+      - Resolves the Ludus API key from the C(LUDUS_API_KEY) environment
+        variable (the ONLY source — this role never reads any file), validates
+        its shape, confirms via C(/whoami) that it authenticates as the
+        expected identity (and optionally as an admin), and publishes it as a
+        C(no_log) fact C(__ludus_api_key) plus non-secret diagnostics
+        (C(__ludus_key_source), C(ludus_auth_status), C(ludus_auth_user),
+        C(ludus_auth_is_admin)).
+      - Key delivery is the calling context's job — the sanctioned injection
+        path is C(get_sybers.cluster) C(playbooks/ludus-ra-auth.yml) + export.
+      - The C(/whoami) HTTP status is the auth boundary. The C(ludus) CLI
+        exits rc=0 on an invalid key and must never be used as one.
+    options:
+      ludus_api_url:
+        type: str
+        default: "https://127.0.0.1:8080/api/v2"
+        description: Base URL of the local Ludus v2 API.
+      ludus_auth_validate_certs:
+        type: bool
+        default: false
+        description:
+          - TLS verification for the C(/whoami) round-trip. Default C(false)
+            for the stock loopback API on its self-signed cert; set C(true)
+            when C(ludus_api_url) points at a trusted-certificate endpoint.
+      ludus_expected_user:
+        type: str
+        default: RA
+        description: The userID the key MUST authenticate as.
+      ludus_auth_require_admin:
+        type: bool
+        default: false
+        description:
+          - Require the authenticated identity to be a Ludus admin
+            (C(isAdmin) from C(/whoami)). Incompatible with
+            C(ludus_auth_skip_liveness=true).
+      ludus_auth_skip_liveness:
+        type: bool
+        default: false
+        description: Skip the live C(/whoami) round-trip and validate the key shape only.
+  verify:
+    short_description: Verify ludus_auth_check (positive identity + negative control).
+    description:
+      - Positive check that the expected identity was established, plus a
+        negative control that a known-invalid key is rejected.

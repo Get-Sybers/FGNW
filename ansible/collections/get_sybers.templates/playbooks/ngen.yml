@@ -1,0 +1,6 @@
+---
+- name: "Generate native .NET images (ngen) for the Windows template"
+  hosts: all
+  gather_facts: false
+  roles:
+    - get_sybers.templates.windows_ngen

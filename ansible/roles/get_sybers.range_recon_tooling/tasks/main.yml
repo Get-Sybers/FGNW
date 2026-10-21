@@ -1,0 +1,11 @@
+---
+- name: Deploy the cannon (rate-capped TCP flood script)
+  ansible.builtin.include_tasks: cannon.yml
+- name: Deploy portable nmap
+  ansible.builtin.include_tasks: nmap.yml
+- name: Verify the deployed tooling
+  ansible.builtin.include_tasks:
+    file: verify.yml
+    apply:
+      tags: [verify]
+  tags: [verify]

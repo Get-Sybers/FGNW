@@ -1,0 +1,33 @@
+---
+# GHOSTS v9 Universal client for macOS. The Universal client is officially cross-platform
+# (Windows / Linux / macOS; see https://cmu-sei.github.io/GHOSTS/quickstart/) and is the one
+# we use on the Sand workstation to replace the .NET-Framework Windows client that the
+# jasonmull.ludus_ghosts_client role installs.
+#
+# The GHOSTS API endpoint is the same ghost9 CT the rest of the range reports to — the API
+# URL is set in the blueprint's global_role_vars.ghosts_config_replace line.
+fgnw_mac_ghosts_client_version: v9.0.0
+fgnw_mac_ghosts_client_tarball_url: >-
+  {{ 'https://github.com/cmu-sei/GHOSTS/releases/download/' ~ fgnw_mac_ghosts_client_version
+     ~ '/ghosts-client-universal-osx-x64-' ~ fgnw_mac_ghosts_client_version ~ '.tar.gz' }}
+
+fgnw_mac_ghosts_client_install_dir: /usr/local/ghosts
+fgnw_mac_ghosts_client_config_dir: /etc/ghosts
+fgnw_mac_ghosts_client_log_dir: /var/log/ghosts
+fgnw_mac_ghosts_client_daemon_label: com.cmu.sei.ghosts
+
+# ApiRootUrl is substituted so the macOS client reports to the same ghost9 CT as every other
+# GHOSTS client. The range's second octet is derived per-host from `ansible_host` (which the
+# materialized infra inventory sets to the real IP after RANGENUMBER substitution), matching
+# the pattern FGNW-ghosts-activity.yml and FGNW-exchange.yml use. Using
+# `range_second_octet | default('2')` here would silently point every range at 10.2.99.51 —
+# which is wrong on any range whose second octet is not 2 — because no play on this role's
+# code path (FGNW-mac-prestage.yml, phase1c-macos-base.yml) defines range_second_octet.
+fgnw_mac_ghosts_client_api_url: "http://10.{{ ansible_host.split('.')[1] }}.99.51:5000/api"
+
+# Phase selector. The role is called twice during a deploy:
+#   * Phase 1c (pre-containment): `prestage` fetches the tarball + extracts it + rewrites
+#     the ApiRootUrl. github.com is only reachable at this point.
+#   * Phase 4d (post-containment): `service` writes the launchd plist and bootstraps it.
+# Default `all` runs both — safe for a manual re-run on a host that has egress.
+fgnw_mac_ghosts_client_phase: all

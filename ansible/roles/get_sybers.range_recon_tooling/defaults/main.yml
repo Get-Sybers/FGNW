@@ -1,0 +1,8 @@
+---
+range_recon_tooling_nmap_version: "7.92"
+range_recon_tooling_nmap_zip_url: http://192.0.2.2:8081/repository/raw-hosted/tools/nmap-{{ range_recon_tooling_nmap_version }}-win32.zip
+range_recon_tooling_nmap_zip_sha256: b54c54d4b478cad19567a504c7c6b7230dfd80acd881dc2e9015a628a3efa71e
+range_recon_tooling_nmap_install_dir: C:\Tools
+range_recon_tooling_nmap_vcredist_exe: VC_redist.x86.exe
+range_recon_tooling_nmap_npcap_exe: npcap-1.50.exe
+range_recon_tooling_npcap_install_timeout: 300

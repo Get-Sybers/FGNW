@@ -1,0 +1,44 @@
+Microsoft Defender Server Setup
+================================
+This server is prepared for Microsoft Defender for Endpoint management.
+Configuration Status:
+--------------------
+- Windows Defender features: Enabled
+- Real-time protection: Enabled
+- Cloud-delivered protection: Enabled
+- Network protection: Enabled
+Onboarding Steps:
+----------------
+1. Access Microsoft Defender Security Portal:
+   https://security.microsoft.com
+2. Navigate to Settings > Endpoints > Onboarding
+3. Download the onboarding package:
+   - Select: Windows Server 2022 (or "Windows Server 2019 and 2022" for compatibility)
+   - Download the .cmd or .zip package
+4. Run the onboarding script on this server:
+   - Extract the package
+   - Run WindowsDefenderATPOnboardingScript.cmd as Administrator
+5. Verify onboarding:
+   - Run: "C:\Program Files\Windows Defender\MpCmdRun.exe" -CheckOnboarding
+   - Check device appears in Defender portal (may take 5-10 minutes)
+6. Test detection:
+   - Run test file from: https://demo.wd.microsoft.com/
+   - Verify alert appears in Defender portal
+Advanced Configuration:
+----------------------
+For ADX/Log Analytics integration:
+1. Create Log Analytics Workspace in Azure Portal
+2. In Defender portal: Settings > Advanced Features
+3. Enable "Azure Data Explorer connection"
+4. Configure workspace connection
+Useful PowerShell Commands:
+--------------------------
+Get-MpComputerStatus
+Get-MpThreat
+Start-MpScan -ScanType QuickScan
+& "C:\Program Files\Windows Defender\MpCmdRun.exe" -CheckOnboarding
+Resources:
+---------
+- Defender Documentation: https://docs.microsoft.com/en-us/microsoft-365/security/defender-endpoint/
+- Onboarding Guide: https://docs.microsoft.com/en-us/microsoft-365/security/defender-endpoint/onboarding
+- ADX Integration: https://docs.microsoft.com/en-us/azure/data-explorer/

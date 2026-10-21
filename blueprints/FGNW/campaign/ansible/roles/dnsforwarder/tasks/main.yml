@@ -1,0 +1,48 @@
+---
+- name: Keep only dnsforwarder_domains whose DC exists in this inventory
+  ansible.builtin.set_fact:
+    __deployed_domains: "{{ dnsforwarder_domains | selectattr('dc_host', 'in', hostvars) | list }}"
+- name: Note which dnsforwarder_domains are being skipped this run
+  ansible.builtin.debug:
+    msg: >-
+      No DC in this inventory for
+      {{ (dnsforwarder_domains | rejectattr('dc_host', 'in', hostvars) | map(attribute='name') | list) | join(', ') }};
+      their conditional forwarders are skipped.
+  when: (dnsforwarder_domains | length) != (__deployed_domains | length)
+- name: Publish a conditional forwarder for each remote village
+  ansible.windows.win_dns_zone:
+    name: "{{ item.name }}"
+    type: forwarder
+    dns_servers:
+      - "{{ hostvars[item.dc_host]['ansible_host'] }}"
+  loop: "{{ __deployed_domains }}"
+  when: item.name != ansible_domain
+- name: Resolve this forest's -owa VLAN octet (blank when it runs no mail server)
+  ansible.builtin.set_fact:
+    __dnsforwarder_owa_octet: "{{ dnsforwarder_mail_owa_vlan_octet[ansible_domain] | default('') }}"
+- name: Compose this forest's -owa address from the range's second octet
+  ansible.builtin.set_fact:
+    __dnsforwarder_owa_ip: 10.{{ ansible_host.split('.')[1] }}.{{ __dnsforwarder_owa_octet }}.20
+  when: __dnsforwarder_owa_octet != ''
+- name: Probe whether this forest's -owa VM is deployed (TCP 5986)
+  ansible.windows.win_shell: |
+    $c = New-Object System.Net.Sockets.TcpClient
+    try { $ok = $c.ConnectAsync("{{ __dnsforwarder_owa_ip }}", 5986).Wait(3000) } catch { $ok = $false } finally { $c.Close() }
+    if ($ok) { "OWA_PRESENT" } else { "OWA_ABSENT" }
+  register: __dnsforwarder_owa_probe
+  changed_when: false
+  failed_when: false
+  when: __dnsforwarder_owa_octet != ''
+- name: "Register the mail A record for the domain: {{ 'mail.' ~ ansible_domain ~ ' -> ' ~ (__dnsforwarder_owa_ip | default('')) }}"
+  ansible.windows.win_dns_record:
+    name: mail
+    type: A
+    zone: "{{ ansible_domain }}"
+    value:
+      - "{{ __dnsforwarder_owa_ip }}"
+    state: present
+  register: __dnsforwarder_owa_dns_reg
+  failed_when: false
+  when:
+    - __dnsforwarder_owa_octet != ''
+    - "'OWA_PRESENT' in (__dnsforwarder_owa_probe.stdout | default(''))"

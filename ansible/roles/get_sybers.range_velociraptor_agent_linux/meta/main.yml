@@ -1,0 +1,9 @@
+---
+galaxy_info:
+  author: Get-Sybers
+  namespace: get_sybers
+  description: Install Velociraptor agent on Linux hosts
+  role_name: range_velociraptor_agent_linux
+  license: AGPL-3.0-only
+  min_ansible_version: "2.14"
+dependencies: []

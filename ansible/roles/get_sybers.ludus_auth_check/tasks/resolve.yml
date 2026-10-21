@@ -1,0 +1,33 @@
+---
+- name: "resolve | Resolve the key from the environment (the ONLY source)"
+  ansible.builtin.set_fact:
+    __ludus_api_key: "{{ lookup('env', 'LUDUS_API_KEY') | default('', true) | trim }}"
+    __ludus_key_source: environment
+  no_log: true
+- name: "resolve | Derive NON-SECRET facts about the key for diagnostics"
+  ansible.builtin.set_fact:
+    __ludus_key_len: "{{ __ludus_api_key | length }}"
+    __ludus_key_present: "{{ (__ludus_api_key | length) > 0 }}"
+    __ludus_key_ok_shape: >-
+      {{ __ludus_api_key is match('^' ~ (ludus_expected_user | regex_escape) ~ '\..+')
+         and (__ludus_api_key | length) > 20 }}
+  no_log: true
+- name: "resolve | Assert a key is present in the environment"
+  ansible.builtin.assert:
+    that: __ludus_key_present | bool
+    fail_msg: >-
+      No LUDUS_API_KEY in the environment. This check reads NO files — key
+      delivery is the calling context's job. Authenticate first with
+      get_sybers.cluster playbooks/ludus-ra-auth.yml, then export
+      LUDUS_API_KEY into this shell (the get_sybers.cluster collection, Get-Sybers/proxmaxxing).
+    quiet: true
+- name: "resolve | Assert the key has the expected shape"
+  ansible.builtin.assert:
+    that: __ludus_key_ok_shape | bool
+    fail_msg: >-
+      The environment key is malformed (length {{ __ludus_key_len }}, expected
+      a '{{ ludus_expected_user }}.'-prefixed value > 20 chars). The copy you
+      were handed is broken or truncated — mint a fresh key with
+      get_sybers.cluster playbooks/ludus-key-rotate.yml.
+    success_msg: "Key resolved from {{ __ludus_key_source }} (shape OK)."
+    quiet: true

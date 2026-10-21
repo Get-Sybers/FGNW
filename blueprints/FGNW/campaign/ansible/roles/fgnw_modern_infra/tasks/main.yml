@@ -1,0 +1,63 @@
+---
+- name: Create modern-infra content root
+  ansible.builtin.file:
+    path: "{{ fgnw_modern_infra_root }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+- name: Deploy docker-compose.yml
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../content/modern-infra/docker-compose.yml"
+    dest: "{{ fgnw_modern_infra_root }}/docker-compose.yml"
+    mode: "0644"
+  notify: Recreate modern-infra stack
+- name: Deploy LocalStack seed script
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../content/modern-infra/localstack-seed.sh"
+    dest: "{{ fgnw_modern_infra_root }}/localstack-seed.sh"
+    mode: "0755"
+- name: Deploy OpenEMR patient seed data + script
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../content/modern-infra/{{ item }}"
+    dest: "{{ fgnw_modern_infra_root }}/{{ item }}"
+    mode: "0644"
+  loop:
+    - patient-seed.csv
+    - openemr-seed-patients.py
+- name: Bring up the Docker Compose stack
+  ansible.builtin.command:
+    cmd: docker compose up -d
+    chdir: "{{ fgnw_modern_infra_root }}"
+  register: __compose_up
+  changed_when: "'Started' in __compose_up.stdout or 'Created' in __compose_up.stdout"
+- name: Wait for LocalStack to report healthy
+  ansible.builtin.uri:
+    url: http://localhost:4566/_localstack/health
+    status_code: 200
+  register: __localstack_health
+  until: __localstack_health.status == 200
+  retries: 30
+  delay: 10
+  ignore_errors: true
+- name: Seed LocalStack (S3 bucket + IAM misconfiguration) — item 4
+  ansible.builtin.command:
+    cmd: bash localstack-seed.sh
+    chdir: "{{ fgnw_modern_infra_root }}"
+  register: __localstack_seed
+  failed_when: false
+  changed_when: __localstack_seed.rc == 0
+  when: __localstack_health.status | default(0) == 200
+- name: Wait for OpenEMR to report ready (self-signed TLS, so a plain TCP check on 8443)
+  ansible.builtin.wait_for:
+    host: localhost
+    port: 8443
+    timeout: 300
+  failed_when: false # OpenEMR readiness is best-effort; the seed step below checks its own result
+- name: Seed OpenEMR patients from the real character roster — item 7
+  ansible.builtin.command:
+    cmd: python3 openemr-seed-patients.py
+    chdir: "{{ fgnw_modern_infra_root }}"
+  register: __openemr_seed
+  failed_when: false
+  changed_when: __openemr_seed.rc == 0

@@ -1,0 +1,87 @@
+---
+# Idempotent macOS AD bind. The role:
+#   1. Reads the current directory-service state with `dsconfigad -show`.
+#   2. If the target domain is not already present in that output, requires the bind
+#      principal to have been passed in by the play, then runs `dsconfigad -add`.
+#   3. Reads the state again and asserts the target domain is present.
+#
+# `dsconfigad` is Apple's own tool; this role does not reinvent its logic, it just drives
+# it under Ansible so a replay is safe.
+- name: Read the current directory-service configuration
+  ansible.builtin.command:
+    cmd: /usr/sbin/dsconfigad -show
+  register: fgnw_mac_dsconfigad_before
+  changed_when: false
+  failed_when: false
+  become: true
+
+- name: Compute whether this host is already bound to the target domain
+  ansible.builtin.set_fact:
+    fgnw_mac_dsconfigad_already_bound: >-
+      {{ (fgnw_mac_dsconfigad_before.stdout | default('')) is search(fgnw_mac_dsconfigad_domain | default('') | regex_escape) }}
+
+- name: Skip the bind step when the host is already bound
+  ansible.builtin.debug:
+    msg: "{{ inventory_hostname }} is already bound to {{ fgnw_mac_dsconfigad_domain }} — nothing to do."
+  when: fgnw_mac_dsconfigad_already_bound
+
+- name: Require the bind principal when a bind is needed
+  ansible.builtin.assert:
+    that:
+      - fgnw_mac_dsconfigad_admin_user | length > 0
+      - fgnw_mac_dsconfigad_admin_password | length > 0
+    fail_msg: >-
+      fgnw_mac_dsconfigad needs fgnw_mac_dsconfigad_admin_user and
+      fgnw_mac_dsconfigad_admin_password passed in by the play (not read from defaults).
+      See FGNW-mac-ad-bind.yml for the standard call shape.
+    quiet: true
+  when: not fgnw_mac_dsconfigad_already_bound
+
+- name: Compose the argv for dsconfigad -add
+  ansible.builtin.set_fact:
+    fgnw_mac_dsconfigad_argv: >-
+      {{ __base + (__ou if fgnw_mac_dsconfigad_ou | length > 0 else []) + __creds }}
+  vars:
+    __base:
+      - /usr/sbin/dsconfigad
+      - -add
+      - "{{ fgnw_mac_dsconfigad_domain }}"
+      - -computer
+      - "{{ fgnw_mac_dsconfigad_computer }}"
+    __ou:
+      - -ou
+      - "{{ fgnw_mac_dsconfigad_ou }}"
+    __creds:
+      - -username
+      - "{{ fgnw_mac_dsconfigad_admin_user }}"
+      - -password
+      - "{{ fgnw_mac_dsconfigad_admin_password }}"
+  when: not fgnw_mac_dsconfigad_already_bound
+  no_log: true
+
+- name: Run dsconfigad -add
+  ansible.builtin.command:
+    argv: "{{ fgnw_mac_dsconfigad_argv }}"
+  register: fgnw_mac_dsconfigad_add
+  changed_when: fgnw_mac_dsconfigad_add.rc == 0
+  become: true
+  no_log: true
+  when: not fgnw_mac_dsconfigad_already_bound
+
+- name: Re-read the directory-service configuration
+  ansible.builtin.command:
+    cmd: /usr/sbin/dsconfigad -show
+  register: fgnw_mac_dsconfigad_after
+  changed_when: false
+  become: true
+
+- name: Assert this host is now bound to the target domain
+  ansible.builtin.assert:
+    that: fgnw_mac_dsconfigad_domain in (fgnw_mac_dsconfigad_after.stdout | default(''))
+    fail_msg: >-
+      {{ inventory_hostname }} is not bound to {{ fgnw_mac_dsconfigad_domain }} after
+      dsconfigad -add. Common causes: the macOS host cannot resolve the AD SRV records
+      for the domain (check the resolver points at the Sand child DC), or clock skew
+      against the DC is over 5 minutes (Kerberos refuses). dsconfigad -show output:
+      {{ fgnw_mac_dsconfigad_after.stdout | default('(empty)') }}
+    quiet: true

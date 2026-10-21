@@ -1,0 +1,78 @@
+---
+- name: "preflight | Profile is one we actually implement"
+  ansible.builtin.assert:
+    that: acsc_sysmon_profile in ['hypervisor', 'guest']
+    fail_msg: >-
+      acsc_sysmon_profile is '{{ acsc_sysmon_profile }}'; expected 'hypervisor'
+      (PVE cluster nodes) or 'guest' (infra VM guests, range Linux VMs).
+    quiet: true
+- name: "preflight | Platform is one this role was written for"
+  ansible.builtin.assert:
+    that: ansible_facts.os_family | default('') == 'Debian'
+    fail_msg: >-
+      os_family is '{{ ansible_facts.os_family | default("unknown") }}'. This
+      role installs .deb artefacts with apt and asserts against journald; there
+      is no dnf/rpm path here. If ansible_facts is empty, the calling play set
+      gather_facts: false — this role needs facts.
+    quiet: true
+- name: "preflight | Artefacts were supplied and are complete"
+  ansible.builtin.assert:
+    that:
+      - acsc_sysmon_artefacts | length > 0
+      - acsc_sysmon_artefacts | selectattr('deb', 'defined') | list | length
+        == acsc_sysmon_artefacts | length
+      - acsc_sysmon_artefacts | selectattr('name', 'defined') | list | length
+        == acsc_sysmon_artefacts | length
+      - acsc_sysmon_artefacts | selectattr('version', 'defined') | list | length
+        == acsc_sysmon_artefacts | length
+    fail_msg: >-
+      Entries missing a required key —
+      no 'deb': {{ acsc_sysmon_artefacts | rejectattr('deb', 'defined') | list }};
+      no 'name': {{ acsc_sysmon_artefacts | rejectattr('name', 'defined') | list }};
+      no 'version': {{ acsc_sysmon_artefacts | rejectattr('version', 'defined') | list }}.
+      acsc_sysmon_artefacts is empty or malformed. Supply
+      [{name, version, sha256, deb}] in install order — sysinternalsebpf MUST
+      come before sysmonforlinux, which hard-depends on it. The default is
+      empty on purpose so an unconfigured call fails instead of installing
+      nothing and reporting success.
+    quiet: true
+- name: "preflight | Every artefact is digest-pinned"
+  ansible.builtin.assert:
+    that:
+      - acsc_sysmon_artefacts | selectattr('sha256', 'defined') | list | length
+        == acsc_sysmon_artefacts | length
+      - acsc_sysmon_artefacts | map(attribute='sha256') | select('match', '^[0-9a-f]{64}$')
+        | list | length == acsc_sysmon_artefacts | length
+    fail_msg: >-
+      Every entry in acsc_sysmon_artefacts needs a 64-hex-character sha256.
+      Got: {{ acsc_sysmon_artefacts | map(attribute='name') | list }} with
+      digests {{ acsc_sysmon_artefacts | map(attribute='sha256', default='(missing)') | list }}.
+      The role re-verifies the digest on the target after transport; without one
+      that gate silently passes.
+    quiet: true
+- name: "preflight | The XML validator exists on the target"
+  ansible.builtin.include_tasks: preflight-validator.yml
+  when: acsc_sysmon_validate_config | bool
+- name: "preflight | Container policy is one we implement"
+  ansible.builtin.assert:
+    that: acsc_sysmon_container_policy in ['fail', 'warn', 'ignore']
+    fail_msg: >-
+      acsc_sysmon_container_policy is '{{ acsc_sysmon_container_policy }}';
+      expected 'fail', 'warn' or 'ignore'.
+    quiet: true
+- name: "preflight | Detect container type"
+  ansible.builtin.setup:
+    gather_subset:
+      - "!all"
+      - "virtual"
+- name: "preflight | Is this a container eBPF cannot load in?"
+  ansible.builtin.set_fact:
+    __acsc_sysmon_ebpf_doubtful: >-
+      {{ ansible_facts.virtualization_type | default('') in ['lxc', 'docker', 'podman', 'container'] }}
+- name: "preflight | Report what this run will do"
+  ansible.builtin.debug:
+    msg:
+      - "host: {{ inventory_hostname }}, profile={{ acsc_sysmon_profile }}"
+      - "virtualization_type: {{ ansible_facts.virtualization_type | default('none') }} (container policy: {{ acsc_sysmon_container_policy }})"
+      - "artefacts: {{ acsc_sysmon_artefacts | map(attribute='deb') | list }}"
+      - "config: {{ acsc_sysmon_config_path }} (schema {{ acsc_sysmon_schema_version }})"

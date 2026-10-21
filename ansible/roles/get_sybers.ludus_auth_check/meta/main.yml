@@ -1,0 +1,13 @@
+---
+galaxy_info:
+  author: Get-Sybers
+  namespace: get_sybers
+  description: >-
+    ENV-ONLY Ludus API auth check — proves LUDUS_API_KEY is present, shaped,
+    live (/whoami) and the expected identity, and publishes it as a no_log
+    fact. Holds no secret access: never reads any file, never touches the
+    credential vault.
+  role_name: ludus_auth_check
+  license: AGPL-3.0-only
+  min_ansible_version: "2.15"
+dependencies: []

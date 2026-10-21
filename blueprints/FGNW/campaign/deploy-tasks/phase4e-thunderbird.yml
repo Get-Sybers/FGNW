@@ -1,0 +1,19 @@
+---
+# Phase 4e — Mozilla Thunderbird mail-client stack for every workstation in the range.
+# Runs AFTER phase 4d so that:
+#   * The Konoha / Oto / Akatsuki Exchange servers (brought up in phase 4b) are present and
+#     their mailboxes exist, so this phase's first play can enable the MSExchangeIMAP4
+#     services and set LoginType=PlainTextLogin on each.
+#   * The Sand Postfix/Dovecot stack (`fgnw_mac_mail_server`, phase 4d) is standing by the
+#     time the Sand workstation (suna-ws1) gets its Thunderbird client here.
+#
+# Order within the phase: one playbook (FGNW-thunderbird.yml) runs all three internal plays
+# (exchange IMAP enable, Windows workstation clients, Sand macOS workstation client).
+- name: "deploy-tasks | phase4e-thunderbird | FGNW-thunderbird.yml (IMAP enable on each Exchange + Thunderbird client on every workstation)"
+  ansible.builtin.command:
+    argv: [ansible-playbook, -i, "{{ __tmp_infra_inv }}", FGNW-thunderbird.yml]
+  args:
+    chdir: "{{ ansible_dir }}"
+  environment:
+    ANSIBLE_ROLES_PATH: "{{ users_dir }}/.ansible/roles"
+  changed_when: true

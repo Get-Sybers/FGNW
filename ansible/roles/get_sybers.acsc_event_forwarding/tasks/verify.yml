@@ -1,0 +1,45 @@
+---
+- name: "verify | Re-read the subscription list"
+  ansible.windows.win_command: wecutil es
+  register: __acsc_wef_verify
+  changed_when: false
+- name: "verify | VERIFY — every requested subscription now exists"
+  ansible.builtin.assert:
+    that: >-
+      __acsc_wef_wanted | difference(
+        (__acsc_wef_verify.stdout | default('')).splitlines() | map('trim') | select | list
+      ) | length == 0
+    fail_msg: >-
+      These subscriptions were requested but are absent from `wecutil es` after
+      the run:
+      {{ __acsc_wef_wanted | difference((__acsc_wef_verify.stdout | default('')).splitlines() | map('trim') | select | list) }}.
+      wecutil returning 0 is not proof a subscription was created.
+    quiet: true
+- name: "verify | Read back each subscription's runtime state"
+  ansible.windows.win_command: wecutil gs "{{ item }}"
+  loop: "{{ __acsc_wef_wanted }}"
+  loop_control:
+    label: "{{ item }}"
+  register: __acsc_wef_state
+  changed_when: false
+- name: "verify | VERIFY — enabled state matches what was asked for"
+  ansible.builtin.assert:
+    that: >-
+      ((item.stdout | regex_search('(?i)Enabled:\s*true')) is not none)
+      == (acsc_wef_enable_subscriptions | bool)
+    fail_msg: >-
+      Subscription '{{ item.item }}' reports an Enabled state that does not
+      match acsc_wef_enable_subscriptions={{ acsc_wef_enable_subscriptions }}.
+    quiet: true
+  loop: "{{ __acsc_wef_state.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+- name: "verify | Report"
+  ansible.builtin.debug:
+    msg: >-
+      {{ __acsc_wef_wanted | length }} subscription(s) present on
+      {{ inventory_hostname }}, enabled={{ acsc_wef_enable_subscriptions }},
+      sources={{ 'set' if acsc_wef_set_sources else 'NOT set' }}.
+- name: "verify | Source computers were applied"
+  ansible.builtin.include_tasks: verify-sources.yml
+  when: acsc_wef_set_sources | bool

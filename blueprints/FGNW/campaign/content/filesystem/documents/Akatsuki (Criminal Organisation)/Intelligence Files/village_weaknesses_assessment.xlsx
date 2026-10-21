@@ -1,0 +1,11 @@
+VILLAGE VULNERABILITY MATRIX
+Scored 1 (hard) to 5 (soft) for isolated host extraction.
+
+Village      | Host present | Defence | Extraction difficulty | Notes
+-------------|--------------|---------|-----------------------|---------------------
+Sunagakure   | One-Tail     |   3     | 3 (DONE)              | Puppet corps, night raid
+Kumogakure   | 2 & 8 Tails  |   5     | 5                     | Raikage guards personally
+Iwagakure    | 4 & 5 Tails  |   3     | 2 (DONE)              | Hosts trained abroad, isolated
+Takigakure   | 7-Tail       |   2     | 2 (DONE)              | Small village, weak border
+Kirigakure   | 6-Tail       |   4     | 4                     | Host is a wanderer, hard to find
+Konohagakure | 9-Tail       |   5     | 5                     | Save for last, most guarded

@@ -1,0 +1,73 @@
+---
+- name: Assert the end-of-seed marker paths were supplied by the caller
+  ansible.builtin.assert:
+    that:
+      - fgnw_seed_mail_state_dir is defined
+      - fgnw_seed_mail_sentinel is defined
+      - fgnw_seed_mail_state_dir | length > 0
+      - fgnw_seed_mail_sentinel | length > 0
+    fail_msg: >-
+      fgnw_seed_mail_state_dir / fgnw_seed_mail_sentinel must be set by the caller (see
+      ansible/FGNW-exchange-seed-mail.yml's vars). They are the end-of-seed marker this
+      forest's re-run guard depends on.
+    quiet: true
+- name: Load user inbox data from generated YAML
+  ansible.builtin.include_vars:
+    file: "{{ playbook_dir }}/../content/OWA/user-inboxes.yml"
+    name: fgnw_inbox_data
+- name: Load AD population source (domain membership ground truth)
+  ansible.builtin.include_vars:
+    file: "{{ playbook_dir }}/../ad/NARUTO/data/config.json"
+    name: fgnw_ad_config
+- name: Determine which sAMAccountNames are real AD users in this host's own domain
+  ansible.builtin.set_fact:
+    __fgnw_seed_mail_domain_users: "{{ (fgnw_ad_config.lab.domains[fgnw_seed_mail_domain].users | default({})).keys() | list }}"
+- name: Filter user-inboxes.yml down to recipients that are real mailboxes in this domain
+  ansible.builtin.set_fact:
+    __fgnw_seed_mail_recipients: "{{ fgnw_inbox_data.user_inboxes | dict2items | selectattr('key', 'in', __fgnw_seed_mail_domain_users) | list }}"
+- name: Assert this forest has at least one real mailbox to seed
+  ansible.builtin.assert:
+    that: __fgnw_seed_mail_recipients | length > 0
+    fail_msg: >-
+      No seedable recipients for {{ inventory_hostname }}: no key in content/OWA/user-inboxes.yml
+      matches a user of domain '{{ fgnw_seed_mail_domain }}' in ad/NARUTO/data/config.json
+      ({{ __fgnw_seed_mail_domain_users | length }} users found in that domain). Refusing to
+      report a successful seed for a forest that would receive zero messages.
+    quiet: true
+- name: Send each character-quote / alert message as real SMTP mail via this forest's Exchange server
+  ansible.windows.win_shell: >-
+    Send-MailMessage -SmtpServer localhost
+    -From '{{ __from }}'
+    -To '{{ __to }}'
+    -Subject '{{ __subject }}'
+    -Body '{{ __body }}'
+  loop: "{{ __fgnw_seed_mail_recipients | subelements('value') }}"
+  loop_control:
+    label: "{{ item.0.key }} <- {{ item.1.subject[:40] }}"
+  no_log: true
+  vars:
+    __from: "{{ item.1.from_address | regex_replace('[‘’‛]', \"'\") | replace(\"'\", \"''\") }}"
+    __to: "{{ item.0.key }}@{{ fgnw_seed_mail_domain }}"
+    __subject: "{{ item.1.subject | replace('\n', ' ') | regex_replace('[‘’‛]', \"'\") | replace(\"'\", \"''\") }}"
+    __body: "{{ item.1.body | regex_replace('[‘’‛]', \"'\") | replace(\"'\", \"''\") }}"
+    ansible_become: true
+    ansible_become_method: runas
+    ansible_become_user: "{{ fgnw_seed_mail_admin_domain }}\\Administrator"
+    ansible_become_password: "{{ fgnw_seed_mail_admin_password }}"
+- name: Ensure the FGNW state directory exists on this Exchange server
+  ansible.windows.win_file:
+    path: "{{ fgnw_seed_mail_state_dir }}"
+    state: directory
+- name: Write the end-of-seed marker for this forest
+  ansible.windows.win_copy:
+    dest: "{{ fgnw_seed_mail_sentinel }}"
+    content: |
+      FGNW mail-seed marker — written only after every message for this forest was delivered.
+      Delete this file (or pass -e force_reseed=true) to deliver the corpus again; doing so
+      DUPLICATES every message already in these mailboxes.
+      domain      : {{ fgnw_seed_mail_domain }}
+      host        : {{ inventory_hostname }}
+      recipients  : {{ __fgnw_seed_mail_recipients | length }}
+      messages    : {{ __fgnw_seed_mail_recipients | subelements('value') | length }}
+      corpus_sha1 : {{ __fgnw_seed_mail_recipients | to_json | hash('sha1') }}
+      seeded_utc  : {{ now(utc=true, fmt='%Y-%m-%dT%H:%M:%SZ') }}

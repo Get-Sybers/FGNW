@@ -1,0 +1,92 @@
+---
+- name: "finalize_discover | Record the VM id and node being finalized"
+  ansible.builtin.set_fact:
+    macos_template_vmid: "{{ macos_template_match.vmid }}"
+    macos_template_node_target: "{{ macos_template_match.node }}"
+- name: "finalize_discover | Read the VM config"
+  no_log: true
+  ansible.builtin.uri:
+    url: "{{ macos_template_api_host }}/api2/json/nodes/{{ macos_template_node_target }}/qemu/{{ macos_template_vmid }}/config"
+    method: GET
+    headers: "{{ macos_template_auth_headers }}"
+    validate_certs: "{{ macos_template_validate_certs }}"
+  register: macos_template_cfg
+- name: "finalize_discover | Start the VM if it is not running"
+  when: (macos_template_match.status | default('stopped')) != 'running'
+  no_log: true
+  ansible.builtin.uri:
+    url: "{{ macos_template_api_host }}/api2/json/nodes/{{ macos_template_node_target }}/qemu/{{ macos_template_vmid }}/status/start"
+    method: POST
+    headers: "{{ macos_template_auth_headers }}"
+    validate_certs: "{{ macos_template_validate_certs }}"
+- name: "finalize_discover | Extract the VM's MAC address from its net0 config"
+  ansible.builtin.set_fact:
+    macos_template_mac_lower: "{{ (macos_template_cfg.json.data.net0 | regex_search('([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}')) | default('') | lower }}"
+- name: "finalize_discover | Wait for the VM's DHCP lease on the build network"
+  ansible.builtin.slurp:
+    src: /var/lib/misc/dnsmasq.leases
+  register: macos_template_leases
+  until: macos_template_mac_lower | length > 0 and macos_template_mac_lower in (macos_template_leases.content | b64decode | lower)
+  retries: "{{ macos_template_ip_retries | int }}"
+  delay: 5
+  ignore_errors: true
+- name: "finalize_discover | Collect the lease IPs for this MAC (regex_findall returns a list)"
+  ansible.builtin.set_fact:
+    macos_template_lease_ips: "{{ (macos_template_leases.content | b64decode | lower) | regex_findall('\\s' ~ macos_template_mac_lower ~ '\\s+(\\S+)') }}"
+  when:
+    - macos_template_mac_lower | length > 0
+    - macos_template_leases is not failed
+    - macos_template_leases.content is defined
+- name: "finalize_discover | Resolve the VM's IP (last lease wins), as a string"
+  ansible.builtin.set_fact:
+    macos_template_ip: "{{ macos_template_lease_ips[-1] if (macos_template_lease_ips | default([]) | length > 0) else '' }}"
+- name: "finalize_discover | Not reachable yet - end without creating a template"
+  when: (macos_template_ip | default('')) | length == 0
+  block:
+    - name: "finalize_discover | Explain the awaiting-install state"
+      ansible.builtin.debug:
+        msg:
+          - "VM {{ macos_template_vmid }} has no DHCP lease yet - macOS is not reachable."
+          - "Finish the interactive install and enable Remote Login (SSH), then re-run the build."
+    - name: "finalize_discover | Mark FINALIZE not ready"
+      ansible.builtin.set_fact:
+        macos_template_finalize_ready: false
+- name: "finalize_discover | Reachable - confirm SSH and hand off to provisioning"
+  when: (macos_template_ip | default('')) | length > 0
+  block:
+    - name: "finalize_discover | Wait for SSH to open on the VM"
+      ansible.builtin.wait_for:
+        host: "{{ macos_template_ip }}"
+        port: 22
+        timeout: "{{ macos_template_ssh_wait_timeout | int }}"
+        state: started
+      register: macos_template_ssh_port
+      failed_when: false
+    - name: "finalize_discover | SSH open - register the guest and mark FINALIZE ready"
+      when: (macos_template_ssh_port.state | default('')) == 'started'
+      block:
+        - name: "finalize_discover | Add the macOS guest as an in-memory host for provisioning"
+          ansible.builtin.add_host:
+            name: "{{ macos_template_ip }}"
+            groups: macos_template_target
+            ansible_host: "{{ macos_template_ip }}"
+            ansible_user: "{{ macos_template_ssh_username }}"
+            ansible_ssh_pass: "{{ macos_template_ssh_password }}"
+            ansible_become_pass: "{{ macos_template_ssh_password }}"
+            ansible_connection: ssh
+            ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+          no_log: true
+        - name: "finalize_discover | Mark FINALIZE ready (provision + convert plays will run)"
+          ansible.builtin.set_fact:
+            macos_template_finalize_ready: true
+    - name: "finalize_discover | SSH not open yet - end without creating a template"
+      when: (macos_template_ssh_port.state | default('')) != 'started'
+      block:
+        - name: "finalize_discover | Explain the Remote-Login-needed state"
+          ansible.builtin.debug:
+            msg:
+              - "SSH is not open on {{ macos_template_ip }}:22 within {{ macos_template_ssh_wait_timeout }}s."
+              - "Enable Remote Login for {{ macos_template_ssh_username }} (Settings -> Sharing) and re-run the build."
+        - name: "finalize_discover | Mark FINALIZE not ready"
+          ansible.builtin.set_fact:
+            macos_template_finalize_ready: false

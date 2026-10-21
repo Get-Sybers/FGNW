@@ -1,0 +1,22 @@
+# CODEOWNERS — https://docs.github.com/articles/about-code-owners
+#
+# Review routing for pull requests; the branch ruleset (.github/rulesets/main.json)
+# gates merge on the CI workflow's all_green check and on an extra approval for
+# changes not attributed to the PR author. Owners are teams, not people, so
+# membership changes never touch this file. Later lines win.
+# Default owner for everything.
+*                               @get-sybers/maintainers
+# CI/CD and repository policy need the owners' sign-off.
+/.github/                       @get-sybers/owners
+/.pre-commit-config.yaml        @get-sybers/owners
+/.pinact.yaml                   @get-sybers/owners
+/Makefile                       @get-sybers/owners
+/scripts/                       @get-sybers/owners
+# Version pins and the source manifest are a reviewed change.
+/requirements.yml               @get-sybers/owners
+/test-requirements.txt          @get-sybers/owners
+/source.yml                     @get-sybers/owners
+/blueprints/FGNW/requirements.yml @get-sybers/owners
+/blueprints/FGNW/blueprint.yml  @get-sybers/owners
+/CONTRIBUTING.md                @get-sybers/owners
+/MAINTAINERS                    @get-sybers/owners

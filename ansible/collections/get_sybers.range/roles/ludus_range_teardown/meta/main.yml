@@ -1,0 +1,18 @@
+---
+galaxy_info:
+  author: Get-Sybers
+  namespace: get_sybers
+  description: >-
+    Range lifecycle (S4): range-scoped destroy that confirms the VMs are actually
+    gone (ERR-14). Stops testing if enabled, runs `range rm`, then polls until
+    rangeState is DESTROYED AND the live VM count is 0 — guarding on both, since
+    state alone is not proof. Never deletes the range object and never touches Nexus.
+    Drives the Ludus API only; touches no guest.
+  role_name: ludus_range_teardown
+  license: AGPL-3.0-only
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Debian
+      versions:
+        - all
+dependencies: []

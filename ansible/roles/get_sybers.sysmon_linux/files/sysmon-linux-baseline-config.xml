@@ -1,0 +1,41 @@
+<Sysmon schemaversion="4.90">
+  <HashAlgorithms>SHA256</HashAlgorithms>
+  <EventFiltering>
+    <RuleGroup name="ProcessCreate_Baseline" groupRelation="or">
+      <ProcessCreate onmatch="exclude">
+      </ProcessCreate>
+    </RuleGroup>
+    <RuleGroup name="ProcessTerminate_Baseline" groupRelation="or">
+      <ProcessTerminate onmatch="exclude">
+      </ProcessTerminate>
+    </RuleGroup>
+    <RuleGroup name="NetworkConnect_Baseline" groupRelation="or">
+      <NetworkConnect onmatch="exclude">
+        <DestinationIp condition="is">127.0.0.1</DestinationIp>
+      </NetworkConnect>
+    </RuleGroup>
+    <RuleGroup name="DnsQuery_Baseline" groupRelation="or">
+      <DnsQuery onmatch="exclude">
+        <QueryName condition="end with">.local</QueryName>
+        <QueryName condition="end with">in-addr.arpa</QueryName>
+      </DnsQuery>
+    </RuleGroup>
+    <RuleGroup name="FileCreate_Baseline" groupRelation="or">
+      <FileCreate onmatch="include">
+        <TargetFilename condition="begin with">/etc/</TargetFilename>
+        <TargetFilename condition="begin with">/root/</TargetFilename>
+        <TargetFilename condition="contains">/.ssh/</TargetFilename>
+        <TargetFilename condition="begin with">/tmp/</TargetFilename>
+        <TargetFilename condition="begin with">/dev/shm/</TargetFilename>
+        <TargetFilename condition="begin with">/var/www/</TargetFilename>
+      </FileCreate>
+    </RuleGroup>
+    <RuleGroup name="FileDelete_Baseline" groupRelation="or">
+      <FileDelete onmatch="include">
+        <TargetFilename condition="begin with">/etc/</TargetFilename>
+        <TargetFilename condition="begin with">/root/</TargetFilename>
+        <TargetFilename condition="contains">/.ssh/</TargetFilename>
+      </FileDelete>
+    </RuleGroup>
+  </EventFiltering>
+</Sysmon>

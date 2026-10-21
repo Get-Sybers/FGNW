@@ -1,0 +1,36 @@
+---
+- name: "Preflight"
+  ansible.builtin.include_tasks: preflight.yml
+  tags: [always]
+- name: "Preflight — stop on container (opt-in gate)"
+  ansible.builtin.include_tasks: preflight-container-fail.yml
+  when:
+    - __acsc_sysmon_ebpf_doubtful | bool
+    - acsc_sysmon_container_policy == 'fail'
+- name: "Preflight — note eBPF-hostile platform (opt-in warning)"
+  ansible.builtin.include_tasks: preflight-container-warn.yml
+  when:
+    - __acsc_sysmon_ebpf_doubtful | bool
+    - acsc_sysmon_container_policy == 'warn'
+- name: "Transport and install the digest-gated artefacts"
+  ansible.builtin.include_tasks: install.yml
+- name: "Render the ACSC-Linux-Port-Sysmon config"
+  ansible.builtin.include_tasks: configure.yml
+- name: "Install Sysmon with our config (first time)"
+  ansible.builtin.include_tasks: configure-install.yml
+  when: "'sysmon.service' not in ansible_facts.services"
+- name: "Re-apply the config (changed, already installed)"
+  ansible.builtin.include_tasks: configure-reapply.yml
+  when:
+    - "'sysmon.service' in ansible_facts.services"
+    - __acsc_sysmon_cfg.changed
+- name: "Ensure Sysmon is enabled and running"
+  ansible.builtin.include_tasks: service.yml
+- name: "Apply the ACSC retention target to the journal"
+  ansible.builtin.include_tasks: retention.yml
+  when: acsc_sysmon_manage_retention | bool
+- name: "Verify"
+  ansible.builtin.include_tasks: verify.yml
+- name: "Verify — the loaded config is the one we shipped"
+  ansible.builtin.include_tasks: verify-schema.yml
+  when: not __acsc_sysmon_ebpf_doubtful | bool

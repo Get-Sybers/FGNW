@@ -1,0 +1,37 @@
+---
+schema_version: 1
+role: get_sybers.zeek_sensor
+baseline: Zeek network sensor
+status: promoted
+variable_prefix: zeek_sensor_
+derived_from:
+  - name: juju4/ansible-zeek
+    url: https://github.com/juju4/ansible-zeek
+    commit: f300b5468ab0a2547cfd6434d31c77b5df0bd4a3
+    commit_is: branch-head-at-vendoring
+    licence: BSD-2-Clause
+    licence_holder: Copyright (c) 2015, juju4
+    relationship: adapted-no-verbatim-files
+    vendored: []
+    derived:
+      - local: tasks/, templates/, defaults/main.yml
+        from: the upstream role as a whole
+        note: >-
+          Kept from upstream: `redef ignore_checksums = T` (load-bearing on
+          Proxmox virtio, where offload leaves checksums unfinalised) and the
+          unprivileged-user + POSIX-capabilities install pattern.
+          Adapted: OBS/source install -> Nexus or staged .debs (rule 4, ranges
+          have no VM internet); single interface -> one worker per interface;
+          hardcoded vars/Debian-*.yml paths -> derived at runtime from
+          `zeekctl config`; systemd Type=forking -> oneshot + RemainAfterExit;
+          90-day log expiry -> 548 days plus a size ceiling.
+          Dropped, each with the reason recorded in the README and in the
+          rendered local.zeek: detect-MHR and the SSL notary (live internet
+          lookups at runtime), JA3/JA4 and four third-party script trees
+          (git-cloned at deploy time), MISP, zkg, ssh/geo-data, mail, AIDE,
+          monit, and the RedHat/SUSE paths.
+verify: |
+  git ls-remote https://github.com/juju4/ansible-zeek refs/heads/HEAD
+update: |
+  git clone https://github.com/juju4/ansible-zeek /tmp/ansible-zeek
+  git -C /tmp/ansible-zeek log --oneline f300b546..HEAD

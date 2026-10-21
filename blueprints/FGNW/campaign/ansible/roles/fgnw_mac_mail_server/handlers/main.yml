@@ -1,0 +1,16 @@
+---
+- name: Restart postfix
+  ansible.builtin.command:
+    cmd: "postfix reload"
+  changed_when: true
+  become: true
+
+- name: Restart dovecot
+  ansible.builtin.command:
+    cmd: "brew services restart dovecot"
+  changed_when: true
+  # become: true so the restart targets the system LaunchDaemon domain the "Start Dovecot"
+  # task in tasks/main.yml loaded under sudo — without it, this handler would hit the
+  # per-user LaunchAgent domain instead and could spawn a conflicting user-level instance
+  # while leaving the running (root) dovecot untouched. Must match the start task's `become`.
+  become: true

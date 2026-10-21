@@ -1,0 +1,165 @@
+---
+- name: Fourth Great Ninja War — deploy ({{ range_variant }})
+  hosts: localhost
+  connection: local
+  gather_facts: true
+  become: false
+  vars_files:
+    - vars/common.yml
+  vars:
+    range_variant: regular
+    range_testing: true
+    range_fresh: false
+    range_skip_nexus: false
+    range_skip_exchange: false
+    range_from_phase: ""
+    force_reseed: false
+    bp_dir: "{{ playbook_dir | dirname }}"
+    ludus_root: /opt/ludus
+    ad_dir: "{{ playbook_dir }}/ad/NARUTO"
+    ansible_dir: "{{ playbook_dir }}/ansible"
+    ludus_user: range-admin
+    users_dir: /opt/ludus/users/{{ ludus_user }}
+    __variant_norm: "{{ 'regular' if range_variant == 'full' else range_variant }}"
+    __variant_map:
+      small:
+        ad_config: config-small.json
+        ad_data: inventory-small
+        ad_prov: inventory-small.yml
+        infra: inventory-small-infra.yml
+        modern_infra: false
+      regular:
+        ad_config: config.json
+        ad_data: inventory
+        ad_prov: inventory.yml
+        infra: inventory-infra.yml
+        modern_infra: false
+      xl:
+        ad_config: config.json
+        ad_data: inventory
+        ad_prov: inventory.yml
+        infra: inventory-infra.yml
+        modern_infra: true
+  tasks:
+    - name: "Preflight: stat the derived layout roots"
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      loop:
+        - "{{ bp_dir }}"
+        - "{{ ad_dir }}"
+        - "{{ ansible_dir }}"
+      register: __layout_stat
+      loop_control:
+        label: "{{ item }}"
+    - name: "Preflight: assert the derived layout resolves (source-checkout layout)"
+      ansible.builtin.assert:
+        that:
+          - item.stat.exists
+          - item.stat.isdir
+        fail_msg: >-
+          Derived path '{{ item.item }}' does not exist. deploy.yml derives its layout
+          from playbook_dir ('{{ playbook_dir }}') and must run from a `ludus source add`
+          checkout (…/sources/<id>/blueprints/FGNW/campaign) or an
+          equivalent repo clone. Re-add the source, then run deploy.yml from its campaign/ dir.
+        quiet: true
+      loop: "{{ __layout_stat.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+    - name: "Preflight: assert the variant is known"
+      ansible.builtin.assert:
+        that: __variant_norm in __variant_map
+        fail_msg: range_variant must be small|regular|full|xl, got '{{ range_variant }}'.
+        quiet: true
+    - name: "Preflight: resolve the variant"
+      ansible.builtin.set_fact:
+        __v: "{{ __variant_map[__variant_norm] }}"
+    - name: "Preflight: validate the resume phase token"
+      ansible.builtin.assert:
+        that: range_from_phase | string in __phase_order
+        fail_msg: range_from_phase must be one of {{ __phase_order | join(' ') }}, got '{{ range_from_phase }}'.
+        quiet: true
+      when: range_from_phase | string | length > 0
+    - name: "Preflight: compute the phase gate index"
+      ansible.builtin.set_fact:
+        __start_idx: "{{ __phase_order.index(range_from_phase | string) if (range_from_phase | string | length > 0) else 0 }}"
+    - name: "Preflight: derive the users/ config path + blueprint master"
+      ansible.builtin.set_fact:
+        __cfg_users: "{{ users_dir }}/range-config.yml"
+        __cfg_blueprint: "{{ bp_dir }}/range-config.yml"
+    - name: "Preflight: ensure the owner-only temp dir exists"
+      ansible.builtin.file:
+        path: "{{ __tmp_dir }}"
+        state: directory
+        mode: "0700"
+    - name: "Preflight: authenticate to Ludus (get_sybers.range.ludus_auth)"
+      ansible.builtin.include_role:
+        name: get_sybers.range.ludus_auth
+    - name: "Preflight: render the variant into users/: {{ __variant_norm }}"
+      ansible.builtin.copy:
+        content: "{{ lookup('file', __cfg_blueprint) | from_yaml | fgnw_variant(__variant_norm) | to_nice_yaml(indent=2, width=200) }}"
+        dest: "{{ __cfg_users }}"
+        mode: "0644"
+    - name: "Preflight: announce"
+      ansible.builtin.debug:
+        msg:
+          - "variant   : {{ __variant_norm }}{{ ' (alias of regular)' if range_variant == 'full' else '' }}"
+          - "config    : {{ __cfg_users }}"
+          - "testing   : {{ range_testing | bool }} (containment)"
+          - "fresh     : {{ range_fresh | bool }}"
+          - "from-phase: {{ range_from_phase | default('(start)') }}  order={{ __phase_order | join(' ') }}"
+    - name: "Fresh: teardown first (opt-in, ERR-14-correct, Nexus-safe)"
+      ansible.builtin.include_role:
+        name: get_sybers.range.ludus_range_teardown
+      when: range_fresh | bool
+    - name: Phase 0 (Nexus)
+      ansible.builtin.include_tasks: deploy-tasks/phase0-nexus.yml
+      when:
+        - __phase_order.index('0') | int >= __start_idx | int
+        - not range_skip_nexus | bool
+        - not range_fresh | bool
+    - name: Phase 1 (VMs)
+      ansible.builtin.include_tasks: deploy-tasks/phase1-vms.yml
+      when: __phase_order.index('1') | int >= __start_idx | int
+    - name: Materialize the run inventories
+      ansible.builtin.include_tasks: deploy-tasks/materialize-infra-inv.yml
+    - name: Phase 1b (Ghost9 CT)
+      ansible.builtin.include_tasks: deploy-tasks/phase1b-ghost9.yml
+      when: __phase_order.index('1b') | int >= __start_idx | int
+    - name: Phase 1c (macOS dev base — pre-containment Homebrew + mac-dev-playbook)
+      ansible.builtin.include_tasks: deploy-tasks/phase1c-macos-base.yml
+      when: __phase_order.index('1c') | int >= __start_idx | int
+    - name: Phase 2 (Containment)
+      ansible.builtin.include_tasks: deploy-tasks/phase2-containment.yml
+      when: __phase_order.index('2') | int >= __start_idx | int
+    - name: Phase 3 (AD build)
+      ansible.builtin.include_tasks: deploy-tasks/phase3-ad.yml
+      when: __phase_order.index('3') | int >= __start_idx | int
+    - name: Phase 4 (Content)
+      ansible.builtin.include_tasks: deploy-tasks/phase4-content.yml
+      when: __phase_order.index('4') | int >= __start_idx | int
+    - name: Phase 4b (Exchange)
+      ansible.builtin.include_tasks: deploy-tasks/phase4b-exchange.yml
+      when:
+        - __phase_order.index('4b') | int >= __start_idx | int
+        - not range_skip_exchange | bool
+    - name: Phase 4c (Threat emulation — campaign primitives)
+      ansible.builtin.include_tasks: deploy-tasks/phase4c-threat.yml
+      when: __phase_order.index('4c') | int >= __start_idx | int
+    - name: Phase 4d (macOS service stack — mail, browsers, decoys, GHOSTS, telemetry)
+      ansible.builtin.include_tasks: deploy-tasks/phase4d-mac-services.yml
+      when: __phase_order.index('4d') | int >= __start_idx | int
+
+    - name: Phase 4e (Thunderbird mail client on every workstation — Win + Mac; incl. Exchange IMAP enable)
+      ansible.builtin.include_tasks: deploy-tasks/phase4e-thunderbird.yml
+      when: __phase_order.index('4e') | int >= __start_idx | int
+    - name: Phase 5 (User emulation — GHOSTS)
+      ansible.builtin.include_tasks: deploy-tasks/phase5-emulation.yml
+      when: __phase_order.index('5') | int >= __start_idx | int
+    - name: Phase 5 (Verify)
+      ansible.builtin.include_tasks: deploy-tasks/phase5-verify.yml
+      when: __phase_order.index('5') | int >= __start_idx | int
+    - name: Cleanup (credentials)
+      ansible.builtin.include_tasks: deploy-tasks/cleanup-credentials.yml
+    - name: Done
+      ansible.builtin.debug:
+        msg: Deploy composition complete for variant '{{ __variant_norm }}'.

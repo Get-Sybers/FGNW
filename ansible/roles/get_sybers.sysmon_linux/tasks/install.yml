@@ -1,0 +1,39 @@
+---
+- name: "install | Path A (Nexus): install the vendored, pre-dearmored Microsoft signing key into the apt keyring"
+  ansible.builtin.copy:
+    src: microsoft-prod.gpg
+    dest: /usr/share/keyrings/microsoft-prod.gpg
+    owner: root
+    group: root
+    mode: "0644"
+  when:
+    - not __sysmon_linux_msft_repo.stat.exists
+    - __sysmon_linux_nexus_probe is succeeded
+- name: "install | Path A (Nexus): register the Microsoft repo via the Nexus apt-proxy"
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/microsoft-prod.list
+    owner: root
+    group: root
+    mode: "0644"
+    content: >-
+      deb [arch=amd64,arm64,armhf signed-by=/usr/share/keyrings/microsoft-prod.gpg]
+      http://{{ nexus_host | default('192.0.2.2') }}:{{ nexus_port | default('8081') }}/repository/{{ __sysmon_linux_nexus_repo_name }}
+      {{ __sysmon_linux_repo_codename }} main
+  when:
+    - not __sysmon_linux_msft_repo.stat.exists
+    - __sysmon_linux_nexus_probe is succeeded
+# The apt module cannot scope an update to one source list (Dir::Etc::sourcelist);
+# the base-OS lists stay untouched on purpose, so this stays a command.
+- name: "install | Update apt scoped to just the Microsoft repo (leaves the base OS repos/cache untouched)" # noqa: command-instead-of-module
+  ansible.builtin.command:
+    cmd: >-
+      apt-get update
+      -o Dir::Etc::sourcelist=sources.list.d/microsoft-prod.list
+      -o Dir::Etc::sourceparts=-
+      -o APT::Get::List-Cleanup=0
+  changed_when: false
+- name: "install | Install sysmonforlinux"
+  ansible.builtin.apt:
+    name: sysmonforlinux
+    state: present
+  register: sysmon_linux_install

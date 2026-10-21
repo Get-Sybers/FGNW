@@ -1,0 +1,27 @@
+---
+- name: "verify | Ensure CORE services are running"
+  ansible.builtin.service:
+    name: "{{ item }}"
+    state: started
+    enabled: true
+  loop:
+    - apache2
+    - mariadb
+    - ssh
+- name: "verify | Ensure optional vulnerable services are running (best-effort)"
+  ansible.builtin.service:
+    name: "{{ item }}"
+    state: started
+    enabled: true
+  loop:
+    - vsftpd
+  register: __msf_optional_svc
+  failed_when: false
+- name: "verify | Verify vulnerable web app endpoints respond"
+  ansible.builtin.uri:
+    url: http://127.0.0.1{{ item }}
+    method: GET
+    status_code: 200
+  loop:
+    - /vulnerable/login.php
+    - /vulnerable/upload.php

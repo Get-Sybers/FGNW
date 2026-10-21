@@ -1,0 +1,24 @@
+---
+- name: "deploy-tasks | phase0-nexus | Deploy the Nexus VM (tag nexus)"
+  ansible.builtin.include_role:
+    name: get_sybers.range.ludus_range_deploy
+  vars:
+    ludus_range_deploy_tags: [nexus]
+- name: "deploy-tasks | phase0-nexus | Stat the Nexus seed orchestrator in get_sybers.infra"
+  ansible.builtin.stat:
+    path: "{{ users_dir }}/.ansible/collections/ansible_collections/get_sybers/infra/playbooks/nexus-seed-all.yml"
+  register: __nexus_seed_stat
+- name: "deploy-tasks | phase0-nexus | Assert the Nexus seed orchestrator is installed"
+  ansible.builtin.assert:
+    that: __nexus_seed_stat.stat.exists
+    fail_msg: >-
+      {{ users_dir }}/.ansible/collections/ansible_collections/get_sybers/infra/playbooks/nexus-seed-all.yml
+      not found — it ships in the get_sybers.infra collection. Re-add the source
+      (`ludus source add`) or install the collection for {{ ludus_user }}, then retry.
+    quiet: true
+- name: "deploy-tasks | phase0-nexus | Seed Nexus (get_sybers.infra nexus-seed-all.yml — setup + cache plays, in order)"
+  ansible.builtin.command:
+    argv:
+      - ansible-playbook
+      - "{{ users_dir }}/.ansible/collections/ansible_collections/get_sybers/infra/playbooks/nexus-seed-all.yml"
+  changed_when: true

@@ -1,0 +1,37 @@
+---
+# Phase 4d — macOS service stack for the converted Hidden Sand Village hosts.
+# Runs AFTER phase 4b (Exchange on the three non-Sand villages), because the Sand mail
+# path is now Postfix/Dovecot — this is where it lands.
+#
+# Order within the phase:
+#   1. AD bind via dsconfigad (bind first so later steps run on domain-member Macs)
+#   2. mac mail server + Thunderbird client (replaces Exchange + OWA for Sunagakure)
+#   3. mac browser defaults (homepage/bookmark policy, same corpus as the Windows path)
+#   4. mac decoy files on suna-ws1 (same scenario as the Windows fgnw_decoy_files)
+#   5. GHOSTS Universal client on suna-ws1 (user emulation for the Gaara persona)
+- name: "deploy-tasks | phase4d-mac-services | FGNW-mac-ad-bind.yml (dsconfigad — Sand macOS hosts bound to sunagakure.wind.ninja)"
+  ansible.builtin.command:
+    argv: [ansible-playbook, -i, "{{ __tmp_infra_inv }}", FGNW-mac-ad-bind.yml]
+  args:
+    chdir: "{{ ansible_dir }}"
+  environment:
+    ANSIBLE_ROLES_PATH: "{{ users_dir }}/.ansible/roles"
+  changed_when: true
+
+- name: "deploy-tasks | phase4d-mac-services | FGNW-mac-mail.yml (Postfix + Dovecot + Thunderbird — Sand mail stack)"
+  ansible.builtin.command:
+    argv: [ansible-playbook, -i, "{{ __tmp_infra_inv }}", FGNW-mac-mail.yml]
+  args:
+    chdir: "{{ ansible_dir }}"
+  environment:
+    ANSIBLE_ROLES_PATH: "{{ users_dir }}/.ansible/roles"
+  changed_when: true
+
+- name: "deploy-tasks | phase4d-mac-services | FGNW-mac-services.yml (browser defaults, decoys, GHOSTS, telemetry)"
+  ansible.builtin.command:
+    argv: [ansible-playbook, -i, "{{ __tmp_infra_inv }}", FGNW-mac-services.yml]
+  args:
+    chdir: "{{ ansible_dir }}"
+  environment:
+    ANSIBLE_ROLES_PATH: "{{ users_dir }}/.ansible/roles"
+  changed_when: true

@@ -1,0 +1,135 @@
+---
+- name: "preflight | Profile is one we actually implement"
+  ansible.builtin.assert:
+    that: zeek_sensor_profile in ['hypervisor', 'chokepoint']
+    fail_msg: >-
+      zeek_sensor_profile is '{{ zeek_sensor_profile }}'; expected 'hypervisor'
+      (a PVE cluster node capturing on its SDN VNet bridges — the primary
+      vantage point) or 'chokepoint' (the Ludus range router or a mirror-fed
+      sensor VM, which sees inter-VLAN and egress only).
+    quiet: true
+- name: "preflight | Install source is one we actually implement"
+  ansible.builtin.assert:
+    that: zeek_sensor_install_source in ['nexus_apt', 'staged_deb']
+    fail_msg: >-
+      zeek_sensor_install_source is '{{ zeek_sensor_install_source }}'; expected
+      'nexus_apt' or 'staged_deb'.
+    quiet: true
+- name: "preflight | The chosen install source is actually configured"
+  ansible.builtin.assert:
+    that:
+      - >-
+        zeek_sensor_install_source != 'nexus_apt'
+        or (zeek_sensor_nexus_repo | length > 0
+            and zeek_sensor_nexus_repo_codename | length > 0)
+      - >-
+        zeek_sensor_install_source != 'staged_deb'
+        or zeek_sensor_artefacts | length > 0
+    fail_msg: >-
+      zeek_sensor_install_source is '{{ zeek_sensor_install_source }}' but it is
+      not configured.
+      For 'nexus_apt' set zeek_sensor_nexus_repo (the Nexus apt-proxy repository
+      name) and zeek_sensor_nexus_repo_codename (e.g. trixie).
+      For 'staged_deb' set zeek_sensor_artefacts to [{name, version, sha256,
+      deb}] in install order and stage the files at
+      {{ zeek_sensor_stage_dir }} on the controller.
+      Both default to empty on purpose — ranges run --testing with no VM
+      internet, so there is nothing to silently fall back to.
+    quiet: true
+- name: "preflight | A service account name was supplied"
+  ansible.builtin.assert:
+    that: zeek_sensor_user | length > 0 and zeek_sensor_group | length > 0
+    fail_msg: "zeek_sensor_user / zeek_sensor_group must be non-empty (use 'root' to run privileged)."
+    quiet: true
+- name: "preflight | Gather the facts we depend on"
+  ansible.builtin.setup:
+    gather_subset:
+      - "!all"
+      - "min"
+      - "virtual"
+- name: "preflight | Debian family only"
+  ansible.builtin.assert:
+    that: ansible_facts.os_family == 'Debian'
+    fail_msg: >-
+      This role targets the Debian family only (PVE nodes are Debian; the Ludus
+      range router is Debian 11). Detected os_family
+      '{{ ansible_facts.os_family | default("unknown") }}'. The upstream role
+      this was adapted from also covers RedHat/SUSE; that half was dropped
+      rather than carried untested — see README.md § What was dropped.
+    quiet: true
+- name: "preflight | Refuse unprivileged LXC (no host interfaces, no CAP_NET_RAW)"
+  ansible.builtin.assert:
+    that: >-
+      not (ansible_facts.virtualization_type | default('') == 'lxc'
+           and not zeek_sensor_allow_lxc | default(false))
+    fail_msg: >-
+      This host looks like an LXC container. A container cannot see the PVE
+      node's SDN VNet bridges and an unprivileged one has no CAP_NET_RAW in the
+      initial user namespace, so Zeek would run and capture nothing. Run this
+      role on the NODE with zeek_sensor_profile=hypervisor instead. Override
+      with zeek_sensor_allow_lxc=true only for a PRIVILEGED container you have
+      confirmed can open a promiscuous socket on a real bridge device.
+    quiet: true
+- name: "preflight | Hypervisor profile checks and bridge discovery"
+  ansible.builtin.include_tasks: preflight-hypervisor.yml
+  when: zeek_sensor_profile == 'hypervisor'
+- name: "preflight | Resolve the effective capture set"
+  ansible.builtin.set_fact:
+    zeek_sensor_effective_interfaces: >-
+      {{ zeek_sensor_capture_interfaces
+         if (zeek_sensor_capture_interfaces | length > 0)
+         else (__zeek_discovered_ifaces | default([])) }}
+- name: "preflight | At least one capture interface resolved"
+  ansible.builtin.assert:
+    that: zeek_sensor_effective_interfaces | length > 0
+    fail_msg: >-
+      No capture interface resolved, so this sensor would watch nothing.
+      {% if zeek_sensor_profile == 'hypervisor' %}
+      Discovery matched no bridge device against
+      '{{ zeek_sensor_hypervisor_iface_pattern }}'. Range VNets (r<N>) are
+      created by get_sybers.cluster's cluster-sdn-setup.yml and only exist once
+      a range has been deployed; ludusnat exists only on the Ludus node. Deploy
+      the range first, widen the pattern, or set zeek_sensor_capture_interfaces
+      explicitly.
+      {% else %}
+      zeek_sensor_profile=chokepoint requires zeek_sensor_capture_interfaces to
+      be set explicitly — there is no safe auto-discovery on a router, because
+      including the WAN interface alongside the per-VLAN interfaces double-counts
+      every NATed flow.
+      {% endif %}
+    quiet: true
+- name: "preflight | Each capture interface exists"
+  ansible.builtin.command: "ip -o link show {{ item }}"
+  loop: "{{ zeek_sensor_effective_interfaces }}"
+  register: __zeek_iface_state
+  changed_when: false
+  check_mode: false
+  failed_when: __zeek_iface_state.rc != 0
+- name: "preflight | Each capture interface is administratively UP"
+  ansible.builtin.assert:
+    that: "'UP' in (item.stdout | regex_search('<[^>]*>') | default('', true))"
+    fail_msg: >-
+      Capture interface '{{ item.item }}' exists but is administratively DOWN:
+      {{ item.stdout | trim }}
+      A DOWN interface delivers no frames, so Zeek would run and see nothing.
+      Bring it up (ifup {{ item.item }}) before deploying the sensor.
+    quiet: true
+  loop: "{{ __zeek_iface_state.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+- name: "preflight | Free space on the log filesystem"
+  ansible.builtin.command: "df -B1M --output=avail /var"
+  register: __zeek_df
+  changed_when: false
+  check_mode: false
+- name: "preflight | Enough headroom for the configured log ceiling"
+  ansible.builtin.assert:
+    that: >-
+      (__zeek_df.stdout_lines | last | trim | int)
+      > (zeek_sensor_log_max_use_mb | int)
+    fail_msg: >-
+      /var has {{ __zeek_df.stdout_lines | last | trim }} MiB free but
+      zeek_sensor_log_max_use_mb is {{ zeek_sensor_log_max_use_mb }} MiB. The
+      pruner would never be able to reach its ceiling, so the volume fills
+      first. Lower zeek_sensor_log_max_use_mb, or give /var more space.
+    quiet: true

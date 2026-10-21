@@ -1,0 +1,35 @@
+---
+collections:
+  - name: ansible.utils
+    version: "5.1.2"
+  - name: community.general
+    version: "10.3.0"
+  - name: ansible.windows
+    version: "2.8.0"
+  - name: community.windows
+    version: "2.4.0"
+  - name: chocolatey.chocolatey
+    version: "1.5.3"
+  - name: microsoft.ad
+    version: "1.8.0"
+  - name: ansible.mysql
+    version: "5.2.0"
+  - name: badsectorlabs.ludus_windows_utils
+    version: "1.2.0"
+  # The blueprint's macOS plays (FGNW-mac-dev.yml) apply geerlingguy.mac.homebrew,
+  # .mas and .dock; pinned here, as in blueprints/FGNW/requirements.yml, so the
+  # lint and syntax check of those plays resolve the roles.
+  - name: geerlingguy.mac
+    version: "1.2.0"
+  # The FGNW blueprint's phase 1b play (blueprints/FGNW/campaign/ansible/ghost9-range-ct.yml)
+  # composes get_sybers.lxc's lxc_preflight / lxc_guest / lxc_ghost9 roles, and its
+  # module_defaults name the community.proxmox action group — ansible-lint and the
+  # syntax check need both installed. get_sybers.lxc 0.1.0 has no collection release
+  # tag yet, so it is pinned as a git source at a commit (scripts/check-pins.py accepts a
+  # `type: git` entry pinned to a 40-hex commit as an exact pin); re-pin to the release
+  # tag once one exists.
+  - name: https://github.com/Get-Sybers/LXC.git
+    type: git
+    version: 2313507225b32b1bf2f09c14b8f242f227872d21
+  - name: community.proxmox
+    version: "2.1.0"

@@ -1,0 +1,21 @@
+---
+# `command -v` is a shell builtin (no module resolves a PATH lookup), so this probe
+# needs the shell; it reads and never changes anything.
+- name: "preflight-validator | Preflight — is the XML validator present on the target?" # noqa: command-instead-of-shell
+  ansible.builtin.shell: "command -v {{ acsc_sysmon_validate_command.split() | first }}"
+  register: __acsc_sysmon_validator
+  changed_when: false
+  failed_when: false
+  check_mode: false
+- name: "preflight-validator | Preflight — the configured XML validator exists on the target"
+  ansible.builtin.assert:
+    that: __acsc_sysmon_validator.rc | default(1) == 0
+    fail_msg: >-
+      acsc_sysmon_validate_config is true but
+      '{{ acsc_sysmon_validate_command.split() | first }}' is not on PATH.
+      xmllint ships in libxml2-utils (Priority: optional — absent from a minimal
+      Debian install and from all three PVE nodes here). Either
+      `apt install libxml2-utils` on the target, or set
+      acsc_sysmon_validate_config=false and accept that a malformed Sysmon
+      config will only be caught when sysmon itself rejects it.
+    quiet: true

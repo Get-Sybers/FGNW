@@ -1,0 +1,362 @@
+{
+  Fourth Great Ninja War — per-persona GHOSTS timeline (LOE 1 BAU noise + flagship overrides).
+  Rendered once per GHOSTS-client host by ansible/FGNW-ghosts-activity.yml.
+  All persona/topology values come in as vars (nothing host-specific hardcoded):
+    ghosts_browse_urls          : baseline browsing URLs (generated persona-timelines.yml)
+    ghosts_signature_urls       : hand-authored per-character obsession sites (persona-overrides.yml);
+                                  rendered as high-frequency `browse` events inside the BrowserChrome
+                                  handler (H1 migration — was a dedicated Command handler). May be empty.
+    ghosts_pace                 : obsessive | normal | idle — signature browse-event loop speed.
+    ghosts_time_on/ghosts_time_off : UTC activity window for the DAY shift. Converted by the
+                                  playbook from persona-overrides.yml's local-time active_hours
+                                  (default 08:00-18:00 local), so it normally WRAPS midnight UTC
+                                  (UtcTimeOn > UtcTimeOff). GHOSTS honours a wrapping window.
+    ghosts_night_factor         : if defined, also emit an after-hours shift on the complementary
+                                  window with every DelayAfter multiplied by this, giving a thin
+                                  overnight trickle (~10% of activity). Undefined => day only.
+    ghosts_ad_domain            : this host's AD domain, for the AD-noise lookups
+    ghosts_owa_user             : sAMAccountName whose OWA inbox this box opens
+    ghosts_has_owa_inbox        : whether that inbox actually exists on this persona's own
+                                  forest's -owa server
+    ghosts_owa_octet            : third IP octet of THIS persona's own forest's -owa VM
+                                  (VLAN third-octet; all 4 `-owa` VMs use ip_last_octet 20 --
+                                  see range-config.yml). Bound per-persona in
+                                  FGNW-ghosts-activity.yml from __persona.ad_domain, same
+                                  data-only convention as ghosts_recon_legs below (no
+                                  Jinja/octets pre-rendered through set_fact).
+    range_second_octet          : range number, for the shared-infra IPs (attacker/OWA)
+  Shared infra IPs (from range-config.yml): attacker sinkhole 10.<r>.99.50,
+  each forest's own -owa server at 10.<r>.{{ ghosts_owa_octet }}.20 (konoha-mail is VLAN 10,
+  suna-mail 20, oto-mail 30, dark-mail 87). Browse/signature URLs resolve to the attacker
+  sinkhole via its catch-all vhost + the range dns_rewrites.
+  The night shift reuses the SAME events as the day shift so out-of-hours traffic looks like the
+  same person working late, not a different behaviour profile. Its window is the exact complement
+  of the day window (on/off swapped), so the two never overlap and together cover 24h.
+{%- if ghosts_pace | default('normal') == 'obsessive' %}{% set sig_lo = 60 %}{% set sig_hi = 120 %}
+{%- elif ghosts_pace | default('normal') == 'idle' %}{% set sig_lo = 480 %}{% set sig_hi = 720 %}
+{%- else %}{% set sig_lo = 180 %}{% set sig_hi = 300 %}{% endif %}
+{%- set day_on = ghosts_time_on | default('22:30:00') %}
+{%- set day_off = ghosts_time_off | default('08:30:00') %}
+{
+   (ghosts_lunch_on/off, only set when the lunch hour sits inside this persona's day window), split the
+   day into morning + lunch(slow) + afternoon so activity dips at midday like a real user, instead of a
+   flat day rate. The three segments TILE the same day window (day_on->day_off) with no overlap/gap, each
+   a valid GHOSTS window (wrapping allowed). Falls back to one flat day shift when no lunch window is set.
+   The night shift, if any, is the day's complement (day_off->day_on) and is unaffected by the split. #}
+{%- if ghosts_lunch_on is defined and ghosts_lunch_off is defined %}
+{%- set shifts = [{'on': day_on, 'off': ghosts_lunch_on, 'factor': 1.0}, {'on': ghosts_lunch_on, 'off': ghosts_lunch_off, 'factor': ghosts_lunch_factor | float}, {'on': ghosts_lunch_off, 'off': day_off, 'factor': 1.0}] %}
+{%- else %}
+{%- set shifts = [{'on': day_on, 'off': day_off, 'factor': 1.0}] %}
+{%- endif %}
+{%- if ghosts_night_factor is defined %}
+{%- set _ = shifts.append({'on': day_off, 'off': day_on, 'factor': ghosts_night_factor | float}) %}
+{%- endif %}
+{%- set ns = namespace(sep='') %}
+{
+  "Status": "Run",
+  "TimeLineHandlers": [
+{%- for shift in shifts %}
+{%- set f = shift.factor %}
+{
+    browsing (ghosts_signature_urls) is no longer its own `Command`+`start` handler. It was MERGED into
+    the single BrowserChrome handler below as a run of `browse` events, one per signature site, still
+    scaled by the pace-based sig_lo/sig_hi DelayAfter set at the top of this file.
+{% if ghosts_recon_legs is defined %}
+    {
+       Only defined for akatsuki-ws2 (FGNW-ghosts-activity.yml). Targets Fire+Leaf (VLAN
+       ghosts_recon_legs.fire_leaf_subnet_octet) and Sand (ghosts_recon_legs.sand_subnet_octet) --
+       never sourced from them. Each event is its own random(3,8)-minute DelayAfter, same
+       mechanism/spec as everything else in this file ("resolved: fixed delay, randomized per
+       leg"). See docs/FGNW-CAMPAIGN.md's technique map: this is the noisy, expected-to-be-caught
+       precursor signature, deliberately distinct from the real breach's quiet credentialed
+       techniques (PtH, Kerberoasting, SID history).
+    {{ ns.sep }}{
+      "HandlerType": "Command",
+      "Initial": "",
+      "UtcTimeOn": "{{ shift.on }}",
+      "UtcTimeOff": "{{ shift.off }}",
+      "Loop": true,
+      "TimeLineEvents": [
+        {
+          {
+          "Command": "nmap.exe -sV -T4 10.{{ range_second_octet }}.{{ ghosts_recon_legs.fire_leaf_subnet_octet }}.0/24",
+          "CommandArgs": [],
+          "DelayAfter": {{ (((range(180, 481) | random) * 1000) * f) | round | int }},
+          "DelayBefore": 0
+        },
+        {
+          {
+          "Command": "nmap.exe -sV -T4 10.{{ range_second_octet }}.{{ ghosts_recon_legs.sand_subnet_octet }}.0/24",
+          "CommandArgs": [],
+          "DelayAfter": {{ (((range(180, 481) | random) * 1000) * f) | round | int }},
+          "DelayBefore": 0
+        },
+        {
+          {
+          "Command": "nmap.exe -sV -T4 --script vuln 10.{{ range_second_octet }}.{{ ghosts_recon_legs.fire_leaf_subnet_octet }}.0/24 10.{{ range_second_octet }}.{{ ghosts_recon_legs.sand_subnet_octet }}.0/24",
+          "CommandArgs": [],
+          "DelayAfter": {{ (((range(180, 481) | random) * 1000) * f) | round | int }},
+          "DelayBefore": 0
+        }{% for t in ghosts_recon_legs.dos_targets %},
+        {
+          {
+          "Command": "powershell.exe -ExecutionPolicy Bypass -File C:\\ludus\\recon-tooling\\cannon-flood.ps1 -TargetHost 10.{{ range_second_octet }}.{{ t.octet }}.{{ t.host }} -TargetPort {{ t.port }} -RatePerSecond {{ ghosts_recon_legs.dos_rate_per_second | default(20) }} -DurationSeconds {{ ghosts_recon_legs.dos_duration_seconds | default(30) }}",
+          "CommandArgs": [],
+          "DelayAfter": {{ (((range(180, 481) | random) * 1000) * f) | round | int }},
+          "DelayBefore": 0
+        }{% endfor %}
+      ]
+    }
+{%- set ns.sep = ',' %}
+{% endif %}
+{% if ghosts_admin_activity | default(false) %}
+    {
+       Fixed real commands (not persona-specific), gated by the admin_activity boolean in
+       content/ghosts/persona-overrides.yml. Sysmon/ACSC event logging (already applied to
+       every Windows VM) captures this as real privileged-account activity, giving blue-team
+       exercises a baseline to work from.
+    {{ ns.sep }}{
+      "HandlerType": "Command",
+      "Initial": "",
+      "UtcTimeOn": "{{ shift.on }}",
+      "UtcTimeOff": "{{ shift.off }}",
+      "Loop": true,
+      "TimeLineEvents": [
+        {
+          "Command": "powershell.exe -Command \"Get-ADUser -Filter * -ResultSetSize 10 | Out-Null\"",
+          "CommandArgs": [],
+          "DelayAfter": {{ (((range(600, 1201) | random) * 1000) * f) | round | int }},
+          "DelayBefore": 0
+        },
+        {
+          "Command": "powershell.exe -Command \"Get-ADGroupMember -Identity 'Domain Admins' | Out-Null\"",
+          "CommandArgs": [],
+          "DelayAfter": {{ (((range(600, 1201) | random) * 1000) * f) | round | int }},
+          "DelayBefore": 0
+        },
+        {
+          "Command": "cmd /c gpupdate /force",
+          "CommandArgs": [],
+          "DelayAfter": {{ (((range(900, 1801) | random) * 1000) * f) | round | int }},
+          "DelayBefore": 0
+        },
+        {
+          {
+          "Command": "cmd /c start \"\" dsa.msc",
+          "CommandArgs": [],
+          "DelayAfter": {{ (((range(900, 1801) | random) * 1000) * f) | round | int }},
+          "DelayBefore": 0
+        },
+        {
+          {
+          "Command": "cmd /c start \"\" mstsc /v:{{ {'fire.ninja': 'fire-dc1', 'konohagakure.fire.ninja': 'konoha-dc1', 'sunagakure.wind.ninja': 'suna-dc1', 'wind.ninja': 'wind-dc1', 'otogakure.ninja': 'oto-dc1', 'akatsuki.dark': 'akatsuki-dc1'}[ghosts_ad_domain] | default('konoha-dc1') }}",
+          "CommandArgs": [],
+          "DelayAfter": {{ (((range(1200, 2401) | random) * 1000) * f) | round | int }},
+          "DelayBefore": 0
+        }
+      ]
+    }
+{%- set ns.sep = ',' %}
+{% endif %}
+    {
+       Replaces FOUR old `HandlerType: "Command"` + `cmd /c start "" "http://..."` handlers with ONE
+       GHOSTS-native BrowserChrome handler:
+         * the baseline browse handler (sinkhole landing + ghosts_browse_urls),
+         * the per-character signature handler (ghosts_signature_urls),
+         * the OWA login-PAGE-open ("check webmail" browsing tell, /owa/auth/logon.aspx),
+         * the Leaf ninjasploitable mission-report intake page-open (gated on ghosts_submits_reports).
+       BrowserChrome drives a REAL Selenium Chrome (installed by the range_ghosts_browser role, with
+       chromedriver on PATH) in the persona's interactive session, so it emits realistic browser
+       telemetry (process tree, cookies/cache/history, sub-resource fetches, link-following via
+       stickiness) instead of a lone msedge process-create + URL. isheadless MUST be "false" — the
+       autologon desktop is interactive and headless would kill the input-desktop telemetry that is the
+       whole point. The old H2 `taskkill /IM msedge /F` browser-reclaim handler is REMOVED: BrowserChrome
+       manages its own browser lifecycle (and drives Chrome, not msedge), so nothing needs force-killing.
+       What did NOT migrate and stays a Command handler: the G1 authenticated EWS mail ping (below), the
+       G2 UNC file-read, the recon/admin/AD-noise CLI handlers — those are console/AD activity, not
+       browsing.
+       COMMA DISCIPLINE: the sinkhole `browse` event is FIRST and UNCONDITIONAL, so every later event
+       (browse_urls, signature_urls, the conditional intake, and the always-present OWA page) can lead
+       with a comma safely. This whole handler is likewise unconditional (always ≥1 event), so it is the
+       per-shift comma anchor — it consumes ns.sep, then sets ns.sep=',' for the handlers after it and
+       for the next shift iteration, exactly as the old baseline-browse handler did.
+    {{ ns.sep }}{
+      "HandlerType": "BrowserChrome",
+      "Initial": "about:blank",
+      "UtcTimeOn": "{{ shift.on }}",
+      "UtcTimeOff": "{{ shift.off }}",
+      "Loop": true,
+      "HandlerArgs": {
+        "isheadless": "false",
+        "blockimages": "true",
+        "stickiness": 75,
+        "stickiness-depth-min": 5,
+        "stickiness-depth-max": 10
+      },
+      "TimeLineEvents": [
+        {
+          {
+          "Command": "browse",
+          "CommandArgs": ["http://10.{{ range_second_octet }}.99.50/"],
+          "DelayAfter": {{ (((range(150, 271) | random) * 1000) * f) | round | int }},
+          "DelayBefore": 0
+        }{% for url in ghosts_browse_urls %},
+        {
+          {
+          "Command": "browse",
+          "CommandArgs": ["{{ url }}"],
+          "DelayAfter": {{ (((range(120, 301) | random) * 1000) * f) | round | int }},
+          "DelayBefore": 0
+        }{% endfor %}{% for url in ghosts_signature_urls | default([]) %},
+        {
+          {
+             based DelayAfter (sig_lo/sig_hi) preserved from the old signature Command handler.
+          "Command": "browse",
+          "CommandArgs": ["http://{{ url }}"],
+          "DelayAfter": {{ (((range(sig_lo, sig_hi + 1) | random) * 1000) * f) | round | int }},
+          "DelayBefore": 0
+        }{% endfor %}{% if ghosts_submits_reports | default(false) %},
+        {
+          {
+             domain). Gated on ghosts_submits_reports (Leaf personas only) — kept a page-open, not a POST,
+             same as before.
+          "Command": "browse",
+          "CommandArgs": ["http://10.{{ range_second_octet }}.90.10/reports/intake.php"],
+          "DelayAfter": {{ (180000 * f) | round | int }},
+          "DelayBefore": 0
+        }{% endif %},
+        {
+          {
+             AUTHENTICATED mail logon is the separate G1 EWS Command handler below). Unconditional and
+             LAST; harmless WebDriver error where the persona's forest has no -owa VM (mirrors prior
+             behaviour).
+          "Command": "browse",
+          "CommandArgs": ["https://mail.{{ ghosts_ad_domain }}/owa/auth/logon.aspx"],
+          "DelayAfter": {{ (180000 * f) | round | int }},
+          "DelayBefore": 0
+        }
+      ]
+    }
+{%- set ns.sep = ',' %}
+{% if ghosts_has_owa_inbox | default(false) %}
+    {
+       BrowserChrome; it's a credentialed EWS auth, not browsing). The BrowserChrome OWA page-open above
+       is only a browser-history/visual signal — OWA is forms-based auth, so opening logon.aspx never
+       submits the persona's creds and no mail authentication happens. THIS event authenticates to
+       Exchange AS THE PERSONA using the session's existing Kerberos TGT: -UseDefaultCredentials against
+       the IWA /EWS/Exchange.asmx endpoint (Kerberos/NTLM, unlike the FBA /owa/ path) lands a real
+       authenticated Exchange logon (4624 + a 4769 service ticket for the Exchange HTTP SPN) on the
+       CAS/mailbox server as the character. The WHOLE handler is now gated on ghosts_has_owa_inbox (its
+       only event is this ping), so it only renders where the persona has a mailbox; the try{}catch{}
+       makes it a harmless runtime no-op where that forest has no -owa VM (e.g. the small range has
+       konoha-mail only). Leading comma is safe: the unconditional BrowserChrome anchor always precedes
+       it. Night shift scales DelayAfter by f like every surrounding event.
+    ,{
+      "HandlerType": "Command",
+      "Initial": "",
+      "UtcTimeOn": "{{ shift.on }}",
+      "UtcTimeOff": "{{ shift.off }}",
+      "Loop": true,
+      "TimeLineEvents": [
+        {
+          "Command": "powershell.exe -NoProfile -Command \"try { Invoke-WebRequest -UseDefaultCredentials -UseBasicParsing -Uri 'https://mail.{{ ghosts_ad_domain }}/EWS/Exchange.asmx' | Out-Null } catch {}\"",
+          "CommandArgs": [],
+          "DelayAfter": {{ (180000 * f) | round | int }},
+          "DelayBefore": 0
+        }
+      ]
+    }
+{% endif %}
+{%- set g2_dc = {'fire.ninja': 'fire-dc1', 'konohagakure.fire.ninja': 'konoha-dc1', 'sunagakure.wind.ninja': 'suna-dc1', 'wind.ninja': 'wind-dc1', 'otogakure.ninja': 'oto-dc1', 'akatsuki.dark': 'akatsuki-dc1'}[ghosts_ad_domain] | default('konoha-dc1') %}
+    {
+       opened a file over SMB/UNC, so "reviewing files" generated no type-3 network logon anywhere as the
+       persona. This handler reads NETLOGON + SYSVOL on THIS persona's OWN DC, landing a Kerberos/CIFS
+       network logon (4624 type 3 + a CIFS 4769 service ticket) on the DC attributed to the character.
+       NETLOGON/SYSVOL are readable by any authenticated user, so EVERY persona runs this -- no extra file
+       server is needed. The DC hostname (g2_dc, set above) comes from the SAME inline map the mstsc admin
+       handler uses (~line 160), keyed by ghosts_ad_domain, bare-hostname UNC like that handler's /v:<dc>.
+       `type` of the Policies GUID subdirectories errors, but it's >nul 2>&1 and the SMB connect/auth is
+       the whole point -- the network logon lands regardless. Night shift scales DelayAfter by f.
+    ,{
+      "HandlerType": "Command",
+      "Initial": "",
+      "UtcTimeOn": "{{ shift.on }}",
+      "UtcTimeOff": "{{ shift.off }}",
+      "Loop": true,
+      "TimeLineEvents": [
+        {
+          "Command": "cmd /c dir \\\\{{ g2_dc }}\\NETLOGON >nul 2>&1 & type \\\\{{ g2_dc }}\\SYSVOL\\{{ ghosts_ad_domain }}\\Policies\\* >nul 2>&1",
+          "CommandArgs": [],
+          "DelayAfter": {{ (((range(180, 481) | random) * 1000) * f) | round | int }},
+          "DelayBefore": 0
+        }
+      ]
+    }
+    ,{
+      "HandlerType": "Command",
+      "Initial": "",
+      "UtcTimeOn": "{{ shift.on }}",
+      "UtcTimeOff": "{{ shift.off }}",
+      "Loop": true,
+      "TimeLineEvents": [
+        {
+          "Command": "cmd /c echo %USERDOMAIN% && echo %LOGONSERVER%",
+          "CommandArgs": [],
+          "DelayAfter": {{ (10000 * f) | round | int }},
+          "DelayBefore": 0
+        },
+        {
+          "Command": "nltest /dsgetdc:{{ ghosts_ad_domain }}",
+          "CommandArgs": [],
+          "DelayAfter": {{ (10000 * f) | round | int }},
+          "DelayBefore": 0
+        },
+        {
+          "Command": "nltest /domain_trusts",
+          "CommandArgs": [],
+          "DelayAfter": {{ (10000 * f) | round | int }},
+          "DelayBefore": 0
+        },
+        {
+          "Command": "cmd /c gpresult /r",
+          "CommandArgs": [],
+          "DelayAfter": {{ (10000 * f) | round | int }},
+          "DelayBefore": 0
+        },
+        {
+          "Command": "nslookup -type=SRV _ldap._tcp.dc._msdcs.{{ ghosts_ad_domain }}",
+          "CommandArgs": [],
+          "DelayAfter": {{ (900000 * f) | round | int }},
+          "DelayBefore": 0
+        }
+      ]
+    }
+    {
+       ~45-min cadence stays independent of the AD-noise loop above. Real users mistype their own password
+       now and then; the TOTAL absence of any 4625 is itself a detection tell (findings §H3). This models
+       ONE occasional fat-fingered password as the persona's OWN account against their OWN DC. Benign user
+       error, NOT a credential attack: the persona's own sam, one wrong try every ~45 min * f -- no
+       spraying/enumeration, and far under any lockout threshold. Targets the DC by IP
+       (10.<r>.<forest-vlan>.10) rather than the hostname the G2 file-read uses, so it's a distinct SMB
+       server session and never collides with G2's already-authenticated connection (which would otherwise
+       error 1219 instead of producing the 4625). Lands a 4625 (0xC000006A, bad password) on the persona's
+       DC attributed to the character. Leads with a comma -- the AD-noise handler before it is
+       unconditional, so ns.sep is already ',' here.
+    ,{
+      "HandlerType": "Command",
+      "Initial": "",
+      "UtcTimeOn": "{{ shift.on }}",
+      "UtcTimeOff": "{{ shift.off }}",
+      "Loop": true,
+      "TimeLineEvents": [
+        {
+          "Command": "cmd /c net use \\\\10.{{ range_second_octet }}.{{ ghosts_owa_octet }}.10\\ipc$ /user:{{ ghosts_ad_domain }}\\{{ ghosts_owa_user }} Wr0ng-{{ ghosts_owa_user }}-pw >nul 2>&1",
+          "CommandArgs": [],
+          "DelayAfter": {{ (2700000 * f) | round | int }},
+          "DelayBefore": 0
+        }
+      ]
+    }
+{%- endfor %}
+  ]
+}

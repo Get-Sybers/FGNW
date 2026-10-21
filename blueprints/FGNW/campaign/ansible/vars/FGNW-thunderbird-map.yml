@@ -1,0 +1,10 @@
+---
+# Village AD domain → the FQDN of its mail server. Keyed by `ad_domain` from
+# content/ghosts/persona-timelines.yml so a workstation's mail server is derived
+# from its persona's domain (no per-host mapping to drift). Change the server
+# shortname here if a village mail server is ever renamed.
+__fgnw_village_mail_fqdn:
+  konohagakure.fire.ninja: "konoha-mail.konohagakure.fire.ninja"
+  otogakure.ninja: "oto-mail.otogakure.ninja"
+  akatsuki.dark: "dark-mail.akatsuki.dark"
+  sunagakure.wind.ninja: "suna-mail.sunagakure.wind.ninja"

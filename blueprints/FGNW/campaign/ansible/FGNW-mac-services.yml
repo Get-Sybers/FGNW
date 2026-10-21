@@ -1,0 +1,32 @@
+---
+# Post-AD macOS service stack for the Sand hosts. Browser defaults go on both macOS hosts
+# (uniform village look); decoys + GHOSTS go only on suna-ws1 (workstation).
+- name: Hidden Sand Village — browser defaults (unified Win/Mac role; macOS branch runs here)
+  hosts: macos_dev
+  tasks:
+    - name: "Browser-defaults: apply the village browser defaults: Hidden Sand Village"
+      ansible.builtin.include_role:
+        name: fgnw_browser_defaults
+      vars:
+        fgnw_browser_defaults_village: Hidden Sand Village
+
+- name: Hidden Sand Village — decoy documents (workstation only; unified Win/Mac role, macOS branch)
+  hosts: macos_dev
+  tasks:
+    - name: "Decoy-content: plant Sand decoy documents"
+      ansible.builtin.include_role:
+        name: fgnw_decoy_files
+      vars:
+        fgnw_decoy_files_village: Hidden Sand Village (Sunagakure)
+        fgnw_decoy_files_root: /Users/Shared/Documents
+      when: inventory_hostname == 'suna-ws1'
+
+- name: Hidden Sand Village — GHOSTS Universal client (workstation only)
+  hosts: macos_dev
+  tasks:
+    - name: "Mac-ghosts: start the GHOSTS Universal client (service only; prestage ran in Phase 1c)"
+      ansible.builtin.include_role:
+        name: fgnw_mac_ghosts_client
+      vars:
+        fgnw_mac_ghosts_client_phase: service
+      when: inventory_hostname == 'suna-ws1'

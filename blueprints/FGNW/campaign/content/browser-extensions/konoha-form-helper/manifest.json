@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Konoha Form Helper",
+  "short_name": "Form Helper",
+  "version": "1.2.0",
+  "description": "Auto-fills common shinobi registry forms and remembers your last-visited village portal.",
+  "permissions": ["storage"],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "icons": {
+    "48": "icon.png"
+  }
+}

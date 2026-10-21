@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+# scripts/upgrade — §13 RAISE TO THE CEILING.
+#
+# One command that raises every collection pin in requirements.yml to the
+# highest release within its galaxy.yml bound, then runs conform. Changes land
+# only if conform passes; otherwise the working tree is reverted. The galaxy.yml
+# bounds are the only thing that holds a version back (§13).
+#
+# A repo with NO galaxy.yml (a Ludus source shipping only standalone task-roles)
+# has no bounds: every requirements.yml pin is raised to the latest Galaxy
+# release and conform alone decides whether it lands.
+#
+# Needs Galaxy/network to discover available versions. Run it on a schedule and
+# open the result for review rather than committing straight to the default
+# branch (Appendix C).
+set -euo pipefail
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
+command -v ansible-galaxy >/dev/null || {
+  echo "ansible-galaxy not found"
+  exit 2
+}
+python3 - "$ROOT" <<'PY'
+import json
+import re
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+import yaml
+root = Path(sys.argv[1])
+galaxy_path = root / "galaxy.yml"
+galaxy = yaml.safe_load(galaxy_path.read_text()) if galaxy_path.is_file() else {}
+galaxy = galaxy or {}
+reqs_path = root / "requirements.yml"
+reqs_text = reqs_path.read_text()
+reqs = yaml.safe_load(reqs_text) or {}
+deps = galaxy.get("dependencies") or {}
+BOUND = re.compile(r">=\s*(\d+\.\d+\.\d+)\s*,\s*<\s*(\d+\.\d+\.\d+)\s*$")
+def highest_within(name, bound):
+    # Let ansible-galaxy resolve the highest release satisfying the galaxy.yml
+    # bound straight from Galaxy (needs network), using only real subcommands:
+    # a bound-constrained `collection install` into a throwaway path, then read
+    # the resolved version back with `collection list --format json`. (There is
+    # no `collection info` subcommand, and `--offline` cannot see new releases.)
+    # With no bound (no galaxy.yml) the bare name resolves to the latest release.
+    spec = f"{name}:{bound}" if bound else name
+    with tempfile.TemporaryDirectory() as tmp:
+        inst = subprocess.run(
+            ["ansible-galaxy", "collection", "install",
+             spec, "-p", tmp, "--no-deps", "--force"],
+            capture_output=True, text=True,
+        )
+        if inst.returncode != 0:
+            sys.stderr.write(inst.stderr)
+            return None
+        lst = subprocess.run(
+            ["ansible-galaxy", "collection", "list", "-p", tmp, "--format", "json"],
+            capture_output=True, text=True,
+        )
+        try:
+            for colls in json.loads(lst.stdout or "{}").values():
+                if name in colls:
+                    return colls[name].get("version")
+        except json.JSONDecodeError:
+            pass
+    return None
+if galaxy_path.is_file():
+    targets = {name: str(bound) for name, bound in deps.items() if BOUND.match(str(bound))}
+else:
+    targets = {
+        entry["name"]: None
+        for entry in (reqs.get("collections") or [])
+        if isinstance(entry, dict) and "name" in entry
+    }
+changed = []
+for name, bound in targets.items():
+    highest = highest_within(name, bound)
+    if not highest:
+        print(f"  {name}: could not resolve a version within {bound or 'latest'} (needs Galaxy/network)")
+        continue
+    new = re.sub(
+        rf'(name:\s*{re.escape(name)}\s*\n\s*version:\s*)"[^"]*"',
+        rf'\g<1>"{highest}"',
+        reqs_text,
+    )
+    if new != reqs_text:
+        reqs_text = new
+        changed.append(f"{name} -> {highest}")
+reqs_path.write_text(reqs_text)
+print("raised:", ", ".join(changed) if changed else "(nothing)")
+PY
+echo
+echo "== upgrade: running conform =="
+if scripts/conform; then
+  echo "upgrade: conform PASSED — pin bumps kept."
+else
+  echo "upgrade: conform FAILED — reverting requirements.yml."
+  git checkout -- requirements.yml
+  exit 1
+fi

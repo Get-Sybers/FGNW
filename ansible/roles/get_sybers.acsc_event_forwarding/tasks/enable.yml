@@ -1,0 +1,9 @@
+---
+- name: "enable | Set the enabled state of each subscription"
+  ansible.windows.win_command: >-
+    wecutil ss "{{ item }}" /e:{{ acsc_wef_enable_subscriptions | bool | lower }}
+  loop: "{{ __acsc_wef_wanted }}"
+  loop_control:
+    label: "{{ item }}"
+  register: __acsc_wef_enabled
+  changed_when: __acsc_wef_enabled.rc == 0

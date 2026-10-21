@@ -1,0 +1,39 @@
+---
+roles:
+  - name: jasonmull.ludus_ghosts_client
+    version: v1.1.0
+  # macOS provisioning (Hidden Sand Village conversion): mirrors geerlingguy/mac-dev-playbook,
+  # whose upstream requirements.yml pins no versions. elliotweiser.osx-command-line-tools is
+  # intentionally omitted — the macos-sequoia-15 template installs the Command Line Tools in
+  # its FINALIZE phase, so that role would be redundant here.
+  - name: geerlingguy.dotfiles
+    version: 1.3.2
+collections:
+  - name: ansible.windows
+    version: 2.7.0
+  - name: community.general
+    version: 10.3.0
+  - name: community.windows
+    version: 2.3.0
+  - name: chocolatey.chocolatey
+    version: 1.5.3
+  - name: microsoft.ad
+    version: 1.8.0
+  - name: ansible.mysql
+    version: 5.2.0
+  - name: badsectorlabs.ludus_windows_utils
+    version: 1.2.0
+  # macOS workstation + mail provisioning (homebrew/mas/dock roles consumed by FGNW-mac-dev.yml)
+  - name: geerlingguy.mac
+    version: 1.2.0
+  # Phase 1b (campaign/ansible/ghost9-range-ct.yml) creates the GHOSTS server CT from the
+  # published ghost9 LXC template through the get_sybers.lxc roles (lxc_preflight,
+  # lxc_guest, lxc_ghost9). get_sybers.lxc 0.1.0 has no collection release tag yet, so it
+  # is pinned as a git source at a commit; re-pin to the release tag once one exists.
+  - name: https://github.com/Get-Sybers/LXC.git
+    type: git
+    version: 2313507225b32b1bf2f09c14b8f242f227872d21
+  # get_sybers.lxc's dependency (>=2.1.0,<3.0.0): the PVE API module lxc_guest creates
+  # the CT with, and the proxmox_pct_remote connection plugin that reaches into it.
+  - name: community.proxmox
+    version: 2.1.0

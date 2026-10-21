@@ -1,0 +1,39 @@
+extensions = ["md", "markdown", "rst", "html", "txt", "yml", "yaml"]
+hidden = false
+include_fragments = "full"
+include_verbatim = false
+cache = true
+max_cache_age = "1d"
+max_retries = 3
+retry_wait_time = 2
+timeout = 20
+max_concurrency = 16
+max_redirects = 5
+accept = ["200..=204", "429"]
+scheme = ["https", "http"]
+user_agent = "Mozilla/5.0 (compatible; lychee/0.24; +https://github.com/get-sybers)"
+exclude_all_private = true
+include_mail = false
+exclude = [
+  '^https?://localhost',
+  '^https?://127\.0\.0\.1',
+  '^https?://example\.(com|org|net)',
+  '^https?://(www\.)?linkedin\.com',
+  '^https?://twitter\.com',
+  '^https?://x\.com',
+]
+exclude_path = [
+  "(^|/)\\.git/",
+  "(^|/)\\.tox/",
+  "(^|/)\\.venv/",
+  "(^|/)node_modules/",
+  "(^|/)testdata/",
+  "(^|/)vendor/",
+  "(^|/)\\.cache/",
+]
+[hosts."github.com"]
+concurrency = 4
+request_interval = "250ms"
+[hosts."galaxy.ansible.com"]
+concurrency = 2
+request_interval = "500ms"

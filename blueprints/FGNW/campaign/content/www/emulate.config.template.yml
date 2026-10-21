@@ -1,0 +1,50 @@
+---
+tokens:
+  hosed_admin:
+    login: admin
+    scopes: [repo, user, read, write]
+github:
+  users:
+    - login: naruto
+      name: Naruto Uzumaki
+      email: naruto@konoha.local
+  orgs:
+    - login: hidden-leaf
+      name: Hidden Leaf Village
+  repos:
+    - owner: hidden-leaf
+      name: mission-portal
+      language: TypeScript
+      auto_init: true
+  oauth_apps:
+    - client_id: CHANGEME_CLIENT_ID
+      client_secret: CHANGEME_SET_REAL_SECRET
+      name: Hidden Leaf Mission Portal
+      redirect_uris:
+        - http://localhost:3000/api/auth/callback/github
+google:
+  users:
+    - email: sakura@konoha.local
+      name: Sakura Haruno
+  oauth_clients:
+    - client_id: CHANGEME_CLIENT_ID.apps.googleusercontent.com
+      client_secret: CHANGEME_SET_REAL_SECRET
+      redirect_uris:
+        - http://localhost:3000/api/auth/callback/google
+slack:
+  team:
+    name: Allied Shinobi Forces
+    domain: allied-shinobi
+  users:
+    - name: kakashi
+      real_name: Kakashi Hatake
+      email: kakashi@konoha.local
+  channels:
+    - name: mission-ops
+      topic: Joint operation planning
+  oauth_apps:
+    - client_id: CHANGEME_CLIENT_ID
+      client_secret: CHANGEME_SET_REAL_SECRET
+      name: Mission Ops Bot
+      redirect_uris:
+        - http://localhost:3000/api/auth/callback/slack

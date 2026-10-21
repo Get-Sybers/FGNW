@@ -1,0 +1,41 @@
+---
+- name: Preflight
+  ansible.builtin.assert:
+    that:
+      - __ludus_api_key is defined
+      - ludus_range_deploy_max_attempts | int >= 1
+    fail_msg: ludus_range_deploy needs ludus_auth to have run; max_attempts >= 1.
+    quiet: true
+- name: Read the current range state
+  ansible.builtin.include_tasks: state.yml
+- name: Initialise the outcome flags
+  ansible.builtin.set_fact:
+    __ludus_deploy_done: >-
+      {{ __ludus_state == 'SUCCESS'
+         and not (ludus_range_deploy_force | bool)
+         and (ludus_range_deploy_tags | length == 0)
+         and (ludus_range_deploy_limit | length == 0)
+         and (ludus_range_deploy_only_roles | length == 0) }}
+    __ludus_deploy_fatal: false
+- name: Already SUCCESS — skipping (idempotent; set ludus_range_deploy_force to re-apply)
+  ansible.builtin.debug:
+    msg: Range already SUCCESS with {{ __ludus_vmcount }} VM(s); no deploy needed.
+  when: __ludus_deploy_done | bool
+- name: Run bounded deploy attempts
+  ansible.builtin.include_tasks: attempt.yml
+  loop: "{{ range(1, (ludus_range_deploy_max_attempts | int) + 1) | list }}"
+  loop_control:
+    loop_var: __attempt
+  when:
+    - not __ludus_deploy_done | bool
+    - not __ludus_deploy_fatal | bool
+- name: Assert the range reached SUCCESS
+  ansible.builtin.assert:
+    that: __ludus_deploy_done | bool
+    fail_msg: >-
+      Range did not reach SUCCESS (last state: {{ __ludus_state | default('?') }},
+      {{ __ludus_vmcount | default('?') }} VMs) after {{ ludus_range_deploy_max_attempts }}
+      attempt(s). Inspect: `ludus range errors` / `ludus range logs`
+      (or get_sybers.range.ludus_range_health).
+    success_msg: "Range deployed: SUCCESS, {{ __ludus_vmcount }} VM(s)."
+    quiet: true

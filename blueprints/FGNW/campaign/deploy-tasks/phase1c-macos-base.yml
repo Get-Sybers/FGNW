@@ -1,0 +1,23 @@
+---
+# Phase 1c — macOS dev-workstation base (Homebrew + mac-dev-playbook roles) AND the
+# service artefacts that need internet egress. Runs AFTER phase 1b (ghost9 CT) and
+# BEFORE phase 2 (containment), because every fetch here (brew/cask, GitHub releases)
+# stops being reachable the moment `ludus testing start` seals the range. Same pre-seal
+# pattern as phase 1b.
+- name: "deploy-tasks | phase1c-macos-base | FGNW-mac-dev.yml (Homebrew + mac-dev-playbook roles on the Sand macOS hosts)"
+  ansible.builtin.command:
+    argv: [ansible-playbook, -i, "{{ __tmp_infra_inv }}", FGNW-mac-dev.yml]
+  args:
+    chdir: "{{ ansible_dir }}"
+  environment:
+    ANSIBLE_ROLES_PATH: "{{ users_dir }}/.ansible/roles"
+  changed_when: true
+
+- name: "deploy-tasks | phase1c-macos-base | FGNW-mac-prestage.yml (download + extract GHOSTS Universal client from GitHub)"
+  ansible.builtin.command:
+    argv: [ansible-playbook, -i, "{{ __tmp_infra_inv }}", FGNW-mac-prestage.yml]
+  args:
+    chdir: "{{ ansible_dir }}"
+  environment:
+    ANSIBLE_ROLES_PATH: "{{ users_dir }}/.ansible/roles"
+  changed_when: true

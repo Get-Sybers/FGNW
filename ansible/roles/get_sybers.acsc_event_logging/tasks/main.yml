@@ -1,0 +1,5 @@
+---
+- name: "Set Security/Application/System log MaxSize values"
+  ansible.builtin.include_tasks: classic_logs.yml
+- name: "Enable process-creation command-line auditing and PowerShell script block logging"
+  ansible.builtin.include_tasks: audit_policy.yml

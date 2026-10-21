@@ -1,0 +1,12 @@
+---
+- name: "Gate: ludus_auth"
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  roles:
+    - get_sybers.range.ludus_auth
+  post_tasks:
+    - name: "Gate: ludus_auth verify"
+      ansible.builtin.include_role:
+        name: get_sybers.range.ludus_auth
+        tasks_from: verify.yml

@@ -1,0 +1,46 @@
+#!/bin/sh
+set -eu
+LOGDIR="{{ zeek_sensor_logdir }}"
+MAX_MB="{{ zeek_sensor_log_max_use_mb }}"
+FLOOR_DAYS="{{ zeek_sensor_log_prune_floor_days }}"
+if [ ! -d "$LOGDIR" ]; then
+  echo "zeek-sensor-prune: $LOGDIR does not exist; nothing to prune" >&2
+  exit 0
+fi
+usage_mb() {
+  du -sm "$LOGDIR" 2>/dev/null | awk '{print $1}'
+}
+used=$(usage_mb)
+[ -n "$used" ] || used=0
+if [ "$used" -le "$MAX_MB" ]; then
+  echo "zeek-sensor-prune: ${used} MiB used of ${MAX_MB} MiB ceiling; nothing to do"
+  exit 0
+fi
+echo "zeek-sensor-prune: ${used} MiB exceeds ${MAX_MB} MiB ceiling; pruning oldest days"
+dirs=$(find "$LOGDIR" -mindepth 1 -maxdepth 1 -type d \
+  -regex '.*/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]$' |
+  sort)
+total=$(printf '%s\n' "$dirs" | grep -c . || true)
+pruned=0
+for d in $dirs; do
+  used=$(usage_mb)
+  [ -n "$used" ] || used=0
+  if [ "$used" -le "$MAX_MB" ]; then
+    break
+  fi
+  remaining=$((total - pruned))
+  if [ "$remaining" -le "$FLOOR_DAYS" ]; then
+    echo "zeek-sensor-prune: STOPPING at the ${FLOOR_DAYS}-day floor with" \
+      "${used} MiB still above the ${MAX_MB} MiB ceiling." >&2
+    echo "zeek-sensor-prune: the ceiling cannot be met without deleting" \
+      "recent evidence. Raise zeek_sensor_log_max_use_mb, give the" \
+      "volume more space, or forward logs off-host." >&2
+    exit 3
+  fi
+  rm -rf -- "$d"
+  pruned=$((pruned + 1))
+  echo "PRUNED $d"
+done
+kept=$((total - pruned))
+echo "zeek-sensor-prune: removed ${pruned} dated directories, kept ${kept}," \
+  "now $(usage_mb) MiB of ${MAX_MB} MiB ceiling"

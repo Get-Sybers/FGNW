@@ -1,0 +1,26 @@
+---
+- name: Load the AD contract shipped with the role
+  ansible.builtin.include_vars:
+    file: "{{ role_path }}/files/{{ ad_contract_file }}"
+    name: __ad_contract
+- name: Derive this domain's directory data from the contract
+  ansible.builtin.set_fact:
+    ad_users: "{{ __ad_contract.lab.domains[domain].users | default({}) }}"
+    ad_ou: "{{ __ad_contract.lab.domains[domain].organisation_units | default({}) }}"
+    ad_groups: "{{ __ad_contract.lab.domains[domain].groups | default({}) }}"
+- name: Organisational units
+  ansible.builtin.include_tasks: ous.yml
+- name: Groups
+  ansible.builtin.include_tasks: groups.yml
+- name: Users
+  ansible.builtin.include_tasks: users.yml
+- name: Group memberships
+  ansible.builtin.include_tasks: memberships.yml
+- name: Ensure the built-in Administrator is a Domain Admin
+  microsoft.ad.group:
+    identity: Domain Admins
+    scope: global
+    members:
+      add:
+        - Administrator
+    state: present

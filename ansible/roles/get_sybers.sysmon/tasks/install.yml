@@ -1,0 +1,26 @@
+---
+- name: "install | Create the Sysmon directory"
+  ansible.windows.win_file:
+    path: C:\Sysmon
+    state: directory
+- name: "install | Check whether Sysmon.zip is already present"
+  ansible.windows.win_stat:
+    path: C:\Sysmon\Sysmon.zip
+  register: sysmon_zip_stat
+- name: "install | Download Sysmon.zip (only if not present)"
+  ansible.windows.win_get_url:
+    url: "{{ sysmon_download_url }}"
+    dest: C:\Sysmon\Sysmon.zip
+    checksum: "{{ sysmon_zip_checksum | default(omit, true) }}"
+    force: false
+  when: not sysmon_zip_stat.stat.exists
+  register: sysmon_download_result
+  retries: 3
+  delay: 10
+  until: sysmon_download_result is succeeded
+- name: "install | Unzip Sysmon"
+  community.windows.win_unzip:
+    src: C:\Sysmon\Sysmon.zip
+    dest: C:\Sysmon
+    creates: C:\Sysmon\Sysmon64.exe
+  register: unzip_result

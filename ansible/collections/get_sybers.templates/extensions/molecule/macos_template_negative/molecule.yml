@@ -1,0 +1,14 @@
+---
+# macos_template negative — the role must refuse to run without its Proxmox
+# connection inputs, stopping at input validation instead of blundering into
+# REST calls with empty values. No prepare/verify: converge drives the
+# controlled failure itself. (The positive build path needs a live Proxmox node
+# and OpenCore-booted macOS, so it is exercised against real infrastructure, not
+# faked in a container — see the role README.)
+scenario:
+  test_sequence:
+    - dependency
+    - syntax
+    - create
+    - converge
+    - destroy

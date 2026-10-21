@@ -1,0 +1,22 @@
+{{ ansible_managed | comment }}
+[Unit]
+Description=Zeek network security monitor (get_sybers.zeek_sensor)
+Documentation=file://{{ zeek_sensor_cfgdir }}/node.cfg
+After=network-online.target
+Wants=network-online.target
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+{% if zeek_sensor_user != 'root' %}
+User={{ zeek_sensor_user }}
+Group={{ zeek_sensor_group }}
+{% endif %}
+Environment=HOME=/
+ExecStart={{ zeek_sensor_bin }} deploy
+ExecReload={{ zeek_sensor_bin }} deploy
+ExecStop={{ zeek_sensor_bin }} stop
+TimeoutStartSec=300
+Restart=on-failure
+RestartSec=30
+[Install]
+WantedBy=multi-user.target

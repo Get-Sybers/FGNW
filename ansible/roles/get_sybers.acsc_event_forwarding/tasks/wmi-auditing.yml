@@ -1,0 +1,41 @@
+---
+- name: "wmi-auditing | Wmi — count existing audit ACEs on root\\cimv2"
+  ansible.windows.win_shell: |
+    $ErrorActionPreference = 'Stop'
+    $sd = (Invoke-WmiMethod -EnableAllPrivileges -Namespace 'root\cimv2' `
+            -Path __SystemSecurity -Name GetSecurityDescriptor).Descriptor
+    @($sd.SACL | Where-Object { $_.AceType -eq 2 }).Count
+  register: __acsc_wmi_ace_count
+  changed_when: false
+  check_mode: false
+- name: "wmi-auditing | Wmi — record the pre-run state"
+  ansible.builtin.set_fact:
+    __acsc_wmi_already_audited: >-
+      {{ (__acsc_wmi_ace_count.stdout | trim | int) >= 4 }}
+- name: "wmi-auditing | Wmi — report SACL state"
+  ansible.builtin.debug:
+    msg: >-
+      root\cimv2 has {{ __acsc_wmi_ace_count.stdout | trim }} audit ACE(s).
+      {{ 'Already configured — skipping (the upstream script would append duplicates).'
+         if __acsc_wmi_already_audited
+         else 'Fewer than the four ACSC adds — running wmi_auditing.ps1.' }}
+- name: "wmi-auditing | Wmi — apply the ACSC WMI namespace SACLs"
+  ansible.builtin.include_tasks: wmi-auditing-apply.yml
+  when: not __acsc_wmi_already_audited | bool
+- name: "wmi-auditing | Wmi — re-count audit ACEs"
+  ansible.windows.win_shell: |
+    $ErrorActionPreference = 'Stop'
+    $sd = (Invoke-WmiMethod -EnableAllPrivileges -Namespace 'root\cimv2' `
+            -Path __SystemSecurity -Name GetSecurityDescriptor).Descriptor
+    @($sd.SACL | Where-Object { $_.AceType -eq 2 }).Count
+  register: __acsc_wmi_ace_after
+  changed_when: false
+- name: "wmi-auditing | Wmi — VERIFY the audit ACEs are present"
+  ansible.builtin.assert:
+    that: (__acsc_wmi_ace_after.stdout | trim | int) >= 4
+    fail_msg: >-
+      root\cimv2 still reports only {{ __acsc_wmi_ace_after.stdout | trim }}
+      audit ACE(s) after running wmi_auditing.ps1 (expected at least 4). The WMI
+      Auditing subscriptions would collect nothing. The script suppresses its own
+      errors — re-run it interactively with $DebugPreference='Continue' to see why.
+    quiet: true

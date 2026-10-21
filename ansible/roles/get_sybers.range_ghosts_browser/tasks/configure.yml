@@ -1,0 +1,25 @@
+---
+- name: "configure | Disable Chrome auto-update so it stays matched to the installed chromedriver"
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Policies\Google\Update
+    name: "{{ item.name }}"
+    data: "{{ item.data }}"
+    type: dword
+  loop:
+    - { name: UpdateDefault, data: 0 }
+    - { name: AutoUpdateCheckPeriodMinutes, data: 0 }
+    - { name: DisableAutoUpdateChecksCheckboxValue, data: 1 }
+    - { name: "Update{8A69D345-D564-463C-AFF1-A69D9E530F96}", data: 0 }
+- name: "configure | Check whether the GHOSTS client dir exists yet"
+  ansible.windows.win_stat:
+    path: "{{ range_ghosts_browser_ghosts_dir }}"
+  register: __ngb_ghosts_dir
+- name: "configure | Overwrite any chromedriver GHOSTS bundled in its own dir with the matched one"
+  ansible.windows.win_shell: |
+    $src = Get-ChildItem '{{ range_ghosts_browser_choco_lib }}' -Recurse -Filter chromedriver.exe -ErrorAction SilentlyContinue | Select-Object -First 1
+    if (-not $src) { Write-Output 'no-driver-found'; exit 0 }
+    Copy-Item $src.FullName -Destination '{{ range_ghosts_browser_ghosts_dir }}\chromedriver.exe' -Force
+    Write-Output ('copied ' + $src.FullName)
+  register: __ngb_drv_copy
+  changed_when: "'copied' in __ngb_drv_copy.stdout"
+  when: __ngb_ghosts_dir.stat.exists

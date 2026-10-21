@@ -1,0 +1,19 @@
+---
+# Pre-containment (Phase 1c) stage for the Sand macOS hosts' service artifacts that need
+# internet egress. Phase 2 containment seals outbound traffic entirely, so anything that
+# reaches github.com / brew / cask mirrors has to run here.
+#
+# Dovecot and Thunderbird are installed by FGNW-mac-dev.yml via mac-dev-playbook's
+# `homebrew_installed_packages` and `homebrew_casks` lists — this play only picks up what
+# does not fit the mac-dev pattern: the GHOSTS Universal client tarball from
+# github.com/cmu-sei/GHOSTS/releases, which the service play then starts in Phase 4d.
+- name: Pre-fetch the GHOSTS Universal client tarball (needs github.com; pre-containment)
+  hosts: macos_dev
+  gather_facts: true
+  tasks:
+    - name: Run fgnw_mac_ghosts_client in prestage mode (download + extract + ApiRootUrl rewrite)
+      ansible.builtin.include_role:
+        name: fgnw_mac_ghosts_client
+      vars:
+        fgnw_mac_ghosts_client_phase: prestage
+      when: inventory_hostname == 'suna-ws1'

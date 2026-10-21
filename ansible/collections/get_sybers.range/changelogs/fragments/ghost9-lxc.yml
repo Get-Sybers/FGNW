@@ -1,0 +1,8 @@
+---
+removed:
+  - >-
+    ``ghost9_template``, ``ghost9_ct`` and ``ghost9_server`` - the FGNW range's GHOSTS
+    server CT is created from the published ``get_sybers.lxc`` ``ghost9`` template
+    through that collection's ``lxc_preflight`` / ``lxc_guest`` / ``lxc_ghost9`` roles
+    (``blueprints/FGNW/campaign/ansible/ghost9-range-ct.yml``); this collection no
+    longer bakes, places or configures it.

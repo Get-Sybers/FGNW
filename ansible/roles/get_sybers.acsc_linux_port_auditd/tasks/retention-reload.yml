@@ -1,0 +1,12 @@
+---
+- name: "retention-reload | Retention — SIGHUP auditd when the daemon predates this config"
+  ansible.builtin.command: "systemctl kill -s HUP auditd.service"
+  register: __acsc_auditd_hup
+  changed_when: true
+- name: "retention-reload | Retention — record the applied config hash"
+  ansible.builtin.copy:
+    content: "{{ __acsc_auditd_conf_stat.stat.checksum }}"
+    dest: "{{ acsc_auditd_state_dir }}/auditd-conf.applied"
+    owner: root
+    group: root
+    mode: "0600"

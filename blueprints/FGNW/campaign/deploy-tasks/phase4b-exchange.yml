@@ -1,0 +1,49 @@
+---
+- name: "deploy-tasks | phase4b-exchange | Select the forests for this variant"
+  ansible.builtin.set_fact:
+    # suna-mail (Sunagakure) is NOT in this list — it is a macOS host running
+    # Postfix/Dovecot now, stood up by phase 4d (FGNW-mac-mail.yml). Only the three
+    # villages that still run Exchange 2019 live here.
+    __forests: "{{ ['konoha-mail'] if __variant_norm == 'small' else ['konoha-mail', 'oto-mail', 'dark-mail'] }}"
+- name: "deploy-tasks | phase4b-exchange | Build the ordered per-forest step list"
+  ansible.builtin.set_fact:
+    __exchange_steps: "{{ __forests | product(['FGNW-exchange.yml', 'FGNW-exchange-seed-mail.yml']) | list }}"
+- name: "deploy-tasks | phase4b-exchange | Run install+seed, one forest at a time"
+  ansible.builtin.command:
+    argv:
+      - ansible-playbook
+      - -i
+      - "{{ __tmp_infra_inv }}"
+      - "{{ item.1 }}"
+      - --limit
+      - "{{ item.0 }}"
+      - -e
+      - force_reseed={{ force_reseed | default(false) | bool | string | lower }}
+  args:
+    chdir: "{{ ansible_dir }}"
+  environment:
+    ANSIBLE_ROLES_PATH: "{{ users_dir }}/.ansible/roles"
+  changed_when: true
+  loop: "{{ __exchange_steps }}"
+  loop_control:
+    label: "{{ item.1 }} --limit {{ item.0 }}"
+- name: "deploy-tasks | phase4b-exchange | FGNW-owa-cert.yml (mail.<domain> OWA cert + trust on workstations)"
+  ansible.builtin.command:
+    argv: [ansible-playbook, -i, "{{ __tmp_infra_inv }}", FGNW-owa-cert.yml]
+  args:
+    chdir: "{{ ansible_dir }}"
+  environment:
+    ANSIBLE_ROLES_PATH: "{{ users_dir }}/.ansible/roles"
+  changed_when: true
+  register: __owa_cert_run
+  failed_when: (owa_cert_strict | default(false) | bool) and (__owa_cert_run.rc | default(0)) != 0
+- name: "deploy-tasks | phase4b-exchange | WARN if the OWA cert step failed (non-fatal unless -e owa_cert_strict=true)"
+  ansible.builtin.debug:
+    msg: >-
+      WARNING: FGNW-owa-cert.yml FAILED (rc={{ __owa_cert_run.rc | default('?') }}). The deploy
+      CONTINUES because this step is untested + cosmetic — OWA still works, but browsing
+      https://mail.<domain>/owa may raise a certificate warning until it is fixed. Re-run it
+      standalone to see the (now-uncensored) error:
+      ansible-playbook -i {{ __tmp_infra_inv }} FGNW-owa-cert.yml
+      — or re-run the deploy with -e owa_cert_strict=true to make this step fatal.
+  when: (__owa_cert_run.rc | default(0)) != 0

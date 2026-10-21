@@ -1,0 +1,65 @@
+---
+# ansible-lint — https://ansible.readthedocs.io/projects/lint/configuring/
+# ansible-standards §2: profile production. Same file for the pre-commit hook,
+# `make conform` and CI; the version comes from .pre-commit-config.yaml.
+profile: production
+strict: true # warnings fail the gate too
+offline: false # install requirements.yml collections before linting
+exclude_paths:
+  # ansible-lint installs the pinned requirements.yml collections into this
+  # project-local cache (offline: false); they are dependencies, not content.
+  - .ansible/
+  # tests/collections/ holds the symlinks that make the in-tree collections
+  # resolvable as get_sybers.<name> (ansible.cfg collections_path); the real
+  # directories under ansible/collections/ are linted, the links are not.
+  - tests/collections/
+  - .cache/
+  - .github/
+  - .tox/
+  - .venv/
+  - changelogs/
+  - tests/output/
+  - extensions/molecule/*/files/
+  # Third-party roles vendored verbatim with their provenance recorded in
+  # meta/upstream.yml (aleemladha.ludus_exchange, twice: the source-root copy
+  # Ludus installs and the campaign's own copy) or in PROVENANCE.md
+  # (geerlingguy.docker, wireshark). They are linted upstream and are not
+  # reformatted here, so the house rules do not apply to their task files.
+  - ansible/roles/aleemladha.ludus_exchange/
+  - blueprints/FGNW/campaign/ansible/roles/aleemladha.ludus_exchange/
+  - blueprints/FGNW/campaign/ansible/roles/geerlingguy.docker/
+  - blueprints/FGNW/campaign/ansible/roles/wireshark/
+  # INI inventories that the AD-build chain (and its docs) address by these
+  # .yml names; they are not YAML and cannot be parsed as such.
+  - blueprints/FGNW/campaign/ad/NARUTO/providers/ludus/inventory.yml
+  - blueprints/FGNW/campaign/ad/NARUTO/providers/ludus/inventory-infra.yml
+  - blueprints/FGNW/campaign/ad/NARUTO/providers/ludus/inventory-small.yml
+  - blueprints/FGNW/campaign/ad/NARUTO/providers/ludus/inventory-small-infra.yml
+  # The template catalogue icons: binary files under a directory ansible-lint's
+  # default kinds classify as Jinja template text.
+  - templates/*/icon.png
+kinds:
+  # The deploy orchestrator's phase files are task files included from
+  # deploy.yml; one of them (run-playbook.yml) would otherwise be classified as
+  # a playbook by the default `*playbook*` pattern and fail the syntax check.
+  - tasks: "**/deploy-tasks/*.yml"
+# Roles that Ludus installs on the server from the blueprint's own
+# requirements (blueprints/FGNW/requirements.yml `roles:`) or at template
+# build time; they are not part of this tree, so the plays that apply them are
+# linted against a mock.
+mock_roles:
+  - badsectorlabs.ludus_flarevm
+  - geerlingguy.dotfiles
+# §18: lowercase letters, digits, underscores; starts with a letter.
+# §28: internal / registered values may carry the double-underscore prefix.
+var_naming_pattern: "^(__)?[a-z][a-z0-9_]*$"
+# §28: internal/registered variables carry a double-underscore prefix.
+loop_var_prefix: "^(__|{role}_)"
+# §11: task names in a role's stage files are `<stage> | Description`
+# (prefix = the tasks file stem). name[prefix] is opt-in upstream; enabled here.
+task_name_prefix: "{stem} | "
+enable_list:
+  - name[prefix]
+# §19: the standard forbids these outright; keep the list empty on purpose.
+skip_list: []
+warn_list: []

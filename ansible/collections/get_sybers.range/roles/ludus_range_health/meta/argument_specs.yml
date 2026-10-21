@@ -1,0 +1,25 @@
+---
+argument_specs:
+  main:
+    short_description: Read-only fused range health diagnostic (range list + logs)
+    description:
+      - Reads `range list --json`, assembles the `ludus_range_health_result` fact (rangeState, rangeNumber,
+          testingEnabled, vm/powered-on counts, no-IP VMs, VM names), prints a report, tails `range logs` only
+          when the state is ERROR/FAILED, and optionally asserts the range is fully healthy when used as a
+          gate.
+    options:
+      ludus_range_health_log_lines:
+        type: int
+        default: 40
+        description:
+          - How many trailing lines of `range logs` to surface when the state is ERROR or FAILED.
+      ludus_range_health_fail_on_unhealthy:
+        type: bool
+        default: false
+        description:
+          - When true, assert SUCCESS with every VM powered on and holding an IP, so the role can gate a pipeline. Default false = report only, never fail.
+      ludus_range_health_bin:
+        type: str
+        default: /usr/local/bin/ludus
+        description:
+          - Path to the ludus CLI binary invoked for range list and range logs.

@@ -1,0 +1,176 @@
+---
+- name: "prepare | Confirm the ISO storage exists and allows 'iso' content"
+  no_log: true
+  ansible.builtin.uri:
+    url: "{{ macos_template_api_host }}/api2/json/nodes/{{ macos_template_node }}/storage?content=iso"
+    method: GET
+    headers: "{{ macos_template_auth_headers }}"
+    validate_certs: "{{ macos_template_validate_certs }}"
+  register: macos_template_iso_store
+- name: "prepare | Assert the ISO storage is present for 'iso' content"
+  ansible.builtin.assert:
+    that: macos_template_iso_store.json.data | selectattr('storage', 'equalto', macos_template_iso_storage) | list | length > 0
+    fail_msg: >-
+      Storage '{{ macos_template_iso_storage }}' is not available for 'iso' content on node
+      {{ macos_template_node }}. This build will not change cluster storage config (issue
+    quiet: true
+- name: "prepare | Ensure the OpenCore ISO is present and verified in ISO storage"
+  get_sybers.templates.proxmox_iso_download:
+    api_host: "{{ macos_template_api_host }}"
+    api_user: "{{ macos_template_api_user }}"
+    api_token_secret: "{{ macos_template_api_token_secret | default(omit) }}"
+    api_password: "{{ macos_template_api_password | default(omit) }}"
+    validate_certs: "{{ macos_template_validate_certs }}"
+    node: "{{ macos_template_node }}"
+    storage: "{{ macos_template_iso_storage }}"
+    url: "{{ macos_template_opencore_url }}"
+    filename: "{{ macos_template_opencore_name }}"
+    checksum: "{{ macos_template_opencore_checksum }}"
+    timeout: "{{ macos_template_task_timeout }}"
+  no_log: true
+- name: "prepare | Ensure the macOS installer ISO is present and verified in ISO storage"
+  get_sybers.templates.proxmox_iso_download:
+    api_host: "{{ macos_template_api_host }}"
+    api_user: "{{ macos_template_api_user }}"
+    api_token_secret: "{{ macos_template_api_token_secret | default(omit) }}"
+    api_password: "{{ macos_template_api_password | default(omit) }}"
+    validate_certs: "{{ macos_template_validate_certs }}"
+    node: "{{ macos_template_node }}"
+    storage: "{{ macos_template_iso_storage }}"
+    url: "{{ macos_template_iso_url }}"
+    filename: "{{ macos_template_iso_name }}"
+    checksum: "{{ macos_template_iso_checksum }}"
+    timeout: "{{ macos_template_task_timeout }}"
+  no_log: true
+- name: "prepare | Warn if KVM ignore_msrs is off (macOS guests often need it on)"
+  block:
+    - name: "prepare | Read /sys/module/kvm/parameters/ignore_msrs"
+      ansible.builtin.slurp:
+        src: /sys/module/kvm/parameters/ignore_msrs
+      register: macos_template_ignore_msrs
+      failed_when: false
+    - name: "prepare | Advise enabling ignore_msrs"
+      ansible.builtin.debug:
+        msg: >-
+          KVM ignore_msrs is not 'Y'. If macOS panics early, set it on the node:
+          echo 'options kvm ignore_msrs=Y' >/etc/modprobe.d/kvm.conf && update-initramfs -u
+      when:
+        - macos_template_ignore_msrs.content is defined
+        - (macos_template_ignore_msrs.content | b64decode | trim) not in ['Y', '1']
+- name: "prepare | Get the next free VM id"
+  no_log: true
+  ansible.builtin.uri:
+    url: "{{ macos_template_api_host }}/api2/json/cluster/nextid"
+    method: GET
+    headers: "{{ macos_template_auth_headers }}"
+    validate_certs: "{{ macos_template_validate_certs }}"
+  register: macos_template_nextid
+- name: "prepare | Fix the VM id and a random MAC for this build"
+  ansible.builtin.set_fact:
+    macos_template_vmid: "{{ macos_template_nextid.json.data }}"
+    macos_template_mac: "BC:24:11:{{ '%02x:%02x:%02x' | format(256 | random, 256 | random, 256 | random) }}"
+- name: "prepare | Create the macOS VM (q35/OVMF, SATA disk, virtio NIC, OpenCore + installer CDs)"
+  no_log: true
+  ansible.builtin.uri:
+    url: "{{ macos_template_api_host }}/api2/json/nodes/{{ macos_template_node }}/qemu"
+    method: POST
+    headers: "{{ macos_template_auth_headers }}"
+    validate_certs: "{{ macos_template_validate_certs }}"
+    body_format: form-urlencoded
+    body:
+      vmid: "{{ macos_template_vmid }}"
+      name: "{{ macos_template_vm_name }}"
+      memory: "{{ macos_template_vm_memory }}"
+      balloon: "{{ macos_template_balloon }}"
+      cores: "{{ macos_template_vm_cores }}"
+      sockets: 1
+      cpu: "{{ macos_template_guest_cpu }}"
+      machine: "{{ macos_template_machine }}"
+      bios: "{{ macos_template_bios }}"
+      ostype: other
+      efidisk0: "{{ macos_template_storage_pool }}:1,efitype={{ macos_template_efitype }},pre-enrolled-keys=0"
+      sata0: "{{ macos_template_storage_pool }}:{{ macos_template_vm_disk_size }},format={{ macos_template_storage_format }},ssd=1,discard=on"
+      ide0: "{{ macos_template_iso_storage }}:iso/{{ macos_template_opencore_name }},media=cdrom"
+      ide2: "{{ macos_template_iso_storage }}:iso/{{ macos_template_iso_name }},media=cdrom"
+      boot: "order=ide0;sata0"
+      vga: "{{ macos_template_vga }}"
+      net0: "{{ macos_template_guest_nic_model }}={{ macos_template_mac }},bridge={{ macos_template_bridge }}"
+      agent: "enabled=1,type=isa"
+      pool: "{{ macos_template_pool | default(omit, true) }}"
+      description: "{{ macos_template_description }}"
+  register: macos_template_create
+- name: "prepare | Wait for the create task to finish"
+  ansible.builtin.include_tasks: _wait_task.yml
+  vars:
+    wt_upid: "{{ macos_template_create.json.data }}"
+    wt_node: "{{ macos_template_node }}"
+  when: macos_template_create.json.data is string and macos_template_create.json.data.startswith('UPID:')
+- name: "prepare | Detect the Proxmox host CPU vendor (args only needed on AMD)"
+  ansible.builtin.slurp:
+    src: /proc/cpuinfo
+  register: macos_template_cpuinfo
+  failed_when: false
+- name: "prepare | Compute the qemu args line (empty on Intel; -cpu on AMD; or the override)"
+  ansible.builtin.set_fact:
+    macos_template_args: >-
+      {{ macos_template_qemu_args if (macos_template_qemu_args | length > 0)
+         else ('-cpu ' ~ macos_template_guest_cpu ~ ',vendor=GenuineIntel'
+               if ('AuthenticAMD' in (macos_template_cpuinfo.content | default('') | b64decode))
+               else '') }}
+- name: "prepare | Set the CPU args on AMD hosts (root@pam-only in Proxmox)"
+  when: macos_template_args | length > 0
+  block:
+    - name: "prepare | Apply the qemu args to the VM config"
+      no_log: true
+      ansible.builtin.uri:
+        url: "{{ macos_template_api_host }}/api2/json/nodes/{{ macos_template_node }}/qemu/{{ macos_template_vmid }}/config"
+        method: PUT
+        headers: "{{ macos_template_auth_headers }}"
+        validate_certs: "{{ macos_template_validate_certs }}"
+        body_format: form-urlencoded
+        body:
+          args: "{{ macos_template_args }}"
+        status_code: [200]
+      register: macos_template_set_args
+    - name: "prepare | Record that args are set"
+      ansible.builtin.set_fact:
+        macos_template_args_ready: true
+  rescue:
+    - name: "prepare | Args could not be set by the build token"
+      ansible.builtin.set_fact:
+        macos_template_args_ready: false
+    - name: "prepare | Root remedy for the CPU args"
+      ansible.builtin.debug:
+        msg:
+          - "Could not set qemu 'args' with the build token (root@pam-only in Proxmox)."
+          - "This AMD host needs the CPU model forced. Run once as root on {{ macos_template_node }}:"
+          - "    qm set {{ macos_template_vmid }} --args '{{ macos_template_args }}'"
+          - "    qm start {{ macos_template_vmid }}"
+          - "Then complete the interactive install (see README) and re-run the build."
+- name: "prepare | No args needed (Intel host - VirtualSMC in the OpenCore ISO handles SMC)"
+  when: macos_template_args | length == 0
+  ansible.builtin.set_fact:
+    macos_template_args_ready: true
+- name: "prepare | Start the VM (boots OpenCore -> macOS installer)"
+  when: macos_template_args_ready | bool
+  no_log: true
+  ansible.builtin.uri:
+    url: "{{ macos_template_api_host }}/api2/json/nodes/{{ macos_template_node }}/qemu/{{ macos_template_vmid }}/status/start"
+    method: POST
+    headers: "{{ macos_template_auth_headers }}"
+    validate_certs: "{{ macos_template_validate_certs }}"
+- name: "prepare | PREPARE complete - interactive install instructions"
+  ansible.builtin.debug:
+    msg:
+      - "==========================================================================="
+      - "PREPARE COMPLETE - NO TEMPLATE EXISTS YET (this is expected)."
+      - "VM {{ macos_template_vmid }} ({{ macos_template_vm_name }}) on node {{ macos_template_node }}."
+      - "{{ 'If a qm-set remedy was printed above, run it as root first.' if not (macos_template_args_ready | bool) else 'The VM has been started.' }}"
+      - "macOS cannot be installed unattended. At the Proxmox console/VNC:"
+      - "  1. In the OpenCore picker choose 'Install macOS'."
+      - "  2. Disk Utility -> erase the SATA disk as APFS (e.g. 'Macintosh HD')."
+      - "  3. Install macOS (several reboots; keep picking the disk / installer)."
+      - "  4. Setup Assistant: create user {{ macos_template_ssh_username }} / {{ macos_template_ssh_password }} (skip Apple ID)."
+      - "  5. Settings -> General -> Sharing -> Remote Login (SSH) = on for that user."
+      - "Then re-run 'ludus templates build -n {{ macos_template_vm_name }}' to FINALIZE."
+      - "==========================================================================="

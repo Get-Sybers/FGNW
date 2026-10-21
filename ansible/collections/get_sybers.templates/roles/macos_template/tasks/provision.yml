@@ -1,0 +1,164 @@
+---
+- name: "provision | Provision the installed macOS before templating"
+  block:
+    - name: "provision | Confirm the target really is macOS"
+      ansible.builtin.raw: uname -s
+      register: macos_template_uname
+      changed_when: false
+      failed_when: "'Darwin' not in macos_template_uname.stdout"
+    - name: "provision | Install the Command Line Tools so /usr/bin/python3 works (Ludus deploy needs it)"
+      when: macos_template_install_clt | bool
+      become: true
+      ansible.builtin.raw: |
+        set -e
+        if ! xcode-select -p >/dev/null 2>&1; then
+          touch /tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress
+          label=$(softwareupdate -l 2>/dev/null | grep -oE 'Command Line Tools for Xcode-[0-9.]+' | sort -t- -k2,2 -n | tail -1)
+          [ -n "$label" ] && softwareupdate -i "$label" --verbose || true
+          rm -f /tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress
+        fi
+      changed_when: true
+    - name: "provision | Assert /usr/bin/python3 runs non-interactively (hard gate for Ludus deploy)"
+      when: macos_template_install_clt | bool
+      ansible.builtin.raw: /usr/bin/python3 -c 'import sys; print(sys.version)'
+      register: macos_template_py3
+      changed_when: false
+      failed_when: macos_template_py3.rc != 0
+    - name: "provision | Set a neutral, template-generic host name"
+      become: true
+      ansible.builtin.raw: >
+        scutil --set ComputerName macos-template &&
+        scutil --set HostName macos-template &&
+        scutil --set LocalHostName macos-template
+      changed_when: true
+    - name: "provision | Disable display/system/disk sleep (a lab VM must not suspend)"
+      become: true
+      ansible.builtin.raw: >
+        systemsetup -setsleep Never;
+        pmset -a sleep 0 displaysleep 0 disksleep 0
+      changed_when: true
+    - name: "provision | Ensure Remote Login (SSH) stays enabled in the captured image"
+      become: true
+      ansible.builtin.raw: systemsetup -setremotelogin on
+      changed_when: false
+    - name: "provision | Disable automatic software updates (keep the pinned OS, esp. betas)"
+      become: true
+      ansible.builtin.raw: >
+        softwareupdate --schedule off 2>/dev/null || true;
+        defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticCheckEnabled -bool false;
+        defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticDownload -bool false;
+        defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticallyInstallMacOSUpdates -bool false;
+        defaults write /Library/Preferences/com.apple.commerce AutoUpdate -bool false
+      changed_when: true
+    - name: "provision | Install a QEMU guest agent (required for `ludus range deploy` IP discovery)"
+      when:
+        - macos_template_install_guest_agent | bool
+        - (macos_template_guest_agent_checksum | default('')) | length > 0
+      block:
+        - name: "provision | Guest-agent checksum must be a SHA variant (shasum has no md5)"
+          ansible.builtin.assert:
+            that: macos_template_guest_agent_checksum.split(':')[0] in ['sha1', 'sha224', 'sha256', 'sha384', 'sha512']
+            fail_msg: >-
+              macos_template_guest_agent_checksum must use sha1/224/256/384/512 (shasum has no md5);
+              got '{{ macos_template_guest_agent_checksum.split(':')[0] }}'.
+            quiet: true
+        - name: "provision | Download the guest agent into the guest"
+          ansible.builtin.raw: curl -fsSL -o /tmp/mac-guest-agent "{{ macos_template_guest_agent_url }}"
+          changed_when: true
+        - name: "provision | Verify the guest agent checksum in-guest"
+          ansible.builtin.raw: >-
+            echo "{{ macos_template_guest_agent_checksum.split(':')[1] }}  /tmp/mac-guest-agent"
+            | shasum -a {{ macos_template_guest_agent_checksum.split(':')[0] | regex_replace('^sha', '') }} -c -
+          changed_when: false
+        - name: "provision | Install the guest agent (extracts host-native slice, loads a LaunchDaemon)"
+          become: true
+          ansible.builtin.raw: chmod +x /tmp/mac-guest-agent && /tmp/mac-guest-agent --install
+          changed_when: true
+    - name: "provision | Warn if the guest agent was skipped (Ludus deploy will not find the IP)"
+      when: not (macos_template_install_guest_agent | bool) or ((macos_template_guest_agent_checksum | default('')) | length == 0)
+      ansible.builtin.debug:
+        msg: >-
+          Guest agent NOT installed. `ludus range deploy` resolves a VM's IP only via
+          the guest agent, so set macos_template_guest_agent_checksum (and keep
+          macos_template_install_guest_agent true) or handle IPs another way.
+    - name: "provision | Regenerate SSH host keys on next boot (clones must not share keys)"
+      become: true
+      ansible.builtin.raw: rm -f /etc/ssh/ssh_host_*
+      changed_when: true
+    - name: "provision | Reset saved network interfaces so clones enumerate the NIC fresh"
+      become: true
+      ansible.builtin.raw: rm -f /Library/Preferences/SystemConfiguration/NetworkInterfaces.plist
+      changed_when: true
+    - name: "provision | Best-effort cleanup so clones do not share install-time cruft"
+      become: true
+      ansible.builtin.raw: >
+        rm -rf /private/var/log/* /Library/Logs/* 2>/dev/null;
+        rm -rf /Users/*/Library/Caches/* /Library/Caches/* 2>/dev/null; true
+      changed_when: true
+    - name: "provision | Embed OpenCore's EFI onto the disk ESP (so no ISO stays attached)"
+      when: macos_template_embed_opencore | bool
+      block:
+        - name: "provision | Copy OpenCore EFI onto the system disk's ESP and verify"
+          become: true
+          ansible.builtin.raw: |
+            set -e
+            src=$(ls -d /Volumes/*/EFI_RELEASE/EFI 2>/dev/null | head -1)
+            [ -n "$src" ]
+            sysdisk=""
+            for d in $(diskutil list physical | awk '/^\/dev\/disk/{print $1}'); do
+              if diskutil list "$d" | grep -q Apple_APFS; then sysdisk="$d"; break; fi
+            done
+            [ -n "$sysdisk" ]
+            espid=$(diskutil list "$sysdisk" | awk '/ EFI /{print $NF; exit}')
+            [ -n "$espid" ]
+            diskutil mount "$espid"
+            espmnt=$(diskutil info "$espid" | awk -F': +' '/Mount Point/{print $2}')
+            cp -R "$src" "$espmnt/"
+            test -f "$espmnt/EFI/OC/OpenCore.efi" && test -f "$espmnt/EFI/BOOT/BOOTx64.efi" && test -f "$espmnt/EFI/OC/config.plist"
+            diskutil unmount "$espid"
+          changed_when: true
+        - name: "provision | Record that OpenCore is embedded (FINALIZE will drop both ISOs)"
+          ansible.builtin.set_fact:
+            macos_template_oc_embedded: true
+          delegate_to: localhost
+          delegate_facts: true
+      rescue:
+        - name: "provision | EFI embed failed - keep the OpenCore ISO attached instead"
+          ansible.builtin.set_fact:
+            macos_template_oc_embedded: false
+          delegate_to: localhost
+          delegate_facts: true
+        - name: "provision | Note the fallback"
+          ansible.builtin.debug:
+            msg: "Embedding OpenCore onto the ESP failed; the template will keep the OpenCore ISO attached as its boot device."
+    - name: "provision | Capture the macOS product version baked into this template"
+      ansible.builtin.raw: sw_vers
+      register: macos_template_swvers
+      changed_when: false
+    - name: "provision | Show the captured macOS version"
+      ansible.builtin.debug:
+        msg: "{{ macos_template_swvers.stdout_lines | default(['(sw_vers unavailable)']) }}"
+    - name: "provision | Mark provisioning successful (FINALIZE may convert to a template)"
+      ansible.builtin.set_fact:
+        macos_template_provision_ok: true
+      delegate_to: localhost
+      delegate_facts: true
+    - name: "provision | Shut the guest down cleanly (fire-and-forget; the SSH link drops)"
+      become: true
+      ansible.builtin.raw: shutdown -h now
+      async: 1
+      poll: 0
+      failed_when: false
+      changed_when: true
+  rescue:
+    - name: "provision | Provisioning failed - do NOT template a half-configured VM"
+      ansible.builtin.set_fact:
+        macos_template_provision_ok: false
+      delegate_to: localhost
+      delegate_facts: true
+    - name: "provision | Explain the provisioning failure"
+      ansible.builtin.debug:
+        msg: >-
+          In-guest provisioning failed on '{{ ansible_failed_task.name | default('unknown') }}'
+          ({{ ansible_failed_result.msg | default('no detail') }}). No template was
+          created; fix the cause and re-run the build to resume FINALIZE.

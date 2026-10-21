@@ -1,0 +1,32 @@
+---
+range_exchange_admin_password: password
+range_exchange_domainjoin_map:
+  konoha-mail: { domain: fire.ninja, dc_ip: "10.{{ ansible_host.split('.')[1] }}.10.15" }
+  suna-mail: { domain: wind.ninja, dc_ip: "10.{{ ansible_host.split('.')[1] }}.20.15" }
+  oto-mail: { domain: otogakure.ninja, dc_ip: "10.{{ ansible_host.split('.')[1] }}.30.10" }
+  dark-mail: { domain: akatsuki.dark, dc_ip: "10.{{ ansible_host.split('.')[1] }}.87.10" }
+range_exchange_child_domain_map:
+  konoha-mail: konohagakure.fire.ninja
+  suna-mail: sunagakure.wind.ninja
+  oto-mail: otogakure.ninja
+  dark-mail: akatsuki.dark
+range_exchange_org_map:
+  konoha-mail: { org: Konoha, domain: konohagakure.fire.ninja }
+  suna-mail: { org: Suna, domain: sunagakure.wind.ninja }
+  oto-mail: { org: Oto, domain: otogakure.ninja }
+  dark-mail: { org: Akatsuki, domain: akatsuki.dark }
+range_exchange_forest_root_map:
+  konoha-mail: fire.ninja
+  suna-mail: wind.ninja
+  oto-mail: otogakure.ninja
+  dark-mail: akatsuki.dark
+range_exchange_orgs:
+  konoha-mail: { domain: konohagakure.fire.ninja, ip: "10.{{ ansible_host.split('.')[1] }}.10.20" }
+  suna-mail: { domain: sunagakure.wind.ninja, ip: "10.{{ ansible_host.split('.')[1] }}.20.20" }
+  oto-mail: { domain: otogakure.ninja, ip: "10.{{ ansible_host.split('.')[1] }}.30.20" }
+  dark-mail: { domain: akatsuki.dark, ip: "10.{{ ansible_host.split('.')[1] }}.87.20" }
+range_exchange_iso_url: https://download.microsoft.com/download/7/0/a/70a4d908-eacb-426e-ad9f-e7768e27f873/ExchangeServer2019-x64-cu15.iso
+range_exchange_nexus_dotnet: http://192.0.2.2:8081/repository/raw-hosted/tools/exchange/ndp48-x86-x64-allos-enu.exe
+range_exchange_nexus_vcredist: http://192.0.2.2:8081/repository/raw-hosted/tools/exchange/vcredist2013_x64.exe
+range_exchange_nexus_rewrite: http://192.0.2.2:8081/repository/raw-hosted/tools/exchange/rewrite_amd64_en-US.msi
+range_exchange_nexus_ucma: http://192.0.2.2:8081/repository/raw-hosted/tools/exchange/UcmaRuntimeSetup.exe

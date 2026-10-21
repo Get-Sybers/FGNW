@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ page.url }} — Reference</title>
+<style>
+ body{margin:0;font-family:'Helvetica Neue',Arial,sans-serif;background: #f4f4f4;
+ .top{background: #f4f4f4;
+ .wrap{max-width:940px;margin:0 auto;padding:20px 24px;display:grid;grid-template-columns:1fr 260px;gap:26px}
+ h1{font-family:Georgia,serif;font-weight:normal;border-bottom:3px solid {{ village_accent | default('#a2a9b1', true) }};padding-bottom:6px;font-size:1.7rem;margin:0 0 12px}
+ h2{font-family:Georgia,serif;font-weight:normal;border-bottom:1px solid
+ .infobox{background: #fff;
+ .infobox th{text-align:left;color: #333;
+ .see a{display:block;color: #0366d6;
+ p{margin:10px 0}
+ .ref{font-size:.8rem;color: #333;
+ .charblock{margin:14px 0;padding:10px 14px;background: #f4f4f4;
+ .charblock h3{margin:0 0 6px;font-size:1rem}
+ .charblock ul{margin:4px 0;padding-left:20px;font-size:.88rem}
+ .charblock blockquote{margin:8px 0 0;padding-left:10px;border-left:2px solid
+</style></head>
+<body>
+<div class="top">Shinobi Reference &middot; {{ page.category }} &middot; {{ page.village }}</div>
+<div class="wrap">
+ <article>
+  <h1>{{ page.url }}</h1>
+  <p><strong>{{ page.url }}</strong> is a {{ page.category | lower }} resource associated with {{ page.village }}. {{ page.description }}.</p>
+  <h2>Overview</h2>
+  <p>{{ page.description }}. This resource is maintained for the benefit of shinobi seeking authoritative information on the subject. Content is reviewed periodically by the relevant division.</p>
+  <h2>History</h2>
+  <p>Records on this topic date back several generations. Much of the underlying knowledge was consolidated after the founding of the hidden villages and refined through the great wars.</p>
+{% if link.full_index | default(false) %}
+  <h2>Technique Directory</h2>
+  <p>The most complete public index of known jutsu on file, organized by shinobi.</p>
+{% for cname, prof in character_profiles.items() %}
+  <div class="charblock">
+   <h3>{{ cname }}</h3>
+{% if prof.jutsu %}   <ul>{% for j in prof.jutsu %}<li>{{ j }}</li>{% endfor %}</ul>
+{% endif %}  </div>
+{% endfor %}
+  <div class="charblock">
+   <h3>Unattributed / classified techniques</h3>
+   <ul>{% for t in general_techniques %}<li>{{ t }}</li>{% endfor %}</ul>
+  </div>
+{% elif (link.characters is defined) or (link.general_techniques is defined) %}
+  <h2>Notable Techniques</h2>
+{% for cname in link.characters | default([]) %}
+{% set prof = character_profiles[cname] %}
+  <div class="charblock">
+   <h3>{{ cname }}</h3>
+{% if prof.jutsu %}   <ul>{% for j in prof.jutsu %}<li>{{ j }}</li>{% endfor %}</ul>
+{% endif %}{% if prof.quotes %}   <blockquote>&ldquo;{{ prof.quotes[0] }}&rdquo;</blockquote>
+{% endif %}  </div>
+{% endfor %}
+{% if link.general_techniques is defined %}
+  <div class="charblock">
+   <h3>Related techniques on file</h3>
+   <ul>{% for t in link.general_techniques %}<li>{{ t }}</li>{% endfor %}</ul>
+  </div>
+{% endif %}
+{% endif %}
+  <h2>See also</h2>
+  <div class="see">
+{% for r in related[:14] %}   <a href="http://{{ r }}/">{{ r }}</a>
+{% endfor %}{% if related|length == 0 %}   <em>No cross-references.</em>{% endif %}
+  </div>
+  <p class="ref">References: internal {{ page.village }} archives. This article is fan-made fiction (Fourth Great Ninja War range) and cites no real sources.</p>
+ </article>
+ <aside class="infobox">
+  <table>
+   <tr><th>Topic</th><td>{{ page.url }}</td></tr>
+   <tr><th>Category</th><td>{{ page.category }}</td></tr>
+   <tr><th>Affiliation</th><td>{{ page.village }}</td></tr>
+   <tr><th>Status</th><td>Active</td></tr>
+  </table>
+ </aside>
+</div>
+</body></html>

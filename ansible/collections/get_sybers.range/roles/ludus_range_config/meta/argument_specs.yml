@@ -1,0 +1,40 @@
+---
+argument_specs:
+  main:
+    short_description: Push a range configuration to Ludus idempotently
+    description:
+      - Optionally materializes a blueprint master over the users/ copy, asserts the config lives under the CLI-wrapper's users/ root, preflights that every
+        referenced template is built, then compares parsed live-vs-desired YAML and only runs `range config set` when they differ (so a second run is
+        changed=0).
+    options:
+      ludus_range_config_src:
+        type: str
+        default: ""
+        description:
+          - Path under ludus_range_config_users_root to the range-config.yml to push.
+          - Effectively required, but NOT marked `required:` here. defaults/main.yml supplies "", so the spec validator would always see a value and never fire;
+            the real guard is the "config | preflight" assert (length > 0) and the "config | assert it exists under ..." stat/assert.
+      ludus_range_config_blueprint_src:
+        type: str
+        default: ""
+        description:
+          - Optional path to a blueprint master copied over ludus_range_config_src before the push, so the
+              users/ copy and the pushed file cannot disagree (ERR-03).
+          - Empty (the default) pushes an already-placed file unchanged.
+      ludus_range_config_template_check:
+        type: bool
+        default: true
+        description:
+          - When true, resolve every `template:` in the config against `ludus templates list --json` and refuse to push if any is unbuilt or unknown, so the
+            failure names the template instead of surfacing later at VM creation.
+      ludus_range_config_users_root:
+        type: str
+        default: /opt/ludus/users
+        description:
+          - The only root the ludus-cli-wrapper permits `range config set -f` from. Both the blueprint-destination assert and the config-exists assert key on
+            it.
+      ludus_range_config_bin:
+        type: str
+        default: /usr/local/bin/ludus
+        description:
+          - Path to the ludus CLI binary invoked for templates list, config get and config set.

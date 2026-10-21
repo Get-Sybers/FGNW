@@ -1,0 +1,68 @@
+---
+- name: "install | Install via the Nexus apt proxy"
+  ansible.builtin.include_tasks: install-nexus-apt.yml
+  when: zeek_sensor_install_source == 'nexus_apt'
+- name: "install | Install from staged, digest-pinned .debs"
+  ansible.builtin.include_tasks: install-staged-deb.yml
+  when: zeek_sensor_install_source == 'staged_deb'
+# `command -v` is a shell builtin (no module resolves a PATH lookup), so this probe
+# needs the shell; it reads and never changes anything.
+- name: "install | Locate zeekctl" # noqa: command-instead-of-shell
+  ansible.builtin.shell: "command -v zeekctl"
+  register: __zeek_which
+  changed_when: false
+  failed_when: false
+- name: "install | Assert zeekctl is on PATH after install"
+  ansible.builtin.assert:
+    that: __zeek_which.rc == 0 and (__zeek_which.stdout | trim | length) > 0
+    fail_msg: >-
+      zeekctl is not on PATH after installing
+      {{ zeek_sensor_packages | join(', ') }}. The package set does not contain
+      zeekctl for this distribution — check zeek_sensor_packages (Debian's
+      `zeek` metapackage pulls zeek-core + zeekctl; the OBS/zeek.org packaging
+      splits differently and installs under /opt/zeek).
+    quiet: true
+- name: "install | Read zeekctl's effective configuration"
+  ansible.builtin.command: "{{ __zeek_which.stdout | trim }} config"
+  register: __zeek_cfg_raw
+  changed_when: false
+  check_mode: false
+  failed_when: false
+- name: "install | Split zeekctl config into key/value pairs"
+  ansible.builtin.set_fact:
+    zeek_sensor_bin: "{{ __zeek_which.stdout | trim }}"
+    __zeek_cfg_pairs: >-
+      {{ __zeek_cfg_raw.stdout_lines
+         | map('regex_search', '^\\s*([A-Za-z0-9_]+)\\s*=\\s*(.*?)\\s*$', '\\1', '\\2')
+         | select()
+         | list }}
+- name: "install | Fold them into a case-normalised dict"
+  ansible.builtin.set_fact:
+    zeek_sensor_cfg: >-
+      {{ dict(__zeek_cfg_pairs | map('first') | map('lower')
+              | zip(__zeek_cfg_pairs | map('last')) | list) }}
+- name: "install | Assert the layout keys we depend on are present"
+  ansible.builtin.assert:
+    that:
+      - "'cfgdir' in zeek_sensor_cfg"
+      - "'sitepolicypath' in zeek_sensor_cfg"
+      - "'logdir' in zeek_sensor_cfg"
+      - "'spooldir' in zeek_sensor_cfg"
+    fail_msg: >-
+      `zeekctl config` did not report cfgdir/sitepolicypath/logdir/spooldir, so
+      the installed layout cannot be derived — and this role will not guess it,
+      because a wrong path here means configuring a Zeek that is not the one
+      running. Exit status was {{ __zeek_cfg_raw.rc }}.
+      stdout: {{ __zeek_cfg_raw.stdout | default('') | truncate(400) }}
+      stderr: {{ __zeek_cfg_raw.stderr | default('') | truncate(400) }}
+    quiet: true
+- name: "install | Resolve the concrete paths"
+  ansible.builtin.set_fact:
+    zeek_sensor_cfgdir: "{{ zeek_sensor_cfg['cfgdir'] }}"
+    zeek_sensor_sitedir: "{{ zeek_sensor_cfg['sitepolicypath'].split(':')[0] }}"
+    zeek_sensor_logdir: "{{ zeek_sensor_cfg['logdir'] }}"
+    zeek_sensor_spooldir: "{{ zeek_sensor_cfg['spooldir'] }}"
+    zeek_sensor_base: "{{ zeek_sensor_cfg['zeekbase'] | default('/usr') }}"
+- name: "install | Unprivileged service account and capabilities"
+  ansible.builtin.include_tasks: install-service-account.yml
+  when: zeek_sensor_user != 'root'

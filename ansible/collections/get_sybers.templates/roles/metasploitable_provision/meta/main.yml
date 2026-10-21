@@ -1,0 +1,22 @@
+---
+galaxy_info:
+  role_name: metasploitable_provision
+  namespace: get_sybers
+  author: Get-Sybers
+  description: >-
+    One-time provisioning for an imported-disk-image Linux template (the
+    Metasploitable targets) before it is converted to a Ludus template:
+    regenerate SSH host keys so clones do not share them, clear machine-id, and
+    best-effort install qemu-guest-agent. Uses raw only, for very old guests
+    that may lack a usable Python.
+  license: AGPL-3.0-only
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Ubuntu
+      versions: [all]
+  galaxy_tags:
+    - linux
+    - packer
+    - ludus
+    - metasploitable
+dependencies: []

@@ -1,0 +1,15 @@
+---
+- name: "configure_runtime | Create ninjasploitable user"
+  ansible.builtin.user:
+    name: msfadmin
+    password: "{{ ninjasploitable_admin_password | password_hash('sha512') }}"
+    shell: /bin/bash
+    state: present
+    update_password: on_create
+  no_log: true
+- name: "configure_runtime | Configure FTP to allow anonymous access (vulnerable)"
+  ansible.builtin.lineinfile:
+    path: /etc/vsftpd.conf
+    regexp: ^anonymous_enable=
+    line: anonymous_enable=YES
+  notify: Restart vsftpd

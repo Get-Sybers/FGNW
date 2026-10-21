@@ -1,0 +1,9 @@
+---
+- name: "install-plugins | Install audispd-plugins"
+  ansible.builtin.apt:
+    name: audispd-plugins
+    state: present
+  register: __acsc_auditd_apt_plugins
+  retries: 3
+  delay: 10
+  until: __acsc_auditd_apt_plugins is succeeded

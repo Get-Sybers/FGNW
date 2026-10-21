@@ -1,0 +1,15 @@
+---
+# Sand-village mail server (macOS Postfix/Dovecot). Replaces the Exchange 2019 path for
+# Sunagakure. The three other villages (Konoha, Oto, Akatsuki) still run Exchange via
+# FGNW-exchange.yml, and the Thunderbird CLIENT for every workstation in the range —
+# this Sand mail server included — is now driven by FGNW-thunderbird.yml (Phase 4e).
+#
+# Server play runs on suna-mail only (filtered from macos_dev by hostname).
+- name: Sand mail server — Postfix + Dovecot on suna-mail
+  hosts: macos_dev
+  gather_facts: true
+  tasks:
+    - name: Stand up Postfix + Dovecot
+      ansible.builtin.include_role:
+        name: fgnw_mac_mail_server
+      when: inventory_hostname == 'suna-mail'

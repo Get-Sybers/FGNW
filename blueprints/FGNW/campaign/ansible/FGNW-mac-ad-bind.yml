@@ -1,0 +1,27 @@
+---
+# Bind the Sand macOS hosts to sunagakure.wind.ninja via Apple's dsconfigad. The role is
+# idempotent, so this play is safe to re-run.
+#
+# Preconditions this play relies on (the deploy orchestrator sequences them):
+#   * Phase 3 has run — the Sand child DC (suna-dc1) and its parent (wind-dc1) exist,
+#     and `domainadmin` (the Ludus/Shinju default admin principal, created by the
+#     range_ad_mgmt role) is a member of Domain Admins on sunagakure.wind.ninja.
+#   * Containment is up but the DC is reachable on vlan 20 (internal), which it is —
+#     only internet egress is sealed; VLAN traffic is unaffected.
+#
+# Admin principal: `domainadmin` + the lab-wide `password`, same hardcoded pattern the
+# other campaign plays use (FGNW-exchange.yml uses `__lab_admin_password: password`).
+- name: AD-bind the Sand macOS hosts to sunagakure.wind.ninja
+  hosts: macos_dev
+  gather_facts: true
+  vars:
+    __lab_admin_user: domainadmin
+    __lab_admin_password: password
+  tasks:
+    - name: Run the dsconfigad wrapper
+      ansible.builtin.include_role:
+        name: fgnw_mac_dsconfigad
+      vars:
+        fgnw_mac_dsconfigad_admin_user: "{{ __lab_admin_user }}"
+        fgnw_mac_dsconfigad_admin_password: "{{ __lab_admin_password }}"
+      no_log: true

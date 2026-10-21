@@ -1,0 +1,12 @@
+---
+wireshark_version: "latest"
+wireshark_installer_url: "http://192.0.2.2:8081/repository/raw-hosted/tools/wireshark/Wireshark-latest-x64.exe"
+wireshark_installer_path: "C:\\temp\\Wireshark-{{ wireshark_version }}-x64.exe"
+wireshark_install_dir: "C:\\Program Files\\Wireshark"
+wireshark_silent_install: true
+wireshark_install_npcap: true
+wireshark_install_usb_capture: false
+wireshark_create_desktop_shortcut: true
+wireshark_create_start_menu_shortcut: true
+wireshark_validate_installation: true
+wireshark_service_timeout: 30

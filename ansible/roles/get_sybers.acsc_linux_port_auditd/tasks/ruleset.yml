@@ -1,0 +1,23 @@
+---
+- name: "ruleset | Remove superseded rule files"
+  ansible.builtin.file:
+    path: "/etc/audit/rules.d/{{ item }}"
+    state: absent
+  loop: "{{ acsc_auditd_stale_rule_files }}"
+  loop_control: { label: "{{ item }}" }
+  register: __acsc_auditd_stale_removed
+- name: "ruleset | Render the ACSC-Linux-Port-Auditd ruleset"
+  ansible.builtin.template:
+    src: acsc-linux-port-auditd.rules.j2
+    dest: "{{ acsc_auditd_rules_path }}"
+    owner: root
+    group: root
+    mode: "0640"
+  register: __acsc_auditd_rules
+- name: "ruleset | Read the rendered ruleset back"
+  ansible.builtin.slurp:
+    src: "{{ acsc_auditd_rules_path }}"
+  register: __acsc_auditd_rendered
+  failed_when:
+    - __acsc_auditd_rendered.content is not defined
+    - not ansible_check_mode

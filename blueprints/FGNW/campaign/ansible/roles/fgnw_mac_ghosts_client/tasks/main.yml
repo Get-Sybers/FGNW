@@ -1,0 +1,12 @@
+---
+# Install the GHOSTS Universal client (prestage) and run it as a launchd daemon (service).
+# The two parts split across containment: the GitHub tarball comes down in Phase 1c (pre-
+# containment, when egress is still open), and the launchd service is loaded in Phase 4d
+# (post-containment, after AD is up). The role's `fgnw_mac_ghosts_client_phase` var selects which.
+- name: Run the prestage tasks (download + extract + ApiRootUrl rewrite)
+  ansible.builtin.include_tasks: prestage.yml
+  when: fgnw_mac_ghosts_client_phase in ['prestage', 'all']
+
+- name: Run the service tasks (launchd plist + bootstrap)
+  ansible.builtin.include_tasks: service.yml
+  when: fgnw_mac_ghosts_client_phase in ['service', 'all']

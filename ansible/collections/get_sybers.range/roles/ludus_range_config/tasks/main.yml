@@ -1,0 +1,153 @@
+---
+- name: Preflight
+  ansible.builtin.assert:
+    that:
+      - __ludus_api_key is defined
+      - ludus_range_config_src | length > 0
+    fail_msg: ludus_range_config needs ludus_auth to have run and ludus_range_config_src set.
+    quiet: true
+- name: Assert the destination is under the users/ root before writing
+  ansible.builtin.assert:
+    that: ludus_range_config_src is match('^' ~ (ludus_range_config_users_root | regex_escape) ~ '/')
+    fail_msg: >-
+      ludus_range_config_src ({{ ludus_range_config_src }}) must be under {{ ludus_range_config_users_root }};
+      refusing to materialize the blueprint outside it.
+    quiet: true
+  when: ludus_range_config_blueprint_src | length > 0
+- name: Materialize the blueprint master into users/
+  ansible.builtin.copy:
+    src: "{{ ludus_range_config_blueprint_src }}"
+    dest: "{{ ludus_range_config_src }}"
+    mode: "0640"
+    remote_src: true
+  when: ludus_range_config_blueprint_src | length > 0
+- name: Assert the config is a real file under the users/ root (CLI-wrapper guardrail)
+  block:
+    - name: Stat the desired config
+      ansible.builtin.stat:
+        path: "{{ ludus_range_config_src }}"
+      register: __ludus_cfg_stat
+    - name: "Assert it exists under {{ ludus_range_config_users_root }}"
+      ansible.builtin.assert:
+        that:
+          - __ludus_cfg_stat.stat.exists
+          - __ludus_cfg_stat.stat.isreg
+          - ludus_range_config_src | realpath is match('^' ~ (ludus_range_config_users_root | regex_escape) ~ '/')
+        fail_msg: >-
+          {{ ludus_range_config_src }} must be an existing file under {{ ludus_range_config_users_root }}
+          (the ludus-cli-wrapper refuses `config set` from anywhere else — ERR-03).
+        quiet: true
+- name: Template preflight
+  when: ludus_range_config_template_check | bool
+  block:
+    - name: List the templates this server has
+      ansible.builtin.command:
+        argv: ["{{ ludus_range_config_bin }}", templates, list, --json]
+      environment:
+        LUDUS_API_KEY: "{{ __ludus_api_key }}"
+      register: __ludus_tpl_list
+      changed_when: false
+      failed_when: false
+      no_log: true
+    - name: Read the config for its template references
+      ansible.builtin.slurp:
+        src: "{{ ludus_range_config_src }}"
+      register: __ludus_cfg_tpl_probe
+    - name: Assert the template list returned JSON
+      ansible.builtin.assert:
+        that:
+          - (__ludus_tpl_list.rc | default(1)) == 0
+          - (__ludus_tpl_list.stdout | default('') | trim).startswith('[')
+        fail_msg: >-
+          NOT CHECKED: `ludus templates list --json` did not return JSON
+          (rc={{ __ludus_tpl_list.rc | default('?') }}). Refusing to treat an
+          unreadable template list as "all templates present" — a deploy would
+          fail later at VM creation. Fix auth/connectivity and re-run, or set
+          ludus_range_config_template_check=false to accept the risk deliberately.
+        quiet: true
+    - name: Parse the template list and derive the BUILT set
+      ansible.builtin.set_fact:
+        __ludus_tpl_referenced: >-
+          {{ ((__ludus_cfg_tpl_probe.content | b64decode | from_yaml).ludus | default([]))
+             | selectattr('template', 'defined') | map(attribute='template') | unique | list }}
+        __ludus_tpl_built: >-
+          {{ (__ludus_tpl_list.stdout | from_json) | selectattr('built') | map(attribute='name') | list }}
+        __ludus_tpl_known: >-
+          {{ (__ludus_tpl_list.stdout | from_json) | map(attribute='name') | list }}
+    - name: Split the failures by cause
+      ansible.builtin.set_fact:
+        __ludus_tpl_unbuilt: >-
+          {{ __ludus_tpl_referenced | reject('in', __ludus_tpl_built)
+             | select('in', __ludus_tpl_known) | list }}
+        __ludus_tpl_unknown: >-
+          {{ __ludus_tpl_referenced | reject('in', __ludus_tpl_known) | list }}
+    - name: Assert every referenced template is BUILT
+      ansible.builtin.assert:
+        that:
+          - __ludus_tpl_unbuilt | length == 0
+          - __ludus_tpl_unknown | length == 0
+        fail_msg: >-
+          {{ ludus_range_config_src }} cannot deploy — the failure would otherwise surface
+          at VM creation with an error that does not name the template.
+          {% if __ludus_tpl_unbuilt | length > 0 %}
+          REGISTERED BUT NOT BUILT ({{ __ludus_tpl_unbuilt | length }}):
+          {{ __ludus_tpl_unbuilt | join(', ') }}.
+          NEXT: ludus templates build -n {{ __ludus_tpl_unbuilt | first }}
+          (hours for a Windows image), then `ludus templates list` to confirm.
+          {% endif %}
+          {% if __ludus_tpl_unknown | length > 0 %}
+          NOT KNOWN TO LUDUS AT ALL ({{ __ludus_tpl_unknown | length }}):
+          {{ __ludus_tpl_unknown | join(', ') }} — the definition was never registered,
+          so building it will not help.
+          NEXT: register the template definition first (see the ludus-templates-load
+          skill: register, THEN build), or correct the `template:` name in the config.
+          {% endif %}
+        success_msg: >-
+          All {{ __ludus_tpl_referenced | length }} referenced template(s) are built:
+          {{ __ludus_tpl_referenced | join(', ') }}.
+        quiet: true
+    - name: "Negative control: a template that cannot exist is NOT built"
+      ansible.builtin.assert:
+        that: "'nonexistent-probe-template' not in __ludus_tpl_built"
+        fail_msg: >-
+          The built-template set reports a template that cannot exist — the list is
+          not trustworthy, so the preflight above proves nothing.
+        quiet: true
+- name: Read the desired config
+  ansible.builtin.slurp:
+    src: "{{ ludus_range_config_src }}"
+  register: __ludus_cfg_desired
+- name: Fetch the live range config
+  ansible.builtin.command:
+    argv: ["{{ ludus_range_config_bin }}", range, config, get]
+  environment:
+    LUDUS_API_KEY: "{{ __ludus_api_key }}"
+  register: __ludus_cfg_live
+  changed_when: false
+  failed_when: false
+  no_log: true
+- name: Parse desired + live config as YAML
+  ansible.builtin.set_fact:
+    __ludus_cfg_desired_yaml: "{{ __ludus_cfg_desired.content | b64decode | from_yaml }}"
+    __ludus_cfg_live_yaml: >-
+      {{ (__ludus_cfg_live.stdout | from_yaml)
+         if ((__ludus_cfg_live.rc | default(1)) == 0
+             and (__ludus_cfg_live.stdout | default('') | trim | length) > 0)
+         else None }}
+- name: Decide whether the config needs setting
+  ansible.builtin.set_fact:
+    __ludus_cfg_needs_set: "{{ __ludus_cfg_live_yaml is none or (__ludus_cfg_desired_yaml != __ludus_cfg_live_yaml) }}"
+- name: Set the range config (only when it differs)
+  ansible.builtin.command:
+    argv: ["{{ ludus_range_config_bin }}", range, config, set, -f, "{{ ludus_range_config_src }}"]
+  environment:
+    LUDUS_API_KEY: "{{ __ludus_api_key }}"
+  register: __ludus_cfg_set
+  when: __ludus_cfg_needs_set | bool
+  changed_when: __ludus_cfg_needs_set | bool
+  no_log: true
+- name: Report
+  ansible.builtin.debug:
+    msg: >-
+      Range config {{ 'SET from ' ~ ludus_range_config_src if __ludus_cfg_needs_set | bool
+                       else 'already current (no change)' }}.

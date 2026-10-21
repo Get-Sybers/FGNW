@@ -1,0 +1,9 @@
+---
+- name: "update-existing | Update existing subscriptions whose XML changed"
+  ansible.windows.win_command: >-
+    wecutil ss "{{ item }}" /cf:"{{ acsc_wef_stage_dir }}\{{ __acsc_wef_map[item] }}"
+  loop: "{{ __acsc_wef_wanted | intersect(__acsc_wef_present) }}"
+  loop_control:
+    label: "{{ item }}"
+  register: __acsc_wef_updated
+  changed_when: __acsc_wef_updated.rc == 0

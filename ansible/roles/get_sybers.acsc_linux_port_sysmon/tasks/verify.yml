@@ -1,0 +1,8 @@
+---
+- name: "verify | Verify the running config is ours"
+  ansible.builtin.command: sysmon -s
+  register: __acsc_sysmon_running
+  changed_when: false
+  failed_when:
+    - __acsc_sysmon_running.rc != 0
+    - not __acsc_sysmon_ebpf_doubtful | bool

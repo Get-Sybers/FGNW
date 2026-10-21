@@ -1,0 +1,17 @@
+---
+galaxy_info:
+  author: Get-Sybers
+  namespace: get_sybers
+  description: >-
+    Range lifecycle (S4): read-only fused range diagnostic. Combine `range list`
+    with `range logs` (only when the state is unhealthy) into one structured
+    `ludus_range_health_result` fact and a human report; optionally assert healthy for gate use.
+    Never mutates state and never uses the MCP — Ludus CLI/API only; touches no guest.
+  role_name: ludus_range_health
+  license: AGPL-3.0-only
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Debian
+      versions:
+        - all
+dependencies: []

@@ -1,0 +1,7 @@
+---
+- name: Apply ACSC Windows Event Logging and Forwarding baseline
+  hosts: windows_realname
+  tasks:
+    - name: "Acsc-logging: apply the ACSC event logging and forwarding baseline"
+      ansible.builtin.include_role:
+        name: get_sybers.acsc_event_logging

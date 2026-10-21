@@ -1,0 +1,50 @@
+---
+- name: "install-staged-deb | Install (staged) — create the target staging directory"
+  ansible.builtin.file:
+    path: "{{ zeek_sensor_node_stage_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0750"
+- name: "install-staged-deb | Install (staged) — push the digest-gated .debs"
+  ansible.builtin.copy:
+    src: "{{ zeek_sensor_stage_dir }}/{{ item.deb }}"
+    dest: "{{ zeek_sensor_node_stage_dir }}/{{ item.deb }}"
+    owner: root
+    group: root
+    mode: "0640"
+  loop: "{{ zeek_sensor_artefacts }}"
+  loop_control:
+    label: "{{ item.deb }}"
+- name: "install-staged-deb | Install (staged) — re-verify the pushed artefact digests"
+  ansible.builtin.stat:
+    path: "{{ zeek_sensor_node_stage_dir }}/{{ item.deb }}"
+    checksum_algorithm: sha256
+  loop: "{{ zeek_sensor_artefacts }}"
+  loop_control:
+    label: "{{ item.deb }}"
+  register: __zeek_digest
+  failed_when: __zeek_digest.stat.checksum != item.sha256
+- name: "install-staged-deb | Install (staged) — gather installed-package facts"
+  ansible.builtin.package_facts:
+    manager: apt
+- name: "install-staged-deb | Install (staged) — resolve which artefacts are not already pinned"
+  ansible.builtin.set_fact:
+    __zeek_to_install: >-
+      {{ __zeek_to_install | default([]) + ([item] if item.version not in
+         (ansible_facts.packages[item.name] | default([]) | map(attribute='version') | list)
+         else []) }}
+  loop: "{{ zeek_sensor_artefacts }}"
+  loop_control:
+    label: "{{ item.deb }}"
+- name: "install-staged-deb | Install (staged) — install the artefacts in order"
+  ansible.builtin.apt:
+    deb: "{{ zeek_sensor_node_stage_dir }}/{{ item.deb }}"
+  loop: "{{ __zeek_to_install | default([]) }}"
+  loop_control:
+    label: "{{ item.deb }}"
+- name: "install-staged-deb | Install (staged) — capture tooling must also be present"
+  ansible.builtin.apt:
+    name: "{{ zeek_sensor_support_packages }}"
+    state: present
+    update_cache: false

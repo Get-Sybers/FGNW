@@ -1,0 +1,1986 @@
+---
+email_relationships:
+  a.raikage:
+    - to: amai
+      relationship: direct_report
+    - to: c.cloud
+      relationship: direct_report
+    - to: darui
+      relationship: direct_report
+    - to: dodai
+      relationship: direct_report
+    - to: io
+      relationship: direct_report
+    - to: kayui
+      relationship: direct_report
+    - to: killer.b
+      relationship: direct_report
+    - to: mabui
+      relationship: direct_report
+    - to: motoi
+      relationship: direct_report
+    - to: samui
+      relationship: direct_report
+    - to: toroi
+      relationship: direct_report
+    - to: yugito.nii
+      relationship: direct_report
+    - to: gaara
+      relationship: "team: Kage Assembly"
+    - to: mei.terumi
+      relationship: "team: Kage Assembly"
+    - to: onoki
+      relationship: "team: Kage Assembly"
+    - to: yagura
+      relationship: "team: Kage Assembly"
+  a.third.raikage:
+    - to: a.raikage
+      relationship: department_fallback
+    - to: amai
+      relationship: department_fallback
+    - to: atsui
+      relationship: department_fallback
+    - to: c.cloud
+      relationship: department_fallback
+    - to: darui
+      relationship: department_fallback
+    - to: dodai
+      relationship: department_fallback
+    - to: ginkaku
+      relationship: department_fallback
+    - to: io
+      relationship: department_fallback
+    - to: karui
+      relationship: department_fallback
+  akatsuchi:
+    - to: onoki
+      relationship: manager
+  amai:
+    - to: a.raikage
+      relationship: manager
+  anko.mitarashi:
+    - to: hiruzen.sarutobi
+      relationship: manager
+    - to: ibiki.morino
+      relationship: "team: T&I Division"
+  ao:
+    - to: mei.terumi
+      relationship: manager
+  asuma.sarutobi:
+    - to: hiruzen.sarutobi
+      relationship: manager
+    - to: choji.akimichi
+      relationship: direct_report
+    - to: ino.yamanaka
+      relationship: direct_report
+    - to: shikamaru.nara
+      relationship: direct_report
+    - to: asuma.sarutobi.edo
+      relationship: "team: Sarutobi Clan"
+    - to: hiruzen.sarutobi.edo
+      relationship: "team: Sarutobi Clan"
+    - to: hiruzen.young
+      relationship: "team: Sarutobi Clan"
+    - to: konohamaru.sarutobi
+      relationship: "team: Sarutobi Clan"
+  asuma.sarutobi.edo:
+    - to: kabuto.yakushi
+      relationship: manager
+    - to: asuma.sarutobi
+      relationship: "team: Sarutobi Clan"
+    - to: hiruzen.sarutobi
+      relationship: "team: Sarutobi Clan"
+    - to: hiruzen.sarutobi.edo
+      relationship: "team: Sarutobi Clan"
+    - to: hiruzen.young
+      relationship: "team: Sarutobi Clan"
+    - to: konohamaru.sarutobi
+      relationship: "team: Sarutobi Clan"
+  asura.otsutsuki:
+    - to: hagoromo.otsutsuki
+      relationship: manager
+  atsui:
+    - to: samui
+      relationship: manager
+  ayame:
+    - to: teuchi
+      relationship: manager
+  baki:
+    - to: gaara
+      relationship: manager
+    - to: misumi.tsurugi
+      relationship: direct_report
+  black.zetsu:
+    - to: kaguya.otsutsuki
+      relationship: manager
+  c.cloud:
+    - to: a.raikage
+      relationship: manager
+    - to: darui
+      relationship: "team: Cloud Jonin"
+    - to: samui
+      relationship: "team: Cloud Jonin"
+  chiyo:
+    - to: gaara
+      relationship: manager
+  choji.akimichi:
+    - to: asuma.sarutobi
+      relationship: manager
+    - to: ino.yamanaka
+      relationship: "team: Team 10"
+    - to: shikamaru.nara
+      relationship: "team: Team 10"
+    - to: choza.akimichi
+      relationship: "team: Akimichi Clan"
+  chojuro:
+    - to: mei.terumi
+      relationship: manager
+  chomei:
+    - to: fuu
+      relationship: manager
+  choza.akimichi:
+    - to: hiruzen.sarutobi
+      relationship: manager
+    - to: choji.akimichi
+      relationship: "team: Akimichi Clan"
+  dan.kato:
+    - to: hiruzen.sarutobi
+      relationship: manager
+  danzo.shimura:
+    - to: fu.yamanaka
+      relationship: direct_report
+    - to: sai
+      relationship: direct_report
+    - to: sai.anbu
+      relationship: direct_report
+    - to: shin
+      relationship: direct_report
+    - to: torune.aburame
+      relationship: direct_report
+    - to: homura.mitokado
+      relationship: "team: Kage Council"
+    - to: koharu.utatane
+      relationship: "team: Kage Council"
+  darui:
+    - to: a.raikage
+      relationship: manager
+    - to: c.cloud
+      relationship: "team: Cloud Jonin"
+    - to: samui
+      relationship: "team: Cloud Jonin"
+  deidara:
+    - to: pain
+      relationship: manager
+  deidara.edo:
+    - to: kabuto.yakushi
+      relationship: manager
+  dodai:
+    - to: a.raikage
+      relationship: manager
+  ebisu:
+    - to: hiruzen.sarutobi
+      relationship: manager
+    - to: konohamaru.sarutobi
+      relationship: direct_report
+    - to: moegi.kazamatsuri
+      relationship: "team: Team Konohamaru"
+    - to: udon
+      relationship: "team: Team Konohamaru"
+  ebizo:
+    - to: gaara
+      relationship: manager
+  enma:
+    - to: hiruzen.sarutobi
+      relationship: manager
+  fire.daimyo:
+    - to: shijimi
+      relationship: direct_report
+  fu.yamanaka:
+    - to: danzo.shimura
+      relationship: manager
+    - to: sai
+      relationship: "team: Root"
+    - to: sai.anbu
+      relationship: "team: Root"
+    - to: shin
+      relationship: "team: Root"
+    - to: torune.aburame
+      relationship: "team: Root"
+    - to: ino.yamanaka
+      relationship: "team: Yamanaka Clan"
+    - to: inoichi.yamanaka
+      relationship: "team: Yamanaka Clan"
+  fugaku.uchiha:
+    - to: hiruzen.sarutobi
+      relationship: manager
+    - to: mikoto.uchiha
+      relationship: direct_report
+    - to: itachi.uchiha
+      relationship: "team: Uchiha Clan"
+    - to: madara.uchiha
+      relationship: "team: Uchiha Clan"
+    - to: obito.uchiha
+      relationship: "team: Uchiha Clan"
+    - to: sasuke.uchiha
+      relationship: "team: Uchiha Clan"
+    - to: sasuke.uchiha.adult
+      relationship: "team: Uchiha Clan"
+    - to: shisui.uchiha
+      relationship: "team: Uchiha Clan"
+  fuka:
+    - to: yuukimaru
+      relationship: department_fallback
+  fuu:
+    - to: chomei
+      relationship: direct_report
+    - to: han
+      relationship: "team: Tailed Beast Jinchuriki"
+    - to: killer.b
+      relationship: "team: Tailed Beast Jinchuriki"
+    - to: roshi
+      relationship: "team: Tailed Beast Jinchuriki"
+    - to: yagura
+      relationship: "team: Tailed Beast Jinchuriki"
+    - to: yugito.nii
+      relationship: "team: Tailed Beast Jinchuriki"
+  gaara:
+    - to: baki
+      relationship: direct_report
+    - to: chiyo
+      relationship: direct_report
+    - to: ebizo
+      relationship: direct_report
+    - to: kankurou
+      relationship: direct_report
+    - to: pakura
+      relationship: direct_report
+    - to: shukaku
+      relationship: direct_report
+    - to: temari
+      relationship: direct_report
+    - to: a.raikage
+      relationship: "team: Kage Assembly"
+    - to: mei.terumi
+      relationship: "team: Kage Assembly"
+    - to: onoki
+      relationship: "team: Kage Assembly"
+    - to: yagura
+      relationship: "team: Kage Assembly"
+  gamabunta:
+    - to: jiraiya
+      relationship: manager
+  gari:
+    - to: onoki
+      relationship: manager
+  gato:
+    - to: inari
+      relationship: department_fallback
+    - to: tazuna
+      relationship: department_fallback
+    - to: tazuna.bridgebuilder
+      relationship: department_fallback
+    - to: tsunami
+      relationship: department_fallback
+  gengetsu.hozuki:
+    - to: ao
+      relationship: department_fallback
+    - to: chojuro
+      relationship: department_fallback
+    - to: kisame.hoshigaki.young
+      relationship: department_fallback
+    - to: mei.terumi
+      relationship: department_fallback
+    - to: shizuma.hoshigaki
+      relationship: department_fallback
+    - to: yagura
+      relationship: department_fallback
+    - to: zabuza.momochi.edo
+      relationship: department_fallback
+  ginkaku:
+    - to: a.raikage
+      relationship: department_fallback
+    - to: a.third.raikage
+      relationship: department_fallback
+    - to: amai
+      relationship: department_fallback
+    - to: atsui
+      relationship: department_fallback
+    - to: c.cloud
+      relationship: department_fallback
+    - to: darui
+      relationship: department_fallback
+    - to: dodai
+      relationship: department_fallback
+    - to: io
+      relationship: department_fallback
+    - to: karui
+      relationship: department_fallback
+  guren:
+    - to: orochimaru
+      relationship: manager
+    - to: yuukimaru
+      relationship: direct_report
+    - to: kabuto.yakushi.sage
+      relationship: "team: Filler Characters"
+  gyuki:
+    - to: killer.b
+      relationship: manager
+  hagoromo.otsutsuki:
+    - to: asura.otsutsuki
+      relationship: direct_report
+    - to: indra.otsutsuki
+      relationship: direct_report
+  haku:
+    - to: zabuza.momochi
+      relationship: manager
+  haku.edo:
+    - to: kabuto.yakushi
+      relationship: manager
+  hamura.otsutsuki:
+    - to: asura.otsutsuki
+      relationship: department_fallback
+    - to: hagoromo.otsutsuki
+      relationship: department_fallback
+    - to: indra.otsutsuki
+      relationship: department_fallback
+    - to: kaguya.otsutsuki
+      relationship: department_fallback
+    - to: ten.tails
+      relationship: department_fallback
+    - to: toneri.otsutsuki
+      relationship: department_fallback
+  han:
+    - to: onoki
+      relationship: manager
+    - to: kokuo
+      relationship: direct_report
+    - to: fuu
+      relationship: "team: Tailed Beast Jinchuriki"
+    - to: killer.b
+      relationship: "team: Tailed Beast Jinchuriki"
+    - to: roshi
+      relationship: "team: Tailed Beast Jinchuriki"
+    - to: yagura
+      relationship: "team: Tailed Beast Jinchuriki"
+    - to: yugito.nii
+      relationship: "team: Tailed Beast Jinchuriki"
+  hanabi.hyuga:
+    - to: hiruzen.sarutobi
+      relationship: manager
+    - to: hiashi.hyuga
+      relationship: "team: Hyuga Clan"
+    - to: hinata.hyuga
+      relationship: "team: Hyuga Clan"
+    - to: hinata.hyuga.adult
+      relationship: "team: Hyuga Clan"
+    - to: hizashi.hyuga
+      relationship: "team: Hyuga Clan"
+    - to: neji.hyuga
+      relationship: "team: Hyuga Clan"
+  hashirama.senju:
+    - to: mito.uzumaki
+      relationship: direct_report
+    - to: hashirama.senju.edo
+      relationship: "team: Hokage"
+    - to: hiruzen.sarutobi
+      relationship: "team: Hokage"
+    - to: hiruzen.sarutobi.edo
+      relationship: "team: Hokage"
+    - to: minato.namikaze
+      relationship: "team: Hokage"
+    - to: minato.namikaze.edo
+      relationship: "team: Hokage"
+    - to: mu
+      relationship: "team: Hokage"
+    - to: naruto.hokage
+      relationship: "team: Hokage"
+    - to: tobirama.senju
+      relationship: "team: Hokage"
+    - to: tobirama.senju.edo
+      relationship: "team: Hokage"
+    - to: tsunade
+      relationship: "team: Hokage"
+  hashirama.senju.edo:
+    - to: kabuto.yakushi
+      relationship: manager
+    - to: hashirama.senju
+      relationship: "team: Hokage"
+    - to: hiruzen.sarutobi
+      relationship: "team: Hokage"
+    - to: hiruzen.sarutobi.edo
+      relationship: "team: Hokage"
+    - to: minato.namikaze
+      relationship: "team: Hokage"
+    - to: minato.namikaze.edo
+      relationship: "team: Hokage"
+    - to: mu
+      relationship: "team: Hokage"
+    - to: naruto.hokage
+      relationship: "team: Hokage"
+    - to: tobirama.senju
+      relationship: "team: Hokage"
+    - to: tobirama.senju.edo
+      relationship: "team: Hokage"
+    - to: tsunade
+      relationship: "team: Hokage"
+    - to: mito.uzumaki
+      relationship: "team: Senju Clan"
+  hayate.gekkou:
+    - to: hiruzen.sarutobi
+      relationship: manager
+    - to: kakashi.hatake
+      relationship: "team: Konoha Jonin"
+    - to: kido
+      relationship: "team: Konoha Jonin"
+    - to: kurenai.yuhi
+      relationship: "team: Konoha Jonin"
+    - to: might.guy
+      relationship: "team: Konoha Jonin"
+  hiashi.hyuga:
+    - to: hiruzen.sarutobi
+      relationship: manager
+    - to: hizashi.hyuga
+      relationship: direct_report
+    - to: hanabi.hyuga
+      relationship: "team: Hyuga Clan"
+    - to: hinata.hyuga
+      relationship: "team: Hyuga Clan"
+    - to: hinata.hyuga.adult
+      relationship: "team: Hyuga Clan"
+    - to: neji.hyuga
+      relationship: "team: Hyuga Clan"
+  hidan:
+    - to: pain
+      relationship: manager
+  hinata.hyuga:
+    - to: kurenai.yuhi
+      relationship: manager
+    - to: kiba.inuzuka
+      relationship: "team: Team 8"
+    - to: shino.aburame
+      relationship: "team: Team 8"
+    - to: hanabi.hyuga
+      relationship: "team: Hyuga Clan"
+    - to: hiashi.hyuga
+      relationship: "team: Hyuga Clan"
+    - to: hinata.hyuga.adult
+      relationship: "team: Hyuga Clan"
+    - to: hizashi.hyuga
+      relationship: "team: Hyuga Clan"
+    - to: neji.hyuga
+      relationship: "team: Hyuga Clan"
+  hinata.hyuga.adult:
+    - to: hanabi.hyuga
+      relationship: "team: Hyuga Clan"
+    - to: hiashi.hyuga
+      relationship: "team: Hyuga Clan"
+    - to: hinata.hyuga
+      relationship: "team: Hyuga Clan"
+    - to: hizashi.hyuga
+      relationship: "team: Hyuga Clan"
+    - to: neji.hyuga
+      relationship: "team: Hyuga Clan"
+  hiruko: []
+  hiruzen.sarutobi:
+    - to: anko.mitarashi
+      relationship: direct_report
+    - to: asuma.sarutobi
+      relationship: direct_report
+    - to: choza.akimichi
+      relationship: direct_report
+    - to: dan.kato
+      relationship: direct_report
+    - to: ebisu
+      relationship: direct_report
+    - to: enma
+      relationship: direct_report
+    - to: fugaku.uchiha
+      relationship: direct_report
+    - to: hanabi.hyuga
+      relationship: direct_report
+    - to: hayate.gekkou
+      relationship: direct_report
+    - to: hiashi.hyuga
+      relationship: direct_report
+    - to: homura.mitokado
+      relationship: direct_report
+    - to: ibiki.morino
+      relationship: direct_report
+    - to: inoichi.yamanaka
+      relationship: direct_report
+    - to: iruka.umino
+      relationship: direct_report
+    - to: jiraiya.young
+      relationship: direct_report
+    - to: kakashi.hatake
+      relationship: direct_report
+    - to: kido
+      relationship: direct_report
+    - to: koharu.utatane
+      relationship: direct_report
+    - to: kurenai.yuhi
+      relationship: direct_report
+    - to: might.guy
+      relationship: direct_report
+    - to: narukami
+      relationship: direct_report
+    - to: nawaki
+      relationship: direct_report
+    - to: sajin
+      relationship: direct_report
+    - to: shibi.aburame
+      relationship: direct_report
+    - to: shikaku.nara
+      relationship: direct_report
+    - to: shisui.uchiha
+      relationship: direct_report
+    - to: tsume.inuzuka
+      relationship: direct_report
+    - to: zaji
+      relationship: direct_report
+    - to: hashirama.senju
+      relationship: "team: Hokage"
+    - to: hashirama.senju.edo
+      relationship: "team: Hokage"
+    - to: hiruzen.sarutobi.edo
+      relationship: "team: Hokage"
+    - to: minato.namikaze
+      relationship: "team: Hokage"
+    - to: minato.namikaze.edo
+      relationship: "team: Hokage"
+    - to: mu
+      relationship: "team: Hokage"
+    - to: naruto.hokage
+      relationship: "team: Hokage"
+    - to: tobirama.senju
+      relationship: "team: Hokage"
+    - to: tobirama.senju.edo
+      relationship: "team: Hokage"
+    - to: tsunade
+      relationship: "team: Hokage"
+    - to: asuma.sarutobi.edo
+      relationship: "team: Sarutobi Clan"
+    - to: hiruzen.young
+      relationship: "team: Sarutobi Clan"
+    - to: konohamaru.sarutobi
+      relationship: "team: Sarutobi Clan"
+  hiruzen.sarutobi.edo:
+    - to: kabuto.yakushi
+      relationship: manager
+    - to: hashirama.senju
+      relationship: "team: Hokage"
+    - to: hashirama.senju.edo
+      relationship: "team: Hokage"
+    - to: hiruzen.sarutobi
+      relationship: "team: Hokage"
+    - to: minato.namikaze
+      relationship: "team: Hokage"
+    - to: minato.namikaze.edo
+      relationship: "team: Hokage"
+    - to: mu
+      relationship: "team: Hokage"
+    - to: naruto.hokage
+      relationship: "team: Hokage"
+    - to: tobirama.senju
+      relationship: "team: Hokage"
+    - to: tobirama.senju.edo
+      relationship: "team: Hokage"
+    - to: tsunade
+      relationship: "team: Hokage"
+    - to: asuma.sarutobi
+      relationship: "team: Sarutobi Clan"
+    - to: asuma.sarutobi.edo
+      relationship: "team: Sarutobi Clan"
+    - to: hiruzen.young
+      relationship: "team: Sarutobi Clan"
+    - to: konohamaru.sarutobi
+      relationship: "team: Sarutobi Clan"
+  hiruzen.young:
+    - to: tobirama.senju
+      relationship: manager
+    - to: asuma.sarutobi
+      relationship: "team: Sarutobi Clan"
+    - to: asuma.sarutobi.edo
+      relationship: "team: Sarutobi Clan"
+    - to: hiruzen.sarutobi
+      relationship: "team: Sarutobi Clan"
+    - to: hiruzen.sarutobi.edo
+      relationship: "team: Sarutobi Clan"
+    - to: konohamaru.sarutobi
+      relationship: "team: Sarutobi Clan"
+  hizashi.hyuga:
+    - to: hiashi.hyuga
+      relationship: manager
+    - to: hanabi.hyuga
+      relationship: "team: Hyuga Clan"
+    - to: hinata.hyuga
+      relationship: "team: Hyuga Clan"
+    - to: hinata.hyuga.adult
+      relationship: "team: Hyuga Clan"
+    - to: neji.hyuga
+      relationship: "team: Hyuga Clan"
+  homura.mitokado:
+    - to: hiruzen.sarutobi
+      relationship: manager
+    - to: danzo.shimura
+      relationship: "team: Kage Council"
+    - to: koharu.utatane
+      relationship: "team: Kage Council"
+  hotaru:
+    - to: utakata
+      relationship: manager
+  ibiki.morino:
+    - to: hiruzen.sarutobi
+      relationship: manager
+    - to: anko.mitarashi
+      relationship: "team: T&I Division"
+  inari:
+    - to: tazuna
+      relationship: manager
+  indra.otsutsuki:
+    - to: hagoromo.otsutsuki
+      relationship: manager
+  ino.yamanaka:
+    - to: asuma.sarutobi
+      relationship: manager
+    - to: choji.akimichi
+      relationship: "team: Team 10"
+    - to: shikamaru.nara
+      relationship: "team: Team 10"
+    - to: fu.yamanaka
+      relationship: "team: Yamanaka Clan"
+    - to: inoichi.yamanaka
+      relationship: "team: Yamanaka Clan"
+    - to: rin.nohara
+      relationship: "team: Medical Corps"
+    - to: sakura.haruno
+      relationship: "team: Medical Corps"
+    - to: sakura.haruno.adult
+      relationship: "team: Medical Corps"
+    - to: shizune
+      relationship: "team: Medical Corps"
+    - to: tsunade
+      relationship: "team: Medical Corps"
+  inoichi.yamanaka:
+    - to: hiruzen.sarutobi
+      relationship: manager
+    - to: fu.yamanaka
+      relationship: "team: Yamanaka Clan"
+    - to: ino.yamanaka
+      relationship: "team: Yamanaka Clan"
+  io:
+    - to: a.raikage
+      relationship: manager
+  iruka.umino:
+    - to: hiruzen.sarutobi
+      relationship: manager
+  isobu:
+    - to: yagura
+      relationship: manager
+  itachi.uchiha:
+    - to: pain
+      relationship: manager
+    - to: kisame.hoshigaki
+      relationship: direct_report
+    - to: fugaku.uchiha
+      relationship: "team: Uchiha Clan"
+    - to: madara.uchiha
+      relationship: "team: Uchiha Clan"
+    - to: mikoto.uchiha
+      relationship: "team: Uchiha Clan"
+    - to: obito.uchiha
+      relationship: "team: Uchiha Clan"
+    - to: sasuke.uchiha
+      relationship: "team: Uchiha Clan"
+    - to: sasuke.uchiha.adult
+      relationship: "team: Uchiha Clan"
+    - to: shisui.uchiha
+      relationship: "team: Uchiha Clan"
+    - to: kakashi.hatake
+      relationship: "team: ANBU (former)"
+  itachi.uchiha.edo:
+    - to: kabuto.yakushi
+      relationship: manager
+  jiraiya:
+    - to: gamabunta
+      relationship: direct_report
+    - to: konan.young
+      relationship: direct_report
+    - to: nagato.young
+      relationship: direct_report
+    - to: orochimaru
+      relationship: "team: The Sannin"
+    - to: tsunade
+      relationship: "team: The Sannin"
+  jiraiya.young:
+    - to: hiruzen.sarutobi
+      relationship: manager
+  jirobo:
+    - to: orochimaru
+      relationship: manager
+    - to: kidomaru
+      relationship: "team: Sound Five"
+    - to: kimimaro
+      relationship: "team: Sound Five"
+    - to: sakon
+      relationship: "team: Sound Five"
+    - to: tayuya
+      relationship: "team: Sound Five"
+  jugo:
+    - to: sasuke.uchiha
+      relationship: manager
+    - to: karin.uzumaki
+      relationship: "team: Sound Village (former)"
+  kabuto.yakushi:
+    - to: orochimaru
+      relationship: manager
+    - to: asuma.sarutobi.edo
+      relationship: direct_report
+    - to: deidara.edo
+      relationship: direct_report
+    - to: haku.edo
+      relationship: direct_report
+    - to: hashirama.senju.edo
+      relationship: direct_report
+    - to: hiruzen.sarutobi.edo
+      relationship: direct_report
+    - to: itachi.uchiha.edo
+      relationship: direct_report
+    - to: kakuzu.edo
+      relationship: direct_report
+    - to: minato.namikaze.edo
+      relationship: direct_report
+    - to: nagato.edo
+      relationship: direct_report
+    - to: sasori.edo
+      relationship: direct_report
+    - to: tobirama.senju.edo
+      relationship: direct_report
+    - to: zabuza.momochi.edo
+      relationship: direct_report
+    - to: obito.uchiha
+      relationship: "team: Hidden Leaf Village (former)"
+  kabuto.yakushi.sage:
+    - to: guren
+      relationship: "team: Filler Characters"
+  kaguya.otsutsuki:
+    - to: black.zetsu
+      relationship: direct_report
+  kakashi.hatake:
+    - to: hiruzen.sarutobi
+      relationship: manager
+    - to: naruto.uzumaki
+      relationship: direct_report
+    - to: sakura.haruno
+      relationship: direct_report
+    - to: sasuke.uchiha
+      relationship: direct_report
+    - to: sasuke.uchiha.adult
+      relationship: direct_report
+    - to: yamato
+      relationship: direct_report
+    - to: naruto.hokage
+      relationship: "team: Team 7"
+    - to: sai
+      relationship: "team: Team 7"
+    - to: sakura.haruno.adult
+      relationship: "team: Team 7"
+    - to: itachi.uchiha
+      relationship: "team: ANBU (former)"
+    - to: hayate.gekkou
+      relationship: "team: Konoha Jonin"
+    - to: kido
+      relationship: "team: Konoha Jonin"
+    - to: kurenai.yuhi
+      relationship: "team: Konoha Jonin"
+    - to: might.guy
+      relationship: "team: Konoha Jonin"
+  kakuzu:
+    - to: pain
+      relationship: manager
+  kakuzu.edo:
+    - to: kabuto.yakushi
+      relationship: manager
+  kandachi: []
+  kankurou:
+    - to: gaara
+      relationship: manager
+    - to: temari
+      relationship: "team: Sand Siblings"
+  karin.uzumaki:
+    - to: sasuke.uchiha
+      relationship: manager
+    - to: kushina.uzumaki
+      relationship: "team: Uzumaki Clan"
+    - to: mito.uzumaki
+      relationship: "team: Uzumaki Clan"
+    - to: naruto.hokage
+      relationship: "team: Uzumaki Clan"
+    - to: naruto.uzumaki
+      relationship: "team: Uzumaki Clan"
+    - to: jugo
+      relationship: "team: Sound Village (former)"
+  karin.uzumaki.young:
+    - to: ryuzetsu
+      relationship: department_fallback
+  karui:
+    - to: samui
+      relationship: manager
+    - to: omoi
+      relationship: "team: Cloud Chunin"
+  katsuyu:
+    - to: tsunade
+      relationship: manager
+  kayui:
+    - to: a.raikage
+      relationship: manager
+  kiba.inuzuka:
+    - to: kurenai.yuhi
+      relationship: manager
+    - to: hinata.hyuga
+      relationship: "team: Team 8"
+    - to: shino.aburame
+      relationship: "team: Team 8"
+    - to: tsume.inuzuka
+      relationship: "team: Inuzuka Clan"
+  kido:
+    - to: hiruzen.sarutobi
+      relationship: manager
+    - to: hayate.gekkou
+      relationship: "team: Konoha Jonin"
+    - to: kakashi.hatake
+      relationship: "team: Konoha Jonin"
+    - to: kurenai.yuhi
+      relationship: "team: Konoha Jonin"
+    - to: might.guy
+      relationship: "team: Konoha Jonin"
+  kidomaru:
+    - to: orochimaru
+      relationship: manager
+    - to: jirobo
+      relationship: "team: Sound Five"
+    - to: kimimaro
+      relationship: "team: Sound Five"
+    - to: sakon
+      relationship: "team: Sound Five"
+    - to: tayuya
+      relationship: "team: Sound Five"
+  killer.b:
+    - to: a.raikage
+      relationship: manager
+    - to: gyuki
+      relationship: direct_report
+    - to: fuu
+      relationship: "team: Tailed Beast Jinchuriki"
+    - to: han
+      relationship: "team: Tailed Beast Jinchuriki"
+    - to: roshi
+      relationship: "team: Tailed Beast Jinchuriki"
+    - to: yagura
+      relationship: "team: Tailed Beast Jinchuriki"
+    - to: yugito.nii
+      relationship: "team: Tailed Beast Jinchuriki"
+  kimimaro:
+    - to: orochimaru
+      relationship: manager
+    - to: jirobo
+      relationship: "team: Sound Five"
+    - to: kidomaru
+      relationship: "team: Sound Five"
+    - to: sakon
+      relationship: "team: Sound Five"
+    - to: tayuya
+      relationship: "team: Sound Five"
+  kinkaku:
+    - to: a.raikage
+      relationship: department_fallback
+    - to: a.third.raikage
+      relationship: department_fallback
+    - to: amai
+      relationship: department_fallback
+    - to: atsui
+      relationship: department_fallback
+    - to: c.cloud
+      relationship: department_fallback
+    - to: darui
+      relationship: department_fallback
+    - to: dodai
+      relationship: department_fallback
+    - to: ginkaku
+      relationship: department_fallback
+    - to: io
+      relationship: department_fallback
+    - to: karui
+      relationship: department_fallback
+  kisame.hoshigaki:
+    - to: itachi.uchiha
+      relationship: manager
+    - to: kisame.hoshigaki.young
+      relationship: "team: Seven Swordsmen (former)"
+    - to: suigetsu.hozuki
+      relationship: "team: Hidden Mist Village (former)"
+  kisame.hoshigaki.young:
+    - to: kisame.hoshigaki
+      relationship: "team: Seven Swordsmen (former)"
+  koharu.utatane:
+    - to: hiruzen.sarutobi
+      relationship: manager
+    - to: danzo.shimura
+      relationship: "team: Kage Council"
+    - to: homura.mitokado
+      relationship: "team: Kage Council"
+  kokuo:
+    - to: han
+      relationship: manager
+  konan:
+    - to: pain
+      relationship: manager
+    - to: nagato
+      relationship: "team: Hidden Rain Village"
+    - to: yahiko
+      relationship: "team: Hidden Rain Village"
+  konan.young:
+    - to: jiraiya
+      relationship: manager
+  konohamaru.sarutobi:
+    - to: ebisu
+      relationship: manager
+    - to: moegi.kazamatsuri
+      relationship: direct_report
+    - to: udon
+      relationship: direct_report
+    - to: asuma.sarutobi
+      relationship: "team: Sarutobi Clan"
+    - to: asuma.sarutobi.edo
+      relationship: "team: Sarutobi Clan"
+    - to: hiruzen.sarutobi
+      relationship: "team: Sarutobi Clan"
+    - to: hiruzen.sarutobi.edo
+      relationship: "team: Sarutobi Clan"
+    - to: hiruzen.young
+      relationship: "team: Sarutobi Clan"
+  kurama:
+    - to: naruto.uzumaki
+      relationship: manager
+  kurenai.yuhi:
+    - to: hiruzen.sarutobi
+      relationship: manager
+    - to: hinata.hyuga
+      relationship: direct_report
+    - to: kiba.inuzuka
+      relationship: direct_report
+    - to: shino.aburame
+      relationship: direct_report
+    - to: hayate.gekkou
+      relationship: "team: Konoha Jonin"
+    - to: kakashi.hatake
+      relationship: "team: Konoha Jonin"
+    - to: kido
+      relationship: "team: Konoha Jonin"
+    - to: might.guy
+      relationship: "team: Konoha Jonin"
+  kurotsuchi:
+    - to: onoki
+      relationship: manager
+  kushina.uzumaki:
+    - to: minato.namikaze
+      relationship: manager
+    - to: karin.uzumaki
+      relationship: "team: Uzumaki Clan"
+    - to: mito.uzumaki
+      relationship: "team: Uzumaki Clan"
+    - to: naruto.hokage
+      relationship: "team: Uzumaki Clan"
+    - to: naruto.uzumaki
+      relationship: "team: Uzumaki Clan"
+  mabui:
+    - to: a.raikage
+      relationship: manager
+  madara.uchiha:
+    - to: obito.uchiha
+      relationship: direct_report
+    - to: white.zetsu
+      relationship: direct_report
+    - to: fugaku.uchiha
+      relationship: "team: Uchiha Clan"
+    - to: itachi.uchiha
+      relationship: "team: Uchiha Clan"
+    - to: mikoto.uchiha
+      relationship: "team: Uchiha Clan"
+    - to: sasuke.uchiha
+      relationship: "team: Uchiha Clan"
+    - to: sasuke.uchiha.adult
+      relationship: "team: Uchiha Clan"
+    - to: shisui.uchiha
+      relationship: "team: Uchiha Clan"
+  manda:
+    - to: orochimaru
+      relationship: manager
+  matatabi:
+    - to: yugito.nii
+      relationship: manager
+  mecha.naruto:
+    - to: anko.mitarashi
+      relationship: department_fallback
+    - to: asuma.sarutobi
+      relationship: department_fallback
+    - to: asuma.sarutobi.edo
+      relationship: department_fallback
+    - to: ayame
+      relationship: department_fallback
+    - to: choji.akimichi
+      relationship: department_fallback
+    - to: choza.akimichi
+      relationship: department_fallback
+    - to: dan.kato
+      relationship: department_fallback
+    - to: danzo.shimura
+      relationship: department_fallback
+    - to: ebisu
+      relationship: department_fallback
+    - to: fu.yamanaka
+      relationship: department_fallback
+  mei.terumi:
+    - to: ao
+      relationship: direct_report
+    - to: chojuro
+      relationship: direct_report
+    - to: a.raikage
+      relationship: "team: Kage Assembly"
+    - to: gaara
+      relationship: "team: Kage Assembly"
+    - to: onoki
+      relationship: "team: Kage Assembly"
+    - to: yagura
+      relationship: "team: Kage Assembly"
+  menma.uzumaki:
+    - to: sakura.haruno.rtn
+      relationship: department_fallback
+  mifune:
+    - to: ryusui.watarai
+      relationship: direct_report
+    - to: tonbee
+      relationship: direct_report
+  might.guy:
+    - to: hiruzen.sarutobi
+      relationship: manager
+    - to: neji.hyuga
+      relationship: direct_report
+    - to: rock.lee
+      relationship: direct_report
+    - to: tenten
+      relationship: direct_report
+    - to: hayate.gekkou
+      relationship: "team: Konoha Jonin"
+    - to: kakashi.hatake
+      relationship: "team: Konoha Jonin"
+    - to: kido
+      relationship: "team: Konoha Jonin"
+    - to: kurenai.yuhi
+      relationship: "team: Konoha Jonin"
+  mikoto.uchiha:
+    - to: fugaku.uchiha
+      relationship: manager
+    - to: itachi.uchiha
+      relationship: "team: Uchiha Clan"
+    - to: madara.uchiha
+      relationship: "team: Uchiha Clan"
+    - to: obito.uchiha
+      relationship: "team: Uchiha Clan"
+    - to: sasuke.uchiha
+      relationship: "team: Uchiha Clan"
+    - to: sasuke.uchiha.adult
+      relationship: "team: Uchiha Clan"
+    - to: shisui.uchiha
+      relationship: "team: Uchiha Clan"
+  minato.namikaze:
+    - to: kushina.uzumaki
+      relationship: direct_report
+    - to: rin.nohara
+      relationship: direct_report
+    - to: hashirama.senju
+      relationship: "team: Hokage"
+    - to: hashirama.senju.edo
+      relationship: "team: Hokage"
+    - to: hiruzen.sarutobi
+      relationship: "team: Hokage"
+    - to: hiruzen.sarutobi.edo
+      relationship: "team: Hokage"
+    - to: minato.namikaze.edo
+      relationship: "team: Hokage"
+    - to: mu
+      relationship: "team: Hokage"
+    - to: naruto.hokage
+      relationship: "team: Hokage"
+    - to: tobirama.senju
+      relationship: "team: Hokage"
+    - to: tobirama.senju.edo
+      relationship: "team: Hokage"
+    - to: tsunade
+      relationship: "team: Hokage"
+  minato.namikaze.edo:
+    - to: kabuto.yakushi
+      relationship: manager
+    - to: hashirama.senju
+      relationship: "team: Hokage"
+    - to: hashirama.senju.edo
+      relationship: "team: Hokage"
+    - to: hiruzen.sarutobi
+      relationship: "team: Hokage"
+    - to: hiruzen.sarutobi.edo
+      relationship: "team: Hokage"
+    - to: minato.namikaze
+      relationship: "team: Hokage"
+    - to: mu
+      relationship: "team: Hokage"
+    - to: naruto.hokage
+      relationship: "team: Hokage"
+    - to: tobirama.senju
+      relationship: "team: Hokage"
+    - to: tobirama.senju.edo
+      relationship: "team: Hokage"
+    - to: tsunade
+      relationship: "team: Hokage"
+  misumi.tsurugi:
+    - to: baki
+      relationship: manager
+  mito.uzumaki:
+    - to: hashirama.senju
+      relationship: manager
+    - to: karin.uzumaki
+      relationship: "team: Uzumaki Clan"
+    - to: kushina.uzumaki
+      relationship: "team: Uzumaki Clan"
+    - to: naruto.hokage
+      relationship: "team: Uzumaki Clan"
+    - to: naruto.uzumaki
+      relationship: "team: Uzumaki Clan"
+    - to: hashirama.senju.edo
+      relationship: "team: Senju Clan"
+    - to: tobirama.senju
+      relationship: "team: Senju Clan"
+    - to: tobirama.senju.edo
+      relationship: "team: Senju Clan"
+  moegi.kazamatsuri:
+    - to: konohamaru.sarutobi
+      relationship: manager
+    - to: ebisu
+      relationship: "team: Team Konohamaru"
+    - to: udon
+      relationship: "team: Team Konohamaru"
+  motoi:
+    - to: a.raikage
+      relationship: manager
+  mu:
+    - to: hashirama.senju
+      relationship: "team: Hokage"
+    - to: hashirama.senju.edo
+      relationship: "team: Hokage"
+    - to: hiruzen.sarutobi
+      relationship: "team: Hokage"
+    - to: hiruzen.sarutobi.edo
+      relationship: "team: Hokage"
+    - to: minato.namikaze
+      relationship: "team: Hokage"
+    - to: minato.namikaze.edo
+      relationship: "team: Hokage"
+    - to: naruto.hokage
+      relationship: "team: Hokage"
+    - to: tobirama.senju
+      relationship: "team: Hokage"
+    - to: tobirama.senju.edo
+      relationship: "team: Hokage"
+    - to: tsunade
+      relationship: "team: Hokage"
+  nagato:
+    - to: yahiko
+      relationship: direct_report
+    - to: konan
+      relationship: "team: Hidden Rain Village"
+  nagato.edo:
+    - to: kabuto.yakushi
+      relationship: manager
+  nagato.young:
+    - to: jiraiya
+      relationship: manager
+  narukami:
+    - to: hiruzen.sarutobi
+      relationship: manager
+  naruto.hokage:
+    - to: hashirama.senju
+      relationship: "team: Hokage"
+    - to: hashirama.senju.edo
+      relationship: "team: Hokage"
+    - to: hiruzen.sarutobi
+      relationship: "team: Hokage"
+    - to: hiruzen.sarutobi.edo
+      relationship: "team: Hokage"
+    - to: minato.namikaze
+      relationship: "team: Hokage"
+    - to: minato.namikaze.edo
+      relationship: "team: Hokage"
+    - to: mu
+      relationship: "team: Hokage"
+    - to: tobirama.senju
+      relationship: "team: Hokage"
+    - to: tobirama.senju.edo
+      relationship: "team: Hokage"
+    - to: tsunade
+      relationship: "team: Hokage"
+    - to: kakashi.hatake
+      relationship: "team: Team 7"
+    - to: naruto.uzumaki
+      relationship: "team: Team 7"
+    - to: sai
+      relationship: "team: Team 7"
+    - to: sakura.haruno
+      relationship: "team: Team 7"
+    - to: sakura.haruno.adult
+      relationship: "team: Team 7"
+    - to: sasuke.uchiha
+      relationship: "team: Team 7"
+    - to: sasuke.uchiha.adult
+      relationship: "team: Team 7"
+    - to: yamato
+      relationship: "team: Team 7"
+    - to: karin.uzumaki
+      relationship: "team: Uzumaki Clan"
+    - to: kushina.uzumaki
+      relationship: "team: Uzumaki Clan"
+    - to: mito.uzumaki
+      relationship: "team: Uzumaki Clan"
+  naruto.uzumaki:
+    - to: kakashi.hatake
+      relationship: manager
+    - to: kurama
+      relationship: direct_report
+    - to: naruto.hokage
+      relationship: "team: Team 7"
+    - to: sai
+      relationship: "team: Team 7"
+    - to: sakura.haruno
+      relationship: "team: Team 7"
+    - to: sakura.haruno.adult
+      relationship: "team: Team 7"
+    - to: sasuke.uchiha
+      relationship: "team: Team 7"
+    - to: sasuke.uchiha.adult
+      relationship: "team: Team 7"
+    - to: yamato
+      relationship: "team: Team 7"
+    - to: karin.uzumaki
+      relationship: "team: Uzumaki Clan"
+    - to: kushina.uzumaki
+      relationship: "team: Uzumaki Clan"
+    - to: mito.uzumaki
+      relationship: "team: Uzumaki Clan"
+  nawaki:
+    - to: hiruzen.sarutobi
+      relationship: manager
+  neji.hyuga:
+    - to: might.guy
+      relationship: manager
+    - to: rock.lee
+      relationship: "team: Team Guy"
+    - to: tenten
+      relationship: "team: Team Guy"
+    - to: hanabi.hyuga
+      relationship: "team: Hyuga Clan"
+    - to: hiashi.hyuga
+      relationship: "team: Hyuga Clan"
+    - to: hinata.hyuga
+      relationship: "team: Hyuga Clan"
+    - to: hinata.hyuga.adult
+      relationship: "team: Hyuga Clan"
+    - to: hizashi.hyuga
+      relationship: "team: Hyuga Clan"
+  obito.uchiha:
+    - to: madara.uchiha
+      relationship: manager
+    - to: fugaku.uchiha
+      relationship: "team: Uchiha Clan"
+    - to: itachi.uchiha
+      relationship: "team: Uchiha Clan"
+    - to: mikoto.uchiha
+      relationship: "team: Uchiha Clan"
+    - to: sasuke.uchiha
+      relationship: "team: Uchiha Clan"
+    - to: sasuke.uchiha.adult
+      relationship: "team: Uchiha Clan"
+    - to: shisui.uchiha
+      relationship: "team: Uchiha Clan"
+    - to: kabuto.yakushi
+      relationship: "team: Hidden Leaf Village (former)"
+    - to: orochimaru
+      relationship: "team: Hidden Leaf Village (former)"
+  omoi:
+    - to: samui
+      relationship: manager
+    - to: karui
+      relationship: "team: Cloud Chunin"
+  onoki:
+    - to: akatsuchi
+      relationship: direct_report
+    - to: gari
+      relationship: direct_report
+    - to: han
+      relationship: direct_report
+    - to: kurotsuchi
+      relationship: direct_report
+    - to: a.raikage
+      relationship: "team: Kage Assembly"
+    - to: gaara
+      relationship: "team: Kage Assembly"
+    - to: mei.terumi
+      relationship: "team: Kage Assembly"
+    - to: yagura
+      relationship: "team: Kage Assembly"
+  orochimaru:
+    - to: guren
+      relationship: direct_report
+    - to: jirobo
+      relationship: direct_report
+    - to: kabuto.yakushi
+      relationship: direct_report
+    - to: kidomaru
+      relationship: direct_report
+    - to: kimimaro
+      relationship: direct_report
+    - to: manda
+      relationship: direct_report
+    - to: sakon
+      relationship: direct_report
+    - to: tayuya
+      relationship: direct_report
+    - to: jiraiya
+      relationship: "team: The Sannin"
+    - to: tsunade
+      relationship: "team: The Sannin"
+    - to: obito.uchiha
+      relationship: "team: Hidden Leaf Village (former)"
+  pain:
+    - to: deidara
+      relationship: direct_report
+    - to: hidan
+      relationship: direct_report
+    - to: itachi.uchiha
+      relationship: direct_report
+    - to: kakuzu
+      relationship: direct_report
+    - to: konan
+      relationship: direct_report
+    - to: sasori
+      relationship: direct_report
+    - to: zetsu
+      relationship: direct_report
+  pakura:
+    - to: gaara
+      relationship: manager
+  renga: []
+  rin.nohara:
+    - to: minato.namikaze
+      relationship: manager
+    - to: ino.yamanaka
+      relationship: "team: Medical Corps"
+    - to: sakura.haruno
+      relationship: "team: Medical Corps"
+    - to: sakura.haruno.adult
+      relationship: "team: Medical Corps"
+    - to: shizune
+      relationship: "team: Medical Corps"
+    - to: tsunade
+      relationship: "team: Medical Corps"
+  rock.lee:
+    - to: might.guy
+      relationship: manager
+    - to: neji.hyuga
+      relationship: "team: Team Guy"
+    - to: tenten
+      relationship: "team: Team Guy"
+  roshi:
+    - to: son.goku
+      relationship: direct_report
+    - to: fuu
+      relationship: "team: Tailed Beast Jinchuriki"
+    - to: han
+      relationship: "team: Tailed Beast Jinchuriki"
+    - to: killer.b
+      relationship: "team: Tailed Beast Jinchuriki"
+    - to: yagura
+      relationship: "team: Tailed Beast Jinchuriki"
+    - to: yugito.nii
+      relationship: "team: Tailed Beast Jinchuriki"
+  ryusui.watarai:
+    - to: mifune
+      relationship: manager
+  ryuzetsu:
+    - to: karin.uzumaki.young
+      relationship: department_fallback
+  sai:
+    - to: danzo.shimura
+      relationship: manager
+    - to: kakashi.hatake
+      relationship: "team: Team 7"
+    - to: naruto.hokage
+      relationship: "team: Team 7"
+    - to: naruto.uzumaki
+      relationship: "team: Team 7"
+    - to: sakura.haruno
+      relationship: "team: Team 7"
+    - to: sakura.haruno.adult
+      relationship: "team: Team 7"
+    - to: sasuke.uchiha
+      relationship: "team: Team 7"
+    - to: sasuke.uchiha.adult
+      relationship: "team: Team 7"
+    - to: yamato
+      relationship: "team: Team 7"
+    - to: fu.yamanaka
+      relationship: "team: Root"
+    - to: sai.anbu
+      relationship: "team: Root"
+    - to: shin
+      relationship: "team: Root"
+    - to: torune.aburame
+      relationship: "team: Root"
+  sai.anbu:
+    - to: danzo.shimura
+      relationship: manager
+    - to: fu.yamanaka
+      relationship: "team: Root"
+    - to: sai
+      relationship: "team: Root"
+    - to: shin
+      relationship: "team: Root"
+    - to: torune.aburame
+      relationship: "team: Root"
+  saiken:
+    - to: utakata
+      relationship: manager
+  sajin:
+    - to: hiruzen.sarutobi
+      relationship: manager
+  sakon:
+    - to: orochimaru
+      relationship: manager
+    - to: jirobo
+      relationship: "team: Sound Five"
+    - to: kidomaru
+      relationship: "team: Sound Five"
+    - to: kimimaro
+      relationship: "team: Sound Five"
+    - to: tayuya
+      relationship: "team: Sound Five"
+  sakura.haruno:
+    - to: kakashi.hatake
+      relationship: manager
+    - to: naruto.hokage
+      relationship: "team: Team 7"
+    - to: naruto.uzumaki
+      relationship: "team: Team 7"
+    - to: sai
+      relationship: "team: Team 7"
+    - to: sakura.haruno.adult
+      relationship: "team: Team 7"
+    - to: sasuke.uchiha
+      relationship: "team: Team 7"
+    - to: sasuke.uchiha.adult
+      relationship: "team: Team 7"
+    - to: yamato
+      relationship: "team: Team 7"
+    - to: ino.yamanaka
+      relationship: "team: Medical Corps"
+    - to: rin.nohara
+      relationship: "team: Medical Corps"
+    - to: shizune
+      relationship: "team: Medical Corps"
+    - to: tsunade
+      relationship: "team: Medical Corps"
+  sakura.haruno.adult:
+    - to: kakashi.hatake
+      relationship: "team: Team 7"
+    - to: naruto.hokage
+      relationship: "team: Team 7"
+    - to: naruto.uzumaki
+      relationship: "team: Team 7"
+    - to: sai
+      relationship: "team: Team 7"
+    - to: sakura.haruno
+      relationship: "team: Team 7"
+    - to: sasuke.uchiha
+      relationship: "team: Team 7"
+    - to: sasuke.uchiha.adult
+      relationship: "team: Team 7"
+    - to: yamato
+      relationship: "team: Team 7"
+    - to: ino.yamanaka
+      relationship: "team: Medical Corps"
+    - to: rin.nohara
+      relationship: "team: Medical Corps"
+    - to: shizune
+      relationship: "team: Medical Corps"
+    - to: tsunade
+      relationship: "team: Medical Corps"
+  sakura.haruno.rtn:
+    - to: menma.uzumaki
+      relationship: department_fallback
+  samui:
+    - to: a.raikage
+      relationship: manager
+    - to: atsui
+      relationship: direct_report
+    - to: karui
+      relationship: direct_report
+    - to: omoi
+      relationship: direct_report
+    - to: c.cloud
+      relationship: "team: Cloud Jonin"
+    - to: darui
+      relationship: "team: Cloud Jonin"
+  saru: []
+  sasori:
+    - to: pain
+      relationship: manager
+  sasori.edo:
+    - to: kabuto.yakushi
+      relationship: manager
+  sasuke.uchiha:
+    - to: kakashi.hatake
+      relationship: manager
+    - to: jugo
+      relationship: direct_report
+    - to: karin.uzumaki
+      relationship: direct_report
+    - to: suigetsu.hozuki
+      relationship: direct_report
+    - to: naruto.hokage
+      relationship: "team: Team 7"
+    - to: naruto.uzumaki
+      relationship: "team: Team 7"
+    - to: sai
+      relationship: "team: Team 7"
+    - to: sakura.haruno
+      relationship: "team: Team 7"
+    - to: sakura.haruno.adult
+      relationship: "team: Team 7"
+    - to: sasuke.uchiha.adult
+      relationship: "team: Team 7"
+    - to: yamato
+      relationship: "team: Team 7"
+    - to: fugaku.uchiha
+      relationship: "team: Uchiha Clan"
+    - to: itachi.uchiha
+      relationship: "team: Uchiha Clan"
+    - to: madara.uchiha
+      relationship: "team: Uchiha Clan"
+    - to: mikoto.uchiha
+      relationship: "team: Uchiha Clan"
+    - to: obito.uchiha
+      relationship: "team: Uchiha Clan"
+    - to: shisui.uchiha
+      relationship: "team: Uchiha Clan"
+  sasuke.uchiha.adult:
+    - to: kakashi.hatake
+      relationship: manager
+    - to: naruto.hokage
+      relationship: "team: Team 7"
+    - to: naruto.uzumaki
+      relationship: "team: Team 7"
+    - to: sai
+      relationship: "team: Team 7"
+    - to: sakura.haruno
+      relationship: "team: Team 7"
+    - to: sakura.haruno.adult
+      relationship: "team: Team 7"
+    - to: sasuke.uchiha
+      relationship: "team: Team 7"
+    - to: yamato
+      relationship: "team: Team 7"
+    - to: fugaku.uchiha
+      relationship: "team: Uchiha Clan"
+    - to: itachi.uchiha
+      relationship: "team: Uchiha Clan"
+    - to: madara.uchiha
+      relationship: "team: Uchiha Clan"
+    - to: mikoto.uchiha
+      relationship: "team: Uchiha Clan"
+    - to: obito.uchiha
+      relationship: "team: Uchiha Clan"
+    - to: shisui.uchiha
+      relationship: "team: Uchiha Clan"
+  shibi.aburame:
+    - to: hiruzen.sarutobi
+      relationship: manager
+    - to: shino.aburame
+      relationship: "team: Aburame Clan"
+    - to: torune.aburame
+      relationship: "team: Aburame Clan"
+  shijimi:
+    - to: fire.daimyo
+      relationship: manager
+  shikaku.nara:
+    - to: hiruzen.sarutobi
+      relationship: manager
+    - to: shikamaru.nara
+      relationship: "team: Nara Clan"
+  shikamaru.nara:
+    - to: asuma.sarutobi
+      relationship: manager
+    - to: choji.akimichi
+      relationship: "team: Team 10"
+    - to: ino.yamanaka
+      relationship: "team: Team 10"
+    - to: shikaku.nara
+      relationship: "team: Nara Clan"
+  shin:
+    - to: danzo.shimura
+      relationship: manager
+    - to: fu.yamanaka
+      relationship: "team: Root"
+    - to: sai
+      relationship: "team: Root"
+    - to: sai.anbu
+      relationship: "team: Root"
+    - to: torune.aburame
+      relationship: "team: Root"
+  shino.aburame:
+    - to: kurenai.yuhi
+      relationship: manager
+    - to: hinata.hyuga
+      relationship: "team: Team 8"
+    - to: kiba.inuzuka
+      relationship: "team: Team 8"
+    - to: shibi.aburame
+      relationship: "team: Aburame Clan"
+    - to: torune.aburame
+      relationship: "team: Aburame Clan"
+  shisui.uchiha:
+    - to: hiruzen.sarutobi
+      relationship: manager
+    - to: yamato
+      relationship: "team: ANBU"
+    - to: fugaku.uchiha
+      relationship: "team: Uchiha Clan"
+    - to: itachi.uchiha
+      relationship: "team: Uchiha Clan"
+    - to: madara.uchiha
+      relationship: "team: Uchiha Clan"
+    - to: mikoto.uchiha
+      relationship: "team: Uchiha Clan"
+    - to: obito.uchiha
+      relationship: "team: Uchiha Clan"
+    - to: sasuke.uchiha
+      relationship: "team: Uchiha Clan"
+    - to: sasuke.uchiha.adult
+      relationship: "team: Uchiha Clan"
+  shizuma.hoshigaki:
+    - to: ao
+      relationship: department_fallback
+    - to: chojuro
+      relationship: department_fallback
+    - to: gengetsu.hozuki
+      relationship: department_fallback
+    - to: kisame.hoshigaki.young
+      relationship: department_fallback
+    - to: mei.terumi
+      relationship: department_fallback
+    - to: yagura
+      relationship: department_fallback
+    - to: zabuza.momochi.edo
+      relationship: department_fallback
+  shizune:
+    - to: tsunade
+      relationship: manager
+    - to: ino.yamanaka
+      relationship: "team: Medical Corps"
+    - to: rin.nohara
+      relationship: "team: Medical Corps"
+    - to: sakura.haruno
+      relationship: "team: Medical Corps"
+    - to: sakura.haruno.adult
+      relationship: "team: Medical Corps"
+  shukaku:
+    - to: gaara
+      relationship: manager
+  son.goku:
+    - to: roshi
+      relationship: manager
+  sora: []
+  suigetsu.hozuki:
+    - to: sasuke.uchiha
+      relationship: manager
+    - to: kisame.hoshigaki
+      relationship: "team: Hidden Mist Village (former)"
+  tayuya:
+    - to: orochimaru
+      relationship: manager
+    - to: jirobo
+      relationship: "team: Sound Five"
+    - to: kidomaru
+      relationship: "team: Sound Five"
+    - to: kimimaro
+      relationship: "team: Sound Five"
+    - to: sakon
+      relationship: "team: Sound Five"
+  tazuna:
+    - to: inari
+      relationship: direct_report
+    - to: tsunami
+      relationship: direct_report
+  tazuna.bridgebuilder:
+    - to: gato
+      relationship: department_fallback
+    - to: inari
+      relationship: department_fallback
+    - to: tazuna
+      relationship: department_fallback
+    - to: tsunami
+      relationship: department_fallback
+  temari:
+    - to: gaara
+      relationship: manager
+    - to: kankurou
+      relationship: "team: Sand Siblings"
+  ten.tails:
+    - to: asura.otsutsuki
+      relationship: department_fallback
+    - to: hagoromo.otsutsuki
+      relationship: department_fallback
+    - to: hamura.otsutsuki
+      relationship: department_fallback
+    - to: indra.otsutsuki
+      relationship: department_fallback
+    - to: kaguya.otsutsuki
+      relationship: department_fallback
+    - to: toneri.otsutsuki
+      relationship: department_fallback
+  tenten:
+    - to: might.guy
+      relationship: manager
+    - to: neji.hyuga
+      relationship: "team: Team Guy"
+    - to: rock.lee
+      relationship: "team: Team Guy"
+  teuchi:
+    - to: ayame
+      relationship: direct_report
+  tobirama.senju:
+    - to: hiruzen.young
+      relationship: direct_report
+    - to: hashirama.senju
+      relationship: "team: Hokage"
+    - to: hashirama.senju.edo
+      relationship: "team: Hokage"
+    - to: hiruzen.sarutobi
+      relationship: "team: Hokage"
+    - to: hiruzen.sarutobi.edo
+      relationship: "team: Hokage"
+    - to: minato.namikaze
+      relationship: "team: Hokage"
+    - to: minato.namikaze.edo
+      relationship: "team: Hokage"
+    - to: mu
+      relationship: "team: Hokage"
+    - to: naruto.hokage
+      relationship: "team: Hokage"
+    - to: tobirama.senju.edo
+      relationship: "team: Hokage"
+    - to: tsunade
+      relationship: "team: Hokage"
+    - to: mito.uzumaki
+      relationship: "team: Senju Clan"
+  tobirama.senju.edo:
+    - to: kabuto.yakushi
+      relationship: manager
+    - to: hashirama.senju
+      relationship: "team: Hokage"
+    - to: hashirama.senju.edo
+      relationship: "team: Hokage"
+    - to: hiruzen.sarutobi
+      relationship: "team: Hokage"
+    - to: hiruzen.sarutobi.edo
+      relationship: "team: Hokage"
+    - to: minato.namikaze
+      relationship: "team: Hokage"
+    - to: minato.namikaze.edo
+      relationship: "team: Hokage"
+    - to: mu
+      relationship: "team: Hokage"
+    - to: naruto.hokage
+      relationship: "team: Hokage"
+    - to: tobirama.senju
+      relationship: "team: Hokage"
+    - to: tsunade
+      relationship: "team: Hokage"
+    - to: mito.uzumaki
+      relationship: "team: Senju Clan"
+  tonbee:
+    - to: mifune
+      relationship: manager
+  toneri.otsutsuki:
+    - to: asura.otsutsuki
+      relationship: department_fallback
+    - to: hagoromo.otsutsuki
+      relationship: department_fallback
+    - to: hamura.otsutsuki
+      relationship: department_fallback
+    - to: indra.otsutsuki
+      relationship: department_fallback
+    - to: kaguya.otsutsuki
+      relationship: department_fallback
+    - to: ten.tails
+      relationship: department_fallback
+  toroi:
+    - to: a.raikage
+      relationship: manager
+  torune.aburame:
+    - to: danzo.shimura
+      relationship: manager
+    - to: fu.yamanaka
+      relationship: "team: Root"
+    - to: sai
+      relationship: "team: Root"
+    - to: sai.anbu
+      relationship: "team: Root"
+    - to: shin
+      relationship: "team: Root"
+    - to: shibi.aburame
+      relationship: "team: Aburame Clan"
+    - to: shino.aburame
+      relationship: "team: Aburame Clan"
+  tsuchigumo.leader: []
+  tsume.inuzuka:
+    - to: hiruzen.sarutobi
+      relationship: manager
+    - to: kiba.inuzuka
+      relationship: "team: Inuzuka Clan"
+  tsunade:
+    - to: katsuyu
+      relationship: direct_report
+    - to: shizune
+      relationship: direct_report
+    - to: jiraiya
+      relationship: "team: The Sannin"
+    - to: orochimaru
+      relationship: "team: The Sannin"
+    - to: hashirama.senju
+      relationship: "team: Hokage"
+    - to: hashirama.senju.edo
+      relationship: "team: Hokage"
+    - to: hiruzen.sarutobi
+      relationship: "team: Hokage"
+    - to: hiruzen.sarutobi.edo
+      relationship: "team: Hokage"
+    - to: minato.namikaze
+      relationship: "team: Hokage"
+    - to: minato.namikaze.edo
+      relationship: "team: Hokage"
+    - to: mu
+      relationship: "team: Hokage"
+    - to: naruto.hokage
+      relationship: "team: Hokage"
+    - to: tobirama.senju
+      relationship: "team: Hokage"
+    - to: tobirama.senju.edo
+      relationship: "team: Hokage"
+    - to: ino.yamanaka
+      relationship: "team: Medical Corps"
+    - to: rin.nohara
+      relationship: "team: Medical Corps"
+    - to: sakura.haruno
+      relationship: "team: Medical Corps"
+    - to: sakura.haruno.adult
+      relationship: "team: Medical Corps"
+  tsunami:
+    - to: tazuna
+      relationship: manager
+  udon:
+    - to: konohamaru.sarutobi
+      relationship: manager
+    - to: ebisu
+      relationship: "team: Team Konohamaru"
+    - to: moegi.kazamatsuri
+      relationship: "team: Team Konohamaru"
+  utakata:
+    - to: hotaru
+      relationship: direct_report
+    - to: saiken
+      relationship: direct_report
+  white.zetsu:
+    - to: madara.uchiha
+      relationship: manager
+  yagura:
+    - to: isobu
+      relationship: direct_report
+    - to: fuu
+      relationship: "team: Tailed Beast Jinchuriki"
+    - to: han
+      relationship: "team: Tailed Beast Jinchuriki"
+    - to: killer.b
+      relationship: "team: Tailed Beast Jinchuriki"
+    - to: roshi
+      relationship: "team: Tailed Beast Jinchuriki"
+    - to: yugito.nii
+      relationship: "team: Tailed Beast Jinchuriki"
+    - to: a.raikage
+      relationship: "team: Kage Assembly"
+    - to: gaara
+      relationship: "team: Kage Assembly"
+    - to: mei.terumi
+      relationship: "team: Kage Assembly"
+    - to: onoki
+      relationship: "team: Kage Assembly"
+  yahiko:
+    - to: nagato
+      relationship: manager
+    - to: konan
+      relationship: "team: Hidden Rain Village"
+  yamato:
+    - to: kakashi.hatake
+      relationship: manager
+    - to: naruto.hokage
+      relationship: "team: Team 7"
+    - to: naruto.uzumaki
+      relationship: "team: Team 7"
+    - to: sai
+      relationship: "team: Team 7"
+    - to: sakura.haruno
+      relationship: "team: Team 7"
+    - to: sakura.haruno.adult
+      relationship: "team: Team 7"
+    - to: sasuke.uchiha
+      relationship: "team: Team 7"
+    - to: sasuke.uchiha.adult
+      relationship: "team: Team 7"
+    - to: shisui.uchiha
+      relationship: "team: ANBU"
+  yugito.nii:
+    - to: a.raikage
+      relationship: manager
+    - to: matatabi
+      relationship: direct_report
+    - to: fuu
+      relationship: "team: Tailed Beast Jinchuriki"
+    - to: han
+      relationship: "team: Tailed Beast Jinchuriki"
+    - to: killer.b
+      relationship: "team: Tailed Beast Jinchuriki"
+    - to: roshi
+      relationship: "team: Tailed Beast Jinchuriki"
+    - to: yagura
+      relationship: "team: Tailed Beast Jinchuriki"
+  yuukimaru:
+    - to: guren
+      relationship: manager
+  zabuza.momochi:
+    - to: haku
+      relationship: direct_report
+  zabuza.momochi.edo:
+    - to: kabuto.yakushi
+      relationship: manager
+  zaji:
+    - to: hiruzen.sarutobi
+      relationship: manager
+  zetsu:
+    - to: pain
+      relationship: manager

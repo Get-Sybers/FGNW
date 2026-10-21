@@ -1,0 +1,19 @@
+---
+- name: "Gate: ludus_range_verify (conditional on a live SUCCESS range)"
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  roles:
+    - get_sybers.range.ludus_auth
+    - role: get_sybers.range.ludus_range_health
+      vars:
+        ludus_range_health_fail_on_unhealthy: false
+  post_tasks:
+    - name: "Gate: no deployed SUCCESS range — skipping verify"
+      ansible.builtin.debug:
+        msg: rangeState={{ ludus_range_health_result.rangeState }} — ludus_range_verify skipped (nothing to verify).
+      when: ludus_range_health_result.rangeState != 'SUCCESS'
+    - name: "Gate: verify the live range"
+      ansible.builtin.include_role:
+        name: get_sybers.range.ludus_range_verify
+      when: ludus_range_health_result.rangeState == 'SUCCESS'

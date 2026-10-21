@@ -1,0 +1,36 @@
+---
+- name: Validate required role variables
+  ansible.builtin.include_tasks: preflight.yml
+- name: Create bookmarks directory
+  ansible.windows.win_file:
+    path: C:\Users\Public\Desktop\Bookmarks
+    state: directory
+- name: Create Firefox bookmarks HTML file
+  ansible.windows.win_template:
+    src: bookmarks.html.j2
+    dest: C:\Users\Public\Desktop\Bookmarks\{{ bookmark_title | regex_replace('[^a-zA-Z0-9]', '-') | lower }}-bookmarks.html
+- name: Create Chrome bookmarks HTML file
+  ansible.windows.win_template:
+    src: bookmarks.html.j2
+    dest: C:\Users\Public\Desktop\Bookmarks\{{ bookmark_title | regex_replace('[^a-zA-Z0-9]', '-') | lower }}-bookmarks-chrome.html
+- name: Create desktop shortcut to web GUI
+  community.windows.win_shortcut:
+    src: C:\Program Files\Mozilla Firefox\firefox.exe
+    dest: C:\Users\Public\Desktop\{{ bookmark_title }}.lnk
+    args: "{{ bookmark_url }}"
+    icon: C:\Program Files\Mozilla Firefox\firefox.exe,0
+    description: "{{ bookmark_title }}"
+  failed_when: false # the shortcut is a convenience; a missing Firefox install must not fail the role
+- name: Create instructions file
+  ansible.windows.win_template:
+    src: access-instructions.txt.j2
+    dest: C:\Users\Public\Desktop\{{ bookmark_title | regex_replace('[^a-zA-Z0-9]', '-') }}-Access-Instructions.txt
+  no_log: true
+- name: Display bookmark information
+  ansible.builtin.debug:
+    msg:
+      - Browser bookmarks created successfully!
+      - "URL: {{ bookmark_url }}"
+      - "Location: C:\\Users\\Public\\Desktop\\Bookmarks\\"
+      - "Desktop shortcut created: {{ bookmark_title }}.lnk"
+      - "Instructions: C:\\Users\\Public\\Desktop\\{{ bookmark_title | regex_replace('[^a-zA-Z0-9]', '-') }}-Access-Instructions.txt"

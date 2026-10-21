@@ -1,0 +1,8 @@
+---
+- name: Apply Sysmon for Linux
+  hosts: linux_infra
+  become: true
+  tasks:
+    - name: "Sysmon-linux: apply Sysmon for Linux"
+      ansible.builtin.include_role:
+        name: get_sybers.sysmon_linux

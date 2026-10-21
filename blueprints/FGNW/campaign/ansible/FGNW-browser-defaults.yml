@@ -1,0 +1,30 @@
+---
+- name: Hidden Leaf Village browser defaults
+  hosts: konoha-ws1
+  tasks:
+    - name: "Browser-defaults: apply the village browser defaults: Hidden Leaf Village"
+      ansible.builtin.include_role:
+        name: fgnw_browser_defaults
+      vars:
+        fgnw_browser_defaults_village: Hidden Leaf Village
+# Hidden Sand Village browser defaults have moved to FGNW-mac-services.yml (Phase 4d) —
+# suna-ws1 is now a macOS host. The role is the same `fgnw_browser_defaults` the villages
+# below use — it dispatches on `ansible_os_family` and the macOS branch (`tasks/macos.yml`)
+# writes Firefox app-bundle policies.json + Chrome managed-preferences plist against the
+# same village bookmark corpus (content/www/village-bookmarks.yml).
+- name: Hidden Sound Village browser defaults
+  hosts: oto-ws1
+  tasks:
+    - name: "Browser-defaults: apply the village browser defaults: Hidden Sound Village"
+      ansible.builtin.include_role:
+        name: fgnw_browser_defaults
+      vars:
+        fgnw_browser_defaults_village: Hidden Sound Village
+- name: Akatsuki browser defaults
+  hosts: akatsuki-ws1,akatsuki-ws2
+  tasks:
+    - name: "Browser-defaults: apply the village browser defaults: Akatsuki"
+      ansible.builtin.include_role:
+        name: fgnw_browser_defaults
+      vars:
+        fgnw_browser_defaults_village: Akatsuki

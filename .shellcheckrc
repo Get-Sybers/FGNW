@@ -1,0 +1,12 @@
+# shellcheck — get-sybers standard (docs/04): every optional check on, minus a
+# few documented style-only checks that add noise without catching a bug.
+enable=all
+# SC2250 — "always brace variable references": style preference, not a defect.
+disable=SC2250
+# SC2312 — "invoke separately to avoid masking a return value" on $(...) used
+# in command position: noisy for intended pipelines.
+disable=SC2312
+# SC2248 — "always quote even when safe": style preference.
+disable=SC2248
+# Resolve `source`d helpers relative to the sourcing script.
+source-path=SCRIPTDIR

@@ -1,0 +1,104 @@
+---
+- name: Ensure Land of Fire mission-report intake exists on ninjasploitable
+  hosts: ninjasploitable
+  become: true
+  vars:
+    ninjasploitable_content_baked_marker: /var/lib/ludus/ninjasploitable_content_baked
+    report_web_root: /var/www/html/reports
+    report_upload_dir: /var/www/html/uploads
+  tasks:
+    - name: Check whether ninjasploitable web content is already baked
+      ansible.builtin.stat:
+        path: "{{ ninjasploitable_content_baked_marker }}"
+      register: ninjasploitable_content_baked
+    - name: Deploy Fire intake fallback content only on pre-bake clones
+      when: not ninjasploitable_content_baked.stat.exists
+      block:
+        - name: Ensure the report intake web dir exists
+          ansible.builtin.file:
+            path: "{{ report_web_root }}"
+            state: directory
+            owner: www-data
+            group: www-data
+            mode: "0755"
+        - name: Ensure the shared upload dir exists (reused from the role's upload.php)
+          ansible.builtin.file:
+            path: "{{ report_upload_dir }}"
+            state: directory
+            owner: www-data
+            group: www-data
+            mode: "0777"
+        - name: Deploy the Fire/Leaf mission-report intake page (intentionally vulnerable upload)
+          ansible.builtin.copy:
+            dest: "{{ report_web_root }}/intake.php"
+            owner: www-data
+            group: www-data
+            mode: "0644"
+            content: |
+              <!DOCTYPE html>
+              <html lang="en">
+              <head>
+                <meta charset="UTF-8">
+                <title>Land of Fire — Mission &amp; Intel Report Intake</title>
+                <style>
+                  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f4f4;
+                  .container { max-width: 620px; margin: 0 auto; background: #fff;
+                  h2 { color: #333;
+                  .crest { font-size: 2rem; }
+                  .notice { background: #fff3cd;
+                  label { display:block; margin: 14px 0 4px; font-size:.9rem; color: #333;
+                  input[type=text], select { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid
+                  input[type=file] { margin-top: 6px; color: #333;
+                  button { margin-top: 18px; padding: 10px 22px; background: #2c3e50;
+                </style>
+              </head>
+              <body>
+                <div class="container">
+                  <h2><span class="crest">\U0001F525</span> Land of Fire — Mission &amp; Intel Report Intake</h2>
+                  <p>Konohagakure shinobi: submit your mission and intelligence reports below.
+                     All ranks. Attach your report document and photographic evidence.</p>
+                  <div class="notice">Reminder from the Hokage's office: reports for A-rank and above
+                     route through secondary approval. D-rank teams, same-day submission expected.</div>
+                  <form method="post" enctype="multipart/form-data">
+                    <label for="ninja">Reporting shinobi (sAMAccountName)</label>
+                    <input type="text" id="ninja" name="ninja" placeholder="e.g. naruto.uzumaki" />
+                    <label for="rank">Mission rank</label>
+                    <select id="rank" name="rank">
+                      <option>D-rank</option><option>C-rank</option><option>B-rank</option>
+                      <option>A-rank</option><option>S-rank</option>
+                    </select>
+                    <label for="file">Report document / mission_photo.jpg</label>
+                    <input type="file" id="file" name="file" required />
+                    <button type="submit">Submit Report</button>
+                  </form>
+                  <?php
+                  // Intentionally vulnerable: no file-type/size validation, world-writable target.
+                  // Same unrestricted-upload flaw as the role's upload.php — this IS the attack surface.
+                  if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['file'])) {
+                      $upload_dir = '/var/www/html/uploads/';
+                      if (!file_exists($upload_dir)) { mkdir($upload_dir, 0777, true); }
+                      $ninja = isset($_POST['ninja']) ? basename($_POST['ninja']) : 'unknown';
+                      $filename = basename($_FILES['file']['name']);
+                      $target_file = $upload_dir . $ninja . '_' . $filename;
+                      if (move_uploaded_file($_FILES['file']['tmp_name'], $target_file)) {
+                          echo "<p style='color:#8fdb8f;'>✓ Report filed: " . htmlspecialchars($filename) .
+                               " (from " . htmlspecialchars($ninja) . ")</p>";
+                          echo "<p>Archived at: <a href='/uploads/" . htmlspecialchars($ninja . '_' . $filename) .
+                               "'>/uploads/" . htmlspecialchars($ninja . '_' . $filename) . "</a></p>";
+                      } else {
+                          echo "<p style='color:#ff8c42;'>✗ Submission failed — mission_photo.jpg not found?</p>";
+                      }
+                  }
+                  ?>
+                </div>
+              </body>
+              </html>
+    - name: Report intake is already baked
+      ansible.builtin.debug:
+        msg: Ninjasploitable report-intake content already baked; deploy fallback skipped.
+      when: ninjasploitable_content_baked.stat.exists
+    - name: Verify report intake endpoint responds
+      ansible.builtin.uri:
+        url: http://127.0.0.1/reports/intake.php
+        method: GET
+        status_code: 200

@@ -1,0 +1,55 @@
+---
+# FGNW mac-dev-playbook configuration — Hidden Sand Village (Sunagakure) macOS hosts.
+# Based on geerlingguy/mac-dev-playbook's default.config.yml, trimmed for an isolated range
+# box. Consumed by FGNW-mac-dev.yml. The Homebrew set is kept light so the pre-containment
+# install window (phase 1c, the only time these hosts have internet egress) stays short.
+
+# Feature toggles (upstream default.config.yml flags). dotfiles pulls a personal repo and the
+# dock/osx/terminal tweaks are cosmetic, so they are off by default here; flip them on per range.
+configure_dotfiles: false
+configure_terminal: false
+configure_osx: false
+configure_dock: false
+configure_sudoers: false
+configure_sublime: false
+
+# geerlingguy.dotfiles knobs (only used when configure_dotfiles is true).
+dotfiles_repo: "https://github.com/geerlingguy/dotfiles.git"
+dotfiles_repo_version: master
+dotfiles_repo_local_destination: "~/.dotfiles"
+dotfiles_files: []
+
+# Homebrew formulae (geerlingguy.mac.homebrew). Base dev tooling + the browser/network tools
+# the Gaara persona and range verification lean on. Dovecot is installed on every mac here
+# (not only suna-mail) so that Phase 1c carries the brew install while egress is still open;
+# the dovecot launchd service is only loaded on the mail host by fgnw_mac_mail_server.
+homebrew_installed_packages:
+  - git
+  - wget
+  - gnupg
+  - htop
+  - jq
+  - nmap
+  - dovecot
+
+homebrew_cask_appdir: /Applications
+# Casks give the GHOSTS browser handlers something to drive. Thunderbird is included here
+# (not pulled in by fgnw_thunderbird) for the same Phase 1c egress reason as dovecot:
+# `brew install --cask` cannot reach the Homebrew CDN after Phase 2 containment.
+homebrew_casks:
+  - firefox
+  - google-chrome
+  - thunderbird
+
+homebrew_taps: []
+homebrew_use_brewfile: false
+
+# Mac App Store (geerlingguy.mac.mas) — none in an offline range (mas needs a signed-in Apple ID).
+mas_installed_apps: []
+mas_installed_app_ids: []
+mas_email: ""
+mas_password: ""
+
+# Dock (geerlingguy.mac.dock) — only applied when configure_dock is true.
+dockitems_remove: []
+dockitems_persist: []

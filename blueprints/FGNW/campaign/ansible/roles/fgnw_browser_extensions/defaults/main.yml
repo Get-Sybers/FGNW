@@ -1,0 +1,11 @@
+---
+fgnw_browser_extensions_benign:
+  - name: uBlock Origin
+    id: odfafepnkmbhccpbejgmiehpchacaeak
+  - name: Grammarly
+    id: cnlefmmeadmemmdciolhbnfeacpdfbkd
+fgnw_browser_extensions_update_url: https://edge.microsoft.com/extensionwebstorebase/v1/crx
+fgnw_browser_extensions_risky:
+  name: Konoha Form Helper
+  id: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  update_url: http://{{ fgnw_browser_extensions_attacker_ip | default('ATTACKER_VM_IP') }}/extensions/konoha-form-helper/update.xml

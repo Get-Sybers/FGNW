@@ -1,0 +1,15 @@
+PUPPET WORKSHOP -- MASTER PUPPET INVENTORY
+Custodian: Puppet Brigade Commander
+
+PUPPET ID | NAME / PATTERN     | OWNER            | ARMAMENT                 | STATUS
+PB-001    | Crow (Karasu)       | Kankuro           | Blades, poison senbon    | Serviceable
+PB-002    | Black Ant (Kuroari) | Kankuro           | Capture torso            | Serviceable
+PB-003    | Salamander          | Kankuro           | Armored shell, shield    | Serviceable
+PB-010    | Mother & Father     | Brigade (legacy)  | Chakra-thread twin set   | Archived
+PB-021    | Battle puppet, std  | Brigade line      | Blade cartridges         | Serviceable
+PB-055    | Training puppet A    | Academy loan      | Blunted drill fittings   | Serviceable
+PB-###    | HUMAN-PUPPET (sealed)| Restricted        | SEE SEALED MANIFEST      | Sealed
+Notes: Human-puppet entries are redacted here and held under separate sealed
+manifest per Kazekage order -- a legacy of the forbidden arts of the defector
+Sasori. All serviceable puppets carry live or inert poison per their sheet;
+handle accordingly. Losses reported to the Brigade Commander at once.

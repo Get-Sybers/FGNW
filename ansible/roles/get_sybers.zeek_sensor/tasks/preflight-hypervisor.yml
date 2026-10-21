@@ -1,0 +1,17 @@
+---
+- name: "preflight-hypervisor | Preflight — hypervisor profile: is this actually a PVE node?"
+  ansible.builtin.stat:
+    path: /etc/pve
+  register: __zeek_pve
+- name: "preflight-hypervisor | Preflight — hypervisor profile requires a PVE node"
+  ansible.builtin.assert:
+    that: __zeek_pve.stat.exists | default(false)
+    fail_msg: >-
+      zeek_sensor_profile=hypervisor but /etc/pve does not exist, so this is not
+      a Proxmox node. That profile discovers SDN VNet bridge devices (r<N>,
+      ludusnat) which only exist on a PVE node. Use profile 'chokepoint' with an
+      explicit zeek_sensor_capture_interfaces list instead.
+    quiet: true
+- name: "preflight-hypervisor | Preflight — discover the VNet bridges to capture on"
+  ansible.builtin.include_tasks: preflight-discover-bridges.yml
+  when: zeek_sensor_capture_interfaces | length == 0

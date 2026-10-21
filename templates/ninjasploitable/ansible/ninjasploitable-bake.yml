@@ -1,0 +1,363 @@
+---
+- name: Bake ninjasploitable packages and vulnerable web content
+  hosts: all
+  become: true
+  gather_facts: true
+  vars:
+    ms_marker: /var/lib/ludus/ninjasploitable_prereqs_baked
+    ms_content_marker: /var/lib/ludus/ninjasploitable_content_baked
+    ms_service_packages:
+      - apache2
+      - apache2-utils
+      - php
+      - php-mysql
+      - php-gd
+      - php-curl
+      - libapache2-mod-php
+      - mariadb-server
+      - mariadb-client
+      - python3-pymysql
+      - vsftpd
+      - openssh-server
+      - samba
+      - postgresql
+    ms_adjoin_packages:
+      - realmd
+      - sssd
+      - sssd-tools
+      - adcli
+      - samba-common-bin
+      - krb5-user
+      - packagekit
+      - libnss-sss
+      - libpam-sss
+      - oddjob
+      - oddjob-mkhomedir
+  tasks:
+    - name: "Bake: is the content marker already present? (idempotency gate)"
+      ansible.builtin.stat:
+        path: "{{ ms_content_marker }}"
+      register: ms_content_marker_stat
+    - name: "Bake: install packages + deploy vulnerable web content"
+      when: not ms_content_marker_stat.stat.exists
+      block:
+        - name: "Bake: preseed the Kerberos realm so krb5-user installs non-interactively"
+          ansible.builtin.debconf:
+            name: krb5-config
+            question: krb5-config/default_realm
+            vtype: string
+            value: "LUDUS.LOCAL"
+        - name: "Bake: update apt cache (build has internet)"
+          ansible.builtin.apt:
+            update_cache: true
+        - name: "Bake: install the vulnerable-service packages"
+          ansible.builtin.apt:
+            name: "{{ ms_service_packages }}"
+            state: present
+          environment:
+            DEBIAN_FRONTEND: noninteractive
+        - name: "Bake: install the realmd/sssd AD-join packages"
+          ansible.builtin.apt:
+            name: "{{ ms_adjoin_packages }}"
+            state: present
+          environment:
+            DEBIAN_FRONTEND: noninteractive
+        - name: "Bake: enable Apache modules"
+          community.general.apache2_module:
+            name: "{{ item }}"
+            state: present
+          loop:
+            - php
+            - rewrite
+            - headers
+        - name: "Bake: create vulnerable web app directory"
+          ansible.builtin.file:
+            path: /var/www/html/vulnerable
+            state: directory
+            mode: '0755'
+            owner: www-data
+            group: www-data
+        - name: "Bake: create uploads directory"
+          ansible.builtin.file:
+            path: /var/www/html/uploads
+            state: directory
+            mode: '0777'
+            owner: www-data
+            group: www-data
+        - name: "Bake: create reports directory"
+          ansible.builtin.file:
+            path: /var/www/html/reports
+            state: directory
+            mode: '0755'
+            owner: www-data
+            group: www-data
+        - name: "Bake: deploy vulnerable SQLi login app"
+          ansible.builtin.copy:
+            dest: /var/www/html/vulnerable/login.php
+            content: |
+              <!DOCTYPE html>
+              <html>
+              <head>
+                  <title>Vulnerable Login Portal</title>
+                  <style>
+                      body { font-family: Arial, sans-serif; background: #f4f4f4;
+                      .container { max-width: 400px; margin: 0 auto; background: white; padding: 30px;
+                                   border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+                      h2 { color: #333;
+                      input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid
+                      button { width: 100%; padding: 12px; background: #2c3e50;
+                      button:hover { background: #e9e9e9;
+                      .warning { background: #fff3cd;
+                  </style>
+              </head>
+              <body>
+                  <div class="container">
+                      <h2>🔓 Vulnerable Login</h2>
+                      <div class="warning">⚠️ This is an intentionally vulnerable application for testing purposes.</div>
+                      <form method="post" action="login.php">
+                          <input type="text" name="username" placeholder="Username" required />
+                          <input type="password" name="password" placeholder="Password" required />
+                          <button type="submit">Login</button>
+                      </form>
+                      <?php
+                      if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+                          $username = $_POST['username'];
+                          $password = $_POST['password'];
+                          // Intentionally vulnerable SQL query (SQL Injection)
+                          $query = "SELECT * FROM users WHERE username='$username' AND password='$password'";
+                          echo "<div style='margin-top: 20px; padding: 10px; background: #e7f3ff; border-left: 4px solid #2196F3;'>";
+                          echo "<strong>Debug Info (Vulnerable!):</strong><br>";
+                          echo "Query: " . htmlspecialchars($query);
+                          echo "</div>";
+                          // Simulated authentication
+                          if ($username == "admin" && $password == "admin") {
+                              echo "<div style='margin-top: 10px; padding: 10px; background: #d4edda; border-left: 4px solid #28a745;'>";
+                              echo "✓ Login successful! Welcome, admin!";
+                              echo "</div>";
+                          } else {
+                              echo "<div style='margin-top: 10px; padding: 10px; background: #f8d7da; border-left: 4px solid #dc3545;'>";
+                              echo "✗ Login failed. Try: admin/admin or use SQL injection!";
+                              echo "</div>";
+                          }
+                      }
+                      ?>
+                  </div>
+              </body>
+              </html>
+            mode: '0644'
+            owner: www-data
+            group: www-data
+        - name: "Bake: deploy vulnerable file-upload app"
+          ansible.builtin.copy:
+            dest: /var/www/html/vulnerable/upload.php
+            content: |
+              <!DOCTYPE html>
+              <html>
+              <head>
+                  <title>Vulnerable File Upload</title>
+                  <style>
+                      body { font-family: Arial, sans-serif; background: #f4f4f4;
+                      .container { max-width: 500px; margin: 0 auto; background: white; padding: 30px;
+                                   border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+                      .warning { background: #fff3cd;
+                      button { padding: 10px 20px; background: #2c3e50;
+                  </style>
+              </head>
+              <body>
+                  <div class="container">
+                      <h2>📁 Vulnerable File Upload</h2>
+                      <div class="warning">⚠️ No file type validation!</div>
+                      <form method="post" enctype="multipart/form-data">
+                          <input type="file" name="file" required />
+                          <button type="submit">Upload</button>
+                      </form>
+                      <?php
+                      if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['file'])) {
+                          $upload_dir = '/var/www/html/uploads/';
+                          if (!file_exists($upload_dir)) {
+                              mkdir($upload_dir, 0777, true);
+                          }
+                          $filename = basename($_FILES['file']['name']);
+                          $target_file = $upload_dir . $filename;
+                          // Intentionally vulnerable - no validation
+                          if (move_uploaded_file($_FILES['file']['tmp_name'], $target_file)) {
+                              echo "<p style='color: green;'>✓ File uploaded: " . htmlspecialchars($filename) . "</p>";
+                              echo "<p>Access at: <a href='/uploads/" . htmlspecialchars($filename) . "'>/uploads/" . htmlspecialchars($filename) . "</a></p>";
+                          } else {
+                              echo "<p style='color: red;'>✗ Upload failed!</p>";
+                          }
+                      }
+                      ?>
+                  </div>
+              </body>
+              </html>
+            mode: '0644'
+            owner: www-data
+            group: www-data
+        - name: "Bake: deploy ninjasploitable index page"
+          ansible.builtin.copy:
+            dest: /var/www/html/index.html
+            content: |
+              <!DOCTYPE html>
+              <html>
+              <head>
+                  <title>Ninjasploitable Lab Server</title>
+                  <style>
+                      body { font-family: Arial, sans-serif; background: #f4f4f4;
+                      .container { max-width: 800px; margin: 0 auto; }
+                      h1 { color: #333;
+                      .app-list { background: #fff;
+                      .app-list a { color: #0366d6;
+                      .app-list a:hover { background: #e9e9e9;
+                      .warning { background: #fff3cd;
+                  </style>
+              </head>
+              <body>
+                  <div class="container">
+                      <h1>🥷 Ninjasploitable Lab Server</h1>
+                      <div class="warning">
+                          <strong>⚠️ WARNING:</strong> This server contains intentionally vulnerable applications
+                          for security testing and training purposes only.
+                      </div>
+                      <div class="app-list">
+                          <h2>Available Vulnerable Applications:</h2>
+                          <a href="/vulnerable/login.php">🔓 Vulnerable Login (SQL Injection)</a>
+                          <a href="/vulnerable/upload.php">📁 Vulnerable File Upload</a>
+                          <a href="/reports/intake.php">🔥 Land of Fire Mission Report Intake</a>
+                      </div>
+                      <div class="app-list">
+                          <h2>Available Services:</h2>
+                          <ul>
+                              <li>HTTP Web Server (Port 80)</li>
+                              <li>SSH (Port 22)</li>
+                              <li>FTP (Port 21)</li>
+                              <li>MySQL (Port 3306)</li>
+                          </ul>
+                      </div>
+                      <div style="margin-top: 30px; font-size: 12px; color: #888;">
+                          <p>Default Credentials:</p>
+                          <ul>
+                              <li>SSH: msfadmin / msfadmin</li>
+                              <li>MySQL: root / (no password)</li>
+                              <li>Web App: admin / admin</li>
+                          </ul>
+                      </div>
+                  </div>
+              </body>
+              </html>
+            mode: '0644'
+            owner: www-data
+            group: www-data
+        - name: "Bake: deploy Fire mission-report intake page"
+          ansible.builtin.copy:
+            dest: /var/www/html/reports/intake.php
+            mode: '0644'
+            owner: www-data
+            group: www-data
+            content: |
+              <!DOCTYPE html>
+              <html lang="en">
+              <head>
+                <meta charset="UTF-8">
+                <title>Land of Fire — Mission &amp; Intel Report Intake</title>
+                <style>
+                  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f4f4;
+                  .container { max-width: 620px; margin: 0 auto; background: #fff;
+                  h2 { color: #333;
+                  .crest { font-size: 2rem; }
+                  .notice { background: #fff3cd;
+                  label { display:block; margin: 14px 0 4px; font-size:.9rem; color: #333;
+                  input[type=text], select { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid
+                  input[type=file] { margin-top: 6px; color: #333;
+                  button { margin-top: 18px; padding: 10px 22px; background: #2c3e50;
+                </style>
+              </head>
+              <body>
+                <div class="container">
+                  <h2><span class="crest">&
+                  <p>Konohagakure shinobi: submit your mission and intelligence reports below.
+                     All ranks. Attach your report document and photographic evidence.</p>
+                  <div class="notice">Reminder from the Hokage's office: reports for A-rank and above
+                     route through secondary approval. D-rank teams, same-day submission expected.</div>
+                  <form method="post" enctype="multipart/form-data">
+                    <label for="ninja">Reporting shinobi (sAMAccountName)</label>
+                    <input type="text" id="ninja" name="ninja" placeholder="e.g. naruto.uzumaki" />
+                    <label for="rank">Mission rank</label>
+                    <select id="rank" name="rank">
+                      <option>D-rank</option><option>C-rank</option><option>B-rank</option>
+                      <option>A-rank</option><option>S-rank</option>
+                    </select>
+                    <label for="file">Report document / mission_photo.jpg</label>
+                    <input type="file" id="file" name="file" required />
+                    <button type="submit">Submit Report</button>
+                  </form>
+                  <?php
+                  // Intentionally vulnerable: no file-type/size validation, world-writable target.
+                  // Same unrestricted-upload flaw as the role's upload.php — this IS the attack surface.
+                  if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['file'])) {
+                      $upload_dir = '/var/www/html/uploads/';
+                      if (!file_exists($upload_dir)) { mkdir($upload_dir, 0777, true); }
+                      $ninja = isset($_POST['ninja']) ? basename($_POST['ninja']) : 'unknown';
+                      $filename = basename($_FILES['file']['name']);
+                      $target_file = $upload_dir . $ninja . '_' . $filename;
+                      if (move_uploaded_file($_FILES['file']['tmp_name'], $target_file)) {
+                          echo "<p style='color:#8fdb8f;'>✓ Report filed: " . htmlspecialchars($filename) .
+                               " (from " . htmlspecialchars($ninja) . ")</p>";
+                          echo "<p>Archived at: <a href='/uploads/" . htmlspecialchars($ninja . '_' . $filename) .
+                               "'>/uploads/" . htmlspecialchars($ninja . '_' . $filename) . "</a></p>";
+                      } else {
+                          echo "<p style='color:#ff8c42;'>✗ Submission failed — mission_photo.jpg not found?</p>";
+                      }
+                  }
+                  ?>
+                </div>
+              </body>
+              </html>
+        - name: "Bake: configure MariaDB vulnerability (root passwordless + vulnerable_db)"
+          block:
+            - name: "Bake: configure MySQL root with no password (intentional vulnerability)"
+              ansible.mysql.mysql_user:
+                name: root
+                host: localhost
+                password: ''
+                login_unix_socket: /var/run/mysqld/mysqld.sock
+                plugin: mysql_native_password
+                state: present
+            - name: "Bake: create vulnerable database"
+              ansible.mysql.mysql_db:
+                name: vulnerable_db
+                state: present
+                login_unix_socket: /var/run/mysqld/mysqld.sock
+          rescue:
+            - name: "Bake: MariaDB vulnerability setup failed -- fail with guidance"
+              ansible.builtin.fail:
+                msg: >-
+                  Configuring MariaDB (root passwordless + vulnerable_db) failed. Likely
+                  causes: the mysql_native_password auth plugin is unavailable on this
+                  MariaDB build, or the unix socket differs from
+                  /var/run/mysqld/mysqld.sock on this Debian point release. This is the
+                  intentional-vulnerability setup, so it must not be skipped silently.
+        - name: "Bake: ensure the ludus state dir exists"
+          ansible.builtin.file:
+            path: /var/lib/ludus
+            state: directory
+            mode: "0755"
+        - name: "Bake: write the prereq marker"
+          ansible.builtin.copy:
+            dest: "{{ ms_marker }}"
+            mode: "0644"
+            content: |
+              Ninjasploitable vulnerable-service + AD-join packages baked into this template
+              at build time (
+        - name: "Bake: write the content marker LAST"
+          ansible.builtin.copy:
+            dest: "{{ ms_content_marker }}"
+            mode: "0644"
+            content: |
+              Ninjasploitable vulnerable web content + Fire report intake baked at build time
+              (
+              /uploads, Apache module enables, and MariaDB root-passwordless setup.
+    - name: "Bake: report (already fully baked)"
+      ansible.builtin.debug:
+        msg: "Ninjasploitable content already baked (marker present) — nothing to do."
+      when: ms_content_marker_stat.stat.exists

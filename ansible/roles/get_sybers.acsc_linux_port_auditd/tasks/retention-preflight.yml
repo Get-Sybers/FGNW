@@ -1,0 +1,26 @@
+---
+- name: "retention-preflight | Preflight — free space on the audit log filesystem"
+  ansible.builtin.command: "df -P -k {{ acsc_auditd_log_dir }}"
+  register: __acsc_auditd_df
+  changed_when: false
+  check_mode: false
+- name: "retention-preflight | Preflight — the rotation ceiling actually fits"
+  vars:
+    __free_mb: "{{ (__acsc_auditd_df.stdout_lines[1].split()[3] | int) // 1024 }}"
+    __need_mb: "{{ (acsc_auditd_max_log_file_mb | int * acsc_auditd_num_logs | int)
+                  + acsc_auditd_min_free_headroom_mb | int }}"
+  ansible.builtin.assert:
+    that: __free_mb | int >= __need_mb | int
+    success_msg: >-
+      {{ acsc_auditd_log_dir }} has {{ __free_mb }} MiB free; the ceiling
+      ({{ acsc_auditd_num_logs }} x {{ acsc_auditd_max_log_file_mb }} MiB) plus
+      {{ acsc_auditd_min_free_headroom_mb }} MiB headroom needs {{ __need_mb }} MiB.
+    fail_msg: >-
+      Only {{ __free_mb }} MiB free on {{ acsc_auditd_log_dir }}, but
+      num_logs x max_log_file = {{ acsc_auditd_num_logs }} x
+      {{ acsc_auditd_max_log_file_mb }} MiB plus
+      {{ acsc_auditd_min_free_headroom_mb }} MiB headroom needs {{ __need_mb }} MiB.
+      Refusing to raise the rotation ceiling onto a filesystem that cannot hold
+      it — auditd would hit disk_full_action instead of rotating cleanly. Either
+      free space or lower acsc_auditd_num_logs / acsc_auditd_max_log_file_mb,
+      accepting the shorter retention that implies.

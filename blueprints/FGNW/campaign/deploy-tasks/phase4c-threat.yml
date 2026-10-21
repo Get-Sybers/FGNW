@@ -1,0 +1,7 @@
+---
+- name: "deploy-tasks | phase4c-threat | FGNW-campaign-setup.yml (Kerberoast SPN + AS-REP roast, Leaf)"
+  ansible.builtin.command:
+    argv: [ansible-playbook, -i, "{{ __tmp_prov_inv }}", FGNW-campaign-setup.yml]
+  args:
+    chdir: "{{ ansible_dir }}"
+  changed_when: true

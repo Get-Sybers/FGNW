@@ -1,0 +1,17 @@
+---
+galaxy_info:
+  author: Get-Sybers
+  namespace: get_sybers
+  description: >-
+    Range collection auth entry point: resolve and validate the Ludus API
+    identity once (env-only LUDUS_API_KEY, confirmed via /whoami), then publish
+    it as a no_log fact for the rest of the get_sybers.range collection.
+    Delegates the check to the shared get_sybers.ludus_auth_check role.
+  role_name: ludus_auth
+  license: AGPL-3.0-only
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Debian
+      versions:
+        - all
+dependencies: []

@@ -1,0 +1,14 @@
+---
+argument_specs:
+  main:
+    short_description: "ACSC Windows Event Logging and Forwarding baseline: retention sizing + audit policy."
+    description:
+      - >-
+        Sets the ACSC MaxSize figures on the Security (2 GB), Application and
+        System (64 MB) classic event logs and the PowerShell/Operational channel
+        (64 MB) via the registry, applying them immediately with wevtutil when a
+        value changed; enables full command-line auditing on process-creation
+        events (4688) and PowerShell Script Block Logging (4104). Windows only;
+        needs local administrator rights. Idempotent — a converged re-run
+        reports zero changed.
+    options: {}

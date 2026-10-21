@@ -1,0 +1,394 @@
+---
+# The harvest scripts below are PowerShell / bash one-liners carried verbatim in
+# literal blocks, and the manifest expressions are single Jinja dict literals;
+# wrapping either would change what runs, so the line-length rule is off here.
+# yamllint disable rule:line-length
+- name: Harvest base-template provenance (which image each VM derives from)
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  vars:
+    facts_out: latest
+    __bp_root: "{{ playbook_dir | dirname | dirname }}"
+    __src_root: "{{ playbook_dir | dirname | dirname | dirname | dirname }}"
+    __dir: "{{ playbook_dir }}/../facts-local/{{ facts_out }}/infra"
+    __range_config: "{{ __bp_root }}/range-config.yml"
+  tasks:
+    - name: Ensure infra facts dir exists
+      ansible.builtin.file: { path: "{{ __dir }}", state: directory, mode: "0700" }
+      changed_when: false
+    - name: Read the range config (VM -> template mapping)
+      ansible.builtin.slurp:
+        src: "{{ __range_config }}"
+      register: __rc
+      failed_when: false
+    - name: List the Ludus templates present on this server (name + build state)
+      ansible.builtin.shell: |
+        set +e -o pipefail
+        echo "---templates-dir (source-shipped definitions)---"
+        ls -1 "{{ __src_root }}/templates/" 2>/dev/null
+        echo "---proxmox-template-vms---"
+        pvesh get /cluster/resources --type vm --output-format json 2>/dev/null \
+          | python3 -c "import json,sys; [print(f\"{v['vmid']}:{v.get('name','')}\") for v in json.load(sys.stdin) if v.get('template')]" 2>/dev/null
+      args:
+        executable: /bin/bash
+      register: __tpl
+      changed_when: false
+      failed_when: false
+    - name: Collect deploy-pipeline position (which phases had run when facts were taken)
+      ansible.builtin.shell: |
+        set +e -o pipefail
+        echo "---utc---";        date -u +%Y-%m-%dT%H:%M:%SZ
+        echo "---local---";      date +%Y-%m-%dT%H:%M:%S%z
+        echo "---deploy-runs-24h (oldest first)---"
+        for L in $(ls -tr /opt/ludus/logs/FGNW-deploy-full-*.log 2>/dev/null | tail -12); do
+          [ -z "$(find "$L" -mtime -1 2>/dev/null)" ] && continue
+          echo "  RUN $(basename "$L")"
+          echo "    cmd: $(grep -ahoE 'FGNW-deploy\.sh [^\"]*' "$L" 2>/dev/null | head -1)"
+          grep -ahoE "\[\+\] Phase [0-9b]+[^:]*:" "$L" 2>/dev/null | sed 's/\x1b\[[0-9;]*m//g' | sort -u | sed 's/^/    /'
+          grep -ahoE "(deploy succeeded|did not reach SUCCESS|line has broken after [0-9]+ attempts|Timed out waiting)" "$L" 2>/dev/null | sort -u | sed 's/^/    outcome: /'
+        done
+        echo "---range-state---"
+        sqlite3 -readonly /opt/ludus/db/data.db "select rangeState||' vms='||numberOfVMs from ranges where rangeID='RA';" 2>/dev/null
+        echo "---testing-mode---"
+        sqlite3 -readonly /opt/ludus/db/data.db "select 'testingEnabled='||testingEnabled from ranges where rangeID='RA';" 2>/dev/null
+        echo "---git---"
+        BP_ROOT="{{ playbook_dir | dirname | dirname }}"
+        echo "parent=$(git -C /opt/ludus rev-parse --short HEAD 2>/dev/null)"
+        echo "blueprint=$(git -C "$BP_ROOT" rev-parse --short HEAD 2>/dev/null)"
+        echo "blueprint_dirty=$(git -C "$BP_ROOT" status --porcelain 2>/dev/null | wc -l)"
+      args:
+        executable: /bin/bash
+      register: __pos
+      changed_when: false
+      failed_when: false
+    - name: Write the pipeline-position manifest
+      ansible.builtin.copy:
+        content: |
+          {{ {
+             'harvest_taken_at': (__pos.stdout | default('')),
+             'manual_steps': (harvest_notes | default(
+                'none recorded — pass -e harvest_notes="..." to record any step run BY HAND '
+                'outside the orchestrated deploy (e.g. a standalone ad-data.yml re-run, a hand-fixed '
+                'record, a targeted --limit play). These do NOT appear in the wrapper logs above, '
+                'so anything hand-run is invisible to the automatic capture.')),
+             'phase_reference': {
+                '0':  'Nexus cache bring-up',
+                '1':  'ludus range deploy — VMs + range-config roles (sysmon, ghosts client, tool cache)',
+                '1b': 'ghost9 CT — the GHOSTS 9 LXC, before containment',
+                '1c': 'macOS dev base (Homebrew + mac-dev-playbook on the Sand macOS hosts, pre-containment)',
+                '2':  'containment / testing mode (isolation closes HERE, before AD and content)',
+                '3':  'AD build — domains, trusts, users/groups/OUs',
+                '4':  'content playbooks — attacker web, themed sites, decoy content, dnsforwarder, ACSC logging',
+                '4b': 'Exchange install + mail seed',
+                '4c': 'threat artefacts — campaign attack primitives',
+                '4d': 'macOS service stack — Postfix/Dovecot, mac browser defaults, decoys, GHOSTS Universal client',
+                '4e': 'Thunderbird mail client — IMAP enable on each village Exchange, then Thunderbird on every workstation (Win + Mac)',
+                '5':  'GHOSTS emulation start (timelines, persona autologon), then verification'
+             },
+             'note': 'Interpret every gap against the phases that had actually RUN. A missing service/artifact from a phase that never ran is NOT a defect. See harvest_taken_at ---phases-seen--- and ---deploy-cmd--- for flags such as --skip-nexus / --skip-exchange.'
+          } | to_nice_json }}
+        dest: "{{ __dir }}/_pipeline-position.json"
+        mode: "0600"
+      changed_when: false
+    - name: Write template provenance (per-VM lineage + available templates)
+      ansible.builtin.copy:
+        content: |
+          {{ {
+             'vm_to_template': ((__rc.content | default('') | b64decode | from_yaml).ludus | default([])
+                                | map('combine', {}) | list
+                                | map(attribute='vm_name') | list)
+                               | zip(((__rc.content | default('') | b64decode | from_yaml).ludus | default([]))
+                                | map(attribute='template') | list) | list,
+             'templates_on_server': (__tpl.stdout | default('')).split('\n'),
+             'note': 'A rebuilt range MUST use these same base templates; template-baked config vs deploy-applied config is distinguished by comparing a fresh template clone against these harvested facts.'
+          } | to_nice_json }}
+        dest: "{{ __dir }}/_template-provenance.json"
+        mode: "0600"
+      changed_when: false
+- name: Harvest Windows logging/monitoring baseline
+  hosts: windows_realname
+  gather_facts: false
+  vars:
+    facts_out: latest
+    __dir: "{{ playbook_dir }}/../facts-local/{{ facts_out }}/infra"
+  tasks:
+    - name: Ensure infra facts dir exists (controller-side)
+      ansible.builtin.file: { path: "{{ __dir }}", state: directory, mode: "0700" }
+      delegate_to: localhost
+      run_once: true
+      changed_when: false
+    - name: "Windows: Sysmon service + config hash, ACSC audit/registry, features"
+      ansible.windows.win_shell: |
+        $ErrorActionPreference='Stop'
+        function J($o){ if ($null -eq $o) { '[]' } else { ConvertTo-Json -InputObject $o -Depth 6 -Compress } }
+        try {
+          switch ('{{ item }}') {
+            'sysmon' {
+              $svc = Get-Service Sysmon64 -ErrorAction SilentlyContinue
+              $cfg = 'C:\Sysmon\sysmonconfig.xml'
+              $h = if (Test-Path $cfg) { (Get-FileHash $cfg -Algorithm SHA256).Hash } else { $null }
+              J @{ service=($svc.Status.ToString()); startType=($svc.StartType.ToString()); configPath=$cfg; configSha256=$h; present=($null -ne $svc) }
+            }
+            'acsc' {
+              $sec = Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Services\EventLog\Security' -ErrorAction SilentlyContinue
+              $app = Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Services\EventLog\Application' -ErrorAction SilentlyContinue
+              $sb  = Get-ItemProperty 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\PowerShell\ScriptBlockLogging' -ErrorAction SilentlyContinue
+              $cmd = Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System\Audit' -ErrorAction SilentlyContinue
+              $ps  = auditpol /get /subcategory:"Process Creation" /r 2>$null
+              J @{ securityMaxSize=$sec.MaxSize; appMaxSize=$app.MaxSize; scriptBlockLogging=$sb.EnableScriptBlockLogging; procCreationAudit=($ps -join "`n") }
+            }
+            'features' { J (Get-WindowsFeature | Where-Object Installed | Select-Object -Expand Name) }
+            'os'       { $c=Get-CimInstance Win32_OperatingSystem; J @{ caption=$c.Caption; version=$c.Version; domain=(Get-CimInstance Win32_ComputerSystem).Domain } }
+            'services' { J (Get-CimInstance Win32_Service | Select-Object Name,DisplayName,State,StartMode,StartName,PathName) }
+            'localusers' { J @{
+                users   = @(Get-LocalUser -ErrorAction SilentlyContinue | Select-Object Name,Enabled,Description,PasswordRequired,PasswordExpires,LastLogon,PrincipalSource)
+                groups  = @(Get-LocalGroup -ErrorAction SilentlyContinue | Select-Object Name,Description,PrincipalSource)
+                members = $(try { $m=@{}; foreach($g in (Get-LocalGroup)){ try { $m[$g.Name]=@(Get-LocalGroupMember -Group $g.Name -ErrorAction Stop | Select-Object Name,ObjectClass,PrincipalSource) } catch { $m[$g.Name]="_na" } }; $m } catch { "_na" })
+                rights  = $(try { $f="$env:TEMP\rights-harvest.inf"; secedit /export /areas USER_RIGHTS /cfg $f /quiet 2>$null | Out-Null; $c=if (Test-Path $f) { [string]::Join("`n", (Get-Content $f)) } else { "_na" }; Remove-Item $f -ErrorAction SilentlyContinue; $c } catch { "_na" })
+                autologon = $(try { $k=Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon' -ErrorAction Stop; @{ AutoAdminLogon=$k.AutoAdminLogon; DefaultUserName=$k.DefaultUserName; DefaultDomainName=$k.DefaultDomainName } } catch { "_na" })
+              } }
+            'firewall' { J @{
+                profiles = @(Get-NetFirewallProfile -ErrorAction SilentlyContinue | Select-Object Name,Enabled,DefaultInboundAction,DefaultOutboundAction,LogFileName,LogAllowed,LogBlocked)
+                inbound  = @(Get-NetFirewallRule -ErrorAction SilentlyContinue | Where-Object { $_.Enabled -eq 'True' -and $_.Direction -eq 'Inbound' } | Select-Object DisplayName,DisplayGroup,Profile,Action -First 300)
+                outbound = @(Get-NetFirewallRule -ErrorAction SilentlyContinue | Where-Object { $_.Enabled -eq 'True' -and $_.Direction -eq 'Outbound' -and $_.Action -eq 'Block' } | Select-Object DisplayName,DisplayGroup,Profile,Action -First 100)
+                shares   = @(Get-SmbShare -ErrorAction SilentlyContinue | Select-Object Name,Path,Description,ShareType,FolderEnumerationMode,EncryptData)
+                shareacl = $(try { $s=@{}; foreach($sh in (Get-SmbShare -Special $false -ErrorAction Stop)){ try { $s[$sh.Name]=@(Get-SmbShareAccess -Name $sh.Name -ErrorAction Stop | Select-Object AccountName,AccessRight,AccessControlType) } catch { $s[$sh.Name]="_na" } }; $s } catch { "_na" })
+                ntfsacl  = $(try { $n=@{}; foreach($sh in (Get-SmbShare -Special $false -ErrorAction Stop)){ try { $a=Get-Acl -Path $sh.Path -ErrorAction Stop; $n[$sh.Name]=@{ owner=$a.Owner; access=@($a.Access | Select-Object @{n='Identity';e={$_.IdentityReference.Value}},FileSystemRights,AccessControlType,IsInherited) } } catch { $n[$sh.Name]="_na" } }; $n } catch { "_na" })
+                smbserver= $(try { Get-SmbServerConfiguration -ErrorAction Stop | Select-Object EnableSMB1Protocol,EnableSMB2Protocol,RequireSecuritySignature,EncryptData,RejectUnencryptedAccess,AutoShareServer,AutoShareWorkstation,NullSessionShares } catch { "_na" })
+                smbclient= $(try { Get-SmbClientConfiguration -ErrorAction Stop | Select-Object RequireSecuritySignature,EnableInsecureGuestLogons } catch { "_na" })
+                localadmins = $(try { @(Get-LocalGroupMember -Group 'Administrators' -ErrorAction Stop | Select-Object Name,ObjectClass,PrincipalSource) } catch { "_na" })
+                rdpusers    = $(try { @(Get-LocalGroupMember -Group 'Remote Desktop Users' -ErrorAction Stop | Select-Object Name,ObjectClass,PrincipalSource) } catch { "_na" })
+                rdp      = @{ denyTS=(Get-ItemProperty 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name fDenyTSConnections -ErrorAction SilentlyContinue).fDenyTSConnections; nla=(Get-ItemProperty 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name UserAuthentication -ErrorAction SilentlyContinue).UserAuthentication }
+                uac      = $(try { $k=Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System' -ErrorAction Stop; @{ EnableLUA=$k.EnableLUA; LocalAccountTokenFilterPolicy=$k.LocalAccountTokenFilterPolicy } } catch { "_na" })
+                defender = $(try { Get-MpPreference -ErrorAction Stop | Select-Object DisableRealtimeMonitoring,ExclusionPath,ExclusionProcess,ExclusionExtension } catch { "_na" })
+                smb      = $(try { Get-SmbServerConfiguration -ErrorAction Stop | Select-Object EnableSMB1Protocol,RequireSecuritySignature } catch { "_na" })
+              } }
+            'gpoapplied' { J @{ rsop = $(try { (gpresult /r /scope:computer) -join "`n" } catch { "_na" }) } }
+            'installedapps' { J @{
+                machine    = @(Get-ItemProperty 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*','HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*' -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName } | Select-Object DisplayName,DisplayVersion,Publisher,InstallDate,InstallLocation)
+                peruser    = @(Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*' -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName } | Select-Object DisplayName,DisplayVersion,Publisher)
+                appx       = @(Get-AppxPackage -AllUsers -ErrorAction SilentlyContinue | Select-Object Name,PackageFullName,Publisher,Version -First 200)
+                appxprov   = @(Get-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue | Select-Object DisplayName,PackageName,Version)
+                choco      = $(try { if (Test-Path 'C:\ProgramData\chocolatey\lib') { @(Get-ChildItem 'C:\ProgramData\chocolatey\lib' -Directory | Select-Object -Expand Name) } else { @() } } catch { "_na" })
+                programdirs= @(Get-ChildItem 'C:\Program Files','C:\Program Files (x86)' -Directory -ErrorAction SilentlyContinue | Select-Object Name,CreationTime)
+                features   = @(Get-WindowsFeature -ErrorAction SilentlyContinue | Where-Object { $_.Installed } | Select-Object Name,DisplayName)
+                hotfixes   = @(Get-HotFix -ErrorAction SilentlyContinue | Select-Object HotFixID,Description,InstalledOn)
+                browsers   = $(try { @{ chrome=(Get-Item 'C:\Program Files\Google\Chrome\Application\chrome.exe' -ErrorAction SilentlyContinue).VersionInfo.ProductVersion; edge=(Get-Item 'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe' -ErrorAction SilentlyContinue).VersionInfo.ProductVersion; firefox=(Get-Item 'C:\Program Files\Mozilla Firefox\firefox.exe' -ErrorAction SilentlyContinue).VersionInfo.ProductVersion } } catch { "_na" })
+              } }
+            default    { J @{ _error='unknown' } }
+          }
+        } catch { J @{ _error="$($_.Exception.Message)" } }
+      register: __win
+      changed_when: false
+      failed_when: false
+      loop: [sysmon, acsc, features, os, services, localusers, firewall, gpoapplied, installedapps]
+      loop_control: { label: "{{ inventory_hostname }}:{{ item }}" }
+    - name: Write Windows baseline JSON
+      ansible.builtin.copy:
+        content: "{{ (item.stdout | default('')) | trim }}\n"
+        dest: "{{ __dir }}/{{ inventory_hostname }}.{{ item.item }}.json"
+        mode: "0600"
+      delegate_to: localhost
+      loop: "{{ __win.results | default([]) }}"
+      loop_control: { label: "{{ inventory_hostname }}.{{ item.item }}.json" }
+      changed_when: false
+- name: Harvest Exchange structure (best-effort)
+  hosts: exchange_servers
+  gather_facts: false
+  vars:
+    facts_out: latest
+    __dir: "{{ playbook_dir }}/../facts-local/{{ facts_out }}/infra"
+  tasks:
+    - name: "Exchange: accepted domains / mailboxes / DGs / connectors / cert (structure only)"
+      ansible.windows.win_shell: |
+        $ErrorActionPreference='Stop'
+        function J($o){ if ($null -eq $o) { '[]' } else { ConvertTo-Json -InputObject $o -Depth 6 -Compress } }
+        try {
+          $snap = Get-PSSnapin -Registered -ErrorAction SilentlyContinue | Where-Object { $_.Name -like 'Microsoft.Exchange*' } | Select-Object -First 1
+          if ($snap) { Add-PSSnapin $snap.Name -ErrorAction SilentlyContinue }
+          switch ('{{ item }}') {
+            'server'    { J (Get-ExchangeServer | Select-Object Name,Edition,AdminDisplayVersion,ServerRole) }
+            'accepted'  { J (Get-AcceptedDomain | Select-Object Name,DomainName,DomainType,Default) }
+            'mailboxes' { J (Get-Mailbox -ResultSize Unlimited | Select-Object SamAccountName,PrimarySmtpAddress,Database) }
+            'dgroups'   { J (Get-DistributionGroup -ResultSize Unlimited | Select-Object Name,PrimarySmtpAddress) }
+            'connectors'{ J (Get-SendConnector | Select-Object Name,AddressSpaces,SmartHosts,SourceTransportServers) }
+            'cert'      { J (Get-ExchangeCertificate | Where-Object { $_.Services -match 'IIS' } | Select-Object Thumbprint,Subject,CertificateDomains,NotAfter,IsSelfSigned) }
+            'databases' { J (Get-MailboxDatabase -Status -ErrorAction SilentlyContinue | Select-Object Name,Server,EdbFilePath,LogFolderPath,Mounted,DatabaseSize) }
+            'vdirs'     { J @{
+                            owa      = @(Get-OwaVirtualDirectory -ErrorAction SilentlyContinue | Select-Object Name,Server,InternalUrl,ExternalUrl,BasicAuthentication,FormsAuthentication,WindowsAuthentication)
+                            ecp      = @(Get-EcpVirtualDirectory -ErrorAction SilentlyContinue | Select-Object Name,Server,InternalUrl,ExternalUrl)
+                            ews      = @(Get-WebServicesVirtualDirectory -ErrorAction SilentlyContinue | Select-Object Name,Server,InternalUrl,ExternalUrl,BasicAuthentication)
+                            activesync=@(Get-ActiveSyncVirtualDirectory -ErrorAction SilentlyContinue | Select-Object Name,Server,InternalUrl,ExternalUrl)
+                            autodiscover=@(Get-AutodiscoverVirtualDirectory -ErrorAction SilentlyContinue | Select-Object Name,Server,InternalUrl)
+                            mapi     = @(Get-MapiVirtualDirectory -ErrorAction SilentlyContinue | Select-Object Name,Server,InternalUrl,ExternalUrl)
+                          } }
+            'transport' { J @{
+                            rules     = @(Get-TransportRule -ErrorAction SilentlyContinue | Select-Object Name,State,Priority,Description)
+                            recv      = @(Get-ReceiveConnector -ErrorAction SilentlyContinue | Select-Object Name,Server,Bindings,RemoteIPRanges,PermissionGroups,AuthMechanism)
+                            transportcfg = (Get-TransportConfig -ErrorAction SilentlyContinue | Select-Object MaxSendSize,MaxReceiveSize,InternalSMTPServers)
+                            transportsvc = @(Get-TransportService -ErrorAction SilentlyContinue | Select-Object Name,MessageTrackingLogEnabled,MessageTrackingLogPath)
+                          } }
+            'orgconfig' { J @{
+                            org       = (Get-OrganizationConfig -ErrorAction SilentlyContinue | Select-Object Name,ExchangeVersion,DefaultPublicFolderMailbox)
+                            addrlists = @(Get-AddressList -ErrorAction SilentlyContinue | Select-Object Name,RecipientFilter)
+                            emailpol  = @(Get-EmailAddressPolicy -ErrorAction SilentlyContinue | Select-Object Name,Priority,EnabledEmailAddressTemplates,RecipientFilter)
+                            oab       = @(Get-OfflineAddressBook -ErrorAction SilentlyContinue | Select-Object Name,AddressLists,IsDefault)
+                            retention = @(Get-RetentionPolicy -ErrorAction SilentlyContinue | Select-Object Name,RetentionPolicyTagLinks)
+                          } }
+            'rbac'      { J @{
+                            roleassign = @(Get-ManagementRoleAssignment -ErrorAction SilentlyContinue | Select-Object Name,Role,RoleAssigneeName,RoleAssigneeType,AssignmentMethod,Enabled)
+                            rolegroups = @(Get-RoleGroup -ErrorAction SilentlyContinue | Select-Object Name,Members,ManagedBy,Description)
+                            roles      = @(Get-ManagementRole -ErrorAction SilentlyContinue | Select-Object Name,RoleType,Parent)
+                            scopes     = @(Get-ManagementScope -ErrorAction SilentlyContinue | Select-Object Name,ScopeRestrictionType,RecipientFilter,Exclusive)
+                            adperms    = @(Get-ADPermission -Identity (Get-OrganizationConfig).DistinguishedName -ErrorAction SilentlyContinue | Where-Object { -not $_.IsInherited } | Select-Object User,ExtendedRights,AccessRights,Deny)
+                          } }
+            'permissions'{ J @{
+                            mbxperm  = @(Get-Mailbox -ResultSize Unlimited -ErrorAction SilentlyContinue | ForEach-Object { $mb=$_; Get-MailboxPermission -Identity $mb.Identity -ErrorAction SilentlyContinue | Where-Object { -not $_.IsInherited -and $_.User -notlike 'NT AUTHORITY\*' } | Select-Object @{n='Mailbox';e={$mb.SamAccountName}},User,AccessRights })
+                            sendas   = @(Get-Mailbox -ResultSize Unlimited -ErrorAction SilentlyContinue | ForEach-Object { $mb=$_; Get-ADPermission -Identity $mb.Identity -ErrorAction SilentlyContinue | Where-Object { $_.ExtendedRights -like '*Send-As*' -and -not $_.IsInherited } | Select-Object @{n='Mailbox';e={$mb.SamAccountName}},User,ExtendedRights })
+                          } }
+            default     { J @{ _error='unknown' } }
+          }
+        } catch { J @{ _error="$($_.Exception.Message)" } }
+      register: __ex
+      changed_when: false
+      failed_when: false
+      loop: [server, accepted, mailboxes, dgroups, connectors, cert, databases, vdirs, transport, orgconfig, permissions, rbac]
+      loop_control: { label: "{{ inventory_hostname }}:{{ item }}" }
+    - name: Write Exchange JSON
+      ansible.builtin.copy:
+        content: "{{ (item.stdout | default('')) | trim }}\n"
+        dest: "{{ __dir }}/{{ inventory_hostname }}.exchange-{{ item.item }}.json"
+        mode: "0600"
+      delegate_to: localhost
+      loop: "{{ __ex.results | default([]) }}"
+      loop_control: { label: "{{ inventory_hostname }}.exchange-{{ item.item }}.json" }
+      changed_when: false
+- name: Harvest GHOSTS emulation scaffolding
+  hosts: ghosts_clients
+  gather_facts: false
+  vars:
+    facts_out: latest
+    __dir: "{{ playbook_dir }}/../facts-local/{{ facts_out }}/infra"
+  tasks:
+    - name: "GHOSTS: application.json, timeline.json, autologon (NO password), task, browsers"
+      ansible.windows.win_shell: |
+        $ErrorActionPreference='Stop'
+        function J($o){ $o | ConvertTo-Json -Depth 8 -Compress }
+        try {
+          switch ('{{ item }}') {
+            'application' { $p='C:\ludus\ghosts-client\config\application.json'; if(Test-Path $p){ Get-Content $p -Raw } else { J @{ _error='not found' } } }
+            'timeline'    { $p='C:\ludus\ghosts-client\config\timeline.json';    if(Test-Path $p){ Get-Content $p -Raw } else { J @{ _error='not found' } } }
+            'client'      { $e='C:\ludus\ghosts-client\ghosts.exe'; J @{ present=(Test-Path $e); version=$(if(Test-Path $e){ (Get-Item $e).VersionInfo.FileVersion } else { $null }) } }
+            'autologon'   { $w=Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon'; J @{ AutoAdminLogon=$w.AutoAdminLogon; DefaultUserName=$w.DefaultUserName; DefaultDomainName=$w.DefaultDomainName; hasDefaultPassword=([bool]$w.DefaultPassword) } }
+            'schtask'     { $t=Get-ScheduledTask -TaskName 'ghosts' -ErrorAction SilentlyContinue; if($t){ J @{ state=$t.State.ToString(); principal=$t.Principal.UserId; logonType=$t.Principal.LogonType.ToString(); action=$t.Actions.Execute; trigger=($t.Triggers | ForEach-Object { $_.CimClass.CimClassName }) } } else { J @{ _error='no ghosts task' } } }
+            'browsers'    { $c='C:\Program Files\Google\Chrome\Application\chrome.exe'; $d='C:\ProgramData\chocolatey\bin\chromedriver.exe'; $edge=Get-ItemProperty 'HKLM:\SOFTWARE\Policies\Microsoft\Edge' -ErrorAction SilentlyContinue; J @{ chrome=$(if(Test-Path $c){ (Get-Item $c).VersionInfo.ProductVersion }); chromedriver=$(if(Test-Path $d){ (& $d --version 2>$null) }); edgeHomepage=$edge.HomepageLocation; edgeRestore=$edge.RestoreOnStartup } }
+            'extensions'  { $f=Get-ItemProperty 'HKLM:\SOFTWARE\Policies\Microsoft\Edge\ExtensionInstallForcelist' -ErrorAction SilentlyContinue; J @{ forcelist=($f.PSObject.Properties | Where-Object { $_.Name -match '^\d+$' } | ForEach-Object { $_.Value }) } }
+            default       { J @{ _error='unknown' } }
+          }
+        } catch { J @{ _error="$($_.Exception.Message)" } }
+      register: __gh
+      changed_when: false
+      failed_when: false
+      loop: [application, timeline, client, autologon, schtask, browsers, extensions]
+      loop_control: { label: "{{ inventory_hostname }}:{{ item }}" }
+    - name: Write GHOSTS JSON
+      ansible.builtin.copy:
+        content: "{{ (item.stdout | default('')) | trim }}\n"
+        dest: "{{ __dir }}/{{ inventory_hostname }}.ghosts-{{ item.item }}.json"
+        mode: "0600"
+      delegate_to: localhost
+      loop: "{{ __gh.results | default([]) }}"
+      loop_control: { label: "{{ inventory_hostname }}.ghosts-{{ item.item }}.json" }
+      changed_when: false
+- name: Harvest Linux infra facts
+  hosts: linux_infra
+  gather_facts: true
+  become: true
+  vars:
+    facts_out: latest
+    __dir: "{{ playbook_dir }}/../facts-local/{{ facts_out }}/infra"
+  tasks:
+    - name: Ensure infra facts dir exists (controller-side)
+      ansible.builtin.file: { path: "{{ __dir }}", state: directory, mode: "0700" }
+      delegate_to: localhost
+      run_once: true
+      changed_when: false
+    - name: Collect service + package facts
+      ansible.builtin.service_facts:
+      failed_when: false
+    - name: Collect package facts
+      ansible.builtin.package_facts:
+        manager: auto
+      failed_when: false
+    - name: Sysmon-linux + realm join structure, local settings, firewall, web/DB config
+      ansible.builtin.shell: |
+        set +e -o pipefail
+        case "{{ item }}" in
+          sysmon) systemctl is-active sysmon 2>/dev/null; echo "---"; [ -f /etc/sysmon/config.xml ] && sha256sum /etc/sysmon/config.xml ;;
+          realm)  realm list 2>/dev/null | head -40 ;;
+          listen) ss -tlnp 2>/dev/null | awk 'NR>1{print $4" "$7}' | sort -u ;;
+          docker) command -v docker >/dev/null && docker ps --format '{% raw %}{{.Names}}:{{.Image}}:{{.Ports}}{% endraw %}' 2>/dev/null; echo "---compose---"; find / -maxdepth 4 -name 'docker-compose*.y*ml' 2>/dev/null | head -10 ;;
+          services) systemctl list-unit-files --type=service --no-pager --no-legend 2>/dev/null | awk '{print $1" "$2}'; echo "---running---"; systemctl list-units --type=service --state=running --no-pager --no-legend 2>/dev/null | awk '{print $1}' ;;
+          users)  echo "---passwd(uid>=1000 + root)---"; awk -F: '($3>=1000 || $3==0) && $1!="nobody" {print $1":"$3":"$4":"$6":"$7}' /etc/passwd 2>/dev/null;
+                  echo "---groups---"; awk -F: '$3>=1000 || $1 ~ /^(sudo|wheel|adm|docker|www-data)$/ {print $1":"$3":"$4}' /etc/group 2>/dev/null;
+                  echo "---sudoers---"; { cat /etc/sudoers 2>/dev/null; cat /etc/sudoers.d/* 2>/dev/null; } | grep -vE '^\s*#|^\s*$' | head -40;
+                  echo "---shadow-status(no hashes)---"; awk -F: '{print $1":"($2=="!"||$2=="*"?"locked":"has-password")}' /etc/shadow 2>/dev/null | head -40;
+                  echo "---authorized_keys-fingerprints---"; for f in /root/.ssh/authorized_keys /home/*/.ssh/authorized_keys; do [ -f "$f" ] && { echo "# $f"; ssh-keygen -lf "$f" 2>/dev/null; }; done ;;
+          firewall) echo "---ufw---"; ufw status verbose 2>/dev/null;
+                  echo "---firewalld---"; firewall-cmd --list-all 2>/dev/null;
+                  echo "---iptables---"; iptables -S 2>/dev/null | head -60;
+                  echo "---nft---"; nft list ruleset 2>/dev/null | head -60 ;;
+          dns)    echo "---resolv.conf---"; cat /etc/resolv.conf 2>/dev/null;
+                  echo "---resolvectl---"; resolvectl status 2>/dev/null | head -30;
+                  echo "---hosts---"; cat /etc/hosts 2>/dev/null;
+                  echo "---dnsmasq---"; cat /etc/dnsmasq.conf 2>/dev/null | grep -vE '^\s*#|^\s*$' | head -30 ;;
+          web)    echo "---nginx-version---"; nginx -v 2>&1;
+                  echo "---nginx-T(config dump)---"; nginx -T 2>/dev/null | grep -vE '^\s*#|^\s*$' | head -200;
+                  echo "---nginx-sites---"; ls -1 /etc/nginx/sites-enabled/ /etc/nginx/conf.d/ 2>/dev/null;
+                  echo "---apache-version---"; { apache2 -v 2>/dev/null || httpd -v 2>/dev/null; };
+                  echo "---apache-vhosts---"; { apache2ctl -S 2>/dev/null || httpd -S 2>/dev/null; };
+                  echo "---apache-sites---"; ls -1 /etc/apache2/sites-enabled/ /etc/httpd/conf.d/ 2>/dev/null;
+                  echo "---apache-conf---"; for f in /etc/apache2/sites-enabled/*.conf /etc/httpd/conf.d/*.conf; do [ -f "$f" ] && { echo "# $f"; grep -vE '^\s*#|^\s*$' "$f" | head -40; }; done;
+                  echo "---php---"; php -v 2>/dev/null | head -2; php -m 2>/dev/null | head -30;
+                  echo "---tls-certs---"; find /etc/ssl /etc/nginx /etc/apache2 /etc/pki -name '*.crt' -o -name '*.pem' 2>/dev/null | head -20 | while read c; do echo "# $c"; openssl x509 -in "$c" -noout -subject -issuer -dates 2>/dev/null; done ;;
+          webroot) for d in /var/www /usr/share/nginx/html /srv/www /var/www/html; do [ -d "$d" ] && { echo "# $d"; find "$d" -maxdepth 3 -type f \( -name '*.html' -o -name '*.php' -o -name '*.zip' -o -name '*.exe' \) 2>/dev/null | head -60; }; done ;;
+          db)     echo "---mysql---"; { mysql --version 2>/dev/null; mysql -N -e 'show databases;' 2>/dev/null; };
+                  echo "---postgres---"; { psql --version 2>/dev/null; su - postgres -c 'psql -lqt' 2>/dev/null | cut -d'|' -f1; };
+                  echo "---mongo---"; mongod --version 2>/dev/null | head -1 ;;
+          apps)   echo "---dpkg---"; dpkg-query -W -f='${Package} ${Version} ${Status}\n' 2>/dev/null | grep 'install ok installed' | awk '{print $1" "$2}';
+                  echo "---rpm---"; rpm -qa --qf '%{NAME} %{VERSION}\n' 2>/dev/null;
+                  echo "---manually-installed---"; { apt-mark showmanual 2>/dev/null; } | head -120;
+                  echo "---pip---"; { pip3 list --format=freeze 2>/dev/null || pip list --format=freeze 2>/dev/null; } | head -60;
+                  echo "---npm-global---"; npm ls -g --depth=0 2>/dev/null | tail -n +2 | head -30;
+                  echo "---gem---"; gem list --no-versions 2>/dev/null | head -30;
+                  echo "---snap---"; snap list 2>/dev/null;
+                  echo "---flatpak---"; flatpak list 2>/dev/null | head -20;
+                  echo "---opt---"; ls -1 /opt 2>/dev/null;
+                  echo "---usr-local-bin---"; ls -1 /usr/local/bin 2>/dev/null | head -40;
+                  echo "---kernel---"; uname -r; echo "---os---"; cat /etc/os-release 2>/dev/null | grep -E 'PRETTY_NAME|VERSION_ID' ;;
+          cron)   echo "---crontabs---"; for u in $(cut -d: -f1 /etc/passwd); do c=$(crontab -l -u "$u" 2>/dev/null); [ -n "$c" ] && { echo "# $u"; echo "$c" | grep -vE '^\s*#'; }; done;
+                  echo "---cron.d---"; cat /etc/cron.d/* /etc/crontab 2>/dev/null | grep -vE '^\s*#|^\s*$' | head -30;
+                  echo "---timers---"; systemctl list-timers --no-pager --no-legend 2>/dev/null | head -20 ;;
+        esac
+      args:
+        executable: /bin/bash
+      register: __lx
+      changed_when: false
+      failed_when: false
+      loop: [sysmon, realm, listen, docker, services, users, firewall, dns, web, webroot, db, cron, apps]
+      loop_control: { label: "{{ inventory_hostname }}:{{ item }}" }
+    - name: Write Linux facts (services/packages summary + probes)
+      ansible.builtin.copy:
+        content: |
+          {{ {
+             'host': inventory_hostname,
+             'distribution': ansible_distribution ~ ' ' ~ ansible_distribution_version,
+             'services_running': (ansible_facts.services | default({}) | dict2items | selectattr('value.state','equalto','running') | map(attribute='key') | list),
+             'packages_present': (ansible_facts.packages | default({}) | list),
+             'probes': dict(__lx.results | default([]) | map(attribute='item') | zip(__lx.results | default([]) | map(attribute='stdout')))
+          } | to_nice_json }}
+        dest: "{{ __dir }}/{{ inventory_hostname }}.linux.json"
+        mode: "0600"
+      delegate_to: localhost
+      changed_when: false

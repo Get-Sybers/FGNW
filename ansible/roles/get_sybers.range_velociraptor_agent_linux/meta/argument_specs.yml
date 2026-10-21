@@ -1,0 +1,38 @@
+---
+argument_specs:
+  main:
+    short_description: Install and run the Velociraptor client agent on a range Linux host
+    description:
+      - Creates /opt/velociraptor-client, waits for the Velociraptor server, fetches the per-deploy client config (with a delegated slurp fallback), downloads
+        the checksum-pinned linux-amd64 binary, installs a systemd unit, starts and enables it, then verifies. Runs at the user-defined-roles deploy stage (S2).
+    options: &range_velociraptor_agent_linux_options
+      velociraptor_host:
+        type: str
+        required: true
+        description:
+          - The Velociraptor server to enroll against (IP or DNS hostname). Genuinely no default -- supplied by the caller/range config. Referenced
+            unconditionally (server wait, config download), so it is marked required here; this role has no preflight, so the spec is the only guard.
+      velociraptor_version:
+        type: str
+        default: v0.77.1
+        description:
+          - Pinned Velociraptor release tag. Override together with velociraptor_checksum or the checksum-guarded download fails loudly.
+      velociraptor_version_patch:
+        type: str
+        default: 0.77.1
+        description:
+          - Version string embedded in the release asset filename; may differ from the tag (e.g. v0.73.2 vs 0.73.2-rc1).
+      velociraptor_checksum:
+        type: str
+        default: sha256:6636020f3ce03ea4eff5d5b96d635c400e51d2636c823a8f0bd458ddc7c4d28a
+        description:
+          - sha256 of the linux-amd64 binary for the pinned version; get_url refuses a mismatch. Re-pin whenever the version changes.
+      velociraptor_install_path:
+        type: str
+        default: /opt/velociraptor
+        description:
+          - Install path on the Velociraptor SERVER, used only by the delegated fallback that slurps the client config when the API download fails. Must match
+            the server role's velociraptor_install_path.
+  verify:
+    short_description: Assert the Velociraptor agent service is active, enabled, and configured
+    options: *range_velociraptor_agent_linux_options

@@ -1,0 +1,13 @@
+---
+galaxy_info:
+  author: Get-Sybers
+  namespace: get_sybers
+  description: Disable Windows telemetry/diagnostics on range Windows VMs (curated for Server 2022)
+  role_name: range_telemetry_disable
+  license: AGPL-3.0-only
+  min_ansible_version: "2.14"
+  platforms:
+    - name: Windows
+      versions:
+        - "2022"
+dependencies: []

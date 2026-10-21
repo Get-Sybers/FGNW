@@ -1,0 +1,18 @@
+---
+galaxy_info:
+  author: Get-Sybers
+  description: >
+    Seed real Exchange mailboxes with the FGNW character-quote corpus (+ LOE-2 alert entries) as
+    genuine SMTP mail, per forest, at the Ludus user-defined-roles stage. Source-delivered
+    adaptation of campaign fgnw_exchange_seed_mail: the corpus + AD ground-truth are bundled in
+    files/, and the end-of-seed marker probe is moved in-role so a re-deploy does not duplicate
+    mail. Run AFTER get_sybers.range_exchange on the same -mail VM. FGNW
+  role_name: range_exchange_seed
+  license: AGPL-3.0-only
+  min_ansible_version: "2.12"
+  platforms:
+    - name: Windows
+      versions:
+        - "2019"
+        - "2022"
+dependencies: []

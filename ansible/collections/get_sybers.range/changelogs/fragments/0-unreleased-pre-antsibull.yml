@@ -1,0 +1,21 @@
+---
+changed:
+  - >-
+    ``galaxy.yml`` dependencies now carry upper bounds (``>=x.y.z,<next-major``),
+    the collection carries a Galaxy-required tag, and ``tox-ansible.ini`` is
+    ``build_ignore``\ d (§2).
+  - >-
+    Every role declares ``min_ansible_version: "2.15"``, agreeing with
+    ``meta/runtime.yml`` (``requires_ansible >=2.15.0``) and the
+    ``systemd_service`` module the roles use (§2).
+  - >-
+    Task names with a trailing variable place the variable at the end only
+    (``ludus_range_deploy`` attempt steps, ``ghost9_ct``, ``ghost9_server``) (§33).
+  - >-
+    YAML style follows §16 across the roles (quoting, truthy, indentation) —
+    mechanical.
+fixed:
+  - >-
+    ``ghost9_template`` bake steps carry ``creates``/``changed_when`` and an FQCN
+    ``become_method``; ``ghost9_ct``'s settle pause carries its named
+    ``no-handler`` waiver (§7, §8, §17).

@@ -1,0 +1,22 @@
+---
+# Windows half of fgnw_decoy_files. Consumes fgnw_decoy_files_list set by tasks/main.yml and the
+# caller-set fgnw_decoy_files_root (expected to be a Windows path like C:\Shares\Documents).
+# Logic is unchanged from before the OS merge — this file only moved out of tasks/main.yml.
+- name: "windows | Create the directory tree"
+  ansible.windows.win_file:
+    path: '{{ fgnw_decoy_files_root }}\{{ (item | dirname).split("/") | join("\\") }}'
+    state: directory
+  loop: "{{ fgnw_decoy_files_list }}"
+  loop_control:
+    label: "{{ item | dirname }}"
+- name: "windows | Plant decoy files (authored lore-accurate content when present, else placeholder)"
+  ansible.windows.win_copy:
+    dest: '{{ fgnw_decoy_files_root }}\{{ item.split("/") | join("\\") }}'
+    content: "{{ lookup('ansible.builtin.file', authored_dir + '/' + item, errors='ignore') | default(placeholder, true) }}"
+    force: false
+  vars:
+    authored_dir: "{{ playbook_dir }}/../content/filesystem/documents/{{ fgnw_decoy_files_village }}"
+    placeholder: "{{ item | basename }} - decoy document, {{ fgnw_decoy_files_village }}, Fourth Great Ninja War range content pack.\r\n"
+  loop: "{{ fgnw_decoy_files_list }}"
+  loop_control:
+    label: "{{ item }}"

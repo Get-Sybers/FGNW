@@ -1,0 +1,79 @@
+---
+- name: "Real-exchange: issue a REAL Exchange OWA certificate covering mail.<domain> and bind it to IIS"
+  hosts: exchange_servers
+  gather_facts: false
+  vars:
+    fgnw_owa_mail_domain_map:
+      konoha-mail: konohagakure.fire.ninja
+      # suna-mail removed: macOS mail host (Sand conversion), not in [exchange_servers].
+      oto-mail: otogakure.ninja
+      dark-mail: akatsuki.dark
+    __mail_fqdn: mail.{{ fgnw_owa_mail_domain_map[inventory_hostname] | default('') }}
+    fgnw_exchange_forest_root_map:
+      konoha-mail: fire.ninja
+      # suna-mail removed: see note above.
+      oto-mail: otogakure.ninja
+      dark-mail: akatsuki.dark
+  tasks:
+    - name: Ensure the OWA IIS cert covers mail.{{ fgnw_owa_mail_domain_map[inventory_hostname] | default('') }}
+      ansible.windows.win_shell: |
+        Add-PSSnapin Microsoft.Exchange.Management.PowerShell.SnapIn -ErrorAction SilentlyContinue | Out-Null
+        $mail = "{{ __mail_fqdn }}"
+        $have = Get-ExchangeCertificate | Where-Object { $_.Services -match 'IIS' -and (($_.CertificateDomains | ForEach-Object { "$_" }) -contains $mail) }
+        if ($have) { "OWA_CERT_OK"; return }
+        $fqdn = ([System.Net.Dns]::GetHostByName($env:COMPUTERNAME)).HostName
+        $names = @($mail, $fqdn, $env:COMPUTERNAME) | Where-Object { $_ } | Select-Object -Unique
+        $new = New-ExchangeCertificate -FriendlyName "Naruto OWA $mail" -DomainName $names -PrivateKeyExportable $true -Force
+        Enable-ExchangeCertificate -Thumbprint $new.Thumbprint -Services IIS -Force
+        "OWA_CERT_ISSUED " + $new.Thumbprint
+      register: fgnw_owa_cert
+      changed_when: "'OWA_CERT_ISSUED' in (fgnw_owa_cert.stdout | default(''))"
+      failed_when:
+        - "'OWA_CERT_OK' not in (fgnw_owa_cert.stdout | default(''))"
+        - "'OWA_CERT_ISSUED' not in (fgnw_owa_cert.stdout | default(''))"
+      when: fgnw_owa_mail_domain_map[inventory_hostname] is defined
+      vars:
+        ansible_become: true
+        ansible_become_method: runas
+        ansible_become_user: "{{ fgnw_exchange_forest_root_map[inventory_hostname] }}\\Administrator"
+        ansible_become_password: password
+    - name: Export the OWA public certificate (base64) for the workstations to trust
+      ansible.windows.win_shell: |
+        Add-PSSnapin Microsoft.Exchange.Management.PowerShell.SnapIn -ErrorAction SilentlyContinue | Out-Null
+        $mail = "{{ __mail_fqdn }}"
+        $c = Get-ExchangeCertificate | Where-Object { ($_.CertificateDomains | ForEach-Object { "$_" }) -contains $mail } | Select-Object -First 1
+        if (-not $c) { $c = Get-ExchangeCertificate | Where-Object { $_.Services -match 'IIS' } | Select-Object -First 1 }
+        if ($c) { [Convert]::ToBase64String((Get-Item "Cert:\LocalMachine\My\$($c.Thumbprint)").Export('Cert')) } else { "" }
+      register: fgnw_owa_cert_b64
+      changed_when: false
+      failed_when: (fgnw_owa_cert_b64.stdout | default('') | trim) | length == 0
+      when: fgnw_owa_mail_domain_map[inventory_hostname] is defined
+      vars:
+        ansible_become: true
+        ansible_become_method: runas
+        ansible_become_user: "{{ fgnw_exchange_forest_root_map[inventory_hostname] }}\\Administrator"
+        ansible_become_password: password
+- name: "Real-exchange: trust every REAL Exchange OWA certificate on the workstations (clean HTTPS by name)"
+  hosts: ghosts_clients
+  gather_facts: false
+  tasks:
+    - name: Import each deployed OWA public cert into LocalMachine\Root
+      ansible.windows.win_shell: |
+        $b64 = @'
+        {{ hostvars[item]['fgnw_owa_cert_b64']['stdout'] | default('') | trim }}
+        '@
+        $b64 = $b64.Trim()
+        if (-not $b64) { "NO_CERT_FOR {{ item }}"; return }
+        $bytes = [Convert]::FromBase64String($b64)
+        $cert  = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2(,$bytes)
+        $store = New-Object System.Security.Cryptography.X509Certificates.X509Store('Root','LocalMachine')
+        $store.Open('ReadWrite')
+        $already = $store.Certificates | Where-Object { $_.Thumbprint -eq $cert.Thumbprint }
+        if (-not $already) { $store.Add($cert); $store.Close(); "TRUSTED " + $cert.Subject }
+        else { $store.Close(); "ALREADY_TRUSTED " + $cert.Subject }
+      loop: "{{ groups['exchange_servers'] | default([]) }}"
+      register: fgnw_owa_trust
+      changed_when: "'TRUSTED ' in (fgnw_owa_trust.stdout | default('')) and 'ALREADY_TRUSTED' not in (fgnw_owa_trust.stdout | default(''))"
+      failed_when: >-
+        (fgnw_owa_trust is failed)
+        or ('NO_CERT_FOR' in (fgnw_owa_trust.stdout | default('')))

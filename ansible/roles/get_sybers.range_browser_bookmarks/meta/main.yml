@@ -1,0 +1,9 @@
+---
+galaxy_info:
+  author: Get-Sybers
+  namespace: get_sybers
+  description: Add browser bookmarks for easy web GUI access
+  role_name: range_browser_bookmarks
+  license: AGPL-3.0-only
+  min_ansible_version: "2.14"
+dependencies: []

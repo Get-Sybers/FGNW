@@ -1,0 +1,34 @@
+---
+- name: "Orchestrate the macOS template on the Proxmox host (PREPARE or FINALIZE)"
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files:
+    - vars/macos_template_vars.yml
+  roles:
+    - get_sybers.templates.macos_template
+- name: "Provision the installed macOS guest (FINALIZE only)"
+  hosts: macos_template_target
+  gather_facts: false
+  vars_files:
+    - vars/macos_template_vars.yml
+  tasks:
+    - name: "Run the in-guest provisioning tasks unless skipped"
+      ansible.builtin.import_role:
+        name: get_sybers.templates.macos_template
+        tasks_from: provision
+      when: not (macos_template_skip_provision | bool)
+- name: "Convert the macOS VM to a Ludus template (FINALIZE only)"
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files:
+    - vars/macos_template_vars.yml
+  tasks:
+    - name: "Convert to a template when FINALIZE is ready and provisioning succeeded"
+      ansible.builtin.import_role:
+        name: get_sybers.templates.macos_template
+        tasks_from: finalize_convert
+      when:
+        - macos_template_finalize_ready | default(false) | bool
+        - (macos_template_provision_ok | default(false) | bool) or (macos_template_skip_provision | bool)

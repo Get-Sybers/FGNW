@@ -1,0 +1,8 @@
+---
+- name: "reconfigure-service | Update the running Sysmon configuration in place (no reinstall)"
+  ansible.windows.win_command: C:\Sysmon\Sysmon64.exe -accepteula -c C:\Sysmon\sysmonconfig.xml
+  args:
+    chdir: C:\Sysmon
+  register: sysmon_reconfigure_result
+  changed_when: sysmon_reconfigure_result.rc == 0
+  failed_when: sysmon_reconfigure_result.rc not in [0, 255]

@@ -1,0 +1,298 @@
+---
+- name: "Ghost9: prove the server can ingest and execute the FGNW emulation"
+  hosts: localhost
+  gather_facts: false
+  vars:
+    ghost9_proof_api_root: ""
+    ghost9_proof_api_version: 9
+    ghost9_proof_range_octet: 1
+    ghost9_proof_stale_minutes: 15
+    ghost9_proof_client_version: 9.0.0
+    __g9p_now: "{{ lookup('pipe', 'date -u +%Y-%m-%dT%H:%M:%S') }}"
+    __g9p_owa_octets:
+      konohagakure.fire.ninja: 10
+      sunagakure.wind.ninja: 20
+      otogakure.ninja: 30
+      akatsuki.dark: 87
+  tasks:
+    - name: "G9-proof: an API root was supplied"
+      ansible.builtin.assert:
+        that:
+          - ghost9_proof_api_root | length > 0
+          - ghost9_proof_api_root is search('^https?://')
+        fail_msg: >-
+          Pass -e ghost9_proof_api_root=http://<server>:5000/api. There is no
+          default on purpose: this play WRITES machine, timeline and activity
+          records, and a guessed address is how that lands on a live range
+          server instead of the image under test.
+        quiet: true
+    - name: "G9-proof: the personas the campaign drives are in this inventory"
+      ansible.builtin.assert:
+        that:
+          - (groups['ghosts_clients'] | default([])) | length > 0
+        fail_msg: >-
+          The inventory has no `ghosts_clients` group, so this play would prove
+          nothing about nothing — a loop over an empty list reports success. Pass
+          an inventory whose ghosts_clients group names the persona hosts (the
+          same group FGNW-ghosts-activity.yml and FGNW-verify-emulation.yml
+          drive).
+        quiet: true
+    - name: "G9-proof: fetch the OpenAPI document"
+      ansible.builtin.uri:
+        url: "{{ __root }}/swagger/v{{ ghost9_proof_api_version }}/swagger.json"
+        method: GET
+        return_content: true
+        status_code: 200
+        timeout: 30
+      vars:
+        __root: "{{ ghost9_proof_api_root | regex_replace('/api/?$', '') }}"
+      register: __g9p_swagger
+      retries: 12
+      delay: 5
+      until: __g9p_swagger.status | default(0) == 200
+    - name: "G9-proof: it publishes every route the campaign drives"
+      ansible.builtin.assert:
+        that:
+          - __g9p_swagger.json.info.version == 'v' ~ ghost9_proof_api_version
+          - __required_paths | difference(__published) | length == 0
+        fail_msg: >-
+          version={{ __g9p_swagger.json.info.version | default('?') }}
+          (wanted v{{ ghost9_proof_api_version }});
+          missing: {{ __required_paths | difference(__published) | join(', ') or 'none' }}.
+        quiet: true
+      vars:
+        __published: "{{ __g9p_swagger.json.paths.keys() | map('lower') | list }}"
+        __required_paths:
+          - /api/machines
+          - /api/machines/{id}/activity
+          - /api/machineupdates
+          - /api/npcs
+          - /api/npcs/{id}/beliefs
+    - name: "G9-proof: load the generated persona baseline"
+      ansible.builtin.include_vars:
+        file: "{{ playbook_dir }}/../content/ghosts/persona-timelines.yml"
+        name: __g9p_personas
+    - name: "G9-proof: load the hand-authored flagship overrides"
+      ansible.builtin.include_vars:
+        file: "{{ playbook_dir }}/../content/ghosts/persona-overrides.yml"
+        name: __g9p_overrides
+    - name: "G9-proof: every ghosts_clients host has a persona to emulate"
+      ansible.builtin.assert:
+        that:
+          - (groups['ghosts_clients'] | difference(__g9p_personas.ghosts_personas.keys() | list)) | length == 0
+        fail_msg: >-
+          No persona in content/ghosts/persona-timelines.yml for:
+          {{ groups['ghosts_clients'] | difference(__g9p_personas.ghosts_personas.keys() | list) | join(', ') }}.
+        quiet: true
+    - name: "G9-proof: each persona's workstation performs the client handshake"
+      ansible.builtin.uri:
+        url: "{{ ghost9_proof_api_root }}/clientid"
+        method: GET
+        headers:
+          ghosts-name: "{{ item }}"
+          ghosts-fqdn: "{{ item }}.{{ __persona.ad_domain }}"
+          ghosts-host: "{{ item }}"
+          ghosts-domain: "{{ __persona.ad_domain }}"
+          ghosts-resolvedhost: "{{ item }}"
+          ghosts-ip: 10.{{ ghost9_proof_range_octet }}.{{ __g9p_owa_octets[__persona.ad_domain] | default(10) }}.{{ 100 + (groups['ghosts_clients'].index(item))
+            }}
+          ghosts-user: "{{ __persona.sam }}"
+          ghosts-version: "{{ ghost9_proof_client_version }}"
+        return_content: true
+        status_code: 200
+        timeout: 30
+      loop: "{{ groups['ghosts_clients'] }}"
+      vars:
+        __persona: "{{ __g9p_personas.ghosts_personas[item] }}"
+      register: __g9p_clientid
+    - name: "G9-proof: index machine id by persona host"
+      ansible.builtin.set_fact:
+        __g9p_id_by_host: >-
+          {{ __g9p_id_by_host | default({})
+             | combine({item.item: (item.json | default(item.content | default(''), true) | trim)}) }}
+      loop: "{{ __g9p_clientid.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+    - name: "G9-proof: every persona got a machine id back"
+      ansible.builtin.assert:
+        that:
+          - __g9p_id_by_host | dict2items | rejectattr('value', 'search', '^[0-9a-fA-F-]{36}$') | list | length == 0
+        fail_msg: >-
+          /api/clientid did not return a GUID for:
+          {{ __g9p_id_by_host | dict2items | rejectattr('value', 'search', '^[0-9a-fA-F-]{36}$')
+             | map(attribute='key') | join(', ') }}.
+        quiet: true
+    - name: "G9-proof: render each persona's FGNW timeline and parse it"
+      ansible.builtin.set_fact:
+        __g9p_timelines: >-
+          {{ __g9p_timelines | default({})
+             | combine({item: (__rendered if __rendered is mapping else (__rendered | from_json))}) }}
+      loop: "{{ groups['ghosts_clients'] }}"
+      vars:
+        __persona: "{{ __g9p_personas.ghosts_personas[item] }}"
+        __ov: "{{ __g9p_overrides.ghosts_overrides[item] | default({}) }}"
+        range_second_octet: "{{ ghost9_proof_range_octet }}"
+        ghosts_browse_urls: "{{ __persona.browse_urls }}"
+        ghosts_signature_urls: "{{ __ov.signature_urls | default([]) }}"
+        ghosts_pace: "{{ __ov.pace | default('normal') }}"
+        ghosts_ad_domain: "{{ __persona.ad_domain }}"
+        ghosts_owa_user: "{{ __persona.sam }}"
+        ghosts_has_owa_inbox: "{{ __persona.has_owa_inbox }}"
+        ghosts_owa_octet: "{{ __g9p_owa_octets[__persona.ad_domain] | default(10) }}"
+        ghosts_submits_reports: "{{ __persona.ad_domain == 'konohagakure.fire.ninja' }}"
+        ghosts_admin_activity: "{{ __ov.admin_activity | default(false) }}"
+        ghosts_browser: "{{ __ov.browser | default('Chrome') }}"
+        __rendered: "{{ lookup('ansible.builtin.template', 'templates/FGNW-ghosts.timeline.json.j2') }}"
+    - name: "G9-proof: every rendered timeline is a runnable GHOSTS timeline"
+      ansible.builtin.assert:
+        that:
+          - __g9p_timelines[item].Status | default('') == 'Run'
+          - __g9p_timelines[item].TimeLineHandlers | default([]) | length > 0
+          - __g9p_timelines[item].TimeLineHandlers | map(attribute='TimeLineEvents') | map('length') | sum > 0
+        fail_msg: >-
+          The FGNW timeline rendered for {{ item }} is not a runnable GHOSTS
+          timeline (Status/TimeLineHandlers/TimeLineEvents). The template
+          produced JSON, but not something ghosts.exe would execute.
+        quiet: true
+      loop: "{{ groups['ghosts_clients'] }}"
+    - name: "G9-proof: queue each persona's FGNW timeline as a machine update"
+      ansible.builtin.uri:
+        url: "{{ ghost9_proof_api_root }}/machineupdates"
+        method: POST
+        body_format: json
+        body:
+          machineId: "{{ __g9p_id_by_host[item] }}"
+          username: "{{ __g9p_personas.ghosts_personas[item].sam }}"
+          type: Timeline
+          status: Active
+          activeUtc: "{{ __g9p_now }}"
+          update: "{{ __g9p_timelines[item] }}"
+        status_code: [200, 201, 202, 204]
+        return_content: true
+        timeout: 30
+      loop: "{{ groups['ghosts_clients'] }}"
+      register: __g9p_queued
+    - name: "G9-proof: each persona's client polls for its update"
+      ansible.builtin.uri:
+        url: "{{ ghost9_proof_api_root }}/clientupdates"
+        method: GET
+        headers:
+          ghosts-id: "{{ __g9p_id_by_host[item] }}"
+          ghosts-name: "{{ item }}"
+          ghosts-fqdn: "{{ item }}.{{ __g9p_personas.ghosts_personas[item].ad_domain }}"
+          ghosts-host: "{{ item }}"
+          ghosts-domain: "{{ __g9p_personas.ghosts_personas[item].ad_domain }}"
+          ghosts-user: "{{ __g9p_personas.ghosts_personas[item].sam }}"
+          ghosts-version: "{{ ghost9_proof_client_version }}"
+        return_content: true
+        status_code: 200
+        timeout: 30
+      loop: "{{ groups['ghosts_clients'] }}"
+      register: __g9p_dispatched
+      retries: 6
+      delay: 5
+      until: __g9p_dispatched is not failed
+    - name: "G9-proof: the server handed back the FGNW timeline it was given"
+      ansible.builtin.assert:
+        that:
+          - __handlers | length > 0
+          - __handlers | length == (__g9p_timelines[item.item].TimeLineHandlers | length)
+        fail_msg: >-
+          /api/clientupdates returned an update for {{ item.item }} with
+          {{ __handlers | length }} handlers; the timeline ingested for it had
+          {{ __g9p_timelines[item.item].TimeLineHandlers | length }}. The server
+          is holding something other than the FGNW emulation it was handed.
+        quiet: true
+      loop: "{{ __g9p_dispatched.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+      vars:
+        __handlers: "{{ (item.json['update'] | default({}))['timeLineHandlers'] | default([]) }}"
+    - name: "G9-proof: each persona reports an executed timeline event"
+      ansible.builtin.uri:
+        url: "{{ ghost9_proof_api_root }}/clientresults"
+        method: POST
+        headers:
+          ghosts-id: "{{ __g9p_id_by_host[item] }}"
+          ghosts-name: "{{ item }}"
+          ghosts-fqdn: "{{ item }}.{{ __persona.ad_domain }}"
+          ghosts-host: "{{ item }}"
+          ghosts-domain: "{{ __persona.ad_domain }}"
+          ghosts-user: "{{ __persona.sam }}"
+          ghosts-version: "{{ ghost9_proof_client_version }}"
+        body_format: json
+        body:
+          Log: >-
+            TIMELINE|{{ __g9p_now }}|{{ {'Handler': __handler.HandlerType,
+                                        'Command': __event.Command | default('browse'),
+                                        'CommandArg': ((__event.CommandArgs | default([])) + ['']) | first,
+                                        'Result': 'ghost9-emulation-proof: ' ~ item ~ ' executed an FGNW timeline event'}
+                                       | to_json }}
+        status_code: [200, 202, 204]
+        timeout: 30
+      loop: "{{ groups['ghosts_clients'] }}"
+      vars:
+        __persona: "{{ __g9p_personas.ghosts_personas[item] }}"
+        __handler: "{{ __g9p_timelines[item].TimeLineHandlers | first }}"
+        __event: "{{ (__g9p_timelines[item].TimeLineHandlers | first).TimeLineEvents | first }}"
+      register: __g9p_reported
+    - name: "G9-proof: read the reported activity back off the server"
+      ansible.builtin.uri:
+        url: "{{ ghost9_proof_api_root }}/machines/{{ __g9p_id_by_host[item] }}/activity"
+        method: GET
+        return_content: true
+        status_code: 200
+        timeout: 30
+      loop: "{{ groups['ghosts_clients'] }}"
+      register: __g9p_activity_readback
+      until: (__g9p_activity_readback.json | default([])) | length > 0
+      retries: 12
+      delay: 5
+    - name: "G9-proof: the server kept the activity every persona reported"
+      ansible.builtin.assert:
+        that:
+          - __g9p_activity_readback.results | map(attribute='json') | map('length') | select('gt', 0) | list | length == (groups['ghosts_clients'] | length)
+        fail_msg: >-
+          At least one persona's GET /api/machines/<id>/activity is empty after a
+          204 on /api/clientresults. Emulation telemetry is being accepted and
+          dropped — the failure mode a machine-list check cannot see.
+        quiet: true
+    - name: "G9-proof: re-read the machine list the campaign's verifier polls"
+      ansible.builtin.uri:
+        url: "{{ ghost9_proof_api_root }}/machines"
+        method: GET
+        return_content: true
+        status_code: 200
+        timeout: 30
+      register: __g9p_final
+    - name: "G9-proof: every persona is registered under the name the verifier matches"
+      ansible.builtin.assert:
+        that:
+          - groups['ghosts_clients'] | map('lower') | difference(__g9p_final.json | selectattr('name', 'defined') | map(attribute='name') | map('lower') | list)
+            | length == 0
+        fail_msg: >-
+          FGNW-verify-emulation.yml matches machines by
+          `(?i)^<inventory_hostname>($|\.)`. These personas are not present
+          under that name:
+          {{ groups['ghosts_clients'] | map('lower')
+             | difference(__g9p_final.json | selectattr('name', 'defined') | map(attribute='name') | map('lower') | list)
+             | join(', ') }}.
+        quiet: true
+    - name: "G9-proof: summary"
+      ansible.builtin.debug:
+        msg:
+          - "api            : {{ ghost9_proof_api_root }} ({{ __g9p_swagger.json.info.version }})"
+          - "personas       : {{ groups['ghosts_clients'] | length }} registered via the real /api/clientid handshake"
+          - "timelines      : {{ groups['ghosts_clients'] | length }} FGNW timelines ingested via /api/machineupdates"
+          - >-
+            events ingested: {{ groups['ghosts_clients'] | map('extract', __g9p_timelines)
+            | map(attribute='TimeLineHandlers') | map('length') | sum }} handlers total
+          - "dispatched     : {{ groups['ghosts_clients'] | length }} timelines handed back over /api/clientupdates"
+          - "activity       : {{ groups['ghosts_clients'] | length }} execution reports accepted via /api/clientresults and read back"
+          - "machines now   : {{ __g9p_final.json | length }} on the server"
+          - >-
+            next           : run FGNW-verify-emulation.yml against the SAME api root
+            and inventory — its gate should now pass for every ghosts_clients host.
+          - >-
+            NOT proven here: that ghosts.exe on a real Windows client parses and
+            executes the timeline. That needs a deployed client (Phase 4).

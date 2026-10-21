@@ -1,0 +1,35 @@
+---
+# macOS half of fgnw_decoy_files. Consumes fgnw_decoy_files_list set by tasks/main.yml and the
+# caller-set fgnw_decoy_files_root (expected to be a POSIX path like /Users/Shared/Documents).
+# Logic is unchanged from the old fgnw_mac_decoy_files role — this file replaces it after
+# the OS merge.
+- name: "macos | Ensure the macOS decoy root exists"
+  ansible.builtin.file:
+    path: "{{ fgnw_decoy_files_root }}"
+    state: directory
+    mode: "0755"
+  become: true
+
+- name: "macos | Create each decoy file's parent directory"
+  ansible.builtin.file:
+    path: "{{ fgnw_decoy_files_root }}/{{ item | dirname }}"
+    state: directory
+    mode: "0755"
+  loop: "{{ fgnw_decoy_files_list }}"
+  loop_control:
+    label: "{{ item | dirname }}"
+  become: true
+
+- name: "macos | Plant each decoy file (authored content when present, else placeholder)"
+  ansible.builtin.copy:
+    dest: "{{ fgnw_decoy_files_root }}/{{ item }}"
+    content: "{{ lookup('ansible.builtin.file', authored_dir + '/' + item, errors='ignore') | default(placeholder, true) }}"
+    mode: "0644"
+    force: false
+  vars:
+    authored_dir: "{{ playbook_dir }}/../content/filesystem/documents/{{ fgnw_decoy_files_village }}"
+    placeholder: "{{ item | basename }} - decoy document, {{ fgnw_decoy_files_village }}, Fourth Great Ninja War range content pack.\n"
+  loop: "{{ fgnw_decoy_files_list }}"
+  loop_control:
+    label: "{{ item }}"
+  become: true

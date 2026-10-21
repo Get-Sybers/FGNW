@@ -1,0 +1,8 @@
+---
+- name: Settle-reboot every domain host after the Phase-3 content chain
+  hosts: domain
+  tasks:
+    - name: Reboot and wait for the host to come back online
+      ansible.windows.win_reboot:
+        reboot_timeout: 1000
+        post_reboot_delay: 200

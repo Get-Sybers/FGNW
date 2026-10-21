@@ -1,0 +1,34 @@
+---
+# macOS dev-workstation provisioning for the Hidden Sand Village conversion.
+#
+# Mirrors geerlingguy/mac-dev-playbook (the starting point named in the conversion brief):
+# Homebrew + packages/casks, dotfiles, dock and Mac App Store apps, all driven from
+# vars/mac-dev.config.yml (the default.config.yml equivalent). Two deliberate deviations:
+#   * elliotweiser.osx-command-line-tools is NOT run — the macos-sequoia-15 template already
+#     installs the Command Line Tools in its FINALIZE phase (macos_template_install_clt), so the role
+#     would be redundant and is omitted from requirements.yml too.
+#   * no play-level `become` — Homebrew refuses to run as root; the collection roles elevate
+#     per-task where needed (same as upstream mac-dev-playbook).
+#
+# Runs PRE-containment (Homebrew/casks need internet egress); see
+# deploy-tasks/phase1c-macos-base.yml. Hosts resolve from the [macos_dev] inventory group
+# (SSH, localuser/password — the macos-sequoia-15 template defaults).
+- name: Configure the Sand macOS hosts as dev workstations (mac-dev-playbook)
+  hosts: macos_dev
+  gather_facts: true
+  vars_files:
+    - vars/mac-dev.config.yml
+  roles:
+    - role: geerlingguy.mac.homebrew
+      tags: ['homebrew']
+    - role: geerlingguy.dotfiles
+      when: configure_dotfiles | default(false) | bool
+      tags: ['dotfiles']
+    - role: geerlingguy.mac.mas
+      when: >-
+        (mas_installed_apps | default([]) | length > 0)
+        or (mas_installed_app_ids | default([]) | length > 0)
+      tags: ['mas']
+    - role: geerlingguy.mac.dock
+      when: configure_dock | default(false) | bool
+      tags: ['dock']

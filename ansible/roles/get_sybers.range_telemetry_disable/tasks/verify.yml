@@ -1,0 +1,20 @@
+---
+- name: "verify | Read the DiagTrack service start type"
+  ansible.windows.win_reg_stat:
+    path: HKLM:\SYSTEM\CurrentControlSet\Services\DiagTrack
+    name: Start
+  register: range_telemetry_diagtrack
+- name: "verify | Read the telemetry policy value"
+  ansible.windows.win_reg_stat:
+    path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection
+    name: AllowTelemetry
+  register: range_telemetry_allowtelemetry
+- name: "verify | Assert telemetry is disabled"
+  ansible.builtin.assert:
+    that:
+      - range_telemetry_diagtrack.value | int == 4
+      - range_telemetry_allowtelemetry.value | int == 0
+    success_msg: Telemetry disabled (DiagTrack Start=4, AllowTelemetry=0).
+    fail_msg: >-
+      Telemetry NOT fully disabled — DiagTrack Start={{ range_telemetry_diagtrack.value | default('absent') }},
+      AllowTelemetry={{ range_telemetry_allowtelemetry.value | default('absent') }}.

@@ -1,0 +1,26 @@
+---
+galaxy_info:
+  role_name: acsc_linux_port_sysmon
+  namespace: get_sybers
+  author: Get-Sybers
+  description: >-
+    ACSC-Linux-Port-Sysmon — Sysmon for Linux with the ACSC Windows Event
+    Logging baseline ported to the Linux-observable event set, plus the ACSC
+    >=18-month retention target applied to journald. One config for PVE cluster
+    nodes (profile: hypervisor) and infra VM guests / range Linux VMs
+    (profile: guest). Not for unprivileged LXC — eBPF is unavailable there and
+    the role refuses rather than installing a service that cannot emit.
+  license: AGPL-3.0-only
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Debian
+      versions: [bookworm, trixie]
+    - name: Ubuntu
+      versions: [jammy, noble]
+  galaxy_tags:
+    - sysmon
+    - acsc
+    - logging
+    - dfir
+    - linux
+dependencies: []

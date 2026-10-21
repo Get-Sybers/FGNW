@@ -1,0 +1,5 @@
+---
+- name: "verify | Run the shared check's verification"
+  ansible.builtin.include_role:
+    name: get_sybers.ludus_auth_check
+    tasks_from: verify

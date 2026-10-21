@@ -1,0 +1,54 @@
+---
+- name: Point workstation autologon at each persona's own domain account
+  hosts: ghosts_clients
+  gather_facts: false
+  vars:
+    fgnw_config_json: "{{ playbook_dir }}/../ad/NARUTO/data/config.json"
+  tasks:
+    - name: Load persona timeline data (for sam/netbios/ad_domain per host)
+      ansible.builtin.include_vars:
+        file: "{{ playbook_dir }}/../content/ghosts/persona-timelines.yml"
+        name: fgnw_ghosts
+    - name: Fail if this host has no persona defined
+      ansible.builtin.fail:
+        msg: No persona for '{{ inventory_hostname }}' in content/ghosts/persona-timelines.yml.
+      when: inventory_hostname not in fgnw_ghosts.ghosts_personas
+    - name: Resolve this host's persona
+      ansible.builtin.set_fact:
+        __persona: "{{ fgnw_ghosts.ghosts_personas[inventory_hostname] }}"
+    - name: Load this persona's OWN password from config.json
+      ansible.builtin.set_fact:
+        __domain_password: "{{ (lookup('ansible.builtin.file', fgnw_config_json) | from_json).lab.domains[__persona.ad_domain].users[__persona.sam].password }}"
+      no_log: true
+    - name: Grant the persona the local interactive-logon right (SeInteractiveLogonRight only)
+      ansible.windows.win_user_right:
+        name: SeInteractiveLogonRight
+        users:
+          - "{{ __persona.netbios }}\\{{ __persona.sam }}"
+        action: add
+    - name: Configure Windows autologon for the persona account
+      ansible.windows.win_regedit:
+        path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon
+        name: "{{ item.name }}"
+        data: "{{ item.data }}"
+        type: string
+      loop:
+        - { name: AutoAdminLogon, data: "1" }
+        - { name: DefaultUserName, data: "{{ __persona.sam }}" }
+        - { name: DefaultDomainName, data: "{{ __persona.netbios }}" }
+        - { name: DefaultPassword, data: "{{ __domain_password }}" }
+      no_log: true
+    - name: Reboot to apply the new autologon account
+      ansible.windows.win_reboot:
+        reboot_timeout: 300
+    - name: Confirm the persona account is now logged in at the console
+      ansible.windows.win_shell: |
+        (quser 2>$null | Select-String -Pattern '{{ __persona.sam }}') -ne $null
+      register: __persona_login_check
+      changed_when: false
+    - name: Report autologon result
+      ansible.builtin.debug:
+        msg: >-
+          {{ inventory_hostname }}: persona '{{ __persona.sam }}' {{ 'IS' if
+          'True' in __persona_login_check.stdout else 'is NOT (check manually)' }}
+          logged in at the console after reboot.

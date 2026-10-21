@@ -1,0 +1,34 @@
+---
+- name: "install | Range_exchange(install) | install Exchange 2019 + enable user mailboxes"
+  ansible.builtin.include_role:
+    name: aleemladha.ludus_exchange
+  vars:
+    ludus_os_version: "2022"
+    ludus_exchange_iso_url: "{{ range_exchange_iso_url }}"
+    exchange_dotnet_install_path: "{{ range_exchange_nexus_dotnet }}"
+    vcredist2013_install_path: "{{ range_exchange_nexus_vcredist }}"
+    rewrite_module_path: "{{ range_exchange_nexus_rewrite }}"
+    ucma_runtime_path: "{{ range_exchange_nexus_ucma }}"
+    ludus_exchange_domain: "{{ __rex_org.org }}"
+    ludus_exchange_domain_username: "{{ __rex_forest_root }}\\Administrator"
+    ludus_exchange_domain_password: "{{ range_exchange_admin_password }}"
+    ludus_exchange_dc: ""
+    ludus_exchange_host: "{{ inventory_hostname }}"
+  no_log: true
+- name: "install | Range_exchange(install) | register the org as an Authoritative Accepted Domain (if not already): {{ __rex_org.domain }}"
+  ansible.windows.win_shell: |
+    Add-PSSnapin Microsoft.Exchange.Management.PowerShell.SnapIn
+    if (-not (Get-AcceptedDomain -Identity '{{ __rex_org.domain }}' -ErrorAction SilentlyContinue)) {
+      New-AcceptedDomain -Name '{{ __rex_org.domain }}' -DomainName '{{ __rex_org.domain }}' -DomainType Authoritative
+      Write-Output "ACCEPTED_DOMAIN_CREATED"
+    } else {
+      Write-Output "ACCEPTED_DOMAIN_EXISTS"
+    }
+  register: __rex_accepted_domain
+  changed_when: "'ACCEPTED_DOMAIN_CREATED' in (__rex_accepted_domain.stdout | default(''))"
+  no_log: true
+  vars:
+    ansible_become: true
+    ansible_become_method: runas
+    ansible_become_user: "{{ __rex_forest_root }}\\Administrator"
+    ansible_become_password: "{{ range_exchange_admin_password }}"

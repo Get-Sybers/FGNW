@@ -1,0 +1,143 @@
+---
+argument_specs:
+  main:
+    short_description: "ACSC-Linux-Port-Sysmon: Sysmon for Linux with the ACSC baseline ported to the Linux-observable event set."
+    description:
+      - >-
+        Installs Sysmon for Linux from caller-staged, digest-pinned .debs (ranges
+        run --testing with no VM internet), renders the ACSC Windows Sysmon
+        baseline ported to the seven Linux-capable event types (plus DnsQuery,
+        RawAccessRead, FileDelete) as /etc/sysmon/config.xml, validates it on the
+        target, registers and starts the service, applies the ACSC >=18-month
+        retention target to journald, and verifies by reading the effective
+        config back.
+      - >-
+        Two profiles: 'hypervisor' (PVE cluster nodes, NetworkConnect filtered by
+        exclusion to drop intra-cluster traffic) and 'guest' (infra VM guests and
+        range Linux VMs, NetworkConnect unfiltered). Debian/Ubuntu; needs root.
+    options:
+      acsc_sysmon_profile:
+        type: str
+        required: false
+        default: guest
+        choices: [hypervisor, guest]
+        description: "Which config profile to render. Anything else fails the preflight rather than silently picking one."
+      acsc_sysmon_container_policy:
+        type: str
+        required: false
+        default: ignore
+        choices: [ignore, warn, fail]
+        description:
+          - >-
+            What to do when the target is a container (eBPF availability is a
+            container BUILD concern, not this role's): ignore = install and say
+            nothing; warn = install but note an eBPF-hostile platform; fail = stop
+            instead of installing (opt-in gate).
+      acsc_sysmon_artefacts:
+        type: list
+        elements: dict
+        required: false
+        default: []
+        description:
+          - >-
+            The .deb artefacts to install, in order (sysinternalsebpf MUST precede
+            sysmonforlinux). Deliberately empty by default so an unconfigured call
+            fails loudly instead of installing nothing and reporting success.
+        options:
+          name:
+            type: str
+            required: true
+            description: "Package name (sysinternalsebpf, sysmonforlinux)."
+          version:
+            type: str
+            required: true
+            description: "Package version the .deb carries."
+          sha256:
+            type: str
+            required: true
+            description: "Digest of the .deb, asserted before install."
+          deb:
+            type: str
+            required: true
+            description: "The .deb filename under acsc_sysmon_stage_dir."
+      acsc_sysmon_stage_dir:
+        type: str
+        required: false
+        default: /var/cache/get-sybers/audit-logging
+        description: "On-controller staging directory the artefacts are read from."
+      acsc_sysmon_node_stage_dir:
+        type: str
+        required: false
+        default: /var/cache/get-sybers/audit-logging
+        description: "On-target staging directory the artefacts are pushed to."
+      acsc_sysmon_config_path:
+        type: str
+        required: false
+        default: /etc/sysmon/config.xml
+        description: "Where the rendered Sysmon config is installed."
+      acsc_sysmon_schema_version:
+        type: str
+        required: false
+        default: "4.90"
+        description: "Sysmon config schemaversion; must match the sysmonforlinux build being installed."
+      acsc_sysmon_hash_algorithms:
+        type: str
+        required: false
+        default: sha256
+        description: "Hash algorithm(s) recorded in each event, as the <HashAlgorithms> value."
+      acsc_sysmon_excluded_dest_prefixes:
+        type: list
+        elements: str
+        required: false
+        default: ["192.0.2.", "203.0.113.", "127.", "::1"]
+        description: >-
+          NetworkConnect destination prefixes excluded on the 'hypervisor' profile only.
+          Add the management and storage networks of your own cluster.
+      acsc_sysmon_watched_paths:
+        type: list
+        elements: str
+        required: false
+        default: [/etc/, /root/.ssh/, /usr/local/sbin/, /usr/local/bin/, /var/spool/cron/, /lib/systemd/system/]
+        description: "FileCreate/FileDelete paths that fire events — integrity-relevant only."
+      acsc_sysmon_manage_retention:
+        type: bool
+        required: false
+        default: true
+        description: >-
+          Write the journald drop-in that ports the ACSC >=18-month retention target (size and age, whichever is hit first) and restart journald when it
+          changes.
+      acsc_sysmon_journal_storage:
+        type: str
+        required: false
+        default: persistent
+        description: "journald Storage=. persistent is the precondition for any retention setting to mean anything."
+      acsc_sysmon_journal_max_retention:
+        type: str
+        required: false
+        default: 18month
+        description: "journald MaxRetentionSec=, the ACSC >=18-month target."
+      acsc_sysmon_journal_max_use:
+        type: str
+        required: false
+        default: 4G
+        description: "journald SystemMaxUse=, the disk ceiling (the Linux analogue of the ACSC 2 GB Security-log figure, with hypervisor headroom)."
+      acsc_sysmon_journal_keep_free:
+        type: str
+        required: false
+        default: 2G
+        description: "journald SystemKeepFree=, so journald rotates early rather than fill the root volume."
+      acsc_sysmon_journal_max_file_size:
+        type: str
+        required: false
+        default: 256M
+        description: "journald SystemMaxFileSize=, so rotation happens in usable chunks."
+      acsc_sysmon_validate_config:
+        type: bool
+        required: false
+        default: true
+        description: "Validate the rendered XML on the target before installing it; the preflight asserts the validator binary exists. false skips validation."
+      acsc_sysmon_validate_command:
+        type: str
+        required: false
+        default: "xmllint --noout %s"
+        description: "The `template: validate:` command (%s is the temp file). Its first word is probed on the target in preflight."

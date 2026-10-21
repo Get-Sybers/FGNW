@@ -1,0 +1,10 @@
+{{ ansible_managed | comment }}
+[Unit]
+Description=Daily Zeek log-tree size prune
+[Timer]
+OnCalendar=daily
+RandomizedDelaySec=1h
+Persistent=true
+Unit=zeek-sensor-prune.service
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,7 @@
+---
+- name: Run the shared env-only auth check
+  ansible.builtin.include_role:
+    name: get_sybers.ludus_auth_check
+  vars:
+    ludus_api_url: "{{ ludus_auth_api_url }}"
+    ludus_expected_user: "{{ ludus_auth_expected_user }}"

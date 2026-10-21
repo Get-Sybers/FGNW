@@ -1,0 +1,9 @@
+---
+- name: "Resolve + shape-check the environment key"
+  ansible.builtin.include_tasks: resolve.yml
+- name: "Prove the key is live and is the expected identity"
+  ansible.builtin.include_tasks: liveness.yml
+  when: not ludus_auth_skip_liveness | bool
+- name: "Require an admin identity"
+  ansible.builtin.include_tasks: admin.yml
+  when: ludus_auth_require_admin | bool

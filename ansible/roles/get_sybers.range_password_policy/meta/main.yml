@@ -1,0 +1,16 @@
+---
+galaxy_info:
+  author: Get-Sybers
+  description: >
+    Set the domain default password policy on a DC, loosened to admit the lab's short
+    contract passwords (used ahead of get_sybers.range_ad_mgmt). Source-delivered adaptation
+    of the campaign password_policy role for the Ludus user-defined-roles stage. FGNW
+  role_name: range_password_policy
+  license: AGPL-3.0-only
+  min_ansible_version: "2.12"
+  platforms:
+    - name: Windows
+      versions:
+        - "2019"
+        - "2022"
+dependencies: []

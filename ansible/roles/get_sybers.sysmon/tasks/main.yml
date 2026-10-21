@@ -1,0 +1,17 @@
+---
+- name: "Download and extract Sysmon"
+  ansible.builtin.include_tasks: install.yml
+- name: "Deploy the desired config and read the current service state"
+  ansible.builtin.include_tasks: configure.yml
+- name: "Register Sysmon with the config (service absent)"
+  ansible.builtin.include_tasks: install-service.yml
+  when: not sysmon64_info.exists
+- name: "Update a running Sysmon in place (config changed, no reinstall)"
+  ansible.builtin.include_tasks: reconfigure-service.yml
+  when: sysmon64_info.exists and (sysmon_config_copy.changed | default(false))
+- name: "Ensure the service is running"
+  ansible.builtin.include_tasks:
+    file: verify.yml
+    apply:
+      tags: [verify]
+  tags: [verify]

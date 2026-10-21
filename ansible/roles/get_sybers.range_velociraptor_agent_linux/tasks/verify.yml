@@ -1,0 +1,30 @@
+---
+- name: "verify | Stat the client config the service runs against"
+  ansible.builtin.stat:
+    path: /opt/velociraptor-client/client.config.yaml
+  register: velociraptor_verify_config
+- name: "verify | Read velociraptor systemd unit state"
+  ansible.builtin.systemd:
+    name: velociraptor
+  register: velociraptor_verify_unit
+- name: "verify | Assert agent is active + enabled with a config present"
+  ansible.builtin.assert:
+    that:
+      - velociraptor_verify_config.stat.exists
+      - velociraptor_verify_config.stat.size | default(0) | int > 0
+      - velociraptor_verify_unit.status.ActiveState == 'active'
+      - velociraptor_verify_unit.status.UnitFileState == 'enabled'
+    fail_msg: >-
+      Velociraptor agent verification failed
+      (config_present={{ velociraptor_verify_config.stat.exists }},
+      ActiveState={{ velociraptor_verify_unit.status.ActiveState | default('unknown') }},
+      UnitFileState={{ velociraptor_verify_unit.status.UnitFileState | default('unknown') }}).
+      Inspect on the host with:
+      systemctl status velociraptor && journalctl -u velociraptor -n 50
+- name: "verify | Summary"
+  ansible.builtin.debug:
+    msg: >-
+      velociraptor.service is
+      {{ velociraptor_verify_unit.status.ActiveState }} and
+      {{ velociraptor_verify_unit.status.UnitFileState }}, with client config
+      present at /opt/velociraptor-client/client.config.yaml.

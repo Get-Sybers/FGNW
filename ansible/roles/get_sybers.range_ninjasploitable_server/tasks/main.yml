@@ -1,0 +1,19 @@
+---
+- name: "Bake marker | check whether vulnerable web content is already baked"
+  ansible.builtin.stat:
+    path: /var/lib/ludus/ninjasploitable_content_baked
+  register: ninjasploitable_content_baked_marker
+- name: Apt packages (fallback for pre-bake templates)
+  ansible.builtin.include_tasks: install.yml
+  when: not ninjasploitable_content_baked_marker.stat.exists
+- name: Deploy baked web content fallback for pre-bake templates
+  ansible.builtin.include_tasks: configure.yml
+  when: not ninjasploitable_content_baked_marker.stat.exists
+- name: Runtime deploy-only settings
+  ansible.builtin.include_tasks: configure_runtime.yml
+- name: Ensure services are running
+  ansible.builtin.include_tasks:
+    file: verify.yml
+    apply:
+      tags: [verify]
+  tags: [verify]

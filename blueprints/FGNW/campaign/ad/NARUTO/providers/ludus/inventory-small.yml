@@ -1,0 +1,41 @@
+[default]
+; SMALL "trust-pair" variant — AD-BUILD inventory (Windows AD hosts ONLY).
+; ansible_host MUST be an IPv4 (RANGENUMBER -> range 2nd octet).
+;
+; This inventory is consumed by the Shinju AD chain.
+; The chain's plays load config.json via vars_files and target the Windows AD host groups,
+; so ONLY Windows AD members may live here — Linux infra (attacker/ninjasploitable) and the
+; GHOSTS-client aliases would be SSH-fact-gathered by the AD-build plays and break the run,
+; so they live in the
+; separate post-deploy inventory (inventory-small-infra.yml).
+;
+; AD hosts are NAMED by dict_key; dns_domain points at the DNS server's dict_key.
+;   dc01 = fire-dc1 (fire.ninja root, DNS=self)
+;   dc02 = konoha-dc1 (konohagakure child, DNS=dc01)
+;   srv03 = konoha-ws1 (Leaf member, DNS=dc02)
+;   dc05 = oto-dc1 (otogakure.ninja root, DNS=self)
+;   srv08 = oto-ws1 (Sound member, DNS=dc05)
+dc01 ansible_host=10.RANGENUMBER.10.15 dns_domain=dc01 dict_key=dc01
+dc02 ansible_host=10.RANGENUMBER.10.10 dns_domain=dc01 dict_key=dc02
+srv03 ansible_host=10.RANGENUMBER.10.21 dns_domain=dc02 dict_key=srv03
+dc05 ansible_host=10.RANGENUMBER.30.10 dns_domain=dc05 dict_key=dc05
+srv08 ansible_host=10.RANGENUMBER.30.11 dns_domain=dc05 dict_key=srv08
+[all:vars]
+domain_name=NARUTO
+force_dns_server=yes
+dns_server=10.RANGENUMBER.10.254
+two_adapters=no
+nat_adapter=Ethernet
+domain_adapter=Ethernet
+; winrm connection (windows) — this range listens on WinRM https/5986 (5985 closed)
+ansible_user=localuser
+ansible_password=password
+ansible_connection=winrm
+ansible_port=5986
+ansible_winrm_scheme=https
+ansible_winrm_server_cert_validation=ignore
+ansible_winrm_operation_timeout_sec=400
+ansible_winrm_read_timeout_sec=500
+enable_http_proxy=no
+ad_http_proxy=http://x.x.x.x:xxxx
+ad_https_proxy=http://x.x.x.x:xxxx

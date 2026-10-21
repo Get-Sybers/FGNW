@@ -1,0 +1,17 @@
+---
+- name: "_wait_task | Wait for Proxmox task to finish ({{ wt_upid }})"
+  ansible.builtin.uri:
+    url: "{{ macos_template_api_host }}/api2/json/nodes/{{ wt_node }}/tasks/{{ wt_upid }}/status"
+    method: GET
+    headers: "{{ macos_template_auth_headers }}"
+    validate_certs: "{{ macos_template_validate_certs }}"
+  register: __wt_status
+  until: __wt_status.json.data.status == "stopped"
+  retries: "{{ [1, (macos_template_task_timeout | int) // 5] | max }}"
+  delay: 5
+  no_log: true
+- name: "_wait_task | Assert Proxmox task succeeded ({{ wt_upid }})"
+  ansible.builtin.assert:
+    that: __wt_status.json.data.exitstatus == "OK"
+    fail_msg: "Proxmox task {{ wt_upid }} failed: {{ __wt_status.json.data.exitstatus | default('unknown') }}"
+    quiet: true

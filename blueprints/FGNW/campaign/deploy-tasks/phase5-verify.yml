@@ -1,0 +1,16 @@
+---
+- name: "deploy-tasks | phase5-verify | Ludus-observable end state (get_sybers.range.ludus_range_verify)"
+  ansible.builtin.include_role:
+    name: get_sybers.range.ludus_range_verify
+- name: "deploy-tasks | phase5-verify | FGNW-verify-connectivity.yml"
+  ansible.builtin.command:
+    argv: [ansible-playbook, -i, "{{ __tmp_infra_inv }}", FGNW-verify-connectivity.yml]
+  args:
+    chdir: "{{ ansible_dir }}"
+  changed_when: false
+- name: "deploy-tasks | phase5-verify | FGNW-verify-emulation.yml"
+  ansible.builtin.command:
+    argv: [ansible-playbook, -i, "{{ __tmp_infra_inv }}", FGNW-verify-emulation.yml]
+  args:
+    chdir: "{{ ansible_dir }}"
+  changed_when: false

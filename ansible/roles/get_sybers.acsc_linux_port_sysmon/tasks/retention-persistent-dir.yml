@@ -1,0 +1,8 @@
+---
+- name: "retention-persistent-dir | Retention — persistent journal directory exists"
+  ansible.builtin.file:
+    path: /var/log/journal
+    state: directory
+    owner: root
+    group: systemd-journal
+    mode: "2755"

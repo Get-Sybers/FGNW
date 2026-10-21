@@ -1,0 +1,21 @@
+---
+- name: "subscriptions | Create the staging directory"
+  ansible.windows.win_file:
+    path: "{{ acsc_wef_stage_dir }}"
+    state: directory
+- name: "subscriptions | Stage the subscription XML"
+  ansible.windows.win_copy:
+    src: "subscriptions/{{ __acsc_wef_map[item] }}"
+    dest: "{{ acsc_wef_stage_dir }}\\{{ __acsc_wef_map[item] }}"
+  loop: "{{ __acsc_wef_wanted }}"
+  loop_control:
+    label: "{{ item }}"
+  register: __acsc_wef_staged
+- name: "subscriptions | Create subscriptions that do not exist yet"
+  ansible.windows.win_command: >-
+    wecutil cs "{{ acsc_wef_stage_dir }}\{{ __acsc_wef_map[item] }}"
+  loop: "{{ __acsc_wef_wanted | difference(__acsc_wef_present) }}"
+  loop_control:
+    label: "{{ item }}"
+  register: __acsc_wef_created
+  changed_when: __acsc_wef_created.rc == 0

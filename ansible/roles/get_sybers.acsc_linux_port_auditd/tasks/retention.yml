@@ -1,0 +1,58 @@
+---
+- name: "retention | Write the managed auditd.conf keys"
+  ansible.builtin.lineinfile:
+    path: "{{ acsc_auditd_conf_path }}"
+    regexp: "^\\s*{{ item.key }}\\s*="
+    line: "{{ item.key }} = {{ item.value }}"
+    state: present
+    owner: root
+    group: root
+    mode: "0640"
+  loop: "{{ __acsc_auditd_settings }}"
+  loop_control: { label: "{{ item.key }}" }
+- name: "retention | Ensure the state directory exists"
+  ansible.builtin.file:
+    path: "{{ acsc_auditd_state_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+- name: "retention | Hash the auditd.conf we just wrote"
+  ansible.builtin.stat:
+    path: "{{ acsc_auditd_conf_path }}"
+    checksum_algorithm: sha256
+  register: __acsc_auditd_conf_stat
+- name: "retention | Which auditd.conf has been signalled in?"
+  ansible.builtin.slurp:
+    src: "{{ acsc_auditd_state_dir }}/auditd-conf.applied"
+  register: __acsc_auditd_conf_applied
+  failed_when: false
+- name: "retention | Reload auditd if it predates this config"
+  ansible.builtin.include_tasks: retention-reload.yml
+  when: >-
+    (__acsc_auditd_conf_applied.content | default('') | b64decode | trim)
+    != __acsc_auditd_conf_stat.stat.checksum
+- name: "retention | Read auditd.conf back"
+  ansible.builtin.slurp:
+    src: "{{ acsc_auditd_conf_path }}"
+  register: __acsc_auditd_conf_raw
+- name: "retention | Assert each managed key is set exactly once, to our value"
+  vars:
+    __found: >-
+      {{ (__acsc_auditd_conf_raw.content | b64decode).splitlines()
+         | select('match', '^\s*' ~ item.key ~ '\s*=')
+         | map('regex_replace', '^\s*' ~ item.key ~ '\s*=\s*(.*?)\s*$', '\1')
+         | list }}
+  ansible.builtin.assert:
+    that:
+      - __found | length == 1
+      - (__found | first | default('')) == (item.value | string)
+    fail_msg: >-
+      {{ acsc_auditd_conf_path }} should set {{ item.key }} exactly once to
+      '{{ item.value }}', but the effective occurrences are {{ __found }}. More
+      than one uncommented occurrence means a later line shadows ours and the
+      running daemon is not using this role's value; zero means the lineinfile
+      regexp did not match this distro's layout of that key.
+    quiet: true
+  loop: "{{ __acsc_auditd_settings }}"
+  loop_control: { label: "{{ item.key }}" }

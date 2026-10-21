@@ -1,0 +1,33 @@
+---
+argument_specs:
+  main:
+    short_description: Assert the Ludus-observable end state of a range
+    description:
+      - Reads `range list --json` (asserting it returned JSON first) and asserts the positive invariants the toggles enable — rangeState SUCCESS, every VM
+        powered on, every VM holding a non-empty IP, and optionally an exact VM count — plus an always-on negative control that a bogus VM name is absent.
+    options:
+      ludus_range_verify_require_success:
+        type: bool
+        default: true
+        description:
+          - When true, assert rangeState is SUCCESS.
+      ludus_range_verify_require_powered_on:
+        type: bool
+        default: true
+        description:
+          - When true, assert every VM is powered on.
+      ludus_range_verify_require_ips:
+        type: bool
+        default: true
+        description:
+          - When true, assert every VM has a non-empty IP.
+      ludus_range_verify_expect_vmcount:
+        type: int
+        default: 0
+        description:
+          - Exact VM count to assert. 0 (the default) disables the count check.
+      ludus_range_verify_bin:
+        type: str
+        default: /usr/local/bin/ludus
+        description:
+          - Path to the ludus CLI binary invoked for range list.

@@ -1,0 +1,39 @@
+---
+argument_specs:
+  main:
+    short_description: Seed a forest's real Exchange mailboxes with the FGNW quote corpus as genuine SMTP mail
+    description:
+      - Sends the bundled character-quote corpus (files/user-inboxes.yml, plus LOE-2 alert entries) as real SMTP mail via this forest's own Exchange
+        (localhost), only to recipients that are real AD users of this host's own domain (files/config.json is the routing ground truth). Writes an end-of-seed
+        marker last so a re-deploy does not duplicate mail.
+      - Runs AFTER get_sybers.range_exchange on the same -mail VM, at the Ludus user-defined-roles stage (S2).
+    options:
+      range_exchange_seed_admin_password:
+        type: str
+        default: password
+        description:
+          - Shared lab forest-root Administrator password used to send as each mailbox. Range credential, disposable by design.
+      range_exchange_seed_force:
+        type: bool
+        default: false
+        description:
+          - Re-run guard override. The SEND is not idempotent, so the role skips delivery when the end-of-seed marker is present; set true to deliver the corpus
+            AGAIN (this duplicates every message).
+      range_exchange_seed_state_dir:
+        type: str
+        default: C:\ProgramData\FGNW
+        description:
+          - Directory on the target VM that holds the end-of-seed marker.
+      range_exchange_seed_sentinel:
+        type: str
+        default: C:\ProgramData\FGNW\seed-mail.done
+        description:
+          - Full path of the end-of-seed marker file probed to decide whether to seed.
+      range_exchange_seed_org_map:
+        type: dict
+        description:
+          - Per-forest mail (recipient) domain, keyed by the -mail suffix derived from the VM name. Default in defaults/main.yml.
+      range_exchange_seed_forest_root_map:
+        type: dict
+        description:
+          - Forest root each host authenticates against when sending, keyed by -mail suffix. Default in defaults/main.yml.

@@ -1,0 +1,14 @@
+---
+- name: "preflight-discover-bridges | Preflight — enumerate bridge devices on this host"
+  ansible.builtin.command: ip -o link show type bridge
+  register: __zeek_bridges
+  changed_when: false
+  check_mode: false
+- name: "preflight-discover-bridges | Preflight — select the VNet bridges matching the pattern"
+  ansible.builtin.set_fact:
+    __zeek_discovered_ifaces: >-
+      {{ __zeek_bridges.stdout_lines
+         | map('regex_replace', '^[0-9]+:\\s*([^:@\\s]+).*$', '\\1')
+         | map('trim')
+         | select('match', zeek_sensor_hypervisor_iface_pattern)
+         | list }}

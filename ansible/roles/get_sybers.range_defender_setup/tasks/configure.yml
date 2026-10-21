@@ -1,0 +1,37 @@
+---
+- name: "configure | Create Defender configuration script"
+  ansible.windows.win_template:
+    src: Configure-Defender.ps1.j2
+    dest: "{{ range_defender_setup_dir }}\\Configure-Defender.ps1"
+- name: "configure | Run Defender configuration (check-then-set)"
+  ansible.windows.win_shell: |
+    Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
+    & '{{ range_defender_setup_dir }}\Configure-Defender.ps1'
+  register: defender_config
+  changed_when: "'DEFENDER-CONFIG: CHANGED' in defender_config.stdout"
+  failed_when: false
+- name: "configure | Assert Defender configuration succeeded"
+  ansible.builtin.assert:
+    that:
+      - defender_config.rc == 0
+      - "'DEFENDER-CONFIG:' in defender_config.stdout"
+    fail_msg: >-
+      Defender configuration failed (rc={{ defender_config.rc | default('n/a') }}):
+      {{ defender_config.stderr | default('') | trim | truncate(400) }} —
+      run 'Get-MpComputerStatus' on the VM to check the Defender service state;
+      if the Windows-Defender feature was only just installed
+      (reboot_required={{ defender_features.reboot_required | default('unknown') }}),
+      reboot the VM and re-run this role.
+    success_msg: Defender preferences are in the desired state.
+  when: defender_config.rc is defined
+- name: "configure | Create README with instructions"
+  ansible.windows.win_template:
+    src: README.txt.j2
+    dest: "{{ range_defender_setup_dir }}\\README.txt"
+- name: "configure | Create desktop shortcut for setup"
+  community.windows.win_shortcut:
+    src: "{{ range_defender_setup_dir }}\\README.txt"
+    dest: C:\Users\Public\Desktop\Defender Setup Instructions.lnk
+    icon: C:\Windows\System32\shell32.dll,1
+    description: Microsoft Defender Setup Instructions
+  failed_when: false # the shortcut is a convenience, not the deliverable

@@ -1,0 +1,27 @@
+---
+# Unified Thunderbird client role for the FGNW range. Dispatches on `ansible_os_family` so
+# both the Windows workstations (konoha-ws1..5, oto-ws1, akatsuki-ws1/2 — Thunderbird talks
+# IMAP+SMTP to their village's Exchange server) and the Sand macOS workstation (suna-ws1 —
+# talks to the Sand Postfix/Dovecot stack) run the same account preconfiguration code path.
+#
+# Install vs. configure:
+#   * Windows path installs Thunderbird via Chocolatey (routed through the range's
+#     Nexus `chocolatey-proxy` repo at deploy time) AND drops the enterprise policies.json.
+#   * macOS path only drops the policies.json: Thunderbird itself is installed as a Homebrew
+#     cask in Phase 1c (`FGNW-mac-dev.yml` -> `homebrew_casks: [thunderbird]`), because
+#     Phase 2 containment seals internet egress and `brew install --cask` would fail here.
+#
+# The policies.json template is OS-agnostic — it's Mozilla's enterprise policy schema and
+# reads the same vars under both branches.
+- name: Fail loudly on an unsupported OS family (checked before dispatch so the message is reachable)
+  ansible.builtin.fail:
+    msg: >-
+      fgnw_thunderbird supports ansible_os_family in (Windows, Darwin) only.
+      Got '{{ ansible_os_family }}' on '{{ inventory_hostname }}'. If you need Linux
+      Thunderbird too, add tasks/linux.yml and extend the dispatcher below.
+  when: ansible_os_family not in ['Windows', 'Darwin']
+
+- name: Dispatch to the OS-specific install + configure path
+  ansible.builtin.include_tasks:
+    file: "{{ 'windows' if ansible_os_family == 'Windows' else 'macos' }}.yml"
+  when: ansible_os_family in ['Windows', 'Darwin']

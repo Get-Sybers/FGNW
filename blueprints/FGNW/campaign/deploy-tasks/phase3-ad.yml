@@ -1,0 +1,77 @@
+---
+- name: "deploy-tasks | phase3-ad | Stat the tracked config.json"
+  ansible.builtin.stat:
+    path: "{{ ad_dir }}/data/config.json"
+    checksum_algorithm: sha1
+  register: __p3_cfg_tracked
+- name: "deploy-tasks | phase3-ad | Stat any leftover config.json.full.bak from the retired swap"
+  ansible.builtin.stat:
+    path: "{{ ad_dir }}/data/config.json.full.bak"
+    checksum_algorithm: sha1
+  register: __p3_cfg_bak
+- name: "deploy-tasks | phase3-ad | Assert the tracked config.json is present"
+  ansible.builtin.assert:
+    that: __p3_cfg_tracked.stat.exists
+    fail_msg: >-
+      {{ ad_dir }}/data/config.json is missing. It is the AD data model every Shinju play
+      reads; restore it from the source checkout (`git checkout --`) or re-add the source.
+    quiet: true
+- name: "deploy-tasks | phase3-ad | Assert the tracked config.json was not left mutated by an interrupted legacy swap"
+  ansible.builtin.assert:
+    that: >-
+      (not __p3_cfg_bak.stat.exists)
+      or (__p3_cfg_bak.stat.checksum == __p3_cfg_tracked.stat.checksum)
+    fail_msg: >-
+      {{ ad_dir }}/data/config.json does NOT match the leftover
+      config.json.full.bak beside it. That pair is the signature of a small-range deploy under
+      the retired config-swap that was killed before its restore ran, which leaves SMALL AD
+      data in the tracked config.json — a regular deploy built from it produces a silently
+      wrong range, and roles/fgnw_exchange_seed_mail + FGNW-ninjasploitable-join read it at
+      runtime. Restore the tracked file (`git -C <source checkout> checkout --
+      blueprints/FGNW/campaign/ad/NARUTO/data/config.json`, or re-add the
+      source), then delete the stale .bak and re-run. This phase no longer writes either file.
+    quiet: true
+- name: "deploy-tasks | phase3-ad | Define the post-native AD content / attack-primitive chain"
+  ansible.builtin.set_fact:
+    __phase3_playbooks:
+      - tgtdelegation.yml
+      - ad-data.yml
+      - lat.yml
+      - reboot.yml
+- name: "deploy-tasks | phase3-ad | Ensure the run's AD data dir exists"
+  ansible.builtin.file:
+    path: "{{ __tmp_ad_data_dir }}"
+    state: directory
+    mode: "0700"
+- name: "deploy-tasks | phase3-ad | Render this variant's AD data model into the run's temp dir"
+  ansible.builtin.copy:
+    src: "{{ ad_dir }}/data/{{ __v.ad_config }}"
+    dest: "{{ __tmp_ad_config }}"
+    remote_src: true
+    mode: "0600"
+- name: "deploy-tasks | phase3-ad | Run each Shinju playbook (timeout 30m, retry per playbook)"
+  ansible.builtin.include_tasks: run-playbook.yml
+  loop: "{{ __phase3_playbooks }}"
+  loop_control:
+    loop_var: __phase3_pb
+    label: "{{ __phase3_pb }}"
+- name: "deploy-tasks | phase3-ad | Adcs.yml (Sand Enterprise CA + ESC1 template) — timeout 30m, up to 3 attempts"
+  ansible.builtin.command:
+    argv:
+      - timeout
+      - 30m
+      - ansible-playbook
+      - -i
+      - "{{ ad_dir }}/data/{{ __v.ad_data }}"
+      - -i
+      - "{{ __tmp_prov_inv }}"
+      - -e
+      - data_path={{ __tmp_ad_data_dir }}
+      - adcs.yml
+  register: __phase3_adcs
+  args:
+    chdir: "{{ ansible_dir }}"
+  changed_when: true
+  until: __phase3_adcs.rc == 0
+  retries: 3
+  delay: 0

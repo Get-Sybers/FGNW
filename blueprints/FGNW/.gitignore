@@ -1,0 +1,6 @@
+# Backup debris. `campaign/ad/NARUTO/data/config.json.full.bak` (~84 KB) was written by the
+# retired small-range AD-data swap on every small deploy and left behind as untracked noise in
+# `git status`. Phase 3 no longer writes it (it renders the AD data model into the run's temp
+# dir instead — see campaign/deploy-tasks/phase3-ad.yml), but stale copies still exist on
+# servers that ran the old code, and nothing in this blueprint should ever commit a .bak.
+*.bak

@@ -1,0 +1,128 @@
+---
+- name: "attempt | Build the deploy argv, attempt {{ __attempt ~ '/' ~ ludus_range_deploy_max_attempts }}"
+  ansible.builtin.set_fact:
+    __ludus_deploy_argv: >-
+      {{ [ludus_range_deploy_bin, 'range', 'deploy']
+         + (['-t', ludus_range_deploy_tags | join(',')] if (ludus_range_deploy_tags | length) > 0 else [])
+         + (['--limit', ludus_range_deploy_limit] if (ludus_range_deploy_limit | length) > 0 else [])
+         + (['--only-roles', ludus_range_deploy_only_roles] if (ludus_range_deploy_only_roles | length) > 0 else []) }}
+- name: "attempt | Re-check state before firing, attempt {{ __attempt }}"
+  ansible.builtin.command:
+    argv: ["{{ ludus_range_deploy_bin }}", range, list, --json]
+  environment:
+    LUDUS_API_KEY: "{{ __ludus_api_key }}"
+  register: __ludus_prefire
+  changed_when: false
+  failed_when: false
+  no_log: true
+- name: "attempt | Parse pre-fire state, attempt {{ __attempt }}"
+  ansible.builtin.set_fact:
+    __ludus_prefire_state: >-
+      {{ ((__ludus_prefire.stdout | from_json).rangeState | default('UNKNOWN'))
+         if ((__ludus_prefire.rc | default(1)) == 0 and (__ludus_prefire.stdout | default('') | trim).startswith('{'))
+         else 'UNKNOWN' }}
+- name: "attempt | A deploy is already in flight — attaching, NOT firing, attempt {{ __attempt }}"
+  ansible.builtin.debug:
+    msg: rangeState=DEPLOYING already — not firing a rival deploy; polling the in-flight one.
+  when: __ludus_prefire_state == 'DEPLOYING'
+- name: "attempt | Fire the deploy, attempt {{ __attempt ~ ': ' ~ (__ludus_deploy_argv | join(' ')) }}"
+  ansible.builtin.command:
+    argv: "{{ __ludus_deploy_argv }}"
+  environment:
+    LUDUS_API_KEY: "{{ __ludus_api_key }}"
+  register: __ludus_fire
+  failed_when: __ludus_fire.rc != 0
+  changed_when: true
+  no_log: true
+  when: __ludus_prefire_state != 'DEPLOYING'
+- name: "attempt | Poll until a terminal state, attempt {{ __attempt }}"
+  ansible.builtin.command:
+    argv: ["{{ ludus_range_deploy_bin }}", range, list, --json]
+  environment:
+    LUDUS_API_KEY: "{{ __ludus_api_key }}"
+  register: __ludus_poll
+  changed_when: false
+  failed_when: false
+  no_log: true
+  retries: "{{ ludus_range_deploy_poll_retries | int }}"
+  delay: "{{ ludus_range_deploy_poll_delay | int }}"
+  until: >-
+    (__ludus_poll.rc | default(1)) == 0
+    and (__ludus_poll.stdout | default('') | trim | length) > 0
+    and (__ludus_poll.stdout | default('') | trim).startswith('{')
+    and ((__ludus_poll.stdout | from_json).rangeState | default('')) in ['SUCCESS', 'FAILED', 'ERROR']
+- name: "attempt | Parse the terminal state, attempt {{ __attempt }}"
+  ansible.builtin.set_fact:
+    __ludus_state: >-
+      {{ ((__ludus_poll.stdout | from_json).rangeState | default('UNKNOWN'))
+         if ((__ludus_poll.rc | default(1)) == 0
+             and (__ludus_poll.stdout | default('') | trim).startswith('{'))
+         else 'UNKNOWN' }}
+    __ludus_vmcount: >-
+      {{ ((__ludus_poll.stdout | from_json).VMs | default([]) | length)
+         if ((__ludus_poll.rc | default(1)) == 0
+             and (__ludus_poll.stdout | default('') | trim).startswith('{'))
+         else 0 }}
+- name: "attempt | Succeeded, attempt {{ __attempt }}"
+  ansible.builtin.set_fact:
+    __ludus_deploy_done: true
+  when: __ludus_state == 'SUCCESS'
+- name: "attempt | FAILED — will not retry, attempt {{ __attempt }}"
+  ansible.builtin.set_fact:
+    __ludus_deploy_fatal: true
+  when: __ludus_state == 'FAILED'
+- name: "attempt | Transient ERROR — retrying, attempt {{ __attempt }}"
+  ansible.builtin.debug:
+    msg: >-
+      rangeState=ERROR after attempt {{ __attempt }} — usually a VM not reachable
+      when its roles ran; all VMs are provisioned, re-running deploy re-applies
+      roles idempotently. Retrying ({{ __attempt | int + 1 }}/{{ ludus_range_deploy_max_attempts }}).
+  when:
+    - __ludus_state == 'ERROR'
+    - ludus_range_deploy_error_retry | bool
+    - __attempt | int < ludus_range_deploy_max_attempts | int
+- name: "attempt | Capture errored-attempt diagnostics (#320), attempt {{ __attempt }}"
+  when:
+    - __ludus_state == 'ERROR'
+    - ludus_range_deploy_capture_errors | bool
+  block:
+    - name: "attempt | Ensure the error-capture dir exists, attempt {{ __attempt }}"
+      ansible.builtin.file:
+        path: "{{ ludus_range_deploy_error_capture_dir }}"
+        state: directory
+        mode: "0700"
+      failed_when: false
+      changed_when: false
+    - name: "attempt | Read `ludus range errors` (rolls over on the next fire), attempt {{ __attempt }}"
+      ansible.builtin.command:
+        argv: ["{{ ludus_range_deploy_bin }}", range, errors]
+      environment:
+        LUDUS_API_KEY: "{{ __ludus_api_key }}"
+      register: __ludus_errors
+      changed_when: false
+      failed_when: false
+      no_log: true
+    - name: "attempt | Persist the errored-attempt diagnostics, attempt {{ __attempt }}"
+      ansible.builtin.copy:
+        dest: "{{ ludus_range_deploy_error_capture_dir }}/attempt-{{ __attempt }}-errors.txt"
+        mode: "0600"
+        content: |
+          {{ __ludus_errors.stdout | default('(no output / capture failed)') }}
+      failed_when: false
+      changed_when: false
+    - name: "attempt | Point at the saved diagnostics, attempt {{ __attempt }}"
+      ansible.builtin.debug:
+        msg: Saved attempt {{ __attempt }} `ludus range errors` -> {{ ludus_range_deploy_error_capture_dir }}/attempt-{{ __attempt }}-errors.txt (
+- name: "attempt | Poll budget exhausted, still non-terminal, attempt {{ __attempt }}"
+  ansible.builtin.set_fact:
+    __ludus_deploy_fatal: true
+  when: __ludus_state not in ['SUCCESS', 'FAILED', 'ERROR']
+- name: "attempt | Non-terminal timeout is fatal — do not re-fire, attempt {{ __attempt }}"
+  ansible.builtin.fail:
+    msg: >-
+      Deploy did not reach a terminal state within
+      {{ (ludus_range_deploy_poll_retries | int) * (ludus_range_deploy_poll_delay | int) }}s
+      (last state: {{ __ludus_state }}). Refusing to re-fire `range deploy` on an
+      in-flight deploy. Raise ludus_range_deploy_poll_retries/delay or check
+      `ludus range logs`.
+  when: __ludus_state not in ['SUCCESS', 'FAILED', 'ERROR']

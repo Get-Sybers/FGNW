@@ -1,0 +1,8 @@
+---
+rules:
+  unpinned-uses:
+    config:
+      policies:
+        "*": hash-pin
+        "get-sybers/.github/*": ref-pin
+        "ansible/ansible-content-actions/*": ref-pin

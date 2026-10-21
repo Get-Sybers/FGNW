@@ -1,0 +1,5 @@
+---
+- name: Restart velociraptor_server
+  ansible.builtin.service:
+    name: velociraptor_server
+    state: restarted

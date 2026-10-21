@@ -1,0 +1,1113 @@
+This is what is probably the most accurate Naruto Timeline on the internet. I've been working on this timeline for the last couple of years, basing it mostly on the manga and the databooks, but also taking events from the anime and novels into account, if possible. It covers the entire Naruto history from the beginning of all chakra and Kaguya Ōtsutsuki to the Fourth Shinobi World War and beyond, even Boruto: Naruto Next Generations. It includes every (relevant) statement about when something took place, even more specific dates like weeks and days. I have also created two smaller timelines that deal with two of the most prominent errors: The life of Kakashi, Obito and Rin and the three Shinobi World Wars. These are linked below.
+Please refrain from editing this page, but feel free to make improvements on the talk page. I especially have to thank Elveonora and ItachiWasAHero for contributing to the cause by making me aware of mistakes and providing information to add. I also have to thank Platypus @ NF for his very detailed list of dates from the Itachi Shinden novels. Furthermore, this timeline was inspired by my predecessor ShounenSuki's timeline.
+Contents
+1	Legend
+2	Databooks
+3	Specific timelines with explanations
+4	1st January to 31st December 983 bNb
+5	1st January to 31st December 783 bNb
+6	1st January to 31st December 79 bNb
+7	1st January to 31st December 78 bNb
+8	1st January to 31st December 76 bNb
+9	1st January to 31st December 75 bNb
+10	1st January to 31st December 74 bNb
+11	1st January to 31st December 72 bNb
+12	1st January to 31st December 71 bNb
+13	1st January to 31st December 64 bNb
+14	1st January to 31st December 62 bNb
+15	1st January to 31st December 59 bNb
+16	1st January to 31st December 58 bNb
+17	1st January to 31st December 56 bNb
+18	1st January to 31st December 55 bNb
+19	1st January to 31st December 53 bNb
+20	1st January to 31st December 50 bNb
+21	1st January to 31st December 49 bNb
+22	1st January to 31st December 48 bNb
+23	1st January to 31st December 47 bNb
+24	1st January to 31st December 44 bNb
+25	1st January to 31st December 43 bNb
+26	1st January to 31st December 42 bNb
+27	1st January to 31st December 41 bNb
+28	1st January to 31st December 40 bNb
+29	1st January to 31st December 38 bNb
+30	1st January to 31st December 36 bNb
+31	1st January to 31st December 35 bNb
+32	1st January to 31st December 34 bNb
+33	1st January to 31st December 33 bNb
+34	1st January to 31st December 32 bNb
+35	1st January to 31st December 31 bNb
+36	1st January to 31st December 30 bNb
+37	1st January to 31st December 29 bNb
+38	1st January to 31st December 27 bNb
+39	1st January to 31st December 26 bNb
+40	1st January to 31st December 25 bNb
+41	1st January to 31st December 24 bNb
+42	1st January to 31st December 23 bNb
+43	1st January to 31st December 22 bNb
+44	1st January to 31st December 21 bNb
+45	1st January to 31st December 20 bNb
+46	1st January to 31st December 19 bNb
+47	1st January to 31st December 18 bNb
+48	1st January to 31st December 17 bNb
+49	1st January to 31st December 16 bNb
+50	1st January to 31st December 15 bNb
+51	1st January to 31st December 14 bNb
+52	1st January to 31st December 13 bNb
+53	1st January to 31st December 12 bNb
+54	1st January to 31st December 11 bNb
+55	1st January to 31st December 10 bNb
+56	1st January to 31st December 9 bNb
+57	1st January to 31st December 8 bNb
+58	1st January to 31st December 7 bNb
+59	1st January to 31st December 6 bNb
+60	1st January to 31st December 5 bNb
+61	1st January to 31st December 4 bNb
+62	1st January to 31st December 3 bNb
+63	1st January to 31st December 2 bNb
+64	1st January to 31st December 1 bNb
+65	1st January to 31st December 0
+66	1st January to 31st December 1 aNb
+67	1st January to 31st December 2 aNb
+68	1st January to 31st December 3 aNb
+69	1st January to 31st December 4 aNb
+70	1st January to 31st December 5 aNb
+71	1st January to 31st December 6 aNb
+72	1st January to 31st December 7 aNb
+73	1st January to 31st December 8 aNb
+74	1st January to 31st December 9 aNb
+75	1st January to 31st December 10 aNb
+76	1st January to 31st December 11 aNb
+77	1st January to 31st December 12 aNb
+78	1st January to 31st December 13 aNb
+79	1st January to 31st December 14 aNb
+80	1st January to 31st December 15 aNb
+81	1st January to 31st December 16 aNb
+82	1st January to 31st December 17 aNb
+83	1st January to 31st December 18 aNb
+84	1st January to 31st December 19 aNb
+85	1st January to 31st December 20 aNb
+86	1st January to 31st December 22 aNb
+87	1st January to 31st December 25 aNb
+88	1st January to 31st December 27 aNb
+89	1st January to 31st December 29 aNb
+90	1st January to 31st December 32 aNb
+91	1st January to 31st December 33 aNb
+92	1st January to 31st December 36 aNb
+93	References/Explanations
+Legend
+bNb means before Naruto's birth.
+aNb means after Naruto's birth.
+Information written in italics have to be re-confirmed.
+Striked information was retconned, as explained in the references.
+At the earliest means that the date is the earliest possible date the event could've happened.
+At the latest means that the date is the latest possible date the event could've happened.
+In the fourth databook, dates are usually given in one of these three ways:
+X年前 X-nen mae — translated as X years ago, reflected as "This year" in the timeline, if no further information was given.
+約X年前 yaku X-nen mae — translated as About X years ago, reflected as "About this year" in the timeline, if no further information was given.
+約X数年前 yaku X-sūnen mae — translated as About X0 to X9 years ago, not reflected in a special way.
+Databooks
+Most of the dates in this timeline come from the four databooks. Each of them covers a specific range of volumes and chapters; the Rin no Sho covers the manga up to volume 12 (chapter 108), the Tō no Sho covers the manga up to volume 27 (chapter 244), the Sha no Sho covers the manga up to volume 43 (chapter 402) and the Jin no Sho covers everything up to volume 71 (chapter 690) as well as chapter 691 from volume 72. It specifically ends on the 10th October.
+For the first three databooks, it's unclear at which date they end. Furthermore, the characters are always made one year older with each new databook, which contradicts the dates provided in the manga itself. This is best explained by looking at Hiruzen's age: In the first databook, his age was stated to be 68. In the following databooks, his age at death is given as 69. However, he was born on 8th February and from the manga, we know that he died between July and September, meaning he could only have become 69 years old if there was a gap year between chapter 108 and 109, which isn't the case.
+Specific timelines with explanations
+Character/event-specific timelines are:
+Kakashi's, Obito's and Rin's timeline: User:Seelentau/KORTL
+Shinobi World War Timeline: User:Seelentau/NWWTL
+1st January to 31st December 983 bNb
+This year
+Kaguya Ōtsutsuki is hailed as the Rabbit Princess.
+1st January to 31st December 783 bNb
+At the latest this year
+9th May — Fukasaku is born.
+1st January to 31st December 79 bNb
+About this year
+9th April — Ginkaku is born.
+1st January to 31st December 78 bNb
+About this year
+7th March — Kinkaku is born.
+1st January to 31st December 76 bNb
+At the latest this year[1]
+24th December — Madara Uchiha is born.
+1st January to 31st December 75 bNb
+15th August — Kakuzu is born.
+1st January to 31st December 74 bNb
+About this year
+10th February — Izuna Uchiha is born.
+1st January to 31st December 72 bNb
+This year — Genji is born.
+1st January to 31st December 71 bNb
+About this year — Kawarama Senju is born.
+1st January to 31st December 64 bNb
+About this year
+Sengoku Jidai (戦国時代, Warring States Period)[2]
+Different clans fight each other, Uchiha and Senju become famous.
+Kawarama Senju (7) is killed by Uchiha clansmen.
+Itama Senju dies at an unknown age.
+Torifu Akimichi is born.
+1st January to 31st December 62 bNb
+8th October — Ōnoki is born.
+1st January to 31st December 59 bNb
+At the earliest this year — Kagami Uchiha is born.
+1st January to 31st December 58 bNb
+15th October — Chiyo is born.
+1st January to 31st December 56 bNb
+6th January — Ebizō is born.
+6th January — Danzō Shimura is born.
+8th February — Hiruzen Sarutobi is born.
+8th May — Homura Mitokado is born.
+1st September — Koharu Utatane is born.
+1st January to 31st December 55 bNb
+At the latest this year — Biwako is born.
+1st January to 31st December 53 bNb
+Since around this year
+The tailed beasts begin causing incidents and victims.[3]
+1st January to 31st December 50 bNb
+About this year
+Sengoku Jidai (戦国時代, Warring States Period)
+Izuna Uchiha (24) is killed by Tobirama Senju.[4]
+Madara Uchiha (25–26) awakens the Eternal Mangekyō Sharingan.
+Uchiha and Senju conclude a peace treaty, ending the Warring States Period. An alliance is formed and Konohagakure is built.
+Tobirama Senju tells Hashirama Senju that Madara Uchiha will never become Hokage.[5]
+Hashirama Senju becomes Shodai Hokage.
+Iwagakure is built.
+Ishikawa becomes Shodai Tsuchikage.
+Ishikawa tells a young Ōnoki about Iwagakure's Will of Stone.[6]
+1st January to 31st December 49 bNb
+This year
+Ōnoki (12–13) and Mū fight Madara Uchiha (26–27).
+About this year
+Madara Uchiha (26–27) leaves Konohagakure.
+1st January to 31st December 48 bNb
+About this year
+Konohagakure is established.[7]
+Furui is born.
+1st April — Mifune is born.
+1st January to 31st December 47 bNb
+5th April — Tazuna is born.
+1st January to 31st December 44 bNb
+About this year
+Kumogakure is built.
+A becomes Shodai Raikage.
+The Kingin Kyōdai (33–35) attempt to capture Kurama, but are swallowed and come out two weeks later as miniature Kurama.
+Reto unites the people in Kaze no Kuni and Sunagakure is built.
+Reto becomes Shodai Kazekage.
+The priests of Sunagakure seal Shukaku.
+The Five Great Shinobi Countries are established.[8]
+4th October — Sabu-chan is born.
+1st January to 31st December 43 bNb
+About this year
+Tobirama Senju creates the Ninja Training Institution.[9]
+Madara Uchiha (32–33) takes control of Kurama and begins to attack the village.
+In a final clash, Hashirama Senju "kills" Madara Uchiha.
+Mito Uzumaki seals Kurama inside her, becoming its first Jinchūriki.
+1st January to 31st December 42 bNb
+4th December — Dan Katō is born.
+1st January to 31st December 41 bNb
+25th September — Jinin Akebino is born.
+1st January to 31st December 40 bNb
+About this year
+The first 36 Shinobi graduate from the Ninja Training Institution.[9]
+About this year[10]
+Koharu Utatane (15–16) becomes Genin (ID 000256).
+Hiruzen Sarutobi (15–16) becomes Genin (ID 000261).
+Danzō Shimura (15–16) becomes Genin (ID 000272).
+Homura Mitokado (15–16) becomes Genin (ID 000293).
+Tobirama Senju becomes his team's sensei.
+1st January to 31st December 38 bNb
+2nd August — Tsunade is born.
+23rd October — Dodai is born.
+27th October — Orochimaru is born.
+11th November — Jiraiya is born.
+1st January to 31st December 36 bNb
+This year
+The Ninja Training Institution is officially named Ninja Academy.[9]
+Blue B is born.
+1st January to 31st December 35 bNb
+10th December — Might Duy is born.
+1st January to 31st December 34 bNb
+About this year
+The First Shinobi World War wages.
+The first Gokage Kaidan is held. Hashirama Senju captures some Bijū and sells them to the other countries.[11]
+Tobirama Senju becomes Nidaime Hokage.[12]
+Hashirama Senju dies at an unknown age.[13]
+Tobirama Senju creates the Konoha police.[14]
+The First Shinobi World War ends.[15]
+A peace treaty is formed between Konohagakure and Kumogakure, the Nidaime Hokage and Nidaime Raikage meet at the ceremony.
+The Kingin Kyōdai try to stage a coup d'état, leaving Tobirama on the verge of death. The Nidaime Raikage is likely killed.
+A becomes Sandaime Raikage.[16]
+Mū is killed by Gengetsu Hōzuki.[17]
+Gengetsu Hōzuki is killed by Mū.
+Ōnoki (27–28) becomes Sandaime Tsuchikage.
+Tobirama Senju is killed by the Kinkaku Force.[18]
+Hiruzen Sarutobi (21–22) becomes Sandaime Hokage.
+About this year between 7th March and 8th April[19]
+Kinkaku dies at age 44.
+Ginkaku dies at age 44.
+At the earliest this year
+Kagami Uchiha dies at age 25.
+1st January to 31st December 33 bNb
+16th August — Fugaku Uchiha is born.
+1st January to 31st December 32 bNb
+At the earliest 11th November[20]
+Orochimaru (6) becomes Genin (ID 002300).
+Jiraiya (6) becomes Genin (ID 002301).
+Tsunade (6) becomes Genin (ID 002302).
+Hiruzen Sarutobi (24) becomes his team's sensei.
+1st January to 31st December 31 bNb
+At the latest 3rd December[21]
+Dan Katō (10) becomes Genin (ID 002973).
+At the earliest this year
+Might Duy (3–4) becomes Genin (ID 003001).[22]
+1st January to 31st December 30 bNb
+1st June — A is born.
+10th August — Teuchi is born.
+1st January to 31st December 29 bNb
+8th January — Hiashi Hyūga is born.
+8th January — Hizashi Hyūga is born.
+1st August — Ao is born.
+1st January to 31st December 27 bNb
+22nd March — Kitsuchi is born.
+29th March — Rasa is born.
+1st June — Mikoto Uchiha is born.
+1st January to 31st December 26 bNb
+22nd February — Fuguki Suikazan is born.
+7th September — Shibi Aburame is born.
+1st January to 31st December 25 bNb
+24th January — Inoichi Yamanaka is born.
+22nd April — Chōza Akimichi is born.
+15th July — Shikaku Nara is born.
+1st January to 31st December 24 bNb
+25th January — Minato Namikaze is born.
+5th March — Nonō Yakushi is born.
+10th July — Kushina Uzumaki is born.
+18th November — Kushimaru Kuriarare is born.
+1st January to 31st December 23 bNb
+This year
+Son Gokū is sealed in Rōshi.[23]
+23rd February — Yoshino Nara is born.
+At the latest this year
+11th November — Karura is born.[24]
+1st January to 31st December 22 bNb
+12th August — Tsume Inuzuka is born.
+1st January to 31st December 21 bNb
+23rd May — Yashamaru is born.
+1st January to 31st December 20 bNb
+8th November — Sasori is born.
+At the earliest this year
+Sasori's parents are killed by Sakumo Hatake.
+1st January to 31st December 19 bNb
+15th May — Killer B is born.
+19th September — Nagato is born.
+16th October — Motoi is born.
+1st January to 31st December 18 bNb
+20th February — Konan is born.
+4th July — Baki is born.
+28th August — Raidō Namiashi is born.
+1st January to 31st December 17 bNb
+This year
+Teuchi (12–13) devotes his life to making Ramen.
+3rd September — Aoba Yamashiro is born.
+1st January to 31st December 16 bNb
+At the earliest 25th January
+Kushina Uzumaki (8) is brought to Konohagakure.
+Minato Namikaze (9) enters the Ninja Academy.
+Kushina Uzumaki (8) enters the Ninja Academy.
+20th February — Yahiko is born.
+8th March — Ebisu is born.
+18th March — Kisame Hoshigaki is born.
+17th July — Genma Shiranui is born.
+1st January to 31st December 15 bNb
+At the earliest 25th January[25]
+Minato Namikaze (10) becomes Genin (ID 006510).
+Jiraiya (23) becomes his team's sensei.
+20th March — Ibiki Morino is born.
+11th June — Kurenai Yūhi is born.
+18th October — Asuma Sarutobi is born.
+18th November — Shizune is born.
+1st January to 31st December 14 bNb
+About this year
+A (14–15) and Killer B (4–5) become tag-team partner.
+1st January — Might Guy is born.
+10th February — Obito Uchiha is born.
+At the earliest 15th May[26]
+Gyūki goes on a rampage.
+Furui (35) is killed by Gyūki.
+Blue B (22) dies because of Gyūki's extraction.
+Killer B (5) becomes Gyūki's Jinchūriki.
+21st May — Mei Terumī is born.
+15th August — Zabuza Momochi is born.
+15th September — Kakashi Hatake is born.
+15th November — Rin Nohara is born.
+At the latest 3rd December[27]
+The Second Shinobi World War is started by Konohagakure.[28][29][30]
+Konohagakure, Sunagakure and Iwagakure fight in Amegakure.
+Amegakure's leader Hanzō defeats Jiraiya (24), Tsunade (24) and Orochimaru (24). In exchange for their lives, they have to call themselves Konoha's Sannin.[31]
+Dan Katō dies at age 27.[32]
+Tsunade develops hæmophobia.
+Kurama is sealed inside Kushina Uzumaki (10), making her its second Jinchūriki.[33]
+Mito Uzumaki dies after Kurama is extracted from her.
+1st January to 31st December 13 bNb
+At the earliest 6th June
+Gōzu and Meizu are born.
+13th October — Yūra is born.
+At the earliest 8th November
+Sasori (7) becomes Genin (ID 33-001).
+1st January to 31st December 12 bNb
+This year
+The Second Shinobi World War wages.
+Nagato (6–7), Yahiko (3–4) and Konan (5–6) begin to train under Jiraiya (25–26).[34]
+7th January — Samui is born.
+1st February — Mabui is born.
+24th October — Anko Mitarashi is born.
+At the earliest 8th November
+Sasori (8) becomes Chūnin.
+1st January to 31st December 11 bNb
+At the earliest this year
+Might Duy (23–24) has mastered the Hachimon Tonkō no Jin.[35]
+This year
+The Second Shinobi World War wages.
+Nagato (7–8), Yahiko (4–5) and Konan (6–7) continue their training with Jiraiya (26–27).
+2nd November — Hayate Gekkō is born.
+1st January to 31st December 10 bNb
+About this year
+Kushina Uzumaki (13–14) is abducted by Kumogakure Shinobi. Minato Namikaze (13–14) saves her.
+21st February — Yoroi Akadō is born.
+At the earliest 23rd May
+Yashamaru (11) becomes Genin (ID 32-049)
+26th May — Iruka Umino is born.
+At the earliest 4th July
+Baki (8) becomes Genin (ID 38-212).
+10th October — Yamato is born.
+1st January to 31st December 9 bNb
+About this year
+Kakashi Hatake (4–5) enters the Ninja Academy.
+Obito Uchiha (4–5) enters the Ninja Academy.
+Rin Nohara (3–4) enters the Ninja Academy.
+At the earliest 1st January
+Might Guy (5) wants to beat up two Konoha Ninja for mocking his father and ends up in the hospital.
+6th January — Darui is born.
+3rd April — C is born.
+At the earliest 15th September
+Raidō Namiashi (10) becomes Genin (ID 009717).[36]
+Kakashi Hatake (5) becomes Genin (ID 009720).
+Aoba Yamashiro (8) becomes Genin (ID 009744).[37]
+At the earliest 19th September[38]
+The Second Shinobi World War wages.
+Jiraiya (28–29) leaves the Ame orphans after three years of training.[39]
+3rd November — Yūgao Uzuki is born.
+1st January to 31st December 8 bNb
+At the earliest 10th August
+Yamato (2) is used by Orochimaru in his experiments.
+19th October — Shisui Uchiha is born.
+1st January to 31st December 7 bNb
+29th February — Kabuto Yakushi is born.
+At the latest 14th September
+Kakashi Hatake (6) becomes Chūnin.[40]
+1st January to 31st December 6 bNb
+At the earliest 18th March
+Kisame Hoshigaki (10) becomes Genin.
+2nd April — Hidan is born.
+At the earliest 9th June
+A depressed Sakumo Hatake takes his own life after choosing to save his comrades rather than complete an important mission, which caused the nation and the village to suffer a great loss.
+At the earliest 4th July
+Baki (12) becomes Chūnin.
+At the earliest 17th July
+Genma Shiranui (10) becomes Genin (ID 010203).
+Might Guy (7) becomes Genin (ID 010252).[41]
+Might Duy (30–31) shows his son the Hachimon Tonkō no Jin.[42]
+At the earliest 18th November
+Ebisu (10) becomes Genin (ID 010777).
+Shizune (9) becomes Genin (ID 010800).[43]
+Asuma Sarutobi (9) becomes Genin (ID 010829).[44]
+Kurenai Yūhi (9) becomes Genin (ID 010881).[45]
+1st January to 31st December 5 bNb
+This year
+Mei Terumī (8–9) has do undergo the brutal academy graduation ritual of Kirigakure.
+Izumi Uchiha is born.[46]
+13th April — Hana Inuzuka is born.
+At the earliest 23rd May
+Yashamaru (16) becomes Chūnin.
+9th June — Itachi Uchiha is born.
+At the earliest 10th August
+Yamato (5) is abandoned by Orochimaru and taken in by Danzō Shimura.
+At the earliest 15th August
+Zabuza Momochi (9) becomes Genin.
+At the earliest 15th November
+Rin Nohara (9) becomes Genin (ID 010885).[47]
+Obito Uchiha (9) becomes Genin (ID 010886).[48]
+Ibiki Morino (10) becomes Genin (ID 010913).[49]
+1st January to 31st December 4 bNb
+About this year[50]
+The Third Shinobi World War wages.
+Minato Namikaze (19–20) fights with A (24–25) and Killer B (14–15).[51]
+Darui (4–5) is taught Black Lightning by the Sandaime Raikage.
+The Sandaime Raikage A dies, his son A becomes Yondaime Raikage.
+At the latest 18th January
+The Third Shinobi World War wages.[52]
+Sasori (15), using his puppetry, dyes Sunagakure's sand in the red blood of his enemies, thus gaining the nickname "Sasori of the Red Sand".
+Sasori leaves Sunagakure.[53]
+14th February — Ayame is born.
+At the earliest 10th August
+Yamato (6) becomes Genin and later Chūnin (ID 010992).
+At the latest 14th September
+Minato Namikaze (20) begins to develop the Rasengan.[54]
+1st January to 31st December 3 bNb
+At the latest this year
+Obito Uchiha (10–11) tells Rin about his dream to become Hokage.
+About this year
+The flashback from chapter 666 happens.
+At the earliest 1st January
+Might Guy (11) becomes Chūnin.
+11th January — Akatsuchi is born.
+At the earliest 10th February
+Obito Uchiha (11) becomes Chūnin.
+5th May — Deidara is born.
+At the earliest 17th July
+Genma Shiranui (13) becomes Chūnin.
+23rd August — Temari is born.
+At the earliest 18th October
+Asuma Sarutobi (12) becomes Chūnin.
+24th October — Torune Aburame is born.
+1st November — Chōjūrō is born.
+At the earliest 15th November
+Rin Nohara (11) becomes Chūnin.
+1st January to 31st December 2 bNb
+About his year
+Fourth Raikage A and Killer B become partners.[55]
+9th January — Haku is born.
+15th May — Kankurō is born.
+15th June — Kimimaro is born.
+At the earliest 11th July
+Kurenai Yūhi becomes Chūnin.
+2nd August — Atsui is born.
+20th August — Fū Yamanaka is born.
+At the latest 14th September
+Shisui (5) becomes Genin.[56]
+14th September — Zaku Abumi is born.
+1st October — Jūgō is born.
+At the earliest 24th October
+Anko Mitarashi (10) becomes Genin (ID 011226).
+Orochimaru becomes his team's sensei.
+At the earliest 18th November
+Shizune (13) becomes Chūnin.
+16th December — Kidōmaru is born.
+1st January to 31st December 1 bNb
+25th February — Tayuya is born.
+9th March — Tenten is born.
+At the earliest 9th June[57]
+The Third Shinobi World War wages.
+Itachi Uchiha (4) is traumatised by the violence.[58]
+Sasori (18) abducts and kills the Sandaime Kazekage.[59]
+Kabuto Yakushi (6) is found by Nonō (23) and begins to live at the Konoha orphanage.[60]
+Kakashi Hatake (12) becomes Jōnin.
+Obito Uchiha awakens his Sharingan and later "dies" at age 13.
+The Kannabi-Bridge is destroyed by Minato Namikaze (23), Kakashi Hatake and Rin Nohara (12).
+Obito Uchiha is rescued by Madara Uchiha (74).
+Kirigakure, then known as Chigiri no Sato, seals Isobu in Rin, she chooses to die by Kakashi's hands.
+Obito and Kakashi awaken their Mangekyō Sharingan, Obito becomes Madara's successor.
+Madara Uchiha dies a natural death at age 74.
+Obito and Zetsu encounter Nagato (17), Yahiko (15) and Konan (17) in Amegakure.
+Hanzō and Danzō (55) plot to end the Akatsuki's rebellion.
+Yahiko (15) commits suicide.[61]
+Obito, Nagato and Konan establish the new Akatsuki.
+12th June — Dosu Kinuta is born.
+20th June — Sakon and Ukon are born.
+26th June — Jirōbō is born.
+3rd July — Neji Hyūga is born.
+6th July — Kin Tsuchi is born.
+6th September — Kurotsuchi is born.
+At the latest 14th September[62]
+The Third Shinobi World War ends.
+Konohagakure fights against an unknown force at the Kikyō pass.
+Konohagakure and Iwagakure sign an armistice, ending the Third Shinobi World War.[63]
+On a post-war mission, Shisui (6) lets his best friend die and awakens the Mangekyō Sharingan.[64]
+Minato Namikaze (23) becomes Yondaime Hokage.
+Kakashi Hatake (12) joins the Anbu under Minato's command.
+Orochimaru (37) leaves Konohagakure.[65]
+25th November — Sai is born.
+27th November — Rock Lee is born.
+10th December[66]
+Naruto Uzumaki is conceived.
+1st January to 31st December 0
+19th January
+Shukaku is sealed in Gaara while he's still in his mother's womb.
+Gaara is born.
+Karura (22) dies because of birth stress.
+23rd January — Shino Aburame is born.
+14th February — Karui is born.
+18th February — Suigetsu Hōzuki is born.
+At the earliest 20th March
+Ibiki Morino (15) becomes Chūnin.
+28th March — Sakura Haruno is born.
+1st May — Chōji Akimichi is born.
+18th June — Shiho is born.
+20th June — Karin is born.
+7th July — Kiba Inuzuka is born.
+23rd July — Sasuke Uchiha is born.
+At the earliest 23rd July
+Itachi (5) and Shisui (7) meet for the first time.[67]
+At the earliest 10th August
+Yamato (10) works as a Ne under the codename Kinoe.
+At the earliest 11th August
+Kakashi Hatake (14) joins the Ne
+Danzō Shimura tries to assassinate the Sandaime Hokage, but is betrayed by Kakashi.
+Kakashi Hatake (14) leaves the Ne
+22nd September — Shikamaru Nara is born.
+23rd September — Ino Yamanaka is born.
+10th October
+The night of Naruto's birth.
+Naruto Uzumaki is born.
+Biwako Sarutobi (55), Taji (23) and several Anbu are killed by Obito Uchiha (14).
+Obito Uchiha frees Kurama, summons it in Konohagakure and fights Minato Namikaze (24).
+Ikkaku (45) and Kohari Umino (45) are killed by Kurama.
+Izumi Uchiha's father is killed by Kurama.[68]
+Izumi Uchiha (5) awakens the Sharingan.[69]
+The Ninja Academy is destroyed by Kurama.[9]
+Minato Namikaze defeats Obito Uchiha, seals Yin Kurama in his body and Yang Kurama in Naruto Uzumaki.
+Minato Namikaze (24) dies because of Shiki Fūjin.
+Kushina Uzumaki (24) dies because of the extraction of Kurama.
+At the earliest 24th October
+Anko Mitarashi (12) becomes Chūnin.
+26th December — Omoi is born.
+27th December — Hinata Hyūga is born.
+1st January to 31st December 1 aNb
+At the earliest 8th March
+Ebisu (17) becomes Chūnin.
+Ebisu (17), Might Guy (15) and Genma Shiranui (17) encounter Kirigakure's swordsmen, but are rescued by Might Duy.[70]
+Jinin Akebino (41) is killed by Might Duy.
+Kushimaru Kuriarare (24) is killed by Might Duy.
+Might Duy (35) dies because of the Eight Gates Release Formation.
+At the latest 8th June
+The Ninja Academy is rebuild.[9]
+At the earliest 2nd November
+Hayate Gekkō (12) becomes Genin (ID 011671).
+Iruka Umino (11) becomes Genin (ID 011850).[71]
+1st January to 31st December 2 aNb
+Between 15th March and 24th June
+A young boy, implied to be Zabuza, slaughters the participants of the Genin Exams in Kirigakure.[72]
+This year in April[73]
+Itachi Uchiha (6) enters the Ninja Academy.[74]
+At the earliest 9th June
+Kabuto Yakushi (9) leaves the orphanage and begins to work for Ne.[75]
+This year in June[76]
+Itachi Uchiha (6–7) scores a perfect score on a test, as the only one among his classmates.
+Itachi Uchiha (6–7) meets Izumi Uchiha (7) for the first time.
+Shisui Uchiha (9) becomes known as Shunshin no Shisui.
+This year in July[77]
+Itachi Uchiha (7) passes the graduation exam and his teachers decide that he would become Genin after only one year at the academy.
+At the latest 22nd July[78]
+Orochimaru leaves Konohagakure.
+At the earliest 2nd November
+Hayate Gekkō (13) becomes Chūnin.
+1st January to 31st December 3 aNb
+At the latest this year
+Orochimaru leaves Konohagakure.[79]
+This year in March[73]
+Itachi Uchiha (7) becomes Genin (ID 012110).
+Itachi Uchiha and Danzō Shimura meet for the first time.[80]
+Shinko Inari (13) becomes Genin.
+Tenma Izumo (13) becomes Genin.
+Kabuto Yakushi (10) becomes Genin (ID 012140).
+Yūgao Uzuki (11) becomes Genin (ID 012161).[81]
+Yūki Minazuki (40) becomes Team 2's sensei.[82]
+Between 15th March and 24th June
+Kirigakure changes its Genin Exams.
+At the latest 8th June
+Itachi Uchiha (7) attends his clan's meetings for the first time.[83]
+27th December
+Konohagakure and Kumogakure conclude a peace treaty.
+Neji Hyūga (4) gets his clan's Juin.
+At the earliest 27th December
+Kumogakure's Head Ninja (42) is killed by Hiashi Hyūga.
+Hizashi Hyūga (32) sacrifices himself to protect the Byakugan.
+1st January to 31st December 4 aNb
+This year in March[84]
+Itachi Uchiha (8) witnesses Tenma Izumo's (14) death at the hand of Obito Uchiha (18), awakening his Sharingan.[85]
+Itachi Uchiha (8) masters his Sharingan.[86]
+After Tenma Izumo's death, Shinko Inari resigns and two new members join Team 2 – Himuka Suzukaze (14) and Yōji Aburame.
+At the earliest 9th June[87]
+Team 2 completes a D-rank mission to catch a resident of the Land of Fire.
+At the earliest 23rd July[88]
+Fugaku Uchiha tells his son Itachi that he was allowed to take the Chūnin exams next year.
+At the latest 9th October
+Danzō Shimura orders Yamato (14) to kill Kakashi Hatake (18) and take his Sharingan.
+At the earliest 10th October[89]
+Yamato (14) leaves the Ne and joins the regular Anbu forces.
+25th December — Inari is born.
+30th December — Konohamaru Sarutobi is born.
+1st January to 31st December 5 aNb
+About this year
+Itachi and Sasuke play hide and seek.[90]
+This year in April
+Itachi Uchiha (9) leaves Team 2.
+Izumi Uchiha (11) becomes Genin.[91]
+This year in October
+Itachi Uchiha (10) becomes Chūnin.[92]
+At the earliest 18th October
+Asuma Sarutobi (20) and his father have an argument, resulting in Asuma leaving Konohagakure.[93]
+1st January to 31st December 6 aNb
+This year
+Orochimaru leaves Akatsuki.[94][95]
+Suigetsu Hōzuki (5–6) is seen by Kisame Hoshigaki (21–22) for the last time.[96]
+This year in March[97]
+Naruto Uzumaki (5) and Hinata Hyūga (5) meet for the first time.
+27th March — Hanabi Hyūga is born.
+This year in April[73]
+One day before Sasuke Uchiha (5) enters the Ninja Academy, he hurts his ankle during training and is carried home by Itachi Uchiha (10).[98]
+Sasuke Uchiha (5) enters the Ninja Academy.[99]
+Itachi Uchiha (10) and Shisui Uchiha (13) kill Mukai Kohinata.[100]
+Itachi Uchiha (10) joins the Anbu and is put in Kakashi Hatake's (19) Team Ro.[99]
+Itachi Uchiha begins to act strange during the following six months.[101]
+Shisui Uchiha (13) is ordered to keep an eye on Itachi.
+Itachi Uchiha discovers a masked man's presence near the Naka Shrine.[102]
+At the earliest 26th May
+Iruka Umino (16) becomes Chūnin.
+At the earliest 6th June
+Gōzu (12) and Meizu (12) become Genin.
+This year in October[73]
+Shisui (13–14) and Itachi (11) devise the plan to change Fugaku Uchiha's mind with Kotoamatsukami.[103]
+Shisui Uchiha (13–14) dies after losing one of his eyes to Danzō Shimura and giving his other eye to Itachi.
+Itachi Uchiha (11) gains his Mangekyō Sharingan.
+Sasuke Uchiha's (6) first semester has ended.[104]
+Hiruzen Sarutobi tries to mediate between Konohagakure and the Uchiha clan.[105]
+1st January to 31st December 7 aNb
+Between 1st and 18th January
+The Yondaime Kazekage decides to test Gaara's worth, ordering Yashamaru to kill him. Gaara is driven crazy.
+Yashamaru (27) is killed by Gaara (6).
+At the earliest 9th June
+Itachi Uchiha (12) is promoted to Anbu squad leader.[106]
+Kabuto Yakushi (14) kills Nonō (31) and is taken in by Orochimaru.[107]
+Kabuto and Orochimaru leave Konoha's Root.[108]
+At the earliest 18th October[109]
+Orochimaru uses Fushi Tensei for the first time.[110]
+Orochimaru discovers the Ryūchidō, but is unable to attain Sage Mode due to his fragile host body.
+At the earliest 27th December[111]
+The academy scene of The Last -Naruto the Movie- takes place.
+1st January to 31st December 8 aNb
+1st July[112]
+Rookie-Genin attend the Chūnin Exams.[113]
+Preliminary matches need to be held at the Chūnin Exams.[114]
+At the latest 19th July
+Itachi Uchiha (13) is ordered to kill his clan.
+Itachi Uchiha finds out about the existence of "Madara Uchiha" (22) and they decide to kill the Uchiha together.[115]
+At the latest 22nd July[116]
+Uchiha no Jiken (うちはの事件, Uchiha Incident)
+Itachi Uchiha and "Madara Uchiha" slaughter their clan.
+Fugaku Uchiha dies at age 40.
+Mikoto Uchiha dies at age 35.
+Inabi Uchiha dies at age 25.
+Yakumi Uchiha dies at age 28.
+Tekka Uchiha dies at age 21.
+Teyaki Uchiha dies at age 46.
+Uruchi Uchiha dies at age 46.
+Yashiro Uchiha dies at age 45.
+Hizuki Uchiha dies at age 38.[117]
+Izumi Uchiha dies at age 13.[118]
+Itachi Uchiha pleads with Hiruzen Sarutobi to protect the surviving Sasuke (7).
+He also threatens Danzō Shimura (64) to sell Konoha's secrets to other countries, if Sasuke should be harmed.
+"Madara Uchiha" and Danzō Shimura meet for unknown reasons.
+Itachi Uchiha joins Akatsuki, he's partnered with Jūzō Biwa (29–30).
+At the earliest 25th November
+Sai (9) becomes Genin (ID 012420).
+1st January to 31st December 9 aNb
+7th July — Akamaru is born.
+At the earliest 23rd August
+Temari (12) becomes Genin (ID 53-004).
+At the earliest 25th November
+Sai (10) becomes Chūnin.
+1st January to 31st December 10 aNb
+About this year
+Jūzō Biwa (31) is killed by Yagura.
+Orochimaru (47–48) tries to take over Itachi Uchiha's (14–15) body, but fails and leaves Akatsuki.
+Kisame Hoshigaki kills Fuguki Suikazan (36) and takes Samehada. "Madara Uchiha" (23–24) approaches him and Kisame begins to work for him.
+Akatsuki holds a meeting.
+Itachi Uchiha, Sasori (29–30) and Kisame Hoshigaki meet Deidara (12–13) and convince him to join Akatsuki.
+Hanzō dies.[119]
+Between 23rd January and 1st July
+Inari and Kaiza meet
+At the earliest 15th May
+Kankurō (12) becomes Genin (ID 54-002).
+1st July[120]
+Kabuto Yakushi attends his first Chūnin Exams.
+At the earliest 18th October[121]
+Orochimaru uses Fushi Tensei for the second time to take over a young woman.
+1st January to 31st December 11 aNb
+About this year
+Hinata Hyūga (10–11) cheers on Naruto Uzumaki (10–11) during his sparring match against Sasuke Uchiha (10–11).
+Between 19th January and 22nd January
+Sasori and Kabuto Yakushi meet.[122]
+1st July[123]
+Kabuto Yakushi attends his third Chūnin Exams.
+1st January to 31st December 12 aNb
+This year
+Hashirama Senju and Tobirama Senju are revived with Edo Tensei.[124]
+According to Kabuto Yakushi, Otogakure is created this year.[125]
+At the earliest 19th January
+Gaara (12) becomes Genin (ID 56-001).
+Between 19th January and 22nd March
+Yūra (24) begins to work for Sunagakure.
+At the latest 8th March[126]
+Rock Lee (12) becomes Genin (ID 012561).
+Tenten (12) becomes Genin (ID 012573).
+Neji Hyūga (12) becomes Genin (ID 012587).
+Might Guy becomes Team 9's sensei.
+Between 15th March and 24th June
+Gatō takes over the ship industry of Nami no Kuni.
+Kaiza (30) is killed by Gatō's henchmen.
+At the earliest 6th June
+Gōzu (18) and Meizu (18) become Chūnin.
+Between 6th June and 24th June
+Zabuza Momochi, Haku and the Onikyōdai leave Kirigakure.
+Zabuza Momochi tries to stage a coup d'état in Kirigakure and to kill the Mizukage, but fails.
+To avoid Kirigakure's Oinin, he and his group join Gatō's gang.
+1st July[127]
+Kabuto Yakushi attends his fifth Chūnin Exams.
+10th September[128]
+Naruto Uzumaki's milk expires.
+At the earliest 10th October
+Icha Icha Violence is released.
+31st December — End of the first databook[129]
+1st January to 31st December 13 aNb
+Between 18th January and 22nd January[130]
+18th January — The Naruto story begins.
+19th January — Ninja Academy's Graduation Exam[131]
+Naruto Uzumaki (12) fails the graduation exam the third time.
+Naruto steals the scroll of the First Hokage in the evening.
+Half a day later, the Konoha-nin chase after Naruto.[132]
+Iruka and Naruto fight against Mizuki, who reveals to Naruto that he "is" the Nine-Tailed Fox.[133]
+Naruto masters the Tajū Kage Bunshin no Jutsu and beats Mizuki. Iruka lets him graduate in the early morning hours of the following day.
+21st January — Ninja Registration Day[134]
+Naruto Uzumaki is officially registered as a ninja.
+Naruto and Konohamaru (8) meet for the first time.
+22nd January — Ninja Graduation Ceremony Day[135]
+In total, 27 pupils graduate, making up nine teams of three ninja.
+Sakura Haruno (12) becomes Genin (ID 012601).
+Ino Yamanaka (12) becomes Genin (ID 012604).
+Sasuke Uchiha (12) becomes Genin (ID 012606).
+Naruto Uzumaki (12) becomes Genin (ID 012607).
+Shikamaru Nara (12) becomes Genin (ID 012611).
+Hinata Hyūga (12) becomes Genin (ID 012612).
+Shino Aburame (12) becomes Genin (ID 012618).
+Kiba Inuzuka (12) becomes Genin (ID 012620).
+Chōji Akimichi (12) becomes Genin (ID 012625).
+23rd January — Final Exam[136]
+The final test takes place to see who of the 27 graduates is strong enough to become a Genin.
+Kakashi Hatake's personal test takes place, and he accepts Naruto, Sasuke and Sakura as Team 7.
+Kurenai Yūhi's personal test takes place, and she accepts Kiba, Shino and Hinata as Team 8.
+Asuma Sarutobi's personal test takes place, and he accepts Shikamaru, Chōji and Ino as Team 10.
+Between 15th March and 30th March
+15th March[137]
+Team 7's Escort the Bridge Builder mission begins.
+Team 7 fights Zabuza Momochi (26).
+22nd March[138]
+Team 7 begins to train. Kakashi can move again, so can Zabuza.
+28th March
+Naruto and Haku meet in the forest.[139]
+29th March
+Naruto and Sasuke master the tree climbing and in the evening, they climbed to the tree tops.
+30th March
+Haku (15) is killed by Kakashi Hatake.
+Gatō (48) is killed by Zabuza Momochi.
+Zabuza Momochi (26) is killed by Gatō's henchmen.
+6th April[140]
+The Naruto Bridge is completed, Team 7 leaves for Konohagakure.
+24th June
+The Sand Siblings and other foreign shinobi appear in Konohagakure.
+Hiruzen tells the Konoha Jōnin about the upcoming Chūnin Exams.
+At the latest 30th June[141]
+Rasa (40) is killed by Orochimaru.
+1st to 6th July[142]
+The Chūnin Exams begin.
+Kabuto Yakushi attends his seventh Chūnin Exams.
+The first round ends with 78 remaining Genin, or 26 teams.
+Five day survival training in the Shi no Mori.
+1st July[143]
+14:32 — The second round begins.[144]
+15:22 — At approximately this time, Gaara kills the Ame ninja.
+16:09 — 1 hour and 37 minutes after the second round began, the Suna Siblings complete the trial.[145]
+Team 7 fights Orochimaru, Sasuke gets the Juin, Naruto's seal is blocked.[146]
+20:00 — Anko Mitarashi is found by the Konoha Anbu.
+2nd July
+06:00 — Team Dosu attacks Sakura, Lee intervenes and Sasuke awakes.
+3rd–4th July
+Team 7 heals their wounds.
+5th July[147]
+12:32 or 13:32 — Sasuke goes to get some water and meets Karin (13).[148]
+6th July
+Team 7 and Kabuto fight the Ame ninja and get the missing scroll. They finish the second round along with 18 other Genin, seven teams in total.
+6th July[149]
+The second round of the Chūnin Exams ends.
+Preliminary matches are held.
+Naruto and Jiraiya meet for the first time.
+Night of 6th July
+Dosu Kinuta (14) is killed by Gaara (13).
+Hayate Gekkō (23) is killed by Baki (33).
+Between 7th July and 31st July[150]
+Naruto trains for one month with Jiraiya.
+22nd July — Kakashi begins to train Sasuke.[151]
+27th July — Baki and the "Yondaime Kazekage" meet.
+28th July — Naruto and the Nine-Tails meet for the first time.[152]
+31st July — Naruto awakens in the Konoha Hospital after being asleep for three days.
+1st August[153]
+Third part of the Chūnin Exams.
+Konoha Kuzushi.
+Zaku Abumi (14) is sacrificed for Kuchiyose: Edo Tensei.
+Kin Tsuchi (14) is sacrificed for Kuchiyose: Edo Tensei.
+Hiruzen Sarutobi (69) is killed by Fūinjutsu: Shiki Fūjin.
+2nd August
+An emergency meeting with the Land of Fire's Daimyō is held.
+3rd August[154]
+Kisame and Itachi arrive in Konohagakure.
+The funeral for the Third Hokage is held.
+Jiraiya and Naruto leave Konoha to look for Tsunade.
+Kakashi, Asuma, Kurenai and Guy fight Kisame and Itachi.
+Between 3rd August and Monday, 25th August
+Search for Tsunade[155]
+3rd August — Jiraiya and Naruto travel to Shukuba Town.[156]
+Jiraiya teaches Naruto the Rasengan.
+22nd August — Naruto masters the first stage.
+24th August — Jiraiya refers to the encounter with Itachi being three weeks ago.[157]
+25th August — Orochimaru and Kabuto make their way to Tanzakugai. Naruto masters the second stage. He and Jiraiya leave for Tanzakugai and arrive there later that day.[158]
+Between Monday, 25th August and Monday, 1st September
+Search for Tsunade[159]
+Naruto makes a bet with Tsunade to master the Rasengan in one week.
+Monday, 1st September[160]
+Search for Tsunade
+The Sannin fight and disband.
+Between 2nd and 22nd September[161]
+Tsunade, Naruto and Jiraiya return to Konohagakure.[162]
+Shikamaru (12) became Chūnin.
+Tsunade (51) becomes Godaime Hokage.
+At the earliest 22nd September[163]
+Naruto and Sasuke fight on the hospital.
+Rock Lee is healed by Tsunade.
+Sasuke leaves Konohagakure.
+Jirōbō (14) is killed by Chōji Akimichi.
+Kidōmaru (14) is killed by Neji Hyūga.
+Orochimaru uses Fushi Tensei to take over Gen’yūmaru.[164]
+Tayuya (14) is killed by Temari.
+Sakon and Ukon (14) are killed by Kankurō.
+Kimimaro (15) succumbs to his illness.
+Naruto Uzumaki (13) and Sasuke Uchiha (13) fight at the Valley of the End.
+Jiraiya meets Naruto at the hospital and tells him about Akatsuki, Orochimaru and their training.[165]
+Sakura Haruno (13) begins to learn under Tsunade's (51) guidance.
+At the earliest 22nd December[166]
+Naruto (13) and Jiraiya leave Konohagakure.
+The Akatsuki meets in a cave.
+Kakashi begins to train and re-awakens his Mangekyō Sharingan.
+31st December — End of the second databook[167]
+1st January to 31st December 14 aNb
+At the earliest 23rd August[168]
+Gaara (14) becomes Chūnin and later Godaime Kazekage.
+Kankurō (16) becomes Chūnin and later Jōnin.
+Temari (17) becomes Chūnin and later Jōnin.
+1st January to 31st December 15 aNb
+At the latest 22nd January[169]
+Joint Chūnin Exams are held by Konohagakure and Sunagakure.
+Shino Aburame (14) becomes Chūnin.
+Tenten (15) becomes Chūnin.
+Sakura Haruno (14) becomes Chūnin.
+Chōji Akimichi (14) becomes Chūnin.
+Neji Hyūga (15) becomes Chūnin and later Jōnin.
+Kiba Inuzuka (14) becomes Chūnin.
+Ino Yamanaka (14) becomes Chūnin.
+Rock Lee (15) becomes Chūnin.
+Hinata Hyūga (14) becomes Chūnin.
+The Akatsuki begin their Bijū hunt.
+Han, Fū and Utakata — two of those three are captured by Akatsuki and die.
+1st January to 31st December 16 aNb
+At the latest 17th January[170]
+Naruto Uzumaki (15) and Jiraiya return to Konohagakure.[171]
+Naruto Uzumaki and Sakura Haruno fight against Kakashi Hatake.
+At the latest 18th January[172]
+Deidara and Sasori attack Sunagakure.
+Deidara and Gaara (15) fight.
+Sasori and Kankurō fight.
+Team Kakashi and Temari head to Sunagakure.[173]
+18th January — End of the mini databook
+21st January[174]
+Team Kakashi and Temari arrive in Sunagakure. Team Guy heads to Sunagakure.
+22nd January
+Akatsuki begins the extraction of Shukaku.[175]
+Team Guy and Kisame Hoshigaki fight.
+Team Kakashi and Itachi Uchiha fight.[176]
+25th January[177]
+Akatsuki finishes the extraction of Shukaku.
+Gaara (16) dies because of Shukaku's extraction.
+Sasori and Chiyo and Sakura fight.
+Sasori (35) is killed by Chiyo.
+Chiyo revives Gaara.
+Chiyo (73) dies because of Kishō Tensei.
+29th January[178]
+Team Kakashi and Team Guy have returned to Konohagakure.
+Kakashi is admitted to the hospital.
+30th January[179]
+The new Team Kakashi is formed with Yamato and Sai.
+4th February[180]
+Team Kakashi meets Sasuke Uchiha.[181]
+5th February[182]
+The Chūnin Exams has ended.
+Hidan and Kakuzu catch Yugito Nii.
+There's a big gap here. In the manga, the Sasuke and Sai arc and the Hidan and Kakuzu arc are closely connected, whereas the databook implies a larger gap, since Asuma dies after his 31st birthday on 18th October.
+At the earliest 16th October[183]
+Hidan and Kakuzu begin to move.
+Chiriku (31) is killed by Hidan and Kakuzu.
+Naruto begins his Rasen Shuriken training.
+Deidara and Tobi catch Isobu.
+At the earliest 18th October[184]
+Konohagakure hunts Hidan and Kakuzu.
+Asuma Sarutobi (31) is killed by Hidan.
+At the earliest 24th October[185]
+Isobu and Matatabi are sealed by Akatsuki.
+Yugito Nii (29) dies because of Matatabi's extraction.
+Konohagakure hunts Hidan and Kakuzu.
+Hidan is incapacitated at age 22.
+Kakuzu (91) is killed by Kakashi Hatake.
+Orochimaru tries to take over Sasuke Uchiha (16).
+Orochimaru is absorbed by Sasuke Uchiha.
+Founding of Hebi.
+Rōshi dies at an unknown age.
+Sasuke Uchiha and Deidara fight.
+Deidara (19) commits suicide.
+At the earliest 11th November[186]
+Jiraiya infiltrates Amegakure and fights against Pain and Konan.[187]
+Jiraiya (54) is killed by Pain.
+Sasuke and Itachi Uchiha fight.[188]
+Itachi Uchiha (21) succumbs to his illness.
+Sasuke Uchiha awakens the Mangekyō Sharingan and renames Hebi into Taka.
+At the earliest 22nd December
+An unspecified goal of Akatsuki has to be reached until this time.[189]
+31st December — End of the third databook[190]
+1st January to 31st December 17 aNb
+At the earliest 1st January
+Taka fights Killer B.
+Naruto (16) goes to Myōbokuzan to learn Senjutsu.
+Pain attacks Konohagakure.
+Nagato (35) dies because of Gedō — Rinne Tensei no Jutsu.
+Konan (34) leaves Akatsuki.
+Danzō is appointed as Rokudaime Hokage Kōho.
+Team Samui arrives in Konohagakure.[191]
+The Gokage Kaidan begins.
+Sasuke fights the Kage.
+Tobi starts the Fourth Shinobi World War.
+At the earliest 6th January[192]
+Sasuke (16) fights Danzō.
+Danzō Shimura (73) commits suicide.
+At the earliest 18th March[193]
+Naruto (16) and Killer B (35) train on Genbu.[194]
+Kisame Hoshigaki (33) commits suicide.
+Tobi fights Konan.
+Konan (35) is killed by Tobi.
+Kabuto and a reincarnated Deidara attack Genbu.
+Yamato is abducted by Kabuto.
+There's a big gap here. Logically, the events should be closer together, but since there are not many dates provided for this part of the manga, it's impossible to calculate it more accurately.
+8th October[195]
+The Fourth Shinobi World War begins.
+Muta Aburame (24) is killed by Deidara.
+Torune Aburame (19) is killed by Tobi.
+Fū Yamanaka (19) is sacrificed for Kuchiyose: Edo Tensei.
+Night of 9th October
+The Fourth Shinobi World War wages.[196]
+Shikaku Nara (42) is killed by the Jūbi.
+Inoichi Yamanaka (42) is killed by the Jūbi.
+Ao (46) is killed by the Jūbi.
+Mabui (29) is killed by the Jūbi.
+Neji Hyūga (18) is killed by the Jūbi.
+The Infinite Tsukuyomi is cast by Madara Uchiha, capturing the entire world in a dream. Only Team 7 and Obito Uchiha are unharmed.
+Madara is betrayed by Black Zetsu who takes him over and revives Kaguya Ōtsutsuki. The last fight for mankind begins.
+Obito Uchiha (31) is killed by Kaguya Ōtsutsuki.
+Kaguya Ōtsutsuki is sealed by Naruto (16) and Sasuke (17).
+Morning of 10th October
+The Fourth Shinobi World War ends.
+Madara Uchiha (74) dies because of the Jūbi's extraction.
+End of Book of Jin[197]
+10th to 11th October
+Naruto (17) and Sasuke (17) fight at the Valley of the End.
+1st January to 31st December 18 aNb
+In September
+The prologue of Kakashi Hiden takes place.
+Garyō is captured by Naruto Uzumaki (17) and Sai (18) and thrown in the Blood Prison.
+The prologue of Shikamaru Hiden begins.
+Beginning in September, one young, single, male shinobi goes missing from each of the five great countries each month.
+Furthermore, the requests for shinobi dispatches begin to decrease sharply.
+In November
+Kakashi Hiden takes place.[198]
+The Tobishachimaru is raided by the Ryūha Armament Alliance to enforce the release of Garyō.
+Kakashi Hatake (32) becomes Rokudaime Hokage.[199]
+Sasuke Uchiha (18) leaves Konohagakure.[199]
+1st January to 31st December 19 aNb
+About August this year
+Sai finds a lead about the missing-nin.
+At the earliest 22nd September[200]
+Shikamaru Hiden takes place.
+At the earliest 27th December[199][201]
+The Last -Naruto the Movie- takes place.
+1st January to 31st December 20 aNb
+Several months after The Last
+Sakura Hiden takes place.
+At the earliest 15th March[202]
+Konoha Hiden takes place.
+Naruto Uzumaki (19) and Hinata Hyūga (19) marry.[199]
+27th March — Boruto Uzumaki is born.[199][203]
+31st March — Sarada Uchiha is born.[204]
+Several months after Konoha Hiden[205]
+Gaara Hiden takes place.
+Akatsuki Hiden takes place.
+Sasuke Shinden takes place.
+25th July — Mitsuki is born.
+8th August — Chōchō Akimichi is born.
+23rd September — Shikadai Nara is born.
+5th December — Inojin Yamanaka is born.
+1st January to 31st December 22 aNb
+This year
+Himawari Uzumaki is born.[206]
+1st January to 31st December 25 aNb
+This year
+The epilogue scene of The Last takes place.[207]
+The Day Naruto Became Hokage takes place.[208]
+Naruto Uzumaki (24–25) becomes Hokage.[199]
+A Gokage Kaidan is held to discuss Kaguya's remnants.[209]
+Sasuke Uchiha (24–25) leaves Konohagakure again.
+1st January to 31st December 27 aNb
+At the earliest 24th September[210]
+The Boruto: Naruto Next Generations anime takes place.
+The Ninja Academy entrance ceremony is held.
+Boruto Uzumaki (7) causes a major incident in Konohagakure and is suspended for two weeks.
+At the earliest 8th October
+The Boruto: Naruto Next Generations anime takes place.[211]
+Boruto Uzumaki (7) joins the Ninja Academy after having been suspended for two weeks.
+1st January to 31st December 29 aNb
+At the earliest 11th October[199]
+Chapter 700 takes place.
+Konohamaru Sarutobi (24) became Jōnin.
+A Gokage Kaidan is held in Konohagakure.
+Naruto Uzumaki (29), Gaara (29), Darui (38), Kurotsuchi (30) and Chōjūrō (31) attend.
+An Ex-Gokage Kaidan is held in Iwagakure.
+Tsunade (67), A (59), Ōnoki (91), and Mei Terumī (43) attend.
+Konoha Shinden takes place.[212]
+1st January to 31st December 32 aNb
+About this year[213]
+Naruto Gaiden: The Road Illuminated by the Full Moon takes place.
+Mitsuki (11) joins the Ninja Academy after leaving Orochimaru.[214]
+At the latest 30th March
+Naruto Gaiden: The Seventh Hokage and the Scarlet Spring takes place.[199][215]
+Sarada Uchiha (11) awakens her Sharingan.[216]
+Shin Uchiha is killed by his clones.
+At the earliest 31st March[217]
+Boruto's generation graduates from the Ninja Academy.
+At the earliest 8th October
+The Boruto: Naruto Next Generations anime takes place.[218]
+Several months after Naruto Gaiden[199]
+The Boruto: Naruto Next Generations anime takes place.[219]
+Boruto -Naruto the Movie- takes place and the Boruto -Naruto Next Generations- manga begins.[220]
+The Chūnin Exams are held in Konohagakure.
+Momoshiki and Kinshiki attack the village.
+About this year
+Ōnoki dies at age 94.[221]
+1st January to 31st December 33 aNb
+8th January
+The Boruto: Naruto Next Generations anime takes place.[222]
+This year
+Boruto -Naruto Next Generations- takes place.[223]
+1st January to 31st December 36 aNb
+At the earliest 27th March
+Boruto Uzumaki (16) fights Kawaki in the ruins of Konohagakure.[224]

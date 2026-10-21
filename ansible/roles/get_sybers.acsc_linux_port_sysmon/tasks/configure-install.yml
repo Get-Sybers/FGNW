@@ -1,0 +1,5 @@
+---
+- name: "configure-install | Install Sysmon with our config"
+  ansible.builtin.command: "sysmon -accepteula -i {{ acsc_sysmon_config_path }}"
+  register: __acsc_sysmon_install
+  changed_when: __acsc_sysmon_install.rc == 0

@@ -1,0 +1,48 @@
+---
+# OS-dispatching browser-defaults role: sets the village homepage + bookmark bar for the
+# browser(s) each persona uses. Loads the shared village corpus once, computes the two facts
+# the OS-specific task files consume (fgnw_browser_defaults_homepage, fgnw_browser_defaults_bookmark_list), then branches on
+# ansible_os_family. Keeping both OSes in one role prevents the kind of divergence #17 just
+# fixed (one path on http://, the other on https://, two places to remember).
+#
+# Caller contract (same shape for both OSes):
+#   fgnw_browser_defaults_village (required) — key into content/www/village-bookmarks.yml
+#
+# OS mechanisms this dispatches to:
+#   Windows (ansible_os_family == Windows) -> tasks/windows.yml
+#     HKU/HKLM Edge+IE policy registry writes + Netscape-format bookmarks HTML
+#   macOS   (ansible_os_family == Darwin)  -> tasks/macos.yml
+#     Firefox app-bundle policies.json + Chrome CFPreferences managed plist
+- name: Load village bookmark data (shared corpus)
+  ansible.builtin.include_vars:
+    file: "{{ playbook_dir }}/../content/www/village-bookmarks.yml"
+    name: fgnw_browser_defaults_bookmark_data
+
+- name: Fail if the requested village has no bookmark list
+  ansible.builtin.fail:
+    msg: No entry for '{{ fgnw_browser_defaults_village }}' in content/www/village-bookmarks.yml
+  when: fgnw_browser_defaults_village not in fgnw_browser_defaults_bookmark_data.village_bookmarks
+
+- name: Compute homepage + combined bookmark list facts
+  ansible.builtin.set_fact:
+    # http:// because the themed-sites nginx (fgnw_themed_sites) listens on :80 only.
+    fgnw_browser_defaults_homepage: "http://{{ fgnw_browser_defaults_bookmark_data.village_homepage[fgnw_browser_defaults_village] }}"
+    fgnw_browser_defaults_bookmark_list: >-
+      {{ fgnw_browser_defaults_bookmark_data.village_bookmarks[fgnw_browser_defaults_village]
+         + fgnw_browser_defaults_bookmark_data.shared_bookmarks }}
+
+- name: Apply Windows browser defaults (Edge/IE policies + bookmarks HTML)
+  ansible.builtin.include_tasks: windows.yml
+  when: ansible_os_family == 'Windows'
+
+- name: Apply macOS browser defaults (Firefox app-bundle policies + Chrome managed plist)
+  ansible.builtin.include_tasks: macos.yml
+  when: ansible_os_family == 'Darwin'
+
+- name: Fail loudly on an unsupported OS family (nothing matched)
+  ansible.builtin.fail:
+    msg: >-
+      fgnw_browser_defaults has no implementation for ansible_os_family=
+      '{{ ansible_os_family | default('(unset — did gather_facts run?)') }}'.
+      Only Windows and Darwin are supported.
+  when: ansible_os_family not in ['Windows', 'Darwin']

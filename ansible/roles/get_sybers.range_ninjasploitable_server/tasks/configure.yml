@@ -1,0 +1,202 @@
+---
+- name: "configure | Enable Apache modules"
+  community.general.apache2_module:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - php
+    - rewrite
+    - headers
+  notify: Restart apache2
+- name: "configure | Create vulnerable web application directory"
+  ansible.builtin.file:
+    path: /var/www/html/vulnerable
+    state: directory
+    mode: "0755"
+    owner: www-data
+    group: www-data
+- name: "configure | Deploy vulnerable PHP application (SQL injection demo)"
+  ansible.builtin.copy:
+    dest: /var/www/html/vulnerable/login.php
+    content: |
+      <!DOCTYPE html>
+      <html>
+      <head>
+          <title>Vulnerable Login Portal</title>
+          <style>
+              body { font-family: Arial, sans-serif; background: #f4f4f4;
+              .container { max-width: 400px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+              h2 { color: #333;
+              input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid
+              button { width: 100%; padding: 12px; background: #2c3e50;
+              button:hover { background: #e9e9e9;
+              .warning { background: #fff3cd;
+          </style>
+      </head>
+      <body>
+          <div class="container">
+              <h2>🔓 Vulnerable Login</h2>
+              <div class="warning">⚠️ This is an intentionally vulnerable application for testing purposes.</div>
+              <form method="post" action="login.php">
+                  <input type="text" name="username" placeholder="Username" required />
+                  <input type="password" name="password" placeholder="Password" required />
+                  <button type="submit">Login</button>
+              </form>
+              <?php
+              if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+                  $username = $_POST['username'];
+                  $password = $_POST['password'];
+                  // Intentionally vulnerable SQL query (SQL Injection)
+                  $query = "SELECT * FROM users WHERE username='$username' AND password='$password'";
+                  echo "<div style='margin-top: 20px; padding: 10px; background: #e7f3ff; border-left: 4px solid #2196F3;'>";
+                  echo "<strong>Debug Info (Vulnerable!):</strong><br>";
+                  echo "Query: " . htmlspecialchars($query);
+                  echo "</div>";
+                  // Simulated authentication
+                  if ($username == "admin" && $password == "admin") {
+                      echo "<div style='margin-top: 10px; padding: 10px; background: #d4edda; border-left: 4px solid #28a745;'>";
+                      echo "✓ Login successful! Welcome, admin!";
+                      echo "</div>";
+                  } else {
+                      echo "<div style='margin-top: 10px; padding: 10px; background: #f8d7da; border-left: 4px solid #dc3545;'>";
+                      echo "✗ Login failed. Try: admin/admin or use SQL injection!";
+                      echo "</div>";
+                  }
+              }
+              ?>
+          </div>
+      </body>
+      </html>
+    mode: "0644"
+    owner: www-data
+    group: www-data
+- name: "configure | Deploy vulnerable file upload page"
+  ansible.builtin.copy:
+    dest: /var/www/html/vulnerable/upload.php
+    content: |
+      <!DOCTYPE html>
+      <html>
+      <head>
+          <title>Vulnerable File Upload</title>
+          <style>
+              body { font-family: Arial, sans-serif; background: #f4f4f4;
+              .container { max-width: 500px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+              .warning { background: #fff3cd;
+              button { padding: 10px 20px; background: #2c3e50;
+          </style>
+      </head>
+      <body>
+          <div class="container">
+              <h2>📁 Vulnerable File Upload</h2>
+              <div class="warning">⚠️ No file type validation!</div>
+              <form method="post" enctype="multipart/form-data">
+                  <input type="file" name="file" required />
+                  <button type="submit">Upload</button>
+              </form>
+              <?php
+              if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['file'])) {
+                  $upload_dir = '/var/www/html/uploads/';
+                  if (!file_exists($upload_dir)) {
+                      mkdir($upload_dir, 0777, true);
+                  }
+                  $filename = basename($_FILES['file']['name']);
+                  $target_file = $upload_dir . $filename;
+                  // Intentionally vulnerable - no validation
+                  if (move_uploaded_file($_FILES['file']['tmp_name'], $target_file)) {
+                      echo "<p style='color: green;'>✓ File uploaded: " . htmlspecialchars($filename) . "</p>";
+                      echo "<p>Access at: <a href='/uploads/" . htmlspecialchars($filename) . "'>/uploads/" . htmlspecialchars($filename) . "</a></p>";
+                  } else {
+                      echo "<p style='color: red;'>✗ Upload failed!</p>";
+                  }
+              }
+              ?>
+          </div>
+      </body>
+      </html>
+    mode: "0644"
+    owner: www-data
+    group: www-data
+- name: "configure | Create uploads directory"
+  ansible.builtin.file:
+    path: /var/www/html/uploads
+    state: directory
+    mode: "0777"
+    owner: www-data
+    group: www-data
+- name: "configure | Deploy index page"
+  ansible.builtin.copy:
+    dest: /var/www/html/index.html
+    content: |
+      <!DOCTYPE html>
+      <html>
+      <head>
+          <title>Ninjasploitable Lab Server</title>
+          <style>
+              body { font-family: Arial, sans-serif; background: #f4f4f4;
+              .container { max-width: 800px; margin: 0 auto; }
+              h1 { color: #333;
+              .app-list { background: #fff;
+              .app-list a { color: #0366d6;
+              .app-list a:hover { background: #e9e9e9;
+              .warning { background: #fff3cd;
+          </style>
+      </head>
+      <body>
+          <div class="container">
+              <h1>🥷 Ninjasploitable Lab Server</h1>
+              <div class="warning">
+                  <strong>⚠️ WARNING:</strong> This server contains intentionally vulnerable applications for security testing and training purposes only.
+              </div>
+              <div class="app-list">
+                  <h2>Available Vulnerable Applications:</h2>
+                  <a href="/vulnerable/login.php">🔓 Vulnerable Login (SQL Injection)</a>
+                  <a href="/vulnerable/upload.php">📁 Vulnerable File Upload</a>
+              </div>
+              <div class="app-list">
+                  <h2>Available Services:</h2>
+                  <ul>
+                      <li>HTTP Web Server (Port 80)</li>
+                      <li>SSH (Port 22)</li>
+                      <li>FTP (Port 21)</li>
+                      <li>MySQL (Port 3306)</li>
+                  </ul>
+              </div>
+              <div style="margin-top: 30px; font-size: 12px; color: #888;">
+                  <p>Default Credentials:</p>
+                  <ul>
+                      <li>SSH: msfadmin / msfadmin</li>
+                      <li>MySQL: root / (no password)</li>
+                      <li>Web App: admin / admin</li>
+                  </ul>
+              </div>
+          </div>
+      </body>
+      </html>
+    mode: "0644"
+    owner: www-data
+    group: www-data
+- name: "configure | Configure MariaDB vulnerability (root passwordless + vulnerable_db)"
+  block:
+    - name: "configure | Configure MySQL root with no password (INTENTIONAL VULNERABILITY for lab)"
+      ansible.mysql.mysql_user:
+        name: root
+        host: localhost
+        password: ""
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+        plugin: mysql_native_password
+        state: present
+    - name: "configure | Create vulnerable database"
+      ansible.mysql.mysql_db:
+        name: vulnerable_db
+        state: present
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+  rescue:
+    - name: "configure | MariaDB vulnerability setup failed -- fail with guidance"
+      ansible.builtin.fail:
+        msg: >-
+          Configuring MariaDB (root passwordless + vulnerable_db) failed. Likely
+          causes: the mysql_native_password auth plugin is unavailable on this
+          MariaDB build, or the unix socket differs from
+          /var/run/mysqld/mysqld.sock on this Debian point release. This is the
+          role's intentional-vulnerability setup, so it must not be skipped
+          silently -- check the MariaDB version/socket and re-run.

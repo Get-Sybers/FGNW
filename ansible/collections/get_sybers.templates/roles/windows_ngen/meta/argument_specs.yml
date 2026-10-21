@@ -1,0 +1,11 @@
+---
+argument_specs:
+  main:
+    short_description: Generate .NET native images (ngen) on a Windows template
+    description:
+      - >-
+        Runs C(community.windows.win_dotnet_ngen) to pre-generate native images
+        for the installed .NET runtimes during a Packer template bake. The role
+        takes no input and is idempotent in the sense the module provides
+        (it reports changed only while there is queued work).
+    options: {}

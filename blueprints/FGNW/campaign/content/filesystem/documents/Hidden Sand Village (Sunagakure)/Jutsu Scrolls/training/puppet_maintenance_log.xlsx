@@ -1,0 +1,13 @@
+PUPPET BRIGADE -- TRAINING PUPPET MAINTENANCE LOG
+
+DATE(cycle) | PUPPET UNIT      | HANDLER   | ACTION                     | STATUS
+1-04        | Trainer-Alpha     | Genin K.  | Re-strung control threads  | Serviceable
+1-06        | Trainer-Alpha     | Genin K.  | Cleaned poison reservoir    | Serviceable
+1-09        | Trainer-Bravo     | Genin R.  | Replaced cracked left arm   | Repaired
+1-11        | Crow-pattern demo | Chunin T. | Oiled all joints            | Serviceable
+1-14        | Trainer-Bravo     | Genin R.  | Blade cartridge misfire fix | Repaired
+1-18        | Salamander-demo   | Chunin T. | Nozzle carbon clearing      | Serviceable
+1-21        | Trainer-Alpha     | Genin K.  | Full thread-control drill   | Passed
+Notes: Every trainee logs maintenance before and after drills. A puppet that
+fails inspection is grounded until the Brigade armorer clears it. Poison stock
+handled with gloves only; empty reservoirs during transport.

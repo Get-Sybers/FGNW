@@ -1,0 +1,33 @@
+---
+argument_specs:
+  main:
+    short_description: Install and configure the Ninjasploitable vulnerable web server, then verify
+    description:
+      - Deploys FGNW's deliberately exploitable Linux target — vulnerable web apps (SQL injection, unrestricted upload), passwordless-root MariaDB, anonymous
+        FTP and a well-known lab credential — then asserts the services and endpoints are up. The install/configure stages are fallbacks, skipped when the
+        content is already baked into the template.
+    options: &range_ninjasploitable_server_options
+      ninjasploitable_admin_password:
+        type: str
+        default: msfadmin
+        description:
+          - Password for the msfadmin account. An intentionally well-known, public Ninjasploitable lab credential (shown in-band on the server's own web page),
+            not a real secret.
+      ninjasploitable_web_port:
+        type: int
+        default: 80
+        description:
+          - HTTP port the vulnerable web apps are served on. Documents Apache's distro default (80); serving on another port would additionally need
+            ports.conf/vhost wiring (not done here).
+  install:
+    short_description: Install the apt packages for the vulnerable server (pre-bake fallback)
+    options: *range_ninjasploitable_server_options
+  configure:
+    short_description: Deploy the vulnerable web content and passwordless-root MariaDB (pre-bake fallback)
+    options: *range_ninjasploitable_server_options
+  configure_runtime:
+    short_description: Apply runtime-only host config left to deploy time (msfadmin user, anonymous FTP)
+    options: *range_ninjasploitable_server_options
+  verify:
+    short_description: Assert core services are running and the vulnerable web endpoints respond
+    options: *range_ninjasploitable_server_options

@@ -1,0 +1,7 @@
+---
+- name: "Resolve facts and assert Nexus reachability"
+  ansible.builtin.include_tasks: preflight.yml
+- name: "Register Microsoft apt repo and install sysmonforlinux"
+  ansible.builtin.include_tasks: install.yml
+- name: "Deploy config and register/start the sysmon service"
+  ansible.builtin.include_tasks: configure.yml

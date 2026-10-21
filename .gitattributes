@@ -1,0 +1,43 @@
+# Normalise line endings so checks behave identically on every platform.
+* text=auto eol=lf
+# Scripts and config must never pick up CRLF.
+*.sh    text eol=lf
+*.bash  text eol=lf
+*.py    text eol=lf
+*.go    text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.json  text eol=lf
+*.toml  text eol=lf
+*.hcl   text eol=lf
+*.md    text eol=lf
+Makefile text eol=lf
+Dockerfile text eol=lf
+Containerfile text eol=lf
+# The Windows scripts (Packer template provisioning .ps1/.bat, the role payloads)
+# are stored and checked out with LF like everything else: the formatting hooks
+# (mixed-line-ending --fix=lf) and editorconfig-checker (end_of_line = lf)
+# enforce LF on every file, and PowerShell and cmd.exe read LF scripts.
+# Binary content.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.pdf  binary
+*.tar  binary
+*.tar.gz binary
+*.tgz  binary
+*.zip  binary
+*.xz   binary
+# Keep generated files out of diffs and language statistics.
+go.sum                 linguist-generated=true
+CHANGELOG.rst          linguist-generated=true
+**/testdata/**         linguist-generated=true -diff
+**/*.golden            -diff
+# Keep CI scaffolding out of release archives (`git archive`, Galaxy builds that
+# honour it). The collection build itself uses galaxy.yml build_ignore.
+.github/           export-ignore
+.gitattributes     export-ignore
+.gitignore         export-ignore
+.pre-commit-config.yaml export-ignore

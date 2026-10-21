@@ -1,0 +1,21 @@
+---
+- name: "Derive this host's forest identity from its VM name"
+  ansible.builtin.set_fact:
+    __rex_self: "{{ inventory_hostname | regex_search('(konoha|suna|oto|dark)-mail') }}"
+- name: Assert this is a known Exchange (-mail) host
+  ansible.builtin.assert:
+    that: __rex_self in range_exchange_domainjoin_map
+    fail_msg: get_sybers.range_exchange ran on {{ inventory_hostname }}, which is not one of the 4 -mail forests.
+    quiet: true
+- name: "Resolve this host's forest facts from the static maps"
+  ansible.builtin.set_fact:
+    __rex_dj: "{{ range_exchange_domainjoin_map[__rex_self] }}"
+    __rex_orig_child: "{{ range_exchange_child_domain_map[__rex_self] }}"
+    __rex_org: "{{ range_exchange_org_map[__rex_self] }}"
+    __rex_forest_root: "{{ range_exchange_forest_root_map[__rex_self] }}"
+- name: Forest-root domain-join (leave child → free SPN → join root)
+  ansible.builtin.include_tasks: join.yml
+- name: "Install Exchange 2019 + register the org's accepted domain"
+  ansible.builtin.include_tasks: install.yml
+- name: Org config (group mail-enable + cross-forest send-connector mesh)
+  ansible.builtin.include_tasks: org-config.yml

@@ -1,0 +1,133 @@
+#!/usr/bin/env bash
+# scripts/conform — §13 THE GATE.
+#
+# One command, exit non-zero on any failure, run by CI and locally. It runs the
+# runnable-anywhere layer: yamllint (§16), ansible-lint --profile production
+# (§16-§18), a fast syntax-check of every play, the mirrored static checkers of
+# §1-§3/§11 (scripts/check-*.py, scoped by scripts/gates.yml), and the pin check
+# of §2/§13 (scripts/check-pins.py).
+#
+# The §7/§12 idempotence gate (run each of the get_sybers.range collection's
+# tests/test-*.yml twice, second run changed=0) needs a real Ludus host and
+# runs only there: set CONFORM_PVE=1. Per-role molecule scenarios (§12) are an
+# open gap; conform reports coverage but does not fail on their absence.
+#
+# The collections this source ships live under ansible/collections/<dir>/ (a
+# galaxy.yml each), not at the repo root: each one is symlinked into a scratch
+# collections path as <namespace>.<name> so the plays, the Packer template
+# plays and the collection's own test plays resolve them by FQCN. A root
+# galaxy.yml, if one ever appears, is handled the same way.
+set -uo pipefail
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT" || exit 1
+fail=0
+step() { printf '\n== conform: %s ==\n' "$1"; }
+mark() { if "$@"; then :; else
+  echo "  FAILED: $*"
+  fail=1
+fi; }
+WORK="$(mktemp -d)"
+trap 'rm -rf "$WORK"' EXIT
+link_collection() {
+  # $1 = directory holding a galaxy.yml; expose it as <namespace>.<name>.
+  local dir="$1" ns name
+  ns="$(awk '/^namespace:/{print $2; exit}' "$dir/galaxy.yml")"
+  name="$(awk '/^name:/{print $2; exit}' "$dir/galaxy.yml")"
+  mkdir -p "$WORK/ansible_collections/$ns"
+  ln -s "$dir" "$WORK/ansible_collections/$ns/$name"
+  echo "collection $ns.$name <- ${dir#"$ROOT"/}"
+}
+[[ -f galaxy.yml ]] && link_collection "$ROOT"
+for g in ansible/collections/*/galaxy.yml; do
+  [[ -f $g ]] && link_collection "$ROOT/${g%/galaxy.yml}"
+done
+# Keep any already-installed third-party collections on the path (CI installs
+# them from requirements.yml first; see .github/workflows/ci.yml).
+export ANSIBLE_COLLECTIONS_PATH="$WORK:${ANSIBLE_COLLECTIONS_PATH:-$HOME/.ansible/collections:/usr/share/ansible/collections}"
+if [[ ${CONFORM_INSTALL:-0} == 1 ]]; then
+  step "install pinned dependencies (requirements.yml)"
+  mark ansible-galaxy collection install -r requirements.yml -p "$WORK"
+fi
+step "yamllint (§16)"
+mark yamllint .
+step "ansible-lint --profile production (§16-§18)"
+mark ansible-lint --profile production
+# ansible-lint classifies everything under a path containing `templates/` as
+# Jinja template text (its built-in base kind), so a Ludus source's Packer
+# template plays and roles are never parsed in place. Lint a scratch copy at a
+# neutral path instead.
+# shellcheck disable=SC2329 # invoked through mark
+lint_templates() {
+  # Run FROM the scratch dir with it as --project-dir so ansible-lint walks the
+  # copy (a path outside the project root is otherwise treated as one file),
+  # while still reading this repo's .ansible-lint.
+  rm -rf "$WORK/packer" && cp -a templates "$WORK/packer" || return 1
+  (cd "$WORK" && ansible-lint --profile production --project-dir "$WORK" -c "$ROOT/.ansible-lint" packer)
+}
+if [[ -d templates ]] && [[ -n "$(find templates -name '*.yml' -print -quit 2>/dev/null)" ]]; then
+  step "ansible-lint --profile production: templates/ (Packer template plays + roles)"
+  mark lint_templates
+fi
+step "syntax-check every play (fast parse)"
+# Roles that Ludus or the Packer build install at run time are not in the tree;
+# .ansible-lint lists them under mock_roles and the lint stubs them. The parse
+# here uses the same stubs so a play that applies one still parses.
+mkdir -p "$WORK/roles"
+while IFS= read -r r; do
+  mkdir -p "$WORK/roles/$r/tasks" && : >"$WORK/roles/$r/tasks/main.yml"
+done < <(awk '/^mock_roles:/{m=1; next} m && /^  - /{print $2} m && !/^  - /{m=0}' .ansible-lint)
+export ANSIBLE_ROLES_PATH="$WORK/roles:${ANSIBLE_ROLES_PATH:-ansible/roles}"
+while IFS= read -r p; do
+  ansible-playbook --syntax-check "$p" >/dev/null 2>&1 || {
+    echo "  syntax-check FAILED: $p"
+    fail=1
+  }
+done < <(
+  {
+    find playbooks ansible/collections/*/playbooks ansible/collections/*/tests \
+      blueprints/*/campaign/ansible templates/*/ansible -maxdepth 1 -name '*.yml' 2>/dev/null
+    ls blueprints/*/campaign/deploy.yml 2>/dev/null
+  } | sort
+)
+step "pin discipline (§2/§13)"
+mark python3 scripts/check-pins.py
+step "static gates (§1-§3/§11, scoped by scripts/gates.yml)"
+for c in closure density one-action range-infra-boundary module-availability iso-compliance patches upstream; do
+  [[ -f scripts/check-${c}.py ]] && mark python3 "scripts/check-${c}.py"
+done
+step "role must-haves (§3): meta/main.yml, meta/argument_specs.yml, defaults/main.yml, tasks/main.yml, README.md"
+ROLES_DIR=roles
+[[ -d $ROLES_DIR ]] || ROLES_DIR=ansible/roles
+for r in "$ROLES_DIR"/*/; do
+  for f in meta/main.yml meta/argument_specs.yml defaults/main.yml tasks/main.yml README.md; do
+    [[ -f ${r}${f} ]] || {
+      echo "  missing ${r}${f} (§3)"
+      fail=1
+    }
+  done
+done
+step "molecule / idempotence coverage (§7/§12)"
+missing=0
+for r in "$ROLES_DIR"/*/; do
+  [[ -d ${r}molecule ]] || {
+    echo "  no molecule scenario: ${r%/}"
+    missing=$((missing + 1))
+  }
+done
+if [[ $missing -gt 0 ]]; then
+  echo "  WARNING: $missing role(s) without a molecule scenario — open gap (§12)."
+fi
+GATE=ansible/collections/get_sybers.range/tests/local-gate.sh
+if [[ ${CONFORM_PVE:-0} == 1 ]] && [[ -x $GATE ]]; then
+  step "idempotence gate on the Ludus host (§7/§12)"
+  mark env GATE_TEARDOWN="${GATE_TEARDOWN:-0}" "$GATE"
+else
+  echo "  idempotence gate SKIPPED (needs CONFORM_PVE=1 and an executable $GATE)."
+fi
+echo
+if [[ $fail -eq 0 ]]; then
+  echo "conform: PASS"
+else
+  echo "conform: FAIL"
+fi
+exit "$fail"

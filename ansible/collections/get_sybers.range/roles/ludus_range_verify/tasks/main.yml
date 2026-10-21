@@ -1,0 +1,71 @@
+---
+- name: Preflight
+  ansible.builtin.assert:
+    that: __ludus_api_key is defined
+    fail_msg: ludus_range_verify needs ludus_auth to have run.
+    quiet: true
+- name: Range list --json
+  ansible.builtin.command:
+    argv: ["{{ ludus_range_verify_bin }}", range, list, --json]
+  environment:
+    LUDUS_API_KEY: "{{ __ludus_api_key }}"
+  register: __ludus_v_list
+  changed_when: false
+  failed_when: false
+  no_log: true
+- name: Assert the range read returned JSON
+  ansible.builtin.assert:
+    that:
+      - (__ludus_v_list.rc | default(1)) == 0
+      - (__ludus_v_list.stdout | default('') | trim).startswith('{')
+    fail_msg: "`ludus range list --json` did not return JSON (rc={{ __ludus_v_list.rc | default('?') }}); cannot verify."
+    quiet: true
+- name: Parse
+  ansible.builtin.set_fact:
+    __ludus_v_json: "{{ __ludus_v_list.stdout | from_json }}"
+- name: Derive VM facts
+  ansible.builtin.set_fact:
+    __ludus_v_vms: "{{ __ludus_v_json.VMs | default([]) }}"
+    __ludus_v_state: "{{ __ludus_v_json.rangeState | default('UNKNOWN') }}"
+- name: Compute the not-powered-on and no-IP sets
+  ansible.builtin.set_fact:
+    __ludus_v_off: >-
+      {{ __ludus_v_vms | rejectattr('poweredOn', 'defined') | map(attribute='name') | list
+         + (__ludus_v_vms | selectattr('poweredOn', 'defined') | rejectattr('poweredOn') | map(attribute='name') | list) }}
+    __ludus_v_noip: >-
+      {{ __ludus_v_vms | rejectattr('ip', 'defined') | map(attribute='name') | list
+         + (__ludus_v_vms | selectattr('ip', 'defined') | selectattr('ip', 'equalto', '') | map(attribute='name') | list) }}
+- name: "Positive: range state is SUCCESS"
+  ansible.builtin.assert:
+    that: __ludus_v_state == 'SUCCESS'
+    fail_msg: rangeState is {{ __ludus_v_state }}, expected SUCCESS.
+    quiet: true
+  when: ludus_range_verify_require_success | bool
+- name: "Positive: expected VM count"
+  ansible.builtin.assert:
+    that: __ludus_v_vms | length == ludus_range_verify_expect_vmcount | int
+    fail_msg: Expected {{ ludus_range_verify_expect_vmcount }} VMs, found {{ __ludus_v_vms | length }}.
+    quiet: true
+  when: ludus_range_verify_expect_vmcount | int > 0
+- name: "Positive: every VM is powered on"
+  ansible.builtin.assert:
+    that: __ludus_v_off | length == 0
+    fail_msg: "VMs not powered on: {{ __ludus_v_off | join(', ') }}"
+    quiet: true
+  when: ludus_range_verify_require_powered_on | bool
+- name: "Positive: every VM has an IP"
+  ansible.builtin.assert:
+    that: __ludus_v_noip | length == 0
+    fail_msg: "VMs without an IP: {{ __ludus_v_noip | join(', ') }}"
+    quiet: true
+  when: ludus_range_verify_require_ips | bool
+- name: "Negative control: a bogus VM name is NOT in the range"
+  ansible.builtin.assert:
+    that: "'nonexistent-probe-vm' not in (__ludus_v_vms | map(attribute='name') | list)"
+    fail_msg: A VM that cannot exist is present — the VM list is not trustworthy.
+    quiet: true
+- name: Report
+  ansible.builtin.debug:
+    msg: >-
+      ludus_range_verify PASSED: state={{ __ludus_v_state }},
+      {{ __ludus_v_vms | length }} VM(s), all powered on with IPs.

@@ -1,0 +1,54 @@
+---
+# yamllint — get-sybers Ansible standard (docs/04 §"mandatory files"; 02 §16).
+# This is the same YAML style ansible-lint's embedded `yaml` rule enforces, so
+# the two gates agree. The version comes from .pre-commit-config.yaml.
+extends: default
+
+ignore: |
+  .cache/
+  .tox/
+  .venv/
+  .ansible/
+  changelogs/changelog.yaml
+  changelogs/.plugin-cache.yaml
+  tests/output/
+  # Third-party roles vendored verbatim (provenance in meta/upstream.yml or
+  # PROVENANCE.md); their YAML style is upstream's, not reformatted here.
+  ansible/roles/aleemladha.ludus_exchange/
+  blueprints/FGNW/campaign/ansible/roles/aleemladha.ludus_exchange/
+  blueprints/FGNW/campaign/ansible/roles/geerlingguy.docker/
+  blueprints/FGNW/campaign/ansible/roles/wireshark/
+  # INI inventories the AD-build chain addresses by these .yml names; not YAML.
+  blueprints/FGNW/campaign/ad/NARUTO/providers/ludus/inventory.yml
+  blueprints/FGNW/campaign/ad/NARUTO/providers/ludus/inventory-infra.yml
+  blueprints/FGNW/campaign/ad/NARUTO/providers/ludus/inventory-small.yml
+  blueprints/FGNW/campaign/ad/NARUTO/providers/ludus/inventory-small-infra.yml
+
+rules:
+  # §16: a line that must run long is folded with `>` or split, not left to
+  # wrap. 160 matches ansible-lint's own ceiling so a line that passes one gate
+  # passes the other.
+  line-length:
+    max: 160
+  # §16: booleans are the lower-case words true/false, one spelling per tree.
+  # check-keys off keeps GitHub Actions' `on:` key legal (docs/04).
+  truthy:
+    allowed-values: ["true", "false"]
+    check-keys: false
+  # Jinja carries one space inside `{{ ... }}`; permit it in flow mappings too
+  # so the two gates agree.
+  braces:
+    min-spaces-inside: 0
+    max-spaces-inside: 1
+  # §16: comment the non-obvious; one space after `#`. Indentation of comments
+  # is left to the author (ansible-lint does not enforce it either).
+  comments:
+    min-spaces-from-content: 1
+  comments-indentation: false
+  # §16: never an octal-looking scalar; quote it (e.g. a mode is "0644").
+  octal-values:
+    forbid-implicit-octal: true
+    forbid-explicit-octal: true
+  # §16: every file starts with `---`.
+  document-start:
+    present: true

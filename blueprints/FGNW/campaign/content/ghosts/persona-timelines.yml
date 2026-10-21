@@ -1,0 +1,160 @@
+---
+ghosts_personas:
+  konoha-ws1:
+    character: Naruto Uzumaki
+    sam: naruto.uzumaki
+    ad_domain: konohagakure.fire.ninja
+    netbios: KONOHA
+    homepage: http://www.konoha-portal.leaf
+    has_owa_inbox: true
+    browse_urls:
+      - http://www.konoha-portal.leaf
+      - http://www.hokage-office.gov.leaf
+      - http://www.willoffire.com
+      - http://www.konoha-hospital.med
+      - http://www.leafanbu.classified
+      - http://www.rootoperative.dark
+      - http://www.uchiha-clan-archive.leaf
+      - http://www.hyuga-main-branch.leaf
+      - http://www.nara-shadow-tactics.com
+  konoha-ws2:
+    character: Shikamaru Nara
+    sam: shikamaru.nara
+    ad_domain: konohagakure.fire.ninja
+    netbios: KONOHA
+    homepage: http://www.konoha-portal.leaf
+    has_owa_inbox: true
+    browse_urls:
+      - http://www.konoha-portal.leaf
+      - http://www.hokage-office.gov.leaf
+      - http://www.willoffire.com
+      - http://www.konoha-hospital.med
+      - http://www.leafanbu.classified
+      - http://www.rootoperative.dark
+      - http://www.uchiha-clan-archive.leaf
+      - http://www.hyuga-main-branch.leaf
+      - http://www.nara-shadow-tactics.com
+  konoha-ws3:
+    character: Kakashi Hatake
+    sam: kakashi.hatake
+    ad_domain: konohagakure.fire.ninja
+    netbios: KONOHA
+    homepage: http://www.konoha-portal.leaf
+    has_owa_inbox: true
+    browse_urls:
+      - http://www.konoha-portal.leaf
+      - http://www.hokage-office.gov.leaf
+      - http://www.willoffire.com
+      - http://www.konoha-hospital.med
+      - http://www.leafanbu.classified
+      - http://www.rootoperative.dark
+      - http://www.uchiha-clan-archive.leaf
+      - http://www.hyuga-main-branch.leaf
+      - http://www.nara-shadow-tactics.com
+  konoha-ws4:
+    character: Tsunade
+    sam: tsunade
+    ad_domain: konohagakure.fire.ninja
+    netbios: KONOHA
+    homepage: http://www.konoha-portal.leaf
+    has_owa_inbox: true
+    browse_urls:
+      - http://www.konoha-portal.leaf
+      - http://www.hokage-office.gov.leaf
+      - http://www.willoffire.com
+      - http://www.konoha-hospital.med
+      - http://www.leafanbu.classified
+      - http://www.rootoperative.dark
+      - http://www.uchiha-clan-archive.leaf
+      - http://www.hyuga-main-branch.leaf
+      - http://www.nara-shadow-tactics.com
+  konoha-ws5:
+    character: Might Guy
+    sam: might.guy
+    ad_domain: konohagakure.fire.ninja
+    netbios: KONOHA
+    homepage: http://www.konoha-portal.leaf
+    has_owa_inbox: true
+    browse_urls:
+      - http://www.konoha-portal.leaf
+      - http://www.hokage-office.gov.leaf
+      - http://www.willoffire.com
+      - http://www.konoha-hospital.med
+      - http://www.leafanbu.classified
+      - http://www.rootoperative.dark
+      - http://www.uchiha-clan-archive.leaf
+      - http://www.hyuga-main-branch.leaf
+      - http://www.nara-shadow-tactics.com
+  oto-ws1:
+    character: Orochimaru
+    sam: orochimaru
+    ad_domain: otogakure.ninja
+    netbios: OTO
+    homepage: http://www.konoha-portal.leaf
+    has_owa_inbox: true
+    browse_urls:
+      - http://www.konoha-portal.leaf
+      - http://www.hokage-office.gov.leaf
+      - http://www.willoffire.com
+      - http://www.konoha-hospital.med
+      - http://www.leafanbu.classified
+      - http://www.rootoperative.dark
+      - http://www.uchiha-clan-archive.leaf
+      - http://www.hyuga-main-branch.leaf
+      - http://www.nara-shadow-tactics.com
+  akatsuki-ws1:
+    character: Pain
+    sam: pain
+    ad_domain: akatsuki.dark
+    netbios: AKATSUKI
+    homepage: http://www.ame-portal.rain
+    has_owa_inbox: true
+    browse_urls:
+      - http://www.ame-portal.rain
+      - http://www.pain-gospel.rain
+      - http://www.rinnegan-studies.com
+      - http://www.paperangel.rain
+      - http://www.yahiko-memorial.org
+      - http://www.akatsuki-manifesto.dark
+      - http://www.closed-borders-ame.rain
+      - http://www.rain-sensing-network.rain
+      - http://www.ame-weather-report.rain
+  akatsuki-ws2:
+    character: Zetsu
+    sam: zetsu
+    ad_domain: akatsuki.dark
+    netbios: AKATSUKI
+    homepage: http://www.shinobi-world-news.com
+    has_owa_inbox: true
+    browse_urls:
+      - http://www.shinobi-world-news.com
+      - http://www.missionboard.net
+      - http://www.bingobookwanted.com
+      - http://www.chakranature-quiz.com
+      - http://www.ninjarank-tracker.com
+      - http://www.fivekagehq.com
+      - http://www.alliedshinnobiforces.org
+      - http://www.jutsuencyclopedia.net
+      - http://www.summoning-contracts.com
+  suna-ws1:
+    character: Gaara
+    sam: gaara
+    ad_domain: sunagakure.wind.ninja
+    netbios: SUNA
+    homepage: http://www.suna-portal.sand
+    # has_owa_inbox is a vestige of an earlier range config that used OWA; it is not read
+    # by anything today, so the uniform `true` across every persona entry is kept. The
+    # Sand mail path is Postfix/Dovecot + Thunderbird (IMAP) on macOS; the GHOSTS Universal
+    # client (fgnw_mac_ghosts_client) drives the browse_urls the same way the Windows
+    # client did before the conversion.
+    has_owa_inbox: true
+    browse_urls:
+      - http://www.suna-portal.sand
+      - http://www.kazekage-office.gov.sand
+      - http://www.desertninja-survival.com
+      - http://www.puppet-technique-forum.com
+      - http://www.ironsand-legacy.com
+      - http://www.sand-siblings-fanpage.net
+      - http://www.wind-release-training.com
+      - http://www.gaara-for-kazekage.com
+      - http://www.suna-puppet-workshop.sand

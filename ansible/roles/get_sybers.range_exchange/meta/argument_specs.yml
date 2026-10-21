@@ -1,0 +1,64 @@
+---
+argument_specs:
+  main:
+    short_description: Install and configure real Exchange 2019 on an FGNW -mail VM (forest-root join, org config, connector mesh)
+    description:
+      - Derives this host's forest identity from its VM name, joins it to the forest root, installs Exchange Server 2019 by include_role of the vendored
+        third-party C(aleemladha.ludus_exchange) (which self-skips the ISO/prereqs baked into the win2022-exchange2019 template and runs Setup only), registers
+        the org's Accepted Domain, mail-enables the forest's AD groups and builds the cross-forest send-connector mesh.
+      - Runs on each -mail VM LAST in the role order (AD must be up), at the Ludus user-defined-roles stage (S2).
+    options:
+      range_exchange_admin_password:
+        type: str
+        default: password
+        description:
+          - Shared lab domain-admin (forest-root Administrator) password, aligned to the contract's C(domains[*].domain_password). Range credential, disposable
+            by design.
+      range_exchange_domainjoin_map:
+        type: dict
+        description:
+          - Forest-ROOT join target (domain + DC IP) per -mail host, keyed by the -mail suffix derived from the VM name. Default in defaults/main.yml; override
+            to add/repoint hosts.
+      range_exchange_child_domain_map:
+        type: dict
+        description:
+          - The child domain each -mail host is natively joined to at deploy time (drives the leave-child-then-join-root switch). Default in
+            defaults/main.yml.
+      range_exchange_org_map:
+        type: dict
+        description:
+          - Per-forest org label plus primary SMTP (mail) domain, keyed by -mail suffix. Default in defaults/main.yml.
+      range_exchange_forest_root_map:
+        type: dict
+        description:
+          - Forest root each host joins and authenticates against (Enterprise/Schema Admins live here), keyed by -mail suffix. Default in defaults/main.yml.
+      range_exchange_orgs:
+        type: dict
+        description:
+          - Cross-forest send-connector mesh — every org's SMTP domain and its mail server's fixed IP, keyed by -mail suffix. Default in defaults/main.yml.
+      range_exchange_iso_url:
+        type: str
+        default: https://download.microsoft.com/download/7/0/a/70a4d908-eacb-426e-ad9f-e7768e27f873/ExchangeServer2019-x64-cu15.iso
+        description:
+          - Exchange 2019 CU15 ISO URL passed through to aleemladha.ludus_exchange. Unreachable once the range is contained; the baked-prereqs marker self-skips
+            the download.
+      range_exchange_nexus_dotnet:
+        type: str
+        default: http://192.0.2.2:8081/repository/raw-hosted/tools/exchange/ndp48-x86-x64-allos-enu.exe
+        description:
+          - Nexus-hosted .NET 4.8 installer URL (self-skipped when the baked prereqs marker is present).
+      range_exchange_nexus_vcredist:
+        type: str
+        default: http://192.0.2.2:8081/repository/raw-hosted/tools/exchange/vcredist2013_x64.exe
+        description:
+          - Nexus-hosted VC++ 2013 redistributable URL (self-skipped when baked prereqs are present).
+      range_exchange_nexus_rewrite:
+        type: str
+        default: http://192.0.2.2:8081/repository/raw-hosted/tools/exchange/rewrite_amd64_en-US.msi
+        description:
+          - Nexus-hosted IIS URL Rewrite module URL (self-skipped when baked prereqs are present).
+      range_exchange_nexus_ucma:
+        type: str
+        default: http://192.0.2.2:8081/repository/raw-hosted/tools/exchange/UcmaRuntimeSetup.exe
+        description:
+          - Nexus-hosted UCMA 4.0 runtime URL (self-skipped when baked prereqs are present).

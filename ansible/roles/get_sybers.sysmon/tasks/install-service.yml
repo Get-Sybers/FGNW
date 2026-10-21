@@ -1,0 +1,10 @@
+---
+- name: "install-service | Register Sysmon with the deployed configuration"
+  ansible.windows.win_command: C:\Sysmon\Sysmon64.exe -accepteula -i C:\Sysmon\sysmonconfig.xml
+  args:
+    chdir: C:\Sysmon
+  register: sysmon_install_result
+  changed_when: sysmon_install_result.rc == 0
+  failed_when: sysmon_install_result.rc not in [0, 255]
+  retries: 3
+  delay: 5

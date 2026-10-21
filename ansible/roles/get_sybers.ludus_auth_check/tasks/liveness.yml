@@ -1,0 +1,47 @@
+---
+- name: "liveness | Verify the key actually authenticates (/whoami)"
+  ansible.builtin.uri:
+    url: "{{ ludus_api_url }}/whoami"
+    method: GET
+    headers:
+      X-API-KEY: "{{ __ludus_api_key }}"
+    validate_certs: "{{ ludus_auth_validate_certs }}"
+    status_code: [200, 401, 403]
+    return_content: true
+  register: __ludus_whoami
+  failed_when: false
+  no_log: true
+  check_mode: false
+- name: "liveness | Derive the NON-SECRET auth result"
+  ansible.builtin.set_fact:
+    ludus_auth_status: "{{ __ludus_whoami.status | default(0) }}"
+    ludus_auth_user: >-
+      {{ ((__ludus_whoami.content | from_json).user.userID | default(''))
+         if ((__ludus_whoami.status | default(0) | int) == 200
+             and (__ludus_whoami.content | default('') | trim).startswith('{'))
+         else '' }}
+    ludus_auth_is_admin: >-
+      {{ ((__ludus_whoami.content | from_json).user.isAdmin | default(false) | bool)
+         if ((__ludus_whoami.status | default(0) | int) == 200
+             and (__ludus_whoami.content | default('') | trim).startswith('{'))
+         else false }}
+  no_log: true
+- name: "liveness | Assert the API accepted the key"
+  ansible.builtin.assert:
+    that: ludus_auth_status | int == 200
+    fail_msg: >-
+      The Ludus API rejected the key (HTTP {{ ludus_auth_status }}). It is
+      stale or the server is down. Check: systemctl status ludus.service
+      Then mint a fresh key with get_sybers.cluster
+      playbooks/ludus-key-rotate.yml.
+    quiet: true
+- name: "liveness | Assert we are acting as the expected identity"
+  ansible.builtin.assert:
+    that: ludus_auth_user == ludus_expected_user
+    fail_msg: >-
+      The key authenticates as '{{ ludus_auth_user }}', not
+      {{ ludus_expected_user }}. Commands would act as the wrong user.
+      Mint the right key with get_sybers.cluster
+      playbooks/ludus-key-rotate.yml.
+    success_msg: "Authenticated to the Ludus API as userID={{ ludus_auth_user }}."
+    quiet: true

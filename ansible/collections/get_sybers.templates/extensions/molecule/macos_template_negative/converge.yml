@@ -1,0 +1,29 @@
+---
+- name: Converge (expect a controlled failure on missing Proxmox inputs)
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Refuse to run macos_template without its Proxmox connection inputs
+      block:
+        - name: Run macos_template with nothing supplied
+          ansible.builtin.include_role:
+            name: get_sybers.templates.macos_template
+      rescue:
+        - name: It stopped at input validation, not partway through a build
+          ansible.builtin.assert:
+            that:
+              - ansible_failed_result is defined
+              - "'required' in (ansible_failed_result.msg | default('') | lower)"
+            fail_msg: >-
+              macos_template failed, but not at input validation:
+              {{ ansible_failed_result | default({}) }}
+            quiet: true
+        - name: Record the controlled failure
+          ansible.builtin.set_fact:
+            __macos_failed_cleanly: true
+    - name: The failure path was taken
+      ansible.builtin.assert:
+        that:
+          - __macos_failed_cleanly | default(false)
+        fail_msg: "macos_template accepted missing Proxmox inputs without failing"
+        quiet: true

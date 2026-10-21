@@ -1,0 +1,59 @@
+---
+- name: Create entrypoint service account
+  hosts: suna-dc1
+  tasks:
+    - name: Add new service account to the domain administrator group
+      microsoft.ad.user:
+        identity: svc_entrypoint
+        password: ChangeMe1234!
+        spn:
+          set:
+            - HTTP/suna-ws1.sunagakure.wind.ninja
+        state: present
+        groups:
+          set: Domain Admins
+        password_never_expires: true
+    - name: Verify svc_entrypoint exists and read its group membership
+      microsoft.ad.object_info:
+        filter: sAMAccountName -eq 'svc_entrypoint'
+        properties:
+          - memberOf
+      register: fgnw_lat_svc_entrypoint_info
+    - name: Assert svc_entrypoint landed as a Domain Admin (the entry-point foothold must exist)
+      ansible.builtin.assert:
+        that:
+          - (fgnw_lat_svc_entrypoint_info.objects | default([]) | length) == 1
+          - "'Domain Admins' in (fgnw_lat_svc_entrypoint_info.objects[0].memberOf | default([]) | string)"
+        fail_msg: >-
+          svc_entrypoint is missing or NOT a member of Domain Admins on suna-dc1 --
+          the scenario's entry-point Domain Admin never landed, so the range has no
+          foothold to pivot from. objects found:
+          {{ fgnw_lat_svc_entrypoint_info.objects | default([]) | length }}.
+        success_msg: svc_entrypoint exists and is a member of Domain Admins.
+- name: Install Wireshark on Windows hosts
+  hosts: domain
+  roles:
+    - wireshark
+# The original lat.yml scheduled this Windows-only privileged-cred task on suna-ws1
+# (Gaara's workstation). After the Hidden Sand Village conversion suna-ws1 is a macOS host,
+# which cannot run the Windows `privileged_user_task` role (Scheduled Task + registry
+# plant). The scenario is retargeted to konoha-ws1 (Naruto's workstation) so the lab still
+# produces a credential-material artefact on a workstation — just in a different village —
+# and the Wireshark/PowerShell logging steps either side of it keep working unchanged. The
+# svc_entrypoint SPN above still names suna-ws1.sunagakure.wind.ninja: that is the
+# scenario's intended SPN target string and does not require the host to be Windows.
+- name: Schedule task for privileged user hash on workstation (retargeted to Konoha)
+  hosts: konoha-ws1
+  vars_files:
+    - "{{ data_path }}/config.json"
+  vars:
+    data_path: ../ad/NARUTO/data
+    privileged_user_task_domain: konohagakure.fire.ninja
+    privileged_user_task_username: naruto.uzumaki
+    privileged_user_task_password: "{{ lab.domains[privileged_user_task_domain].users[privileged_user_task_username].password }}"
+  roles:
+    - privileged_user_task
+- name: Enable PowerShell Script Block Logging on Windows hosts
+  hosts: domain
+  roles:
+    - powershell_logging

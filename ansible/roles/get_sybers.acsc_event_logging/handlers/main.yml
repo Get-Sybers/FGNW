@@ -1,0 +1,17 @@
+---
+- name: "Apply the classic log sizes with wevtutil"
+  ansible.windows.win_command: 'wevtutil sl {{ item.channel }} /ms:{{ item.size }}'
+  loop:
+    - { channel: 'Security', size: 2147483648 }
+    - { channel: 'Application', size: 67108864 }
+    - { channel: 'System', size: 67108864 }
+  loop_control:
+    label: "{{ item.channel }}"
+  register: __acsc_event_logging_wevtutil_classic
+  changed_when: __acsc_event_logging_wevtutil_classic.rc == 0
+  failed_when: false
+- name: "Apply the PowerShell/Operational log size with wevtutil"
+  ansible.windows.win_command: 'wevtutil sl "Microsoft-Windows-PowerShell/Operational" /ms:67108864'
+  register: __acsc_event_logging_wevtutil_ps
+  changed_when: __acsc_event_logging_wevtutil_ps.rc == 0
+  failed_when: false

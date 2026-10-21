@@ -1,0 +1,62 @@
+---
+schema_version: 1
+role: get_sybers.acsc_linux_port_sysmon
+baseline: ACSC-Linux-Port-Sysmon
+status: promoted
+superseded_by: get_sybers.sysmon
+variable_prefix: acsc_sysmon_
+derived_from:
+  - name: AustralianCyberSecurityCentre/windows_event_logging
+    url: https://github.com/AustralianCyberSecurityCentre/windows_event_logging
+    commit: 59041b5d4586789a751171fb752be1624ad5e3b4
+    commit_is: sole-branch-head
+    branch: master
+    licence: BSD-3-Clause
+    licence_holder: Copyright 2017 Commonwealth of Australia
+    relationship: ported-not-vendored
+    vendored: []
+    derived:
+      - local: templates/acsc-linux-port-sysmon.xml.j2
+        from: events/sysmon/sysmon_config.xml
+        note: >-
+          Of ACSC's 13 event types, 6 cannot exist on Linux (ImageLoad,
+          RegistryEvent, CreateRemoteThread, DriverLoad, PipeEvent,
+          FileCreateStreamHash) — Sysmon for Linux is eBPF-based and parses but
+          never fires them. They are omitted rather than carried as dead config
+          that reads like coverage. The remaining 7-event ACSC-portable set is
+          carried in full. THREE events are ADDED beyond ACSC: DnsQuery,
+          RawAccessRead and FileDelete — ACSC 2.0.4 contains zero references to
+          the first two and uses FileDeleteDetected rather than FileDelete.
+          Defensible for a lab, but a departure, not a subset.
+          KNOWN GAP: ACSC's active HashAlgorithms line is MD5,SHA256,IMPHASH.
+          IMPHASH is PE-specific and correctly dropped on ELF, but MD5 is a real
+          divergence — ACSC wants it for MD5-keyed IOC feeds. Unresolved:
+          whether Sysmon for Linux accepts MD5 in <HashAlgorithms>. Confirm
+          against the installed build before changing.
+  - name: ACSC Windows Event Logging and Forwarding
+    # the ACSC page URL has no break point
+    # yamllint disable-line rule:line-length
+    url: https://www.cyber.gov.au/resources-business-and-government/maintaining-devices-and-systems/system-hardening-and-administration/system-hardening/windows-event-logging-and-forwarding
+    relationship: conceptual-baseline
+    licence: n/a
+    note: >-
+      Supplies the >=18-month retention target that tasks/retention.yml ports
+      from Windows channel MaxSize onto journald (MaxRetentionSec +
+      SystemMaxUse, whichever is hit first; Storage=persistent as the
+      precondition). Same honesty as the Windows original: aims at 18 months on
+      a typically-busy host, does not guarantee it.
+  - name: get_sybers.cluster/roles/sysmon_linux
+    url: https://github.com/Get-Sybers/proxmaxxing
+    relationship: internal-predecessor
+    licence: n/a
+    note: >-
+      The hypervisor profile's NetworkConnect exclusion list and watched-path
+      set come from this role, which was tuned against real Ceph/corosync/
+      OpenFabric traffic volumes on the owner's cluster nodes. Preserved rather
+      than re-derived.
+verify: |
+  git clone --depth 1 https://github.com/AustralianCyberSecurityCentre/windows_event_logging /tmp/acsc-wel
+  git clone --depth 1 git@github.com:Get-Sybers/FGNW.git /tmp/fgnw
+  diff <(sed 's/[[:space:]]*$//' /tmp/acsc-wel/events/sysmon/sysmon_config.xml) \
+       <(sed 's/[[:space:]]*$//' /tmp/fgnw/ansible/roles/get_sybers.sysmon/files/acsc-sysmon-config.xml)
+update: |

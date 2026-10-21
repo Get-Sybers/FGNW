@@ -1,0 +1,29 @@
+---
+# macOS mail server for suna-mail — Postfix (SMTP MTA, built into macOS) + Dovecot (IMAP/SASL,
+# from Homebrew). Replaces the Exchange 2019 + OWA stack the Hidden Sand Village used to run
+# before the conversion. The Sand user mailboxes come from the same AD user list the
+# FGNW-exchange-seed-mail.yml play already consumes (content/OWA/user-inboxes.yml), so the
+# ghosts personas carry across unchanged.
+#
+# Mail protocols — plaintext inside the sealed range, same scheme as the Exchange config
+# this replaces. Phase 2 containment seals internet egress so only VLAN-local traffic reaches
+# these ports.
+#   * SMTP in/out on 25     (postfix; no 587 submission listener)
+#   * IMAP on 143           (dovecot; no ssl_cert, so no STARTTLS; `protocols = imap lmtp`)
+#   * LMTP on a unix socket (dovecot <- postfix mailbox_transport)
+#   * no webmail            -- Thunderbird on suna-ws1 is the Gaara client, driven by
+#                              the unified fgnw_thunderbird role (`FGNW-thunderbird.yml`,
+#                              Phase 4e). That role is pinned to IMAP 143 plain + SMTP 25
+#                              plain, matching this. If OWA-style webmail is ever needed,
+#                              Roundcube drops in beside this; if a real TLS story is
+#                              wanted, add submission to Postfix master.cf and ssl/ssl_cert
+#                              to Dovecot, then flip fgnw_thunderbird_socket_type.
+fgnw_mac_mail_server_domain: sunagakure.wind.ninja
+fgnw_mac_mail_server_hostname: "{{ inventory_hostname }}.{{ fgnw_mac_mail_server_domain }}"
+fgnw_mac_mail_server_relay_networks: "127.0.0.0/8, 10.0.0.0/8"
+
+# Mailbox corpus is the per-village user list that fgnw_exchange_seed_mail already uses, read
+# from content/OWA/user-inboxes.yml and filtered to this domain.
+fgnw_mac_mail_server_user_corpus_file: "{{ playbook_dir }}/../content/OWA/user-inboxes.yml"
+fgnw_mac_mail_server_user_shell: /sbin/nologin
+fgnw_mac_mail_server_user_password_default: Changeme1!

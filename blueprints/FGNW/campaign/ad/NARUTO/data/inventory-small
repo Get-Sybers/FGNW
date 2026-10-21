@@ -1,0 +1,70 @@
+; SMALL "trust-pair + noise infra" variant — AD group membership.
+; Only 5 dict_keys survive: dc01 (fire root), dc02 (Leaf child),
+; dc05 (Sound forest + trust), srv03 (konoha-ws1), srv08 (oto-ws1).
+; config.json is UNCHANGED (full) — extra host entries there are simply
+; unused because the playbooks iterate over the hosts in THIS inventory.
+; Use this in place of ./inventory for the small deploy (see docs/SMALL-RANGE.md).
+; computers inside domain (mandatory)
+[domain]
+dc01
+dc02
+dc05
+srv03
+srv08
+; domain controller (mandatory)
+[dc]
+dc01
+dc02
+dc05
+; domain server to enroll
+[server]
+srv03
+srv08
+; workstation to enroll
+[workstation]
+; parent domain controller
+[parent_dc]
+dc01
+dc05
+; child domain controller (child_name.parent_name)
+[child_dc]
+dc02
+; external trust — bidirectional fire.ninja <-> otogakure.ninja
+[trust]
+dc01
+dc05
+[adcs]
+[adcs_customtemplates]
+[iis]
+[mssql]
+[mssql_ssms]
+[webdav]
+[elk_server]
+; add log agent for elk (unused — no ELK VM)
+[elk_log]
+dc01
+dc02
+dc05
+srv03
+srv08
+[laps_dc]
+[laps_server]
+[laps_workstation]
+; allow computer update
+[update]
+; disable update
+[no_update]
+dc01
+dc02
+dc05
+srv03
+srv08
+; allow defender
+[defender_on]
+; disable defender
+[defender_off]
+dc01
+dc02
+dc05
+srv03
+srv08

@@ -1,0 +1,111 @@
+---
+- name: "Preflight: assert role inputs before mutating anything (standards §2)"
+  ansible.builtin.import_tasks: preflight.yml
+- name: Set Velociraptor server hostname from IP if needed
+  ansible.builtin.set_fact:
+    velociraptor_server_hostname: "{{ velociraptor_host if velociraptor_host is match('^[a-zA-Z]') else range_id + '-velociraptor' }}"
+- name: Add DNS entry for Velociraptor server (if domain-joined)
+  ansible.windows.win_shell: |
+    $VeloServerIP = "{{ velociraptor_host }}"
+    $VeloServerName = "{{ velociraptor_server_hostname }}"
+    $isDC = (Get-WmiObject -Class Win32_ComputerSystem).DomainRole -ge 4
+    if ($isDC) {
+        try {
+            $existingRecord = Get-DnsServerResourceRecord -ZoneName $env:USERDNSDOMAIN -Name $VeloServerName -ErrorAction SilentlyContinue
+            if (-not $existingRecord) {
+                Add-DnsServerResourceRecordA -Name $VeloServerName -ZoneName $env:USERDNSDOMAIN -IPv4Address $VeloServerIP -TimeToLive 01:00:00
+                Write-Host "Added DNS A record: $VeloServerName.$env:USERDNSDOMAIN -> $VeloServerIP"
+            } else {
+                Write-Host "DNS record already exists for $VeloServerName"
+            }
+        } catch {
+            Write-Host "Could not add DNS record: $_"
+        }
+    } else {
+        Write-Host "Not a domain controller, skipping DNS record creation"
+    }
+  register: dns_result
+  when:
+    - ansible_windows_domain_member is defined
+    - ansible_windows_domain_member
+  changed_when: "'Added DNS A record' in dns_result.stdout"
+  failed_when: false
+- name: Display DNS configuration result
+  ansible.builtin.debug:
+    msg: "{{ dns_result.stdout_lines }}"
+  when:
+    - dns_result is defined
+    - dns_result.stdout_lines is defined
+- name: Create Velociraptor directory on Windows
+  ansible.windows.win_file:
+    path: C:\Program Files\Velociraptor
+    state: directory
+- name: Wait for Velociraptor server to be available
+  ansible.builtin.wait_for:
+    host: "{{ velociraptor_host }}"
+    port: 8000
+    timeout: 300
+  delegate_to: localhost
+- name: Check whether the Velociraptor client config is already on disk
+  ansible.windows.win_stat:
+    path: C:\Program Files\Velociraptor\client.config.yaml
+  register: velociraptor_client_config_stat
+- name: Download Velociraptor client config from server
+  ansible.windows.win_get_url:
+    url: http://{{ velociraptor_host }}:8889/api/v1/DownloadFile?path=/client.config.yaml
+    dest: C:\Program Files\Velociraptor\client.config.yaml
+    validate_certs: false
+  register: client_config_download
+  retries: 5
+  delay: 10
+  until: client_config_download is succeeded
+  ignore_errors: true
+  when: not velociraptor_client_config_stat.stat.exists
+- name: If download failed, fetch config from server directly
+  when: client_config_download is failed
+  block:
+    - name: Fetch client config from Velociraptor server
+      ansible.builtin.slurp:
+        src: "{{ velociraptor_install_path }}/client.config.yaml"
+      delegate_to: "{{ velociraptor_host }}"
+      register: client_config_content
+    - name: Write client config to Windows host
+      ansible.windows.win_copy:
+        content: "{{ client_config_content.content | b64decode }}"
+        dest: C:\Program Files\Velociraptor\client.config.yaml
+- name: Download Velociraptor Windows executable
+  ansible.windows.win_get_url:
+    url: https://github.com/Velocidex/velociraptor/releases/download/{{ velociraptor_version }}/velociraptor-{{ velociraptor_version_patch }}-windows-amd64.exe
+    dest: C:\Program Files\Velociraptor\velociraptor.exe
+    checksum: "{{ velociraptor_checksum }}"
+    validate_certs: false
+  register: velociraptor_download
+  retries: 3
+  delay: 10
+  until: velociraptor_download is succeeded
+- name: Check if Velociraptor service exists
+  ansible.windows.win_service:
+    name: Velociraptor
+  register: velociraptor_service_check
+  failed_when: false
+- name: Install Velociraptor as a Windows service
+  ansible.windows.win_shell: |
+    & "C:\Program Files\Velociraptor\velociraptor.exe" --config "C:\Program Files\Velociraptor\client.config.yaml" service install
+  when: not velociraptor_service_check.exists
+- name: Start Velociraptor service
+  ansible.windows.win_service:
+    name: Velociraptor
+    state: started
+    start_mode: auto
+- name: Add firewall rule for Velociraptor client
+  community.windows.win_firewall_rule:
+    name: Velociraptor Client
+    localport: 8000,8001
+    action: allow
+    direction: out
+    protocol: tcp
+    state: present
+    enabled: true
+- name: "Verify: Velociraptor agent end-state (standards §7)"
+  ansible.builtin.import_tasks: verify.yml
+  tags: [verify]

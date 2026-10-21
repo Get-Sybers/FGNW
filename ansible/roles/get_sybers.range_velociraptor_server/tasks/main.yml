@@ -1,0 +1,76 @@
+---
+- name: Create Velociraptor Directory
+  ansible.builtin.file:
+    path: "{{ velociraptor_install_path }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+- name: Download Velociraptor Binary
+  ansible.builtin.get_url:
+    url: https://github.com/Velocidex/velociraptor/releases/download/{{ velociraptor_version }}/velociraptor-{{ velociraptor_version_patch }}-linux-amd64
+    dest: "{{ velociraptor_install_path }}/velociraptor"
+    checksum: "{{ velociraptor_checksum }}"
+    validate_certs: false
+    owner: root
+    group: root
+    mode: "0755"
+- name: Render Velociraptor Merge Config
+  ansible.builtin.template:
+    src: server.merge.json.j2
+    dest: "{{ velociraptor_install_path }}/server.merge.json"
+    owner: root
+    group: root
+    mode: "0644"
+- name: Generate Velociraptor Server Config
+  ansible.builtin.shell:
+    cmd: >-
+      {{ velociraptor_install_path }}/velociraptor config generate
+      --merge "$(cat {{ velociraptor_install_path }}/server.merge.json)"
+      > {{ velociraptor_install_path }}/server.config.yaml
+  args:
+    creates: "{{ velociraptor_install_path }}/server.config.yaml"
+    executable: /bin/bash
+  register: server_config
+  notify: Restart velociraptor_server
+- name: Split Server Config to Client Config
+  ansible.builtin.shell:
+    cmd: >-
+      {{ velociraptor_install_path }}/velociraptor config client
+      --config {{ velociraptor_install_path }}/server.config.yaml
+      > {{ velociraptor_install_path }}/client.config.yaml
+  args:
+    creates: "{{ velociraptor_install_path }}/client.config.yaml"
+  register: client_config
+  notify: Restart velociraptor_server
+- name: Register the Client Config
+  ansible.builtin.slurp:
+    src: "{{ velociraptor_install_path }}/client.config.yaml"
+  register: client_config_slurp
+- name: Generate Velociraptor Installation File
+  ansible.builtin.command:
+    cmd: >-
+      {{ velociraptor_install_path }}/velociraptor debian server
+      --config {{ velociraptor_install_path }}/server.config.yaml
+      --output {{ velociraptor_install_path }}/velociraptor_server.deb
+  args:
+    creates: "{{ velociraptor_install_path }}/velociraptor_server.deb"
+  register: server_installation_binary
+- name: Install Velociraptor Server
+  ansible.builtin.apt:
+    deb: "{{ velociraptor_install_path }}/velociraptor_server.deb"
+  notify: Restart velociraptor_server
+- name: Add Admin User
+  ansible.builtin.expect:
+    command: sudo -u velociraptor velociraptor user add --role=administrator {{ velociraptor_admin_user }}
+    responses:
+      (?i)Enter user's password: "{{ velociraptor_admin_password }}"
+  no_log: true
+- name: Flush Handlers Before Verification
+  ansible.builtin.meta: flush_handlers
+- name: Include Verify Stage
+  ansible.builtin.include_tasks:
+    file: verify.yml
+    apply:
+      tags: [verify]
+  tags: [verify]

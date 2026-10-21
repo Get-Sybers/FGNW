@@ -1,0 +1,21 @@
+---
+- name: Ensure the Edge policy key exists
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Policies\Microsoft\Edge
+    state: present
+- name: Force-install benign extensions (real Edge Add-ons store)
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Policies\Microsoft\Edge\ExtensionInstallForcelist
+    name: "{{ idx + 1 }}"
+    data: "{{ item.id }};{{ fgnw_browser_extensions_update_url }}"
+    type: string
+  loop: "{{ fgnw_browser_extensions_benign }}"
+  loop_control:
+    index_var: idx
+    label: "{{ item.name }}"
+- name: Force-install the risky extension (self-hosted)
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Policies\Microsoft\Edge\ExtensionInstallForcelist
+    name: "{{ fgnw_browser_extensions_benign | length + 1 }}"
+    data: "{{ fgnw_browser_extensions_risky.id }};{{ fgnw_browser_extensions_risky.update_url }}"
+    type: string

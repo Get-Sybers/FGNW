@@ -1,0 +1,722 @@
+---
+site_pages:
+  - url: www.shinobi-world-news.com
+    village: All Villages
+    category: News
+    archetype: news
+    description: Breaking news across the five nations
+  - url: www.missionboard.net
+    village: All Villages
+    category: Missions
+    archetype: news
+    description: Official D through S rank mission listings
+  - url: www.bingobookwanted.com
+    village: All Villages
+    category: Security
+    archetype: news
+    description: Public missing-nin registry
+  - url: www.chakranature-quiz.com
+    village: All Villages
+    category: Education
+    archetype: wiki
+    description: Find your elemental affinity
+  - url: www.ninjarank-tracker.com
+    village: All Villages
+    category: Career
+    archetype: portal
+    description: Promotion history and exam schedules
+  - url: www.fivekagehq.com
+    village: All Villages
+    category: Government
+    archetype: portal
+    description: Official five kage summit communiqués
+  - url: www.alliedshinnobiforces.org
+    village: All Villages
+    category: Government
+    archetype: portal
+    description: Wartime alliance portal
+  - url: www.jutsuencyclopedia.net
+    village: All Villages
+    category: Reference
+    archetype: wiki
+    description: Community-maintained technique database
+  - url: www.summoning-contracts.com
+    village: All Villages
+    category: Reference
+    archetype: wiki
+    description: Registered summon animal directory
+  - url: www.theninjapath.com
+    village: All Villages
+    category: Lifestyle
+    archetype: shop
+    description: Motivational blog for genin
+  - url: www.kekkei-genkai.org
+    village: All Villages
+    category: Research
+    archetype: wiki
+    description: Bloodline limit research and registry
+  - url: www.tailed-beast-watch.net
+    village: All Villages
+    category: Security
+    archetype: news
+    description: Jinchuriki monitoring network
+  - url: www.chakramedical-journal.com
+    village: All Villages
+    category: Medical
+    archetype: wiki
+    description: Peer reviewed medical ninjutsu papers
+  - url: www.sealmaster.net
+    village: All Villages
+    category: Education
+    archetype: wiki
+    description: Fuinjutsu theory and tutorials
+  - url: www.headband-registry.gov
+    village: All Villages
+    category: Government
+    archetype: portal
+    description: Official village headband issuance portal
+  - url: www.chunin-exam-results.com
+    village: All Villages
+    category: Career
+    archetype: portal
+    description: Live leaderboard during exams
+  - url: www.shinobi-dating.com
+    village: All Villages
+    category: Social
+    archetype: forum
+    description: Jiraiya research site
+  - url: www.genjutsu-breakers-forum.com
+    village: All Villages
+    category: Education
+    archetype: wiki
+    description: Tips for detecting illusions
+  - url: www.medic-nin-network.com
+    village: All Villages
+    category: Medical
+    archetype: wiki
+    description: Tsunade-approved medical portal
+  - url: www.toad-mountain-tourism.com
+    village: All Villages
+    category: Tourism
+    archetype: fansite
+    description: Mount Myoboku visitor information
+  - url: www.slug-shikkotsu-forest.com
+    village: All Villages
+    category: Tourism
+    archetype: fansite
+    description: Katsuyu habitat awareness page
+  - url: www.snakecave-ryuchi.com
+    village: All Villages
+    category: Tourism
+    archetype: fansite
+    description: Ryuchi Cave unofficial tour guide
+  - url: www.shinobi-equipment-mart.com
+    village: All Villages
+    category: Shopping
+    archetype: shop
+    description: Kunai shuriken and wire bulk orders
+  - url: www.ramen-reviews.com
+    village: All Villages
+    category: Food
+    archetype: shop
+    description: Naruto definitive ramen ranking blog
+  - url: www.ninja-tool-blackmarket.dark
+    village: All Villages
+    category: Shopping
+    archetype: shop
+    description: Grey market weapons supplier
+  - url: www.philosophyofpain.com
+    village: All Villages
+    category: Lifestyle
+    archetype: shop
+    description: Existential blog popular in Rain Country
+  - url: www.greatninja-war-memorial.org
+    village: All Villages
+    category: Memorial
+    archetype: portal
+    description: Fourth Shinobi War remembrance site
+  - url: www.sage-mode-tutorials.com
+    village: All Villages
+    category: Education
+    archetype: wiki
+    description: Mount Myoboku certified training guides
+  - url: www.otsutsuki-conspiracy.net
+    village: All Villages
+    category: Forums
+    archetype: forum
+    description: Hagoromo theorist community
+  - url: www.konoha-portal.leaf
+    village: Hidden Leaf Village
+    category: Intranet
+    archetype: portal
+    description: Konoha village intranet homepage
+  - url: www.hokage-office.gov.leaf
+    village: Hidden Leaf Village
+    category: Government
+    archetype: portal
+    description: Official Hokage announcements
+  - url: www.willoffire.com
+    village: Hidden Leaf Village
+    category: Lifestyle
+    archetype: shop
+    description: Philosophy blog celebrating the Will of Fire
+  - url: www.konoha-hospital.med
+    village: Hidden Leaf Village
+    category: Medical
+    archetype: wiki
+    description: Medical ninja appointment booking
+  - url: www.leafanbu.classified
+    village: Hidden Leaf Village
+    category: Security
+    archetype: news
+    description: ANBU internal ops restricted
+  - url: www.rootoperative.dark
+    village: Hidden Leaf Village
+    category: Security
+    archetype: news
+    description: Danzo ROOT intranet very restricted
+  - url: www.uchiha-clan-archive.leaf
+    village: Hidden Leaf Village
+    category: Reference
+    archetype: wiki
+    description: Uchiha history and sharingan records
+  - url: www.hyuga-main-branch.leaf
+    village: Hidden Leaf Village
+    category: Clan
+    archetype: wiki
+    description: Hyuga clan official portal
+  - url: www.nara-shadow-tactics.com
+    village: Hidden Leaf Village
+    category: Research
+    archetype: wiki
+    description: Nara clan strategy papers
+  - url: www.ichiraku-ramen.com
+    village: Hidden Leaf Village
+    category: Food
+    archetype: shop
+    description: Menu hours and Naruto loyalty card
+  - url: www.konoha-academy.edu
+    village: Hidden Leaf Village
+    category: Education
+    archetype: wiki
+    description: Student portal and graduation results
+  - url: www.konoha12-fanclub.net
+    village: Hidden Leaf Village
+    category: Social
+    archetype: forum
+    description: Unofficial fan site for the Konoha 12
+  - url: www.team7updates.leaf
+    village: Hidden Leaf Village
+    category: Missions
+    archetype: news
+    description: Kakashi mission debriefs rarely updated
+  - url: www.mightyguy-youth.com
+    village: Hidden Leaf Village
+    category: Lifestyle
+    archetype: shop
+    description: Guy sensei motivational fitness blog
+  - url: www.springtimeofyouth.net
+    village: Hidden Leaf Village
+    category: Lifestyle
+    archetype: shop
+    description: Rock Lee training diary
+  - url: www.sharingan-users.net
+    village: Hidden Leaf Village
+    category: Forums
+    archetype: forum
+    description: Uchiha eye technique forum
+  - url: www.FGNW-for-hokage.com
+    village: Hidden Leaf Village
+    category: Government
+    archetype: portal
+    description: Naruto campaign site
+  - url: www.konoha-intelligence.leaf
+    village: Hidden Leaf Village
+    category: Security
+    archetype: news
+    description: T&I division intel portal
+  - url: www.medicalcorps-konoha.med
+    village: Hidden Leaf Village
+    category: Medical
+    archetype: wiki
+    description: Medical corps staff intranet
+  - url: www.anbu-black-ops.classified
+    village: Hidden Leaf Village
+    category: Security
+    archetype: news
+    description: ANBU black ops secure channel
+  - url: www.suna-portal.sand
+    village: Hidden Sand Village
+    category: Intranet
+    archetype: portal
+    description: Sunagakure village intranet
+  - url: www.kazekage-office.gov.sand
+    village: Hidden Sand Village
+    category: Government
+    archetype: portal
+    description: Official Kazekage decrees
+  - url: www.desertninja-survival.com
+    village: Hidden Sand Village
+    category: Education
+    archetype: wiki
+    description: Desert combat and survival tips
+  - url: www.puppet-technique-forum.com
+    village: Hidden Sand Village
+    category: Forums
+    archetype: forum
+    description: Sasori fans and puppet enthusiasts
+  - url: www.ironsand-legacy.com
+    village: Hidden Sand Village
+    category: Memorial
+    archetype: portal
+    description: Tribute to the Third Kazekage
+  - url: www.sand-siblings-fanpage.net
+    village: Hidden Sand Village
+    category: Social
+    archetype: forum
+    description: Gaara Temari Kankuro fan site
+  - url: www.wind-release-training.com
+    village: Hidden Sand Village
+    category: Education
+    archetype: wiki
+    description: Wind nature chakra tutorials
+  - url: www.gaara-for-kazekage.com
+    village: Hidden Sand Village
+    category: Government
+    archetype: portal
+    description: Archived campaign site from his election
+  - url: www.suna-puppet-workshop.sand
+    village: Hidden Sand Village
+    category: Shopping
+    archetype: shop
+    description: Puppet parts requisition portal
+  - url: www.desert-weather-watch.sand
+    village: Hidden Sand Village
+    category: News
+    archetype: news
+    description: Sand storm and climate alerts
+  - url: www.suna-medical-corps.sand
+    village: Hidden Sand Village
+    category: Medical
+    archetype: wiki
+    description: Sand village medical staff portal
+  - url: www.kazekage-guard-scheduling.sand
+    village: Hidden Sand Village
+    category: Missions
+    archetype: news
+    description: Gaara bodyguard shift planner
+  - url: www.kiri-portal.mist
+    village: Hidden Mist Village
+    category: Intranet
+    archetype: portal
+    description: Kirigakure village intranet
+  - url: www.mizukage-office.gov.mist
+    village: Hidden Mist Village
+    category: Government
+    archetype: portal
+    description: Official Mizukage directives
+  - url: www.sevenswordsmen-legacy.com
+    village: Hidden Mist Village
+    category: Reference
+    archetype: wiki
+    description: Archive of the legendary seven blades
+  - url: www.samehada-fanclub.net
+    village: Hidden Mist Village
+    category: Social
+    archetype: forum
+    description: Enthusiasts of the sentient sword
+  - url: www.silentkillingtechnique.com
+    village: Hidden Mist Village
+    category: Education
+    archetype: wiki
+    description: Mist assassination technique forum
+  - url: www.bloodymistreform.org
+    village: Hidden Mist Village
+    category: Government
+    archetype: portal
+    description: Post-reform transparency portal
+  - url: www.hunternin-orders.mist
+    village: Hidden Mist Village
+    category: Missions
+    archetype: news
+    description: Hunter-nin mission assignments classified
+  - url: www.hozuki-clan.mist
+    village: Hidden Mist Village
+    category: Clan
+    archetype: wiki
+    description: Liquification technique family portal
+  - url: www.mist-swordsmanship.com
+    village: Hidden Mist Village
+    category: Education
+    archetype: wiki
+    description: Blade combat tutorials
+  - url: www.kiri-kekkei-genkai-registry.mist
+    village: Hidden Mist Village
+    category: Government
+    archetype: portal
+    description: Bloodline limit protection registry
+  - url: www.graduation-duel-archive.mist
+    village: Hidden Mist Village
+    category: Reference
+    archetype: wiki
+    description: Historical graduation records
+  - url: www.mist-navigation-charts.mist
+    village: Hidden Mist Village
+    category: Reference
+    archetype: wiki
+    description: Fog and sea navigation maps
+  - url: www.kumo-portal.cloud
+    village: Hidden Cloud Village
+    category: Intranet
+    archetype: portal
+    description: Kumogakure village intranet
+  - url: www.raikage-office.gov.cloud
+    village: Hidden Cloud Village
+    category: Government
+    archetype: portal
+    description: Official Raikage bulletins
+  - url: www.lightningarmour-training.com
+    village: Hidden Cloud Village
+    category: Education
+    archetype: wiki
+    description: A-rank speed enhancement tutorials
+  - url: www.killerb-raps.com
+    village: Hidden Cloud Village
+    category: Entertainment
+    archetype: fansite
+    description: Killer B official rap mixtape archive
+  - url: www.eight-tails-fansite.net
+    village: Hidden Cloud Village
+    category: Social
+    archetype: forum
+    description: Gyuki appreciation community
+  - url: www.cloudkenjutsu.com
+    village: Hidden Cloud Village
+    category: Education
+    archetype: wiki
+    description: Sword and lightning technique forum
+  - url: www.hyuga-incident-archive.com
+    village: Hidden Cloud Village
+    category: Reference
+    archetype: wiki
+    description: Historical diplomatic record
+  - url: www.kumo-intel-division.cloud
+    village: Hidden Cloud Village
+    category: Security
+    archetype: news
+    description: Intelligence ops portal restricted
+  - url: www.stormrelease-research.com
+    village: Hidden Cloud Village
+    category: Research
+    archetype: wiki
+    description: Darui fan theory site
+  - url: www.jinchuriki-program-kumo.cloud
+    village: Hidden Cloud Village
+    category: Education
+    archetype: wiki
+    description: Tailed beast host training portal
+  - url: www.mountain-weather-kumo.cloud
+    village: Hidden Cloud Village
+    category: News
+    archetype: news
+    description: High altitude weather forecasts
+  - url: www.raikage-fitness-regime.com
+    village: Hidden Cloud Village
+    category: Lifestyle
+    archetype: shop
+    description: Fourth Raikage strength training blog
+  - url: www.iwa-portal.rock
+    village: Hidden Rock Village
+    category: Intranet
+    archetype: portal
+    description: Iwagakure village intranet
+  - url: www.tsuchikage-office.gov.rock
+    village: Hidden Rock Village
+    category: Government
+    archetype: portal
+    description: Official Tsuchikage decrees
+  - url: www.dustrelease-research.com
+    village: Hidden Rock Village
+    category: Research
+    archetype: wiki
+    description: Particle style theory papers
+  - url: www.explosion-corps.iwa
+    village: Hidden Rock Village
+    category: Missions
+    archetype: news
+    description: Demolition unit internal portal
+  - url: www.deidara-art-appreciation.com
+    village: Hidden Rock Village
+    category: Social
+    archetype: forum
+    description: Explosive art fan community
+  - url: www.yellowflash-historical.com
+    village: Hidden Rock Village
+    category: Reference
+    archetype: wiki
+    description: Historical record of Minatos impact on Iwa
+  - url: www.iwa-konoha-war-archive.com
+    village: Hidden Rock Village
+    category: Reference
+    archetype: wiki
+    description: Third Shinobi War documentation
+  - url: www.lava-release-forum.rock
+    village: Hidden Rock Village
+    category: Forums
+    archetype: forum
+    description: Kekkei genkai discussion board
+  - url: www.flight-jutsu-onoki.com
+    village: Hidden Rock Village
+    category: Lifestyle
+    archetype: shop
+    description: Onoki personal levitation blog
+  - url: www.earth-country-mining.rock
+    village: Hidden Rock Village
+    category: Industry
+    archetype: wiki
+    description: Mining and resource extraction portal
+  - url: www.iwa-border-patrol.rock
+    village: Hidden Rock Village
+    category: Missions
+    archetype: news
+    description: Border security mission assignments
+  - url: www.ame-portal.rain
+    village: Hidden Rain Village
+    category: Intranet
+    archetype: portal
+    description: Amegakure village intranet
+  - url: www.pain-gospel.rain
+    village: Hidden Rain Village
+    category: Government
+    archetype: portal
+    description: Pain philosophical edicts
+  - url: www.rinnegan-studies.com
+    village: Hidden Rain Village
+    category: Research
+    archetype: wiki
+    description: Theoretical six paths research
+  - url: www.paperangel.rain
+    village: Hidden Rain Village
+    category: Social
+    archetype: forum
+    description: Konan origami and ninjutsu community
+  - url: www.yahiko-memorial.org
+    village: Hidden Rain Village
+    category: Memorial
+    archetype: portal
+    description: Tribute to the founder of the original Akatsuki
+  - url: www.akatsuki-manifesto.dark
+    village: Hidden Rain Village
+    category: Reference
+    archetype: wiki
+    description: Original peace mission statement
+  - url: www.closed-borders-ame.rain
+    village: Hidden Rain Village
+    category: Government
+    archetype: portal
+    description: Immigration restriction portal
+  - url: www.rain-sensing-network.rain
+    village: Hidden Rain Village
+    category: Security
+    archetype: news
+    description: Amegakure surveillance grid status
+  - url: www.ame-weather-report.rain
+    village: Hidden Rain Village
+    category: News
+    archetype: news
+    description: Perpetual rain forecast
+  - url: www.nagato-resurrection-theory.com
+    village: Hidden Rain Village
+    category: Forums
+    archetype: forum
+    description: Rinne Rebirth conspiracy forums
+  - url: www.oto-portal.sound
+    village: Hidden Sound Village
+    category: Intranet
+    archetype: portal
+    description: Otogakure intranet
+  - url: www.orochimaru-research.com
+    village: Hidden Sound Village
+    category: Research
+    archetype: wiki
+    description: Immortality and jutsu development blog
+  - url: www.cursemark-community.net
+    village: Hidden Sound Village
+    category: Social
+    archetype: forum
+    description: Sound Four fan and support group
+  - url: www.snake-summons-registry.com
+    village: Hidden Sound Village
+    category: Reference
+    archetype: wiki
+    description: Ryuchi Cave contractor listings
+  - url: www.sound-four-fanpage.com
+    village: Hidden Sound Village
+    category: Social
+    archetype: forum
+    description: Sakon Tayuya Kidomaru Jirobo fan archive
+  - url: www.bodymodification-oto.sound
+    village: Hidden Sound Village
+    category: Research
+    archetype: wiki
+    description: Experiment volunteer portal
+  - url: www.edo-tensei-ethics.com
+    village: Hidden Sound Village
+    category: Forums
+    archetype: forum
+    description: Controversial reanimation debate forum
+  - url: www.kabuto-medic.com
+    village: Hidden Sound Village
+    category: Medical
+    archetype: wiki
+    description: Kabuto medical ninjutsu research notes
+  - url: www.sound-frequency-jutsu.com
+    village: Hidden Sound Village
+    category: Education
+    archetype: wiki
+    description: Acoustic technique tutorials
+  - url: www.oto-loyalty-tracker.sound
+    village: Hidden Sound Village
+    category: Security
+    archetype: news
+    description: Employee loyalty monitoring system
+  - url: www.taki-portal.waterfall
+    village: Hidden Waterfall Village
+    category: Intranet
+    archetype: portal
+    description: Takigakure village intranet
+  - url: www.hero-water-safety.taki
+    village: Hidden Waterfall Village
+    category: Reference
+    archetype: wiki
+    description: Hero Water handling guidelines
+  - url: www.fuu-jinchuriki-watch.taki
+    village: Hidden Waterfall Village
+    category: Security
+    archetype: news
+    description: Seven tails host monitoring
+  - url: www.waterfall-country-tourism.com
+    village: Hidden Waterfall Village
+    category: Tourism
+    archetype: fansite
+    description: Takigakure visitor information
+  - url: www.chomei-bijuu-research.taki
+    village: Hidden Waterfall Village
+    category: Research
+    archetype: wiki
+    description: Seven tails academic papers
+  - url: www.kusa-portal.grass
+    village: Hidden Grass Village
+    category: Intranet
+    archetype: portal
+    description: Kusagakure village intranet
+  - url: www.grass-country-neutral.kusa
+    village: Hidden Grass Village
+    category: Government
+    archetype: portal
+    description: Neutrality treaty information
+  - url: www.kusa-chunin-exam-team.grass
+    village: Hidden Grass Village
+    category: Career
+    archetype: portal
+    description: Chunin exam participant portal
+  - url: www.grass-country-herbs.kusa
+    village: Hidden Grass Village
+    category: Medical
+    archetype: wiki
+    description: Medicinal plant database
+  - url: www.landofiron-portal.iron
+    village: Land of Iron
+    category: Intranet
+    archetype: portal
+    description: Land of Iron samurai intranet
+  - url: www.mifune-command.iron
+    village: Land of Iron
+    category: Government
+    archetype: portal
+    description: General Mifune official orders
+  - url: www.bushido-code-online.com
+    village: Land of Iron
+    category: Reference
+    archetype: wiki
+    description: Samurai honour code reference
+  - url: www.no-ninja-jurisdiction.iron
+    village: Land of Iron
+    category: Government
+    archetype: portal
+    description: Explaining the neutral zone to outsiders
+  - url: www.samurai-blade-registry.iron
+    village: Land of Iron
+    category: Reference
+    archetype: wiki
+    description: Certified sword ownership records
+  - url: www.iaido-tutorials.com
+    village: Land of Iron
+    category: Education
+    archetype: wiki
+    description: Sword drawing technique guides
+  - url: www.five-kage-summit-security.iron
+    village: Land of Iron
+    category: Missions
+    archetype: news
+    description: Summit security planning portal
+  - url: www.akatsuki-intranet.dark
+    village: Akatsuki
+    category: Intranet
+    archetype: portal
+    description: Member-only operations portal
+  - url: www.jinchuriki-extraction.akatsuki
+    village: Akatsuki
+    category: Missions
+    archetype: news
+    description: Target tracking and seal procedures
+  - url: www.tobi-is-a-good-boy.com
+    village: Akatsuki
+    category: Entertainment
+    archetype: fansite
+    description: Tobi personal comedy blog
+  - url: www.painispeace.rain
+    village: Akatsuki
+    category: Lifestyle
+    archetype: shop
+    description: Philosophical propaganda outlet
+  - url: www.bountyhunter-kakuzu.com
+    village: Akatsuki
+    category: Missions
+    archetype: news
+    description: Kakuzu personal bounty tracking ledger
+  - url: www.art-is-explosion.com
+    village: Akatsuki
+    category: Entertainment
+    archetype: fansite
+    description: Deidara explosive art portfolio
+  - url: www.puppeteer-sasori.com
+    village: Akatsuki
+    category: Entertainment
+    archetype: fansite
+    description: Sasori puppet collection showcase
+  - url: www.crows-and-crows.dark
+    village: Akatsuki
+    category: Security
+    archetype: news
+    description: Itachi encrypted communication channel
+  - url: www.zerowaste-zetsu.com
+    village: Akatsuki
+    category: Security
+    archetype: news
+    description: Zetsu information brokerage
+  - url: www.akatsuki-ring-shop.com
+    village: Akatsuki
+    category: Shopping
+    archetype: shop
+    description: Unofficial merchandise site
+  - url: www.gedo-statue-maintenance.akatsuki
+    village: Akatsuki
+    category: Reference
+    archetype: wiki
+    description: Outer Path statue upkeep portal
+  - url: www.bijuu-collection-tracker.akatsuki
+    village: Akatsuki
+    category: Missions
+    archetype: news
+    description: Tailed beast acquisition progress

@@ -1,0 +1,6 @@
+---
+ludus_range_teardown_poll_retries: 90
+ludus_range_teardown_poll_delay: 10
+ludus_range_teardown_testing_poll_retries: 30
+ludus_range_teardown_testing_poll_delay: 10
+ludus_range_teardown_bin: /usr/local/bin/ludus

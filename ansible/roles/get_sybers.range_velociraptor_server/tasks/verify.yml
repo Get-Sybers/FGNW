@@ -1,0 +1,46 @@
+---
+- name: "verify | Velociraptor_server service is active"
+  ansible.builtin.service_facts:
+  register: velociraptor_service_state
+  retries: 6
+  delay: 5
+  until: velociraptor_service_state.ansible_facts.services['velociraptor_server.service'].state | default('') == 'running'
+- name: "verify | Frontend port is answering"
+  ansible.builtin.wait_for:
+    host: 127.0.0.1
+    port: "{{ velociraptor_frontend_port }}"
+    timeout: 60
+- name: verify | GUI/API answers over HTTPS
+  ansible.builtin.uri:
+    url: https://127.0.0.1:{{ velociraptor_gui_port }}/
+    validate_certs: false
+    status_code: [200, 301, 302, 401, 403]
+  register: velociraptor_gui_probe
+  retries: 12
+  delay: 5
+  until: velociraptor_gui_probe is succeeded
+- name: "verify | Server and client configs exist"
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  register: velociraptor_config_stat
+  loop:
+    - "{{ velociraptor_install_path }}/server.config.yaml"
+    - "{{ velociraptor_install_path }}/client.config.yaml"
+- name: "verify | Assert both configs are present"
+  ansible.builtin.assert:
+    that: item.stat.exists
+    fail_msg: >-
+      {{ item.item }} is missing -- re-run the role without tags; the
+      creates:-guarded generate/split tasks will regenerate whichever piece
+      is absent.
+    quiet: true
+  loop: "{{ velociraptor_config_stat.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+- name: "verify | Report"
+  ansible.builtin.debug:
+    msg: >-
+      Velociraptor server verified: service active, frontend
+      :{{ velociraptor_frontend_port }} and GUI
+      :{{ velociraptor_gui_port }} (HTTPS) answering, server+client configs
+      present under {{ velociraptor_install_path }}.

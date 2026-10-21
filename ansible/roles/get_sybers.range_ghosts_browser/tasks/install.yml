@@ -1,0 +1,13 @@
+---
+- name: "install | Install Google Chrome (stable) via chocolatey/Nexus"
+  chocolatey.chocolatey.win_chocolatey:
+    name: "{{ range_ghosts_browser_chrome_package }}"
+    version: "{{ range_ghosts_browser_chrome_version | default(omit, true) }}"
+    state: present
+    ignore_checksums: "{{ range_ghosts_browser_ignore_checksums | bool }}"
+- name: "install | Install a matched chromedriver via chocolatey/Nexus"
+  chocolatey.chocolatey.win_chocolatey:
+    name: "{{ range_ghosts_browser_driver_package }}"
+    version: "{{ range_ghosts_browser_driver_version | default(omit, true) }}"
+    state: present
+    ignore_checksums: "{{ range_ghosts_browser_ignore_checksums | bool }}"

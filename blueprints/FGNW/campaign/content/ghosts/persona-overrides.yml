@@ -1,0 +1,148 @@
+---
+ghosts_overrides:
+  konoha-ws1:
+    signature_urls: [www.ichiraku-ramen.com]
+    pace: obsessive
+    note: Ichiraku Ramen kept open as a permanent tab; hammered far more than anything work-related.
+    admin_activity: true
+    beliefs:
+      - { name: The Will of Fire protects the village, likelihood: 0.98 }
+      - { name: Bonds between people are the strongest jutsu, likelihood: 0.97 }
+      - { name: Hard work and determination can overcome any obstacle, likelihood: 0.95 }
+    knowledge_topics:
+      - { topic: ninjutsu, value: 92 }
+      - { topic: rasengan, value: 98 }
+      - { topic: shadow clone jutsu, value: 99 }
+      - { topic: Hokage administration, value: 55 }
+      - { topic: Ichiraku Ramen menu, value: 100 }
+  konoha-ws2:
+    signature_urls: [www.nara-shadow-tactics.com]
+    pace: obsessive
+    note: Parked on nara-shadow-tactics.com during work hours instead of doing paperwork.
+    beliefs:
+      - { name: Strategy is more powerful than brute force, likelihood: 0.97 }
+      - { name: Every situation has an optimal solution through careful analysis, likelihood: 0.94 }
+      - { name: Troublesome responsibilities are unavoidable for capable people, likelihood: 0.85 }
+    knowledge_topics:
+      - { topic: shogi strategy, value: 99 }
+      - { topic: shadow manipulation jutsu, value: 97 }
+      - { topic: tactical operations planning, value: 98 }
+      - { topic: intelligence analysis, value: 90 }
+      - { topic: Nara clan deer husbandry, value: 75 }
+  konoha-ws3:
+    signature_urls: [www.sharingan-users.net]
+    pace: idle
+    note: Account goes idle mid-session regularly ('reading break'); deliberately low, slow activity.
+    beliefs:
+      - { name: Those who abandon their comrades are worse than scum, likelihood: 0.99 }
+      - { name: The past shapes us but does not have to define our future, likelihood: 0.82 }
+      - { name: Power requires sacrifice and carries responsibility, likelihood: 0.90 }
+    knowledge_topics:
+      - { topic: ANBU black ops, value: 98 }
+      - { topic: lightning chakra nature, value: 97 }
+      - { topic: Sharingan analysis, value: 95 }
+      - { topic: copy-ninja techniques, value: 99 }
+      - { topic: Konoha Jonin coordination, value: 93 }
+  konoha-ws4:
+    signature_urls: [www.konoha-hospital.med, www.missionboard.net]
+    pace: normal
+    note: Fifth Hokage / medical-nin; splits attention between the hospital and the mission board.
+    admin_activity: true
+    beliefs:
+      - { name: A medical-nin never gives up on a patient, likelihood: 0.99 }
+      - { name: Leadership means protecting all those under your watch, likelihood: 0.95 }
+      - { name: The Will of Fire must be passed to the next generation, likelihood: 0.88 }
+    knowledge_topics:
+      - { topic: medical ninjutsu, value: 100 }
+      - { topic: Hokage administration, value: 91 }
+      - { topic: strength enhancement jutsu, value: 98 }
+      - { topic: Sannin-level tactics, value: 96 }
+      - { topic: hospital management, value: 85 }
+  konoha-ws5:
+    signature_urls: [www.mightyguy-youth.com, www.springtimeofyouth.net]
+    pace: obsessive
+    active_hours: { start: 05:00:00, end: 21:00:00 }
+    note: Starts absurdly early (5am), obsessive youth-power sites; the Monday-morning spam persona.
+    beliefs:
+      - { name: Hard work and youth surpass natural talent, likelihood: 0.99 }
+      - { name: The springtime of youth is eternal through dedication, likelihood: 0.99 }
+      - { name: Every challenge is an opportunity to surpass your limits, likelihood: 0.98 }
+    knowledge_topics:
+      - { topic: taijutsu, value: 100 }
+      - { topic: eight inner gates, value: 98 }
+      - { topic: youth philosophy, value: 99 }
+      - { topic: physical conditioning, value: 100 }
+      - { topic: team leadership, value: 87 }
+  oto-ws1:
+    signature_urls: [www.orochimaru-research.com, www.cursemark-community.net, www.snake-summons-registry.com]
+    pace: normal
+    note: Forbidden-jutsu research; undercover dual-identity (also has a disabled Konoha account).
+    admin_activity: true
+    beliefs:
+      - { name: Knowledge and immortality are the highest pursuits, likelihood: 0.97 }
+      - { name: The village system is a constraint on true power, likelihood: 0.88 }
+      - { name: The human body is the ultimate experimental medium, likelihood: 0.95 }
+    knowledge_topics:
+      - { topic: forbidden jutsu research, value: 100 }
+      - { topic: curse mark techniques, value: 99 }
+      - { topic: snake summons, value: 98 }
+      - { topic: body experimentation, value: 99 }
+      - { topic: Sannin-level ninjutsu, value: 97 }
+  akatsuki-ws1:
+    signature_urls: [www.pain-gospel.rain, www.philosophyofpain.com, www.painispeace.rain]
+    pace: normal
+    note: Akatsuki leader; ideological 'gospel of pain' browsing.
+    beliefs:
+      - { name: True peace requires experiencing the full extent of pain, likelihood: 0.99 }
+      - { name: The current shinobi world order must be destroyed to be reborn, likelihood: 0.96 }
+      - { name: Only absolute power can enforce lasting peace, likelihood: 0.93 }
+    knowledge_topics:
+      - { topic: Akatsuki ideology and operations, value: 98 }
+      - { topic: Rinnegan techniques, value: 100 }
+      - { topic: Pain gospel, value: 99 }
+      - { topic: geopolitics of the shinobi nations, value: 90 }
+      - { topic: jinchuriki extraction, value: 95 }
+  akatsuki-ws2:
+    signature_urls:
+      - www.konoha-portal.leaf
+      - www.suna-portal.sand
+      - www.oto-portal.sound
+      - www.bingobookwanted.com
+      - www.missionboard.net
+    pace: obsessive
+    note: Highest enumeration activity — cycles multiple village portals + the bingo book. This is the BAU-flavoured recon LOE 2's intel injects will trigger
+      off.
+    recon_legs:
+      fire_leaf_subnet_octet: 10
+      sand_subnet_octet: 20
+      dos_targets:
+        - { octet: 10, host: 20, port: 80 }
+        - { octet: 20, host: 10, port: 445 }
+      dos_rate_per_second: 20
+      dos_duration_seconds: 30
+    beliefs:
+      - { name: Information is the most valuable weapon in any conflict, likelihood: 0.98 }
+      - { name: True loyalty lies with the original Infinite Tsukuyomi plan, likelihood: 0.97 }
+      - { name: Observation without detection is the highest skill, likelihood: 0.96 }
+    knowledge_topics:
+      - { topic: espionage tradecraft, value: 100 }
+      - { topic: village infiltration techniques, value: 98 }
+      - { topic: biological reconnaissance, value: 97 }
+      - { topic: cross-village HUMINT, value: 99 }
+      - { topic: Zetsu spore techniques, value: 98 }
+  suna-ws1:
+    signature_urls: [www.gaara-for-kazekage.com, www.kazekage-office.gov.sand]
+    pace: normal
+    active_hours: { start: 00:00:00, end: 23:59:00 }
+    note: Kazekage; account active 24/7 (no anomaly flagged because it's consistent).
+    admin_activity: true
+    beliefs:
+      - { name: I fight for the sake of those who need me, likelihood: 0.97 }
+      - { name: One must have a reason to exist beyond one's own survival, likelihood: 0.95 }
+      - { name: The bond between a Kage and their village is sacred, likelihood: 0.93 }
+    knowledge_topics:
+      - { topic: sand manipulation jutsu, value: 100 }
+      - { topic: Kazekage administration, value: 93 }
+      - { topic: Wind Country politics, value: 88 }
+      - { topic: tailed beast control, value: 85 }
+      - { topic: defensive tactics, value: 97 }

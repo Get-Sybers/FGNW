@@ -1,0 +1,58 @@
+---
+- name: "retention | Set the zeekctl age and rotation levers"
+  ansible.builtin.lineinfile:
+    path: "{{ zeek_sensor_cfgdir }}/zeekctl.cfg"
+    regexp: '^\s*#?\s*{{ item.key }}\s*='
+    line: "{{ item.key }} = {{ item.value }}"
+    insertafter: EOF
+    owner: root
+    group: "{{ zeek_sensor_group }}"
+    mode: "0640"
+  loop:
+    - { key: "LogExpireInterval", value: "{{ zeek_sensor_log_expire_days }}" }
+    - { key: "StatsLogExpireInterval", value: "{{ zeek_sensor_stats_log_expire_days }}" }
+    - { key: "LogRotationInterval", value: "{{ zeek_sensor_log_rotation_seconds }}" }
+  loop_control:
+    label: "{{ item.key }}"
+  register: __zeek_retention_cfg
+- name: "retention | Install the log-tree pruner"
+  ansible.builtin.template:
+    src: zeek-sensor-prune.sh.j2
+    dest: /usr/local/sbin/zeek-sensor-prune
+    owner: root
+    group: root
+    mode: "0755"
+    validate: "sh -n %s"
+  register: __zeek_pruner
+- name: "retention | Install the pruner unit"
+  ansible.builtin.template:
+    src: zeek-sensor-prune.service.j2
+    dest: /etc/systemd/system/zeek-sensor-prune.service
+    owner: root
+    group: root
+    mode: "0644"
+  register: __zeek_prune_unit
+- name: "retention | Install the pruner timer"
+  ansible.builtin.template:
+    src: zeek-sensor-prune.timer.j2
+    dest: /etc/systemd/system/zeek-sensor-prune.timer
+    owner: root
+    group: root
+    mode: "0644"
+  register: __zeek_prune_timer
+- name: "retention | Reload systemd when a pruner unit changed"
+  ansible.builtin.include_tasks: retention-daemon-reload.yml
+  when: __zeek_prune_unit.changed or __zeek_prune_timer.changed
+- name: "retention | Enable and start the pruner timer"
+  ansible.builtin.systemd_service:
+    name: zeek-sensor-prune.timer
+    enabled: true
+    state: started
+- name: "retention | Run the pruner once to prove it executes"
+  ansible.builtin.command: /usr/local/sbin/zeek-sensor-prune
+  register: __zeek_prune_run
+  changed_when: "'PRUNED' in __zeek_prune_run.stdout"
+  failed_when: __zeek_prune_run.rc != 0
+- name: "retention | Report what the pruner did"
+  ansible.builtin.debug:
+    msg: "{{ __zeek_prune_run.stdout_lines }}"

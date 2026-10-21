@@ -1,0 +1,211 @@
+---
+- name: "Real-exchange: domain-join the Exchange servers (small-range gap -- see note 4 above)"
+  hosts: exchange_servers
+  gather_facts: false
+  vars:
+    # suna-mail intentionally absent from these maps: it is a macOS Postfix/Dovecot host
+    # now (Hidden Sand Village conversion), is not in [exchange_servers], and never resolves
+    # against them. The Sand mail path is stood up by FGNW-mac-mail.yml in phase 4d.
+    fgnw_exchange_domainjoin_map:
+      konoha-mail: { domain: fire.ninja, dc_ip: "10.{{ ansible_host.split('.')[1] }}.10.15" }
+      oto-mail: { domain: otogakure.ninja, dc_ip: "10.{{ ansible_host.split('.')[1] }}.30.10" }
+      dark-mail: { domain: akatsuki.dark, dc_ip: "10.{{ ansible_host.split('.')[1] }}.87.10" }
+    __dj: "{{ fgnw_exchange_domainjoin_map[inventory_hostname] }}"
+    fgnw_exchange_original_child_domain_map:
+      konoha-mail: konohagakure.fire.ninja
+      oto-mail: otogakure.ninja
+      dark-mail: akatsuki.dark
+    __orig_child: "{{ fgnw_exchange_original_child_domain_map[inventory_hostname] }}"
+    __lab_admin_password: password
+  tasks:
+    - name: Check this host's current domain membership (may be unjoined, or already a member of its child domain from the forest build on the full range)
+      ansible.windows.win_shell: (Get-CimInstance -ClassName Win32_ComputerSystem).Domain
+      register: fgnw_exchange_current_domain
+      changed_when: false
+    - name: Leave the child domain first, if this host is already a member of it (full range only -- resolves the CHILD DC via the child DNS still
+        on the NIC; see ordering note above)
+      ansible.windows.win_domain_membership:
+        workgroup_name: WORKGROUP
+        domain_admin_user: Administrator@{{ __orig_child }}
+        domain_admin_password: "{{ __lab_admin_password }}"
+        state: workgroup
+      when:
+        - __orig_child | lower != __dj.domain | lower
+        - fgnw_exchange_current_domain.stdout | trim | lower == __orig_child | lower
+      register: fgnw_exchange_domainleave
+      no_log: true
+    - name: Reboot if leaving the old child domain required it
+      ansible.windows.win_reboot:
+        reboot_timeout: 1500
+        post_reboot_delay: 100
+      when: fgnw_exchange_domainleave.reboot_required | default(false)
+    - name: Point primary DNS at the forest root's own DC, AFTER the child-domain leave, before joining (DC-first, not the router)
+      ansible.windows.win_dns_client:
+        adapter_names: "*"
+        ipv4_addresses:
+          - "{{ __dj.dc_ip }}"
+    - name: Read current domain before the forest-root join (gate the stale-object cleanup)
+      ansible.windows.win_shell: (Get-CimInstance Win32_ComputerSystem).Domain
+      register: fgnw_exchange_curdom
+      changed_when: false
+    - name: "Free the SPN: remove any stale forest-wide computer object for this host (only when not already in the forest root)"
+      when: (fgnw_exchange_curdom.stdout | trim | lower) != (__dj.domain | lower)
+      ansible.windows.win_powershell:
+        script: |
+          $ErrorActionPreference = 'Stop'
+          Clear-DnsClientCache
+          $name = $env:COMPUTERNAME
+          $user = 'Administrator@{{ __dj.domain }}'
+          $pass = '{{ __lab_admin_password }}'
+          $gc = New-Object System.DirectoryServices.DirectoryEntry("GC://{{ __dj.dc_ip }}", $user, $pass)
+          $searcher = New-Object System.DirectoryServices.DirectorySearcher($gc, "(&(objectClass=computer)(cn=$name))")
+          $searcher.PageSize = 100
+          $removed = @()
+          foreach ($res in $searcher.FindAll()) {
+            $dn = [string]$res.Properties['distinguishedname'][0]
+            $dom = (($dn -split ',') | Where-Object { $_ -like 'DC=*' } | ForEach-Object { $_.Substring(3) }) -join '.'
+            $obj = New-Object System.DirectoryServices.DirectoryEntry("LDAP://$dom/$dn", $user, $pass)
+            $obj.DeleteTree()
+            $removed += $dn
+          }
+          if ($removed.Count -gt 0) { $Ansible.Changed = $true; "REMOVED: " + ($removed -join ' | ') }
+          else { $Ansible.Changed = $false; "NONE" }
+        error_action: stop
+      register: fgnw_exchange_stale_cleanup
+      until: fgnw_exchange_stale_cleanup is succeeded
+      retries: 10
+      delay: 6
+      no_log: true
+    - name: "Join the host to its forest root if not already a member: {{ inventory_hostname ~ ' -> ' ~ __dj.domain }}"
+      ansible.windows.win_domain_membership:
+        dns_domain_name: "{{ __dj.domain }}"
+        domain_admin_user: Administrator@{{ __dj.domain }}
+        domain_admin_password: "{{ __lab_admin_password }}"
+        state: domain
+      register: fgnw_exchange_domainjoin
+      until: fgnw_exchange_domainjoin is succeeded
+      retries: 12
+      delay: 15
+      no_log: true
+    - name: Reboot if the domain-join required it
+      ansible.windows.win_reboot:
+        reboot_timeout: 1500
+        post_reboot_delay: 100
+      when: fgnw_exchange_domainjoin.reboot_required
+- name: "Real-exchange: install REAL Exchange 2019 per forest (not the OWA simulation)"
+  hosts: exchange_servers
+  gather_facts: false
+  vars:
+    fgnw_exchange_iso_url: https://download.microsoft.com/download/7/0/a/70a4d908-eacb-426e-ad9f-e7768e27f873/ExchangeServer2019-x64-cu15.iso
+    # suna-mail absent: macOS mail host (Sand conversion); see note at the top of this file.
+    fgnw_exchange_map:
+      konoha-mail: { org: Konoha, domain: konohagakure.fire.ninja }
+      oto-mail: { org: Oto, domain: otogakure.ninja }
+      dark-mail: { org: Akatsuki, domain: akatsuki.dark }
+    __me: "{{ fgnw_exchange_map[inventory_hostname] }}"
+    fgnw_exchange_forest_root_map:
+      konoha-mail: fire.ninja
+      oto-mail: otogakure.ninja
+      dark-mail: akatsuki.dark
+    __forest_root: "{{ fgnw_exchange_forest_root_map[inventory_hostname] }}"
+    ludus_os_version: "2022"
+    ludus_exchange_iso_url: "{{ fgnw_exchange_iso_url }}"
+    exchange_dotnet_install_path: http://192.0.2.2:8081/repository/raw-hosted/tools/exchange/ndp48-x86-x64-allos-enu.exe
+    vcredist2013_install_path: http://192.0.2.2:8081/repository/raw-hosted/tools/exchange/vcredist2013_x64.exe
+    rewrite_module_path: http://192.0.2.2:8081/repository/raw-hosted/tools/exchange/rewrite_amd64_en-US.msi
+    ucma_runtime_path: http://192.0.2.2:8081/repository/raw-hosted/tools/exchange/UcmaRuntimeSetup.exe
+    ludus_exchange_domain: "{{ __me.org }}"
+    ludus_exchange_domain_username: "{{ __forest_root }}\\Administrator"
+    ludus_exchange_domain_password: password
+    ludus_exchange_dc: ""
+    ludus_exchange_host: "{{ inventory_hostname }}"
+  tasks:
+    - name: Install Exchange + enable user mailboxes for this forest
+      ansible.builtin.include_role:
+        name: aleemladha.ludus_exchange
+      no_log: true
+    - name: "Register the org as an Authoritative Accepted Domain (if not already): {{ __me.domain }}"
+      ansible.windows.win_shell: |
+        Add-PSSnapin Microsoft.Exchange.Management.PowerShell.SnapIn
+        if (-not (Get-AcceptedDomain -Identity '{{ __me.domain }}' -ErrorAction SilentlyContinue)) {
+          New-AcceptedDomain -Name '{{ __me.domain }}' -DomainName '{{ __me.domain }}' -DomainType Authoritative
+          Write-Output "ACCEPTED_DOMAIN_CREATED"
+        } else {
+          Write-Output "ACCEPTED_DOMAIN_EXISTS"
+        }
+      register: fgnw_exchange_accepted_domain
+      changed_when: "'ACCEPTED_DOMAIN_CREATED' in (fgnw_exchange_accepted_domain.stdout | default(''))"
+      no_log: true
+      vars:
+        ansible_become: true
+        ansible_become_method: runas
+        ansible_become_user: "{{ __forest_root }}\\Administrator"
+        ansible_become_password: password
+- name: "Real-exchange: mail-enable ALL AD groups as distribution groups (group mailboxes)"
+  hosts: exchange_servers
+  gather_facts: false
+  vars:
+    # suna-mail absent: macOS mail host (Sand conversion); see note at the top of this file.
+    fgnw_exchange_forest_root_map:
+      konoha-mail: fire.ninja
+      oto-mail: otogakure.ninja
+      dark-mail: akatsuki.dark
+    __me: "{{ fgnw_exchange_forest_root_map[inventory_hostname] }}"
+  tasks:
+    - name: Enable-DistributionGroup for every mail-eligible AD group in this domain
+      ansible.windows.win_shell: |
+        Add-PSSnapin Microsoft.Exchange.Management.PowerShell.SnapIn
+        $groups = Get-Group -ResultSize Unlimited |
+          Where-Object { $_.RecipientType -eq 'Group' }
+        foreach ($g in $groups) {
+          try { Enable-DistributionGroup -Identity $g.Name -ErrorAction Stop; Write-Host "mail-enabled: $($g.Name)" }
+          catch { Write-Host "skip/err: $($g.Name)" }
+        }
+      register: fgnw_exchange_dg_enable
+      changed_when: "'mail-enabled:' in (fgnw_exchange_dg_enable.stdout | default(''))"
+      no_log: true
+      vars:
+        ansible_become: true
+        ansible_become_method: runas
+        ansible_become_user: "{{ __me }}\\Administrator"
+        ansible_become_password: password
+- name: "Real-exchange: cross-forest send-connector mesh (every org -> every other org)"
+  hosts: exchange_servers
+  gather_facts: false
+  vars:
+    range_second_octet: "{{ ansible_host.split('.')[1] }}"
+    fgnw_orgs:
+      konoha-mail: { domain: konohagakure.fire.ninja, ip: "10.{{ ansible_host.split('.')[1] }}.10.20" }
+      oto-mail: { domain: otogakure.ninja, ip: "10.{{ ansible_host.split('.')[1] }}.30.20" }
+      dark-mail: { domain: akatsuki.dark, ip: "10.{{ ansible_host.split('.')[1] }}.87.20" }
+    # suna-mail absent: macOS mail host (Sand conversion); see note at the top of this file.
+    fgnw_exchange_forest_root_map:
+      konoha-mail: fire.ninja
+      oto-mail: otogakure.ninja
+      dark-mail: akatsuki.dark
+    __me: "{{ fgnw_exchange_forest_root_map[inventory_hostname] }}"
+  tasks:
+    - name: Create a Send Connector to each OTHER forest's SMTP domain
+      ansible.windows.win_shell: |
+        Add-PSSnapin Microsoft.Exchange.Management.PowerShell.SnapIn
+        $name = "to-{{ item.value.domain }}"
+        if (-not (Get-SendConnector -Identity $name -ErrorAction SilentlyContinue)) {
+          New-SendConnector -Name $name -Custom `
+            -AddressSpaces "SMTP:{{ item.value.domain }};1" `
+            -SmartHosts "{{ item.value.ip }}" `
+            -SourceTransportServers $env:COMPUTERNAME
+          Write-Output "SEND_CONNECTOR_CREATED"
+        } else {
+          Write-Output "SEND_CONNECTOR_EXISTS"
+        }
+      loop: "{{ fgnw_orgs | dict2items | rejectattr('key', 'equalto', inventory_hostname) | list }}"
+      loop_control:
+        label: "{{ inventory_hostname }} -> {{ item.value.domain }}"
+      register: fgnw_exchange_sendconnector
+      changed_when: "'SEND_CONNECTOR_CREATED' in (fgnw_exchange_sendconnector.stdout | default(''))"
+      no_log: true
+      vars:
+        ansible_become: true
+        ansible_become_method: runas
+        ansible_become_user: "{{ __me }}\\Administrator"
+        ansible_become_password: password

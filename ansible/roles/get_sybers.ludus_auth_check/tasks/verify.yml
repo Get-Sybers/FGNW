@@ -1,0 +1,38 @@
+---
+- name: "verify | Positive: we resolved the expected identity"
+  ansible.builtin.assert:
+    that:
+      - __ludus_api_key is defined
+      - (ludus_auth_skip_liveness | bool) or (ludus_auth_user | default('') == ludus_expected_user)
+    fail_msg: "auth-check did not establish identity {{ ludus_expected_user }} (got '{{ ludus_auth_user | default('') }}')."
+    quiet: true
+- name: "verify | Negative control: a bogus key is rejected (not 200)"
+  when: not ludus_auth_skip_liveness | bool
+  block:
+    - name: "verify | Call /whoami with an invalid key"
+      ansible.builtin.uri:
+        url: "{{ ludus_api_url }}/whoami"
+        method: GET
+        headers:
+          X-API-KEY: "RA.invalidkeyfornegativecontroltestonly0000"
+        validate_certs: "{{ ludus_auth_validate_certs }}"
+        status_code: [200, 401, 403]
+        return_content: false
+      register: __ludus_bogus
+      failed_when: false
+    - name: "verify | Assert the bogus key was explicitly REJECTED"
+      ansible.builtin.assert:
+        that: (__ludus_bogus.status | default(0) | int) in [401, 403]
+        fail_msg: >-
+          The negative control did not observe an explicit rejection (got HTTP
+          {{ __ludus_bogus.status | default('no response') }}). Either a
+          known-invalid key was accepted, or the probe never reached the API —
+          either way do not trust the liveness positive.
+        success_msg: "Negative control OK: invalid key -> HTTP {{ __ludus_bogus.status }}."
+        quiet: true
+- name: "verify | Report"
+  ansible.builtin.debug:
+    msg: >-
+      ludus_auth_check verified: identity={{ ludus_auth_user | default('(shape-only)') }},
+      source={{ __ludus_key_source | default('?') }},
+      liveness={{ 'skipped' if ludus_auth_skip_liveness | bool else 'checked' }}.

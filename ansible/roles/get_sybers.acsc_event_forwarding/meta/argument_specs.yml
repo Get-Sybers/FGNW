@@ -1,0 +1,81 @@
+---
+argument_specs:
+  main:
+    short_description: "ACSC Windows Event Forwarding: install the ACSC WEF subscriptions on a collector."
+    description:
+      - >-
+        The Ansible port of ACSC's add_subscriptions.ps1 and
+        set_subscriptions_sources.ps1 (AustralianCyberSecurityCentre/windows_event_logging,
+        vendored verbatim with provenance in meta/upstream.yml). Stages the
+        requested subscription XML on the collector, creates what is missing with
+        `wecutil cs`, updates what changed, points every subscription at its source
+        computers by SDDL, enforces the enabled state in both directions, enables
+        WMI namespace auditing where a WMI subscription is requested, and verifies
+        against `wecutil gs` rather than trusting exit codes.
+      - >-
+        RUN ON THE COLLECTOR, not on source computers. Windows only; needs facts
+        (os_family) and local administrator rights.
+    options:
+      acsc_wef_subscriptions:
+        type: list
+        elements: str
+        required: false
+        default: []
+        description:
+          - >-
+            Which subscriptions to install, by the SubscriptionId inside each
+            vendored *_sub.xml (NOT the filename — that is what wecutil keys on).
+            An empty list means ALL 28 vendored subscriptions; a name not in the
+            vendored set fails the preflight rather than silently installing nothing.
+      acsc_wef_enable_subscriptions:
+        type: bool
+        required: false
+        default: false
+        description:
+          - >-
+            The runtime enabled state ENFORCED on every requested subscription, in
+            both directions (`wecutil ss <name> /e:<bool>`). Must be a real boolean;
+            a YAML-quoted "false" is refused by the preflight because it is truthy.
+      acsc_wef_source_sddl:
+        type: str
+        required: false
+        default: "O:NSG:BAD:P(A;;GA;;;DC)(A;;GA;;;DD)S:"
+        description:
+          - >-
+            Source-computer SDDL applied with `wecutil ss /adc:`. ACSC's default
+            maps to the Domain Controllers (DC) and Domain Computers (DD) groups.
+            Must start with an owner section and carry a DACL (`^O:.*D:`), or the
+            preflight refuses it.
+      acsc_wef_set_sources:
+        type: bool
+        required: false
+        default: true
+        description: "Apply the SDDL to every subscription after creating it. Without it a subscription exists but collects nothing."
+      acsc_wef_configure_collector:
+        type: bool
+        required: false
+        default: true
+        description: >-
+          Run `wecutil qc /q` first so the Windows Event Collector service accepts subscriptions. Set false only if something else owns collector setup.
+      acsc_wef_stage_dir:
+        type: str
+        required: false
+        default: 'C:\ProgramData\acsc-wef'
+        description: "Directory on the collector where the subscription XML (and the WMI auditing script) is staged before wecutil reads it."
+      acsc_wef_wmi_auditing:
+        type: bool
+        required: false
+        default: true
+        description:
+          - >-
+            Run ACSC's wmi_auditing.ps1 (vendored unmodified) when a "WMI Auditing"
+            subscription is requested, guarded by a SACL read-back so it cannot
+            append duplicate ACEs. Set false only if something else owns WMI audit
+            configuration.
+      acsc_wef_update_existing:
+        type: bool
+        required: false
+        default: true
+        description: >-
+          Re-import (`wecutil ss /cf:`) an existing subscription whose staged XML changed on the controller. false leaves a hand-tuned collector
+          untouched.

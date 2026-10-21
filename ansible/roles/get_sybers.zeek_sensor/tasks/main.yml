@@ -1,0 +1,128 @@
+---
+- name: "Preflight"
+  ansible.builtin.include_tasks: preflight.yml
+  tags: [always]
+- name: "Install Zeek and discover its layout"
+  ansible.builtin.include_tasks: install.yml
+  tags: [zeek-sensor-install]
+- name: "Prove the vantage point actually sees traffic"
+  ansible.builtin.include_tasks: capture_gate.yml
+  tags: [zeek-sensor-capture]
+- name: "Ensure the private directories exist and are owned"
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ zeek_sensor_user }}"
+    group: "{{ zeek_sensor_group }}"
+    mode: "0750"
+  loop:
+    - "{{ zeek_sensor_sitedir }}"
+    - "{{ zeek_sensor_logdir }}"
+    - "{{ zeek_sensor_spooldir }}"
+- name: "Ensure the zeekctl scripts directory is writable by the service user"
+  ansible.builtin.file:
+    path: "{{ zeek_sensor_base }}/share/zeekctl/scripts"
+    state: directory
+    owner: "{{ zeek_sensor_user }}"
+    group: "{{ zeek_sensor_group }}"
+    mode: "0755"
+- name: "Deploy node.cfg (one worker per capture interface)"
+  ansible.builtin.template:
+    src: node.cfg.j2
+    dest: "{{ zeek_sensor_cfgdir }}/node.cfg"
+    owner: root
+    group: "{{ zeek_sensor_group }}"
+    mode: "0640"
+  register: __zeek_nodecfg
+- name: "Deploy the site policy"
+  ansible.builtin.template:
+    src: local.zeek.j2
+    dest: "{{ zeek_sensor_sitedir }}/local.zeek"
+    owner: root
+    group: "{{ zeek_sensor_group }}"
+    mode: "0640"
+  register: __zeek_localzeek
+- name: "Set the zeekctl options this role owns"
+  ansible.builtin.lineinfile:
+    path: "{{ zeek_sensor_cfgdir }}/zeekctl.cfg"
+    regexp: '^\s*#?\s*{{ item.key }}\s*='
+    line: "{{ item.key }} = {{ item.value }}"
+    insertafter: EOF
+    owner: root
+    group: "{{ zeek_sensor_group }}"
+    mode: "0640"
+  loop: "{{ __zeek_ctl_options }}"
+  loop_control:
+    label: "{{ item.key }}"
+  vars:
+    __zeek_ctl_options: >-
+      {{ [
+           {'key': 'LogDir', 'value': zeek_sensor_logdir},
+           {'key': 'SpoolDir', 'value': zeek_sensor_spooldir},
+           {'key': 'CronEnabled', 'value': 1},
+           {'key': 'MailTo', 'value': ''},
+           {'key': 'MailConnectionSummary', 'value': 0},
+           {'key': 'SendMail', 'value': ''}
+         ]
+         + ([{'key': 'PcapFilter', 'value': zeek_sensor_capture_filter}]
+            if zeek_sensor_capture_filter | length > 0 else []) }}
+  register: __zeek_ctlcfg
+- name: "Validate the policy before deploying it"
+  ansible.builtin.command: "{{ zeek_sensor_bin }} check"
+  become: "{{ zeek_sensor_user != 'root' }}"
+  become_user: "{{ zeek_sensor_user }}"
+  environment:
+    HOME: /
+  register: __zeek_check
+  changed_when: false
+  failed_when: __zeek_check.rc != 0
+- name: "Install the systemd unit"
+  ansible.builtin.template:
+    src: zeek-sensor.service.j2
+    dest: /etc/systemd/system/zeek-sensor.service
+    owner: root
+    group: root
+    mode: "0644"
+  register: __zeek_unit
+- name: "Install the zeekctl cron unit"
+  ansible.builtin.template:
+    src: zeek-sensor-cron.service.j2
+    dest: /etc/systemd/system/zeek-sensor-cron.service
+    owner: root
+    group: root
+    mode: "0644"
+  register: __zeek_cron_unit
+- name: "Install the zeekctl cron timer"
+  ansible.builtin.template:
+    src: zeek-sensor-cron.timer.j2
+    dest: /etc/systemd/system/zeek-sensor-cron.timer
+    owner: root
+    group: root
+    mode: "0644"
+  register: __zeek_cron_timer
+- name: "Reload systemd when any unit changed"
+  ansible.builtin.include_tasks: daemon-reload.yml
+  when: >-
+    __zeek_unit.changed or __zeek_cron_unit.changed or __zeek_cron_timer.changed
+- name: "Enable and start the sensor"
+  ansible.builtin.systemd_service:
+    name: zeek-sensor
+    enabled: true
+    state: started
+- name: "Redeploy when the configuration changed"
+  ansible.builtin.include_tasks: redeploy.yml
+  when: >-
+    __zeek_nodecfg.changed or __zeek_localzeek.changed
+    or __zeek_ctlcfg.changed or __zeek_unit.changed
+- name: "Enable and start the zeekctl cron timer"
+  ansible.builtin.systemd_service:
+    name: zeek-sensor-cron.timer
+    enabled: true
+    state: started
+- name: "Apply the ACSC retention target to the Zeek log tree"
+  ansible.builtin.include_tasks: retention.yml
+  when: zeek_sensor_manage_retention | bool
+  tags: [zeek-sensor-retention]
+- name: "Verify"
+  ansible.builtin.include_tasks: verify.yml
+  tags: [zeek-sensor-verify]

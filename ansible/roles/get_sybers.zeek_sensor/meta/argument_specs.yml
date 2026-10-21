@@ -1,0 +1,251 @@
+---
+argument_specs:
+  main:
+    short_description: "Deploy Zeek as a passive network sensor, with the vantage point proven rather than assumed."
+    description:
+      - >-
+        Installs and configures Zeek at a capture vantage point, refusing to
+        proceed unless a bounded promiscuous probe shows the resolved interfaces
+        actually deliver unicast frames, and verifying afterwards by reading
+        Zeek's own packet counters instead of the service state.
+      - >-
+        Profile 'hypervisor' discovers the SDN VNet bridge devices on a PVE node
+        and is the primary vantage point — it is the only one that sees
+        same-VLAN VM-to-VM traffic, which never leaves the node's bridge.
+        Profile 'chokepoint' targets the Ludus range router or a mirror-fed
+        sensor VM and sees inter-VLAN plus egress only.
+    options:
+      zeek_sensor_profile:
+        type: str
+        required: false
+        default: hypervisor
+        choices: [hypervisor, chokepoint]
+        description: "Deployment mode. 'hypervisor' = PVE node capturing on r<N>/ludusnat; 'chokepoint' = range router or mirror-fed sensor VM."
+      zeek_sensor_capture_interfaces:
+        type: list
+        elements: str
+        required: false
+        default: []
+        description: "Explicit capture interfaces (e.g. ['r1', 'ludusnat']). REQUIRED for 'chokepoint'; overrides discovery for 'hypervisor'."
+      zeek_sensor_hypervisor_iface_pattern:
+        type: str
+        required: false
+        default: '^(r[0-9]+|ludusnat)$'
+        description: >-
+          Regex matched against bridge device names during 'hypervisor' discovery.
+          Matching zero devices is a hard failure, not an empty capture set.
+      zeek_sensor_allow_lxc:
+        type: bool
+        required: false
+        default: false
+        description: "Override the refusal to install in an LXC container. Only for a PRIVILEGED container with real host interfaces."
+      zeek_sensor_install_source:
+        type: str
+        required: false
+        default: nexus_apt
+        choices: [nexus_apt, staged_deb]
+        description: "Where packages come from. There is no internet path — ranges run --testing (rule 4)."
+      zeek_sensor_nexus_host:
+        type: str
+        required: false
+        default: "192.0.2.2"
+        description: "Nexus host serving the apt proxy."
+      zeek_sensor_nexus_port:
+        type: int
+        required: false
+        default: 8081
+        description: "Nexus port."
+      zeek_sensor_nexus_repo:
+        type: str
+        required: false
+        default: ""
+        description: "Nexus apt-proxy repository name carrying Zeek (e.g. debian-trixie-proxy). Empty by default so an unconfigured call fails loudly."
+      zeek_sensor_nexus_repo_codename:
+        type: str
+        required: false
+        default: ""
+        description: "Suite the proxy serves (e.g. trixie, bookworm, bullseye)."
+      zeek_sensor_nexus_repo_components:
+        type: str
+        required: false
+        default: "main"
+        description: "Repository components (e.g. 'main', 'main contrib')."
+      zeek_sensor_nexus_keyring:
+        type: str
+        required: false
+        default: /usr/share/keyrings/debian-archive-keyring.gpg
+        description: "signed-by keyring on the target. A Nexus apt proxy passes upstream signatures through, so this must be the proxied repo's key."
+      zeek_sensor_nexus_keyring_src:
+        type: str
+        required: false
+        default: ""
+        description: "Controller-side keyring to push, when the proxied repo's key is not already on the host."
+      zeek_sensor_apt_list:
+        type: str
+        required: false
+        default: /etc/apt/sources.list.d/zeek-sensor-nexus.list
+        description: "Where the proxy repo is registered. Refreshed in isolation so a blanket apt update never reaches unreachable repos."
+      zeek_sensor_artefacts:
+        type: list
+        elements: dict
+        required: false
+        default: []
+        description: "For 'staged_deb': [{name, version, sha256, deb}] in install order. Digests are re-verified on the target after transport."
+      zeek_sensor_stage_dir:
+        type: str
+        required: false
+        default: /var/cache/get-sybers/zeek-sensor
+        description: "Controller-side directory the staged .debs are read from."
+      zeek_sensor_node_stage_dir:
+        type: str
+        required: false
+        default: /var/cache/get-sybers/zeek-sensor
+        description: "Target-side directory the staged .debs are pushed to."
+      zeek_sensor_packages:
+        type: list
+        elements: str
+        required: false
+        default: [zeek]
+        description: "Zeek packages to install. Debian's 'zeek' metapackage pulls zeek-core and zeekctl."
+      zeek_sensor_support_packages:
+        type: list
+        elements: str
+        required: false
+        default: [tcpdump, ethtool]
+        description: "Capture tooling. tcpdump is not optional — the packet-visibility gate depends on it."
+      zeek_sensor_user:
+        type: str
+        required: false
+        default: zeek
+        description: "Service account. Unprivileged plus file capabilities by default; set to 'root' to run privileged."
+      zeek_sensor_group:
+        type: str
+        required: false
+        default: zeek
+        description: "Group for the service account and the directories zeekctl writes to."
+      zeek_sensor_require_packets:
+        type: bool
+        required: false
+        default: true
+        description: >-
+          Fail unless every capture interface delivers frames, and unless Zeek's own
+          counters then move. Set false ONLY to converge before the range exists; the
+          run says so loudly when you do.
+      zeek_sensor_capture_probe_seconds:
+        type: int
+        required: false
+        default: 20
+        description: "Probe window per interface, in seconds."
+      zeek_sensor_capture_probe_min_packets:
+        type: int
+        required: false
+        default: 1
+        description: "Frames required per interface within the probe window."
+      zeek_sensor_capture_probe_filter:
+        type: str
+        required: false
+        default: "not broadcast and not multicast"
+        description: "BPF for the PROBE only. Requiring unicast is what distinguishes a forwarding vantage point from a merely noisy interface."
+      zeek_sensor_capture_filter:
+        type: str
+        required: false
+        default: ""
+        description: "BPF applied to Zeek itself (zeekctl PcapFilter). Empty captures everything the interface offers."
+      zeek_sensor_disable_offloads:
+        type: list
+        elements: str
+        required: false
+        default: [gro, lro, tso, gso, rx-checksumming]
+        description: "ethtool features turned off on each capture interface, so Zeek is not handed kernel-coalesced frames that were never on the wire."
+      zeek_sensor_require_offloads_off:
+        type: bool
+        required: false
+        default: true
+        description: "Treat GRO/LRO still being on as a hard failure. Those two corrupt a passive sensor's view; TSO/GSO are transmit-side."
+      zeek_sensor_local_nets:
+        type: list
+        elements: str
+        required: false
+        default: ["10.0.0.0/8", "192.0.2.0/24", "203.0.113.0/24", "198.51.100.0/24"]
+        description: "Site::local_nets. Without it Zeek classes everything as remote and the known-hosts/services/software frameworks stop meaning anything."
+      zeek_sensor_digest_salt:
+        type: str
+        required: false
+        default: "get-sybers-change-me"
+        description: "Salt for Zeek's file-ID digests. Change per deployment."
+      zeek_sensor_json_logs:
+        type: bool
+        required: false
+        default: true
+        description: "Emit JSON logs for SIEM ingest rather than TSV."
+      zeek_sensor_community_id:
+        type: bool
+        required: false
+        default: true
+        description: "Log Community ID on conn.log — the join key to Sysmon's NetworkConnect events."
+      zeek_sensor_vlan_logging:
+        type: bool
+        required: false
+        default: true
+        description: "Log inner 802.1Q tags. Load-bearing on 'hypervisor': the tag is the only thing that says which range VLAN a flow belonged to."
+      zeek_sensor_mac_logging:
+        type: bool
+        required: false
+        default: true
+        description: "Log link-layer addresses in conn.log."
+      zeek_sensor_capture_passwords:
+        type: bool
+        required: false
+        default: true
+        description: "Capture cleartext FTP/HTTP credentials. A feature in a range; it does write real passwords into the log tree."
+      zeek_sensor_intel_files:
+        type: list
+        elements: str
+        required: false
+        default: []
+        description: "Target-side paths of locally staged Zeek intel files. There is deliberately no feed fetcher — rule 4."
+      zeek_sensor_manage_retention:
+        type: bool
+        required: false
+        default: true
+        description: "Apply the ACSC retention target to the Zeek log tree (zeekctl age levers plus a size ceiling zeekctl does not provide)."
+      zeek_sensor_log_expire_days:
+        type: int
+        required: false
+        default: 548
+        description: "zeekctl LogExpireInterval in days. 548 ~= the ACSC 18-month target — an aim, not a guarantee; the size ceiling usually binds first."
+      zeek_sensor_stats_log_expire_days:
+        type: int
+        required: false
+        default: 30
+        description: "Expiry for the diagnostic stats logs, which are not evidence."
+      zeek_sensor_log_rotation_seconds:
+        type: int
+        required: false
+        default: 3600
+        description: "zeekctl LogRotationInterval — how often live logs are archived into the dated tree."
+      zeek_sensor_log_max_use_mb:
+        type: int
+        required: false
+        default: 20480
+        description: >-
+          Size ceiling for the log tree in MiB. zeekctl has no size lever, so the role
+          installs a pruner and timer. Asserted against free space in preflight.
+      zeek_sensor_log_prune_floor_days:
+        type: int
+        required: false
+        default: 7
+        description: >-
+          The pruner refuses to delete below this many dated directories and exits
+          non-zero instead — a ceiling that silently eats everything is worse than one
+          that complains.
+      zeek_sensor_cron_interval:
+        type: str
+        required: false
+        default: "*:0/5"
+        description: "systemd OnCalendar for zeekctl cron, which is what actually enforces rotation, expiry and worker crash recovery."
+      zeek_sensor_verify_settle_seconds:
+        type: int
+        required: false
+        default: 25
+        description: "How long to let Zeek run before reading back its own packet counters."

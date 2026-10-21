@@ -1,0 +1,542 @@
+---
+village_documents:
+  Akatsuki (Criminal Organisation):
+    - Financial Records/kakuzu_bounty_earnings.xlsx
+    - Financial Records/mission_payment_ledger.xlsx
+    - Financial Records/operational_expenses.xlsx
+    - Intelligence Files/jinchuriki_host_profiles.xlsx
+    - Intelligence Files/kage_threat_assessments.docx
+    - Intelligence Files/naruto_gaara_active_surveillance.xlsx
+    - Intelligence Files/spy_network_contacts.docx
+    - Intelligence Files/village_weaknesses_assessment.xlsx
+    - Member Roster/active_members.xlsx
+    - Member Roster/deceased_members_log.xlsx
+    - Member Roster/partnership_pairings.docx
+    - Member Roster/ring_assignments.docx
+    - Onboarding/cloak_and_ring_issuance.docx
+    - Onboarding/partner_assignment_letter.docx
+    - Onboarding/ring_ceremony_instructions.docx
+    - Onboarding/rules_of_the_organisation.docx
+    - Onboarding/welcome_to_akatsuki.docx
+    - Onboarding/what_not_to_do_around_tobi.docx
+    - Operation Logs/active/current_extraction_target.docx
+    - Operation Logs/active/ring_bearer_assignments.docx
+    - Operation Logs/active/tailed_beast_capture_order.docx
+    - Operation Logs/classified/infinite_tsukuyomi_timeline.docx
+    - Operation Logs/classified/madara_true_plan.docx
+    - Operation Logs/classified/ten_tails_revival_steps.docx
+    - Operation Logs/completed/extraction_log.xlsx
+    - Operation Logs/completed/roshi_capture_report.docx
+    - Operation Logs/completed/shukaku_extraction_report.docx
+    - Operation Logs/completed/yugito_capture_report.docx
+    - Policies & Orders/bounty_collection_procedure.docx
+    - Policies & Orders/communications_security_protocol.docx
+    - Policies & Orders/hide_cloud_policy.docx
+    - Policies & Orders/mission_payment_structure.xlsx
+    - Policies & Orders/no_personal_vendettas_policy.docx
+    - Policies & Orders/pain_supreme_authority.docx
+    - Policies & Orders/tobi_shadow_leadership.docx
+    - Technique Files/member_techniques/deidara_explosive_clay_guide.docx
+    - Technique Files/member_techniques/itachi_sharingan_techniques.docx
+    - Technique Files/member_techniques/kakuzu_earth_grudge_fear.docx
+    - Technique Files/member_techniques/pain_six_paths_manual.docx
+    - Technique Files/member_techniques/sasori_puppet_arts.docx
+    - Technique Files/sealing_jutsu/four_corner_sealing_barrier.docx
+    - Technique Files/sealing_jutsu/gedō_statue_seal_procedure.docx
+    - Technique Files/sealing_jutsu/three_days_sealing_process.docx
+  Hidden Cloud Village (Kumogakure):
+    - Intelligence Division/encrypted_comms_log.docx
+    - Intelligence Division/foreign_village_assessments.xlsx
+    - Intelligence Division/hyuga_byakugan_research.docx
+    - Intelligence Division/sensor_nin_reports.docx
+    - Jinchuriki Program/bijuu_extraction_threat_assessment.docx
+    - Jinchuriki Program/eight_tails_host_history.xlsx
+    - Jinchuriki Program/killer_b_training_log.docx
+    - Jinchuriki Program/tailed_beast_control_assessment.xlsx
+    - Jinchuriki Program/two_tails_host_history.xlsx
+    - Jutsu Scrolls/forbidden/gold_silver_brothers_techniques.docx
+    - Jutsu Scrolls/forbidden/three_coloured_pills_policy.docx
+    - Jutsu Scrolls/known_jutsu/cloud_kenjutsu_manual.docx
+    - Jutsu Scrolls/known_jutsu/lightning_release_techniques.docx
+    - Jutsu Scrolls/known_jutsu/storm_release_reference.docx
+    - Jutsu Scrolls/training/lightning_armour_training.docx
+    - Jutsu Scrolls/training/speed_enhancement_drills.docx
+    - Jutsu Scrolls/training/tailed_beast_chakra_control.docx
+    - Mission Reports/active/current_mission_brief.docx
+    - Mission Reports/active/lightning_country_patrol.docx
+    - Mission Reports/active/mountain_surveillance_log.docx
+    - Mission Reports/archive/raikage_war_campaign_logs.docx
+    - Mission Reports/archive/third_raikage_last_stand_report.docx
+    - Mission Reports/classified/gold_silver_brothers_file.docx
+    - Mission Reports/classified/killer_b_extraction_attempt.docx
+    - Mission Reports/classified/yugito_capture_incident.docx
+    - Mission Reports/completed/hyuga_incident_debrief.docx
+    - Mission Reports/completed/jinchuriki_escort_reports.xlsx
+    - Mission Reports/completed/mission_log.xlsx
+    - Onboarding/cloud_village_map.docx
+    - Onboarding/faq_new_recruits.docx
+    - Onboarding/lightning_safety_briefing.docx
+    - Onboarding/mountain_altitude_training_guide.docx
+    - Onboarding/welcome_to_kumo.docx
+    - Personal Records/identity/cloud_headband_issuance.docx
+    - Personal Records/identity/cloud_shinobi_registration.docx
+    - Personal Records/medical/lightning_armour_stress_test.docx
+    - Personal Records/medical/lightning_exposure_health_log.docx
+    - Personal Records/performance/raikage_commendations.docx
+    - Personal Records/performance/speed_assessment_results.xlsx
+    - Raikage Office/first_raikage_records.docx
+    - Raikage Office/five_kage_summit_cloud_position.docx
+    - Raikage Office/fourth_raikage_reform_decrees.docx
+    - Raikage Office/second_raikage_records.docx
+    - Raikage Office/third_raikage_legacy_file.docx
+    - Team Rosters/cloud_jonin_list.xlsx
+    - Team Rosters/intelligence_division.xlsx
+    - Team Rosters/jinchuriki_guard_detail.docx
+    - Team Rosters/raikage_bodyguard_unit.docx
+    - Team Rosters/samui_team_roster.docx
+    - Village Laws & Policies/constitution/cloud_village_charter.docx
+    - Village Laws & Policies/constitution/lightning_country_law_codex.docx
+    - Village Laws & Policies/diplomatic/five_nation_alliance_agreement.docx
+    - Village Laws & Policies/diplomatic/hyuga_incident_treaty.docx
+    - Village Laws & Policies/diplomatic/konoha_relations_file.docx
+    - Village Laws & Policies/jinchuriki_policy/killer_b_protocols.docx
+    - Village Laws & Policies/jinchuriki_policy/tailed_beast_control_training.docx
+    - Village Laws & Policies/jinchuriki_policy/yugito_nii_containment_history.docx
+    - Village Laws & Policies/rank_regulations/chunin_promotion_policy.docx
+    - Village Laws & Policies/rank_regulations/cloud_genin_handbook.docx
+    - Village Laws & Policies/rank_regulations/raikage_authority_decree.docx
+  Hidden Grass Village (Kusagakure):
+    - Jutsu Scrolls/known_jutsu/grass_techniques_reference.docx
+    - Jutsu Scrolls/known_jutsu/kimimaro_bone_technique_archive.docx
+    - Jutsu Scrolls/training/survival_in_hostile_terrain.docx
+    - Mission Reports/active/grass_country_patrol_log.docx
+    - Mission Reports/completed/chunin_exam_participant_log.xlsx
+    - Mission Reports/completed/orochimaru_infiltration_report.docx
+    - Onboarding/faq_new_recruits.docx
+    - Onboarding/grass_country_map.docx
+    - Onboarding/welcome_to_kusa.docx
+    - Personal Records/medical/grass_country_health_log.docx
+    - Personal Records/shinobi_registration.docx
+    - Team Rosters/active_shinobi_list.xlsx
+    - Team Rosters/chunin_exam_team_assignments.docx
+    - Village Laws & Policies/chunin_exam_participation_policy.docx
+    - Village Laws & Policies/grass_village_charter.docx
+    - Village Laws & Policies/neutral_nation_treaty.docx
+  Hidden Leaf Village (Konohagakure):
+    - Bingo Book/akatsuki_threat_files/itachi_uchiha_profile.docx
+    - Bingo Book/akatsuki_threat_files/kisame_profile.docx
+    - Bingo Book/akatsuki_threat_files/tobi_unknown_identity.docx
+    - Bingo Book/konoha_bingo_book.docx
+    - Bingo Book/orochimaru_file.docx
+    - Bingo Book/s_rank_missing_nin.xlsx
+    - Bingo Book/sasuke_uchiha_file.docx
+    - Bingo Book/threat_level_matrix.xlsx
+    - Communications/templates/formal_request_template.docx
+    - Communications/templates/inter_village_memo_template.docx
+    - Communications/templates/mission_debrief_template.docx
+    - Equipment & Inventory/equipment_maintenance_log.xlsx
+    - Equipment & Inventory/ninja_tool_requisition.docx
+    - Equipment & Inventory/scroll_library_index.xlsx
+    - Equipment & Inventory/summoning_contract.docx
+    - Equipment & Inventory/weapons_inventory.xlsx
+    - Hokage Office/fifth_hokage_medical_reforms.docx
+    - Hokage Office/first_hokage_edicts.docx
+    - Hokage Office/fourth_hokage_last_will.docx
+    - Hokage Office/hokage_succession_records.xlsx
+    - Hokage Office/second_hokage_policies.docx
+    - Hokage Office/seventh_hokage_era_reforms.docx
+    - Hokage Office/sixth_hokage_anbu_review.docx
+    - Hokage Office/third_hokage_memoirs.docx
+    - Intel & Surveillance/encrypted/classified_eyes_only.docx
+    - Intel & Surveillance/encrypted/root_black_ops_log.docx
+    - Intel & Surveillance/spy_network_reports/anbu_surveillance_summary.docx
+    - Intel & Surveillance/spy_network_reports/jiraiya_field_intel.docx
+    - Intel & Surveillance/spy_network_reports/jiraiya_manuscript_draft.docx
+    - Intel & Surveillance/spy_network_reports/jiraiya_royalty_statement.xlsx
+    - Intel & Surveillance/village_threat_reports/akatsuki_activity_log.xlsx
+    - Intel & Surveillance/village_threat_reports/sound_village_threat.docx
+    - Intel & Surveillance/village_threat_reports/tailed_beast_sightings.docx
+    - Jutsu Scrolls/forbidden/edo_tensei_ban_notice.docx
+    - Jutsu Scrolls/forbidden/eight_gates_waiver.docx
+    - Jutsu Scrolls/forbidden/scroll_of_seals_inventory.docx
+    - Jutsu Scrolls/known_jutsu/fire_release_techniques.docx
+    - Jutsu Scrolls/known_jutsu/jutsu_reference.docx
+    - Jutsu Scrolls/known_jutsu/lightning_release_techniques.docx
+    - Jutsu Scrolls/known_jutsu/wood_release_restricted.docx
+    - Jutsu Scrolls/seals/eight_trigrams_seal_reference.docx
+    - Jutsu Scrolls/seals/flying_thunder_god_notes.docx
+    - Jutsu Scrolls/seals/four_symbols_seal_reference.docx
+    - Jutsu Scrolls/training/academy_curriculum.docx
+    - Jutsu Scrolls/training/chakra_nature_training.docx
+    - Jutsu Scrolls/training/tree_walking_exercise.docx
+    - Jutsu Scrolls/training/water_walking_exercise.docx
+    - Mission Reports/active/current_mission_brief.docx
+    - Mission Reports/active/fire_country_patrol_log.docx
+    - Mission Reports/active/konoha_field_notes.docx
+    - Mission Reports/archive/first_shinobi_war_summary.docx
+    - Mission Reports/archive/pain_invasion_after_action.docx
+    - Mission Reports/archive/second_shinobi_war_summary.docx
+    - Mission Reports/archive/third_shinobi_war_summary.docx
+    - Mission Reports/classified/akatsuki_ttp_profile.docx
+    - Mission Reports/classified/nine_tails_containment_log.docx
+    - Mission Reports/classified/root_operation_files.docx
+    - Mission Reports/classified/uchiha_massacre_report_classified.docx
+    - Mission Reports/completed/chunin_exam_debrief.docx
+    - Mission Reports/completed/konoha_crush_incident_report.docx
+    - Mission Reports/completed/mission_log.xlsx
+    - Onboarding/academy_new_student_guide.docx
+    - Onboarding/clan_directory.docx
+    - Onboarding/faq_new_recruits.docx
+    - Onboarding/ichiraku_ramen_staff_discount.docx
+    - Onboarding/konoha_village_map.docx
+    - Onboarding/welcome_to_konoha.docx
+    - Onboarding/will_of_fire_introduction.docx
+    - Personal Records/identity/clan_affiliation_cert.docx
+    - Personal Records/identity/konoha_headband_issuance.docx
+    - Personal Records/identity/shinobi_registration_card.docx
+    - Personal Records/medical/chakra_reserve_assessment.docx
+    - Personal Records/medical/curse_mark_disclosure.docx
+    - Personal Records/medical/hospital_records.docx
+    - Personal Records/medical/jinchuriki_health_log.xlsx
+    - Personal Records/performance/academy_exam_results.xlsx
+    - Personal Records/performance/chunin_exam_scores.xlsx
+    - Personal Records/performance/hokage_commendations.docx
+    - Personal Records/performance/promotion_history.xlsx
+    - Personal Records/personal/naruto_academy_disciplinary_record.docx
+    - Personal Records/personal/personal_ninja_way_statement.docx
+    - Personal Records/personal/welcome_to_konoha.docx
+    - Personal Records/personal/will_of_fire_pledge.docx
+    - Team Rosters/anbu_division_roster.xlsx
+    - Team Rosters/chunin_exam_participants.xlsx
+    - Team Rosters/jonin_active_duty_list.xlsx
+    - Team Rosters/konoha_12_contact_sheet.docx
+    - Team Rosters/medical_corps_roster.xlsx
+    - Team Rosters/root_operative_list_classified.xlsx
+    - Team Rosters/team_10_roster.docx
+    - Team Rosters/team_7_roster.docx
+    - Team Rosters/team_8_roster.docx
+    - Team Rosters/team_guy_roster.docx
+    - Village Laws & Policies/civilian/daimyo_liaison_procedures.docx
+    - Village Laws & Policies/civilian/fire_country_civilian_protection.docx
+    - Village Laws & Policies/civilian/ichiraku_vendor_permit.docx
+    - Village Laws & Policies/clan_policies/aburame_clan_insect_use_policy.docx
+    - Village Laws & Policies/clan_policies/hyuga_branch_house_seal_policy.docx
+    - Village Laws & Policies/clan_policies/hyuga_main_branch_policy.docx
+    - Village Laws & Policies/clan_policies/inuzuka_clan_ninken_registry.docx
+    - Village Laws & Policies/clan_policies/nara_clan_intelligence_sharing.docx
+    - Village Laws & Policies/clan_policies/uchiha_clan_regulations.docx
+    - Village Laws & Policies/constitution/first_hokage_founding_decree.docx
+    - Village Laws & Policies/constitution/village_hidden_in_the_leaves_act.docx
+    - Village Laws & Policies/constitution/will_of_fire_charter.docx
+    - Village Laws & Policies/disciplinary/bingo_book_update_procedure.docx
+    - Village Laws & Policies/disciplinary/jinchuriki_containment_directive.docx
+    - Village Laws & Policies/disciplinary/missing_nin_protocol.docx
+    - Village Laws & Policies/disciplinary/sharingan_use_policy.docx
+    - Village Laws & Policies/rank_regulations/academy_graduation_requirements.docx
+    - Village Laws & Policies/rank_regulations/anbu_selection_process.docx
+    - Village Laws & Policies/rank_regulations/chunin_exam_eligibility.docx
+    - Village Laws & Policies/rank_regulations/genin_team_assignment_policy.docx
+    - Village Laws & Policies/rank_regulations/hokage_succession_protocol.docx
+    - Village Laws & Policies/rank_regulations/jonin_promotion_criteria.docx
+  Hidden Mist Village (Kirigakure):
+    - Hunter-Nin Division/body_disposal_protocol.docx
+    - Hunter-Nin Division/hunter_nin_code_of_conduct.docx
+    - Hunter-Nin Division/missing_nin_pursuit_orders.docx
+    - Hunter-Nin Division/retrieval_mission_log.xlsx
+    - Jutsu Scrolls/forbidden/bloodline_limit_research_archive.docx
+    - Jutsu Scrolls/forbidden/graduation_duel_ban_notice.docx
+    - Jutsu Scrolls/known_jutsu/mist_concealment_jutsu.docx
+    - Jutsu Scrolls/known_jutsu/silent_killing_manual.docx
+    - Jutsu Scrolls/known_jutsu/water_release_techniques.docx
+    - Jutsu Scrolls/training/mist_navigation_training.docx
+    - Jutsu Scrolls/training/sword_combat_drills.docx
+    - Jutsu Scrolls/training/water_walking_advanced.docx
+    - Mission Reports/active/current_mission_brief.docx
+    - Mission Reports/active/mist_surveillance_report.docx
+    - Mission Reports/active/water_country_patrol_log.docx
+    - Mission Reports/archive/seven_swordsmen_battle_logs.docx
+    - Mission Reports/archive/war_of_the_bloody_mist.docx
+    - Mission Reports/classified/bloody_mist_era_review.docx
+    - Mission Reports/classified/tobi_manipulation_investigation.docx
+    - Mission Reports/classified/yagura_controlled_period_file.docx
+    - Mission Reports/completed/graduation_duel_records.xlsx
+    - Mission Reports/completed/hunter_nin_capture_reports.xlsx
+    - Mission Reports/completed/mission_log.xlsx
+    - Mizukage Office/bloody_mist_reform_policy.docx
+    - Mizukage Office/fifth_mizukage_mei_terumi_reforms.docx
+    - Mizukage Office/first_mizukage_records.docx
+    - Mizukage Office/fourth_mizukage_yagura_investigation.docx
+    - Mizukage Office/second_mizukage_rivalry_log.docx
+    - Mizukage Office/third_mizukage_records.docx
+    - Onboarding/faq_new_recruits.docx
+    - Onboarding/kiri_village_map.docx
+    - Onboarding/mist_navigation_guide.docx
+    - Onboarding/silent_killing_etiquette.docx
+    - Onboarding/welcome_to_kiri.docx
+    - Personal Records/identity/mist_headband_issuance.docx
+    - Personal Records/identity/mist_shinobi_registration.docx
+    - Personal Records/medical/chakra_exhaustion_record.docx
+    - Personal Records/medical/moisture_exposure_health_log.docx
+    - Personal Records/performance/graduation_duel_outcome.docx
+    - Personal Records/performance/swordsman_certification.docx
+    - Seven Swordsmen Archive/chojuro_active_record.docx
+    - Seven Swordsmen Archive/kisame_hoshigaki_file.docx
+    - Seven Swordsmen Archive/mangetsu_hozuki_file.docx
+    - Seven Swordsmen Archive/suigetsu_hozuki_file.docx
+    - Seven Swordsmen Archive/sword_history_timeline.xlsx
+    - Seven Swordsmen Archive/zabuza_momochi_file.docx
+    - Team Rosters/active_jonin_list.xlsx
+    - Team Rosters/hunter_nin_division.xlsx
+    - Team Rosters/mizukage_guard_detail.docx
+    - Team Rosters/seven_swordsmen_roster.xlsx
+    - Village Laws & Policies/bloodline_policy/ice_release_disclosure.docx
+    - Village Laws & Policies/bloodline_policy/kekkei_genkai_registration.docx
+    - Village Laws & Policies/bloodline_policy/post_bloody_mist_bloodline_protection.docx
+    - Village Laws & Policies/constitution/mist_village_charter.docx
+    - Village Laws & Policies/constitution/water_country_law_codex.docx
+    - Village Laws & Policies/rank_regulations/graduation_examination_policy.docx
+    - Village Laws & Policies/rank_regulations/hunter_nin_mandate.docx
+    - Village Laws & Policies/rank_regulations/mizukage_authority_decree.docx
+    - Village Laws & Policies/swords_registry/kubikiribōchō_maintenance.docx
+    - Village Laws & Policies/swords_registry/samehada_restricted_access.docx
+    - Village Laws & Policies/swords_registry/seven_swords_chain_of_custody.xlsx
+    - Village Laws & Policies/swords_registry/sword_inheritance_policy.docx
+  Hidden Rain Village (Amegakure):
+    - Akatsuki Founding Records/nagato_succession.docx
+    - Akatsuki Founding Records/original_akatsuki_manifesto.docx
+    - Akatsuki Founding Records/peace_through_pain_philosophy.docx
+    - Akatsuki Founding Records/yahiko_founding_vision.docx
+    - Jutsu Scrolls/known_jutsu/paper_ninjutsu_reference.docx
+    - Jutsu Scrolls/known_jutsu/rain_tiger_at_will.docx
+    - Jutsu Scrolls/known_jutsu/rinnegan_six_paths_powers.docx
+    - Jutsu Scrolls/training/rain_sensing_technique.docx
+    - Jutsu Scrolls/training/senjutsu_restricted_notes.docx
+    - Mission Reports/active/akatsuki_liaison_brief.docx
+    - Mission Reports/active/rain_country_patrol_log.docx
+    - Mission Reports/classified/konan_paper_bomb_network.docx
+    - Mission Reports/classified/nagato_true_identity_file.docx
+    - Mission Reports/classified/pain_six_paths_deployment_log.docx
+    - Mission Reports/completed/hanzo_overthrow_after_action.docx
+    - Mission Reports/completed/mission_log.xlsx
+    - Onboarding/closed_village_access_policy.docx
+    - Onboarding/faq_new_recruits.docx
+    - Onboarding/rain_country_map.docx
+    - Onboarding/welcome_to_ame.docx
+    - Surveillance Network/intruder_log.xlsx
+    - Surveillance Network/rain_sensing_grid_map.docx
+    - Surveillance Network/zetsu_spy_reports.docx
+    - Team Rosters/akatsuki_founding_members.docx
+    - Team Rosters/amegakure_guard_roster.xlsx
+    - Team Rosters/pain_six_paths_manifest.docx
+    - Village Laws & Policies/anti_espionage_directive.docx
+    - Village Laws & Policies/closed_border_policy.docx
+    - Village Laws & Policies/god_of_rain_edicts.docx
+    - Village Laws & Policies/pain_law_decrees.docx
+  Hidden Rock Village (Iwagakure):
+    - Explosion Corps/deidara_commendation_then_betrayal.docx
+    - Explosion Corps/demolition_mission_log.xlsx
+    - Explosion Corps/explosion_release_operators.xlsx
+    - Explosion Corps/explosive_clay_incident_reports.docx
+    - Jutsu Scrolls/forbidden/dust_release_civilian_ban.docx
+    - Jutsu Scrolls/forbidden/explosion_corps_classified_tech.docx
+    - Jutsu Scrolls/known_jutsu/dust_release_reference.docx
+    - Jutsu Scrolls/known_jutsu/earth_release_techniques.docx
+    - Jutsu Scrolls/known_jutsu/explosion_release_manual.docx
+    - Jutsu Scrolls/known_jutsu/lava_release_techniques.docx
+    - Jutsu Scrolls/training/earth_manipulation_drills.docx
+    - Jutsu Scrolls/training/flight_jutsu_log.docx
+    - Jutsu Scrolls/training/particle_technique_apprentice_notes.docx
+    - Mission Reports/active/border_surveillance_report.docx
+    - Mission Reports/active/current_mission_brief.docx
+    - Mission Reports/active/earth_country_patrol_log.docx
+    - Mission Reports/archive/iwa_konoha_war_summary.docx
+    - Mission Reports/archive/yellow_flash_encounter_logs.docx
+    - Mission Reports/classified/explosion_corps_black_ops.docx
+    - Mission Reports/classified/han_jinchuriki_extraction.docx
+    - Mission Reports/classified/roshi_jinchuriki_extraction.docx
+    - Mission Reports/completed/deidara_defection_report.docx
+    - Mission Reports/completed/mission_log.xlsx
+    - Mission Reports/completed/third_shinobi_war_debriefs.docx
+    - Onboarding/explosion_safety_policy.docx
+    - Onboarding/faq_new_recruits.docx
+    - Onboarding/iwa_village_map.docx
+    - Onboarding/mountain_terrain_briefing.docx
+    - Onboarding/welcome_to_iwa.docx
+    - Personal Records/identity/iwa_headband_issuance.docx
+    - Personal Records/identity/rock_shinobi_registration.docx
+    - Personal Records/medical/dust_exposure_health_log.docx
+    - Personal Records/medical/explosion_corps_injury_record.docx
+    - Team Rosters/explosion_corps_roster.xlsx
+    - Team Rosters/kurotsuchi_unit_roster.docx
+    - Team Rosters/rock_jonin_active_list.xlsx
+    - Team Rosters/tsuchikage_guard_detail.docx
+    - Tsuchikage Office/first_tsuchikage_records.docx
+    - Tsuchikage Office/five_kage_summit_iwa_position.docx
+    - Tsuchikage Office/fourth_tsuchikage_succession.docx
+    - Tsuchikage Office/second_tsuchikage_mu_dossier.docx
+    - Tsuchikage Office/third_tsuchikage_onoki_era.docx
+    - Village Laws & Policies/constitution/earth_country_law_codex.docx
+    - Village Laws & Policies/constitution/iwa_village_charter.docx
+    - Village Laws & Policies/disciplinary/deidara_defection_ruling.docx
+    - Village Laws & Policies/disciplinary/missing_nin_bounty_list.xlsx
+    - Village Laws & Policies/grudge_policy/konoha_non_aggression_terms.docx
+    - Village Laws & Policies/grudge_policy/minato_namikaze_threat_assessment.docx
+    - Village Laws & Policies/grudge_policy/yellow_flash_historical_record.docx
+    - Village Laws & Policies/rank_regulations/rock_genin_handbook.docx
+    - Village Laws & Policies/rank_regulations/tsuchikage_authority_decree.docx
+  Hidden Sand Village (Sunagakure):
+    - Equipment & Inventory/desert_weapons_inventory.xlsx
+    - Equipment & Inventory/fan_weapon_registry.docx
+    - Equipment & Inventory/puppet_parts_supply_log.xlsx
+    - Equipment & Inventory/wind_country_supply_chain.docx
+    - Jutsu Scrolls/forbidden/shukaku_summoning_warning.docx
+    - Jutsu Scrolls/forbidden/third_kazekage_iron_sand_archive.docx
+    - Jutsu Scrolls/known_jutsu/puppet_technique_manual.docx
+    - Jutsu Scrolls/known_jutsu/sand_technique_reference.docx
+    - Jutsu Scrolls/known_jutsu/wind_release_techniques.docx
+    - Jutsu Scrolls/training/desert_survival_training.docx
+    - Jutsu Scrolls/training/puppet_maintenance_log.xlsx
+    - Jutsu Scrolls/training/sand_manipulation_exercises.docx
+    - Kazekage Office/fifth_kazekage_gaara_era_reforms.docx
+    - Kazekage Office/first_kazekage_records.docx
+    - Kazekage Office/five_kage_summit_sand_position.docx
+    - Kazekage Office/fourth_kazekage_assassination_report.docx
+    - Kazekage Office/second_kazekage_iron_sand_legacy.docx
+    - Kazekage Office/third_kazekage_disappearance_file.docx
+    - Mission Reports/active/current_mission_brief.docx
+    - Mission Reports/active/desert_scouting_report.docx
+    - Mission Reports/active/wind_country_patrol_log.docx
+    - Mission Reports/archive/konoha_alliance_history.docx
+    - Mission Reports/archive/shinobi_war_sand_casualties.docx
+    - Mission Reports/classified/akatsuki_ttp_profile.docx
+    - Mission Reports/classified/fourth_kazekage_assassination.docx
+    - Mission Reports/classified/orochimaru_alliance_postmortem.docx
+    - Mission Reports/classified/shukaku_extraction_incident.docx
+    - Mission Reports/completed/gaara_rescue_operation.docx
+    - Mission Reports/completed/konoha_invasion_debrief.docx
+    - Mission Reports/completed/mission_log.xlsx
+    - Onboarding/desert_survival_briefing.docx
+    - Onboarding/faq_new_recruits.docx
+    - Onboarding/sand_village_map.docx
+    - Onboarding/water_ration_policy.docx
+    - Onboarding/welcome_to_suna.docx
+    - Personal Records/identity/sand_headband_issuance.docx
+    - Personal Records/identity/sand_shinobi_registration.docx
+    - Personal Records/medical/desert_heat_exposure_log.docx
+    - Personal Records/medical/jinchuriki_health_record.docx
+    - Personal Records/medical/sand_armour_physical_assessment.docx
+    - Personal Records/performance/kazekage_commendations.docx
+    - Personal Records/performance/mission_performance_reviews.xlsx
+    - Puppet Workshop/kankuro_puppet_maintenance.docx
+    - Puppet Workshop/puppet_inventory.xlsx
+    - Puppet Workshop/puppet_technique_classification.docx
+    - Puppet Workshop/sasori_puppet_collection_notice.docx
+    - Team Rosters/active_jonin_list.xlsx
+    - Team Rosters/kazekage_guard_detail.docx
+    - Team Rosters/puppet_brigade_roster.xlsx
+    - Team Rosters/sand_siblings_unit.docx
+    - Village Laws & Policies/constitution/desert_law_codex.docx
+    - Village Laws & Policies/constitution/sand_village_founding_charter.docx
+    - Village Laws & Policies/disciplinary/alliance_breach_protocol.docx
+    - Village Laws & Policies/disciplinary/jinchuriki_use_of_force_policy.docx
+    - Village Laws & Policies/rank_regulations/chunin_promotion_criteria.docx
+    - Village Laws & Policies/rank_regulations/kazekage_authority_decree.docx
+    - Village Laws & Policies/rank_regulations/sand_genin_handbook.docx
+    - Village Laws & Policies/resource_management/daimyo_funding_agreement.docx
+    - Village Laws & Policies/resource_management/network_infrastructure_status.docx
+    - Village Laws & Policies/resource_management/weapon_smuggling_policy.docx
+    - Village Laws & Policies/resource_management/wind_country_budget_allocation.docx
+  Hidden Sound Village (Otogakure):
+    - Jutsu Scrolls/forbidden/body_modification_experiments.docx
+    - Jutsu Scrolls/forbidden/living_corpse_reincarnation.docx
+    - Jutsu Scrolls/forbidden/senjutsu_snake_sage_notes.docx
+    - Jutsu Scrolls/known_jutsu/curse_mark_activation_manual.docx
+    - Jutsu Scrolls/known_jutsu/snake_summon_reference.docx
+    - Jutsu Scrolls/known_jutsu/sound_four_techniques.docx
+    - Mission Reports/active/konoha_infiltration_brief.docx
+    - Mission Reports/active/sound_spy_operation_log.docx
+    - Mission Reports/classified/curse_mark_experiment_log.docx
+    - Mission Reports/classified/edo_tensei_subject_list.docx
+    - Mission Reports/classified/orochimaru_body_transfer_schedule.docx
+    - Mission Reports/completed/chunin_exam_operation_debrief.docx
+    - Mission Reports/completed/sasuke_retrieval_mission.docx
+    - Onboarding/curse_mark_consent_form.docx
+    - Onboarding/loyalty_is_everything.docx
+    - Onboarding/sound_village_compound_map.docx
+    - Onboarding/welcome_to_oto.docx
+    - Personal Records/identity/sound_operative_registration.docx
+    - Personal Records/medical/body_modification_consent.docx
+    - Personal Records/medical/curse_mark_health_monitoring.xlsx
+    - Research & Experiments/curse_mark_research_vol1.docx
+    - Research & Experiments/curse_mark_research_vol2.docx
+    - Research & Experiments/dna_modification_notes.docx
+    - Research & Experiments/edo_tensei_improvement_notes.docx
+    - Research & Experiments/immortality_research_archive.docx
+    - Research & Experiments/kekkei_genkai_collection_log.xlsx
+    - Research & Experiments/unlisted_node_notes.docx
+    - Team Rosters/experiment_subjects_log.xlsx
+    - Team Rosters/orochimaru_personal_guard.xlsx
+    - Team Rosters/sound_five_roster.docx
+    - Village Laws & Policies/curse_mark_assignment_policy.docx
+    - Village Laws & Policies/experiment_consent_waiver.docx
+    - Village Laws & Policies/loyalty_oath_template.docx
+    - Village Laws & Policies/orochimaru_supreme_authority.docx
+  Hidden Waterfall Village (Takigakure):
+    - Jinchuriki Program/chomei_bijuu_profile.docx
+    - Jinchuriki Program/extraction_threat_assessment.docx
+    - Jinchuriki Program/fuu_seven_tails_log.docx
+    - Jutsu Scrolls/forbidden/hero_water_restricted_access.docx
+    - Jutsu Scrolls/forbidden/seven_tails_control_manual.docx
+    - Jutsu Scrolls/known_jutsu/hero_water_effects_manual.docx
+    - Jutsu Scrolls/known_jutsu/water_release_techniques.docx
+    - Mission Reports/active/fuu_escort_mission_brief.docx
+    - Mission Reports/active/waterfall_patrol_log.docx
+    - Mission Reports/classified/hero_water_containment.docx
+    - Mission Reports/classified/seven_tails_host_security.docx
+    - Mission Reports/completed/mission_log.xlsx
+    - Onboarding/faq_new_recruits.docx
+    - Onboarding/hero_water_safety_briefing.docx
+    - Onboarding/waterfall_navigation_guide.docx
+    - Onboarding/welcome_to_taki.docx
+    - Personal Records/medical/water_country_health_log.docx
+    - Personal Records/shinobi_registration.docx
+    - Team Rosters/active_shinobi_list.xlsx
+    - Team Rosters/fuu_guard_detail.docx
+    - Village Laws & Policies/hero_water_use_policy.docx
+    - Village Laws & Policies/jinchuriki_protection_act.docx
+    - Village Laws & Policies/outsider_access_restriction.docx
+    - Village Laws & Policies/waterfall_country_charter.docx
+  Land of Iron (Samurai Corps):
+    - Combat Scrolls/known_techniques/chakra_infused_blade_guide.docx
+    - Combat Scrolls/known_techniques/iaido_reference_manual.docx
+    - Combat Scrolls/known_techniques/samurai_sabre_techniques.docx
+    - Combat Scrolls/training/formation_drills.docx
+    - Combat Scrolls/training/mounted_combat_training.docx
+    - Combat Scrolls/training/sword_maintenance_log.xlsx
+    - Corps Rosters/five_kage_summit_guard_assignment.xlsx
+    - Corps Rosters/mifune_command_staff.docx
+    - Corps Rosters/samurai_active_duty.xlsx
+    - Laws & Honour Code/bushido_code.docx
+    - Laws & Honour Code/chakra_use_ban_for_samurai.docx
+    - Laws & Honour Code/land_of_iron_neutrality_act.docx
+    - Laws & Honour Code/no_ninja_jurisdiction_policy.docx
+    - Laws & Honour Code/sword_inheritance_law.docx
+    - Mission Reports/active/five_kage_summit_security_brief.docx
+    - Mission Reports/active/land_of_iron_patrol_log.docx
+    - Mission Reports/completed/neutral_zone_incident_log.docx
+    - Mission Reports/completed/summit_escort_debrief.docx
+    - Onboarding/fortress_map.docx
+    - Onboarding/neutrality_oath.docx
+    - Onboarding/samurai_code_of_conduct.docx
+    - Onboarding/welcome_to_land_of_iron.docx
+    - Personal Records/samurai_registration.docx
+    - Personal Records/sword_certification.docx
+  Naruto Uzumaki (Personal Workstation):
+    - Desktop/passwords_DONT_DELETE.txt
+    - Desktop/personal_info.txt
+    - Desktop/reminders.txt
+    - Downloads/rasengan_training_guide (1).docx
+    - Downloads/rasengan_training_guide (2).docx
+    - Downloads/rasengan_training_guide.docx
+    - Downloads/shadow_clone_notes (1).pdf
+    - Downloads/shadow_clone_notes.pdf

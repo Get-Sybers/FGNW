@@ -1,0 +1,86 @@
+---
+- name: "finalize_convert | Request a graceful ACPI shutdown (belt-and-suspenders)"
+  no_log: true
+  ansible.builtin.uri:
+    url: "{{ macos_template_api_host }}/api2/json/nodes/{{ macos_template_node_target }}/qemu/{{ macos_template_vmid }}/status/shutdown"
+    method: POST
+    headers: "{{ macos_template_auth_headers }}"
+    validate_certs: "{{ macos_template_validate_certs }}"
+  failed_when: false
+- name: "finalize_convert | Wait for the VM to stop (poll status)"
+  no_log: true
+  ansible.builtin.uri:
+    url: "{{ macos_template_api_host }}/api2/json/nodes/{{ macos_template_node_target }}/qemu/{{ macos_template_vmid }}/status/current"
+    method: GET
+    headers: "{{ macos_template_auth_headers }}"
+    validate_certs: "{{ macos_template_validate_certs }}"
+  register: macos_template_stat
+  until: macos_template_stat.json.data.status == "stopped"
+  retries: 36
+  delay: 5
+  failed_when: false
+- name: "finalize_convert | Force-stop if it did not shut down gracefully"
+  when: macos_template_stat.json.data.status | default('') != 'stopped'
+  block:
+    - name: "finalize_convert | Issue an API stop"
+      no_log: true
+      ansible.builtin.uri:
+        url: "{{ macos_template_api_host }}/api2/json/nodes/{{ macos_template_node_target }}/qemu/{{ macos_template_vmid }}/status/stop"
+        method: POST
+        headers: "{{ macos_template_auth_headers }}"
+        validate_certs: "{{ macos_template_validate_certs }}"
+    - name: "finalize_convert | Wait for the forced stop"
+      no_log: true
+      ansible.builtin.uri:
+        url: "{{ macos_template_api_host }}/api2/json/nodes/{{ macos_template_node_target }}/qemu/{{ macos_template_vmid }}/status/current"
+        method: GET
+        headers: "{{ macos_template_auth_headers }}"
+        validate_certs: "{{ macos_template_validate_certs }}"
+      register: macos_template_stat2
+      until: macos_template_stat2.json.data.status == "stopped"
+      retries: 24
+      delay: 5
+- name: "finalize_convert | Remove install media (OpenCore embedded on disk -> drop both ISOs)"
+  when: macos_template_oc_embedded | default(false) | bool
+  no_log: true
+  ansible.builtin.uri:
+    url: "{{ macos_template_api_host }}/api2/json/nodes/{{ macos_template_node_target }}/qemu/{{ macos_template_vmid }}/config"
+    method: PUT
+    headers: "{{ macos_template_auth_headers }}"
+    validate_certs: "{{ macos_template_validate_certs }}"
+    body_format: form-urlencoded
+    body:
+      delete: "ide0,ide2"
+      boot: "order=sata0"
+  failed_when: false
+- name: "finalize_convert | Detach only the installer ISO (OpenCore stays the boot CD)"
+  when: not (macos_template_oc_embedded | default(false) | bool)
+  no_log: true
+  ansible.builtin.uri:
+    url: "{{ macos_template_api_host }}/api2/json/nodes/{{ macos_template_node_target }}/qemu/{{ macos_template_vmid }}/config"
+    method: PUT
+    headers: "{{ macos_template_auth_headers }}"
+    validate_certs: "{{ macos_template_validate_certs }}"
+    body_format: form-urlencoded
+    body:
+      ide2: "none,media=cdrom"
+  failed_when: false
+- name: "finalize_convert | Convert the VM to a Ludus template"
+  no_log: true
+  ansible.builtin.uri:
+    url: "{{ macos_template_api_host }}/api2/json/nodes/{{ macos_template_node_target }}/qemu/{{ macos_template_vmid }}/template"
+    method: POST
+    headers: "{{ macos_template_auth_headers }}"
+    validate_certs: "{{ macos_template_validate_certs }}"
+  register: macos_template_tmpl
+- name: "finalize_convert | Wait for the template conversion task (if it runs asynchronously)"
+  ansible.builtin.include_tasks: _wait_task.yml
+  vars:
+    wt_upid: "{{ macos_template_tmpl.json.data }}"
+    wt_node: "{{ macos_template_node_target }}"
+  when: macos_template_tmpl.json.data is string and macos_template_tmpl.json.data.startswith('UPID:')
+- name: "finalize_convert | FINALIZE complete"
+  ansible.builtin.debug:
+    msg: >-
+      Done. Template '{{ macos_template_vm_name }}' is VM {{ macos_template_vmid }} on {{ macos_template_node_target }}
+      ({{ 'OpenCore embedded on disk; ISOs removed' if (macos_template_oc_embedded | default(false) | bool) else 'OpenCore ISO retained as boot CD' }}).

@@ -1,0 +1,12 @@
+---
+ludus_range_deploy_tags: []
+ludus_range_deploy_limit: ""
+ludus_range_deploy_only_roles: ""
+ludus_range_deploy_force: false
+ludus_range_deploy_max_attempts: 3
+ludus_range_deploy_error_retry: true
+ludus_range_deploy_poll_retries: 270
+ludus_range_deploy_poll_delay: 20
+ludus_range_deploy_capture_errors: true
+ludus_range_deploy_error_capture_dir: "{{ lookup('ansible.builtin.env', 'HOME') | default('/tmp', true) }}/.ludus-deploy-errors"
+ludus_range_deploy_bin: /usr/local/bin/ludus

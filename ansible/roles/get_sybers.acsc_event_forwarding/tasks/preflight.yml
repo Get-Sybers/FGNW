@@ -1,0 +1,115 @@
+---
+- name: "preflight | This is a Windows host"
+  ansible.builtin.assert:
+    that: ansible_facts.os_family | default('') == 'Windows'
+    fail_msg: >-
+      This role configures Windows Event Collector subscriptions and only runs
+      on Windows. Host reports os_family
+      '{{ ansible_facts.os_family | default("unknown") }}'. If ansible_facts is
+      empty here, the calling play set gather_facts: false — this role needs
+      facts.
+    quiet: true
+- name: "preflight | Enable flag is a real boolean, not a truthy string"
+  ansible.builtin.assert:
+    that: acsc_wef_enable_subscriptions is boolean
+    fail_msg: >-
+      acsc_wef_enable_subscriptions is
+      {{ acsc_wef_enable_subscriptions | type_debug }}
+      ({{ acsc_wef_enable_subscriptions }}), not a boolean. Quoting it in YAML
+      ("false") makes it a non-empty string, which is TRUTHY — the subscriptions
+      would be enabled by a value that was meant to disable them.
+    quiet: true
+- name: "preflight | The source SDDL is present and looks like an SDDL"
+  ansible.builtin.assert:
+    that:
+      - acsc_wef_source_sddl | length > 0
+      - acsc_wef_source_sddl is match('^O:.*D:')
+    fail_msg: >-
+      acsc_wef_source_sddl is '{{ acsc_wef_source_sddl }}', which is not an
+      SDDL string (expected owner/group/DACL sections, e.g.
+      "O:NSG:BAD:P(A;;GA;;;DC)(A;;GA;;;DD)S:"). Without a valid SDDL every
+      subscription is created with no source computers and collects nothing.
+    quiet: true
+- name: "preflight | Read SubscriptionId out of each vendored file"
+  ansible.builtin.set_fact:
+    __acsc_wef_ids: >-
+      {{ __acsc_wef_ids | default({}) | combine({
+           (item | basename):
+           (lookup('ansible.builtin.file', item)
+            | regex_findall('<SubscriptionId>([^<]+)</SubscriptionId>')) }) }}
+  loop: >-
+    {{ lookup('ansible.builtin.fileglob',
+              role_path ~ '/files/subscriptions/*_sub.xml', wantlist=True) | sort }}
+  loop_control:
+    label: "{{ item | basename }}"
+- name: "preflight | Every vendored file declares exactly one SubscriptionId"
+  ansible.builtin.assert:
+    that:
+      - __acsc_wef_ids | default({}) | length > 0
+      - __acsc_wef_ids | dict2items | map(attribute='value') | map('length')
+        | select('ne', 1) | list | length == 0
+    fail_msg: >-
+      Every vendored *_sub.xml must declare exactly one <SubscriptionId>;
+      wecutil keys on that id, not on the filename, so a file with none would be
+      silently skipped and one with two would be ambiguous.
+      filename -> id count:
+      {{ __acsc_wef_ids | default({}) | dict2items | map(attribute='key')
+         | zip(__acsc_wef_ids | default({}) | dict2items
+               | map(attribute='value') | map('length')) | list }}
+    quiet: true
+- name: "preflight | Build the SubscriptionId -> filename map"
+  ansible.builtin.set_fact:
+    __acsc_wef_map: >-
+      {{ dict(__acsc_wef_ids | dict2items | map(attribute='value') | map('first') | list
+              | zip(__acsc_wef_ids | dict2items | map(attribute='key') | list)) }}
+- name: "preflight | No two vendored files share a SubscriptionId"
+  ansible.builtin.assert:
+    that: __acsc_wef_map | length == __acsc_wef_ids | length
+    fail_msg: >-
+      {{ __acsc_wef_ids | length }} vendored files yielded only
+      {{ __acsc_wef_map | length }} distinct SubscriptionIds, so at least two
+      files declare the same id and one of them would never be installed.
+    quiet: true
+- name: "preflight | Resolve the requested set"
+  ansible.builtin.set_fact:
+    __acsc_wef_wanted: >-
+      {{ __acsc_wef_map.keys() | list if not acsc_wef_subscriptions
+         else acsc_wef_subscriptions }}
+- name: "preflight | Every requested subscription exists"
+  ansible.builtin.assert:
+    that: __acsc_wef_wanted | difference(__acsc_wef_map.keys() | list) | length == 0
+    fail_msg: >-
+      Requested subscription(s) not found in this role's vendored set:
+      {{ __acsc_wef_wanted | difference(__acsc_wef_map.keys() | list) }}.
+      Available: {{ __acsc_wef_map.keys() | list | sort }}.
+      Note these are SubscriptionId values, not filenames.
+    quiet: true
+- name: "preflight | The resolved set is not empty"
+  ansible.builtin.assert:
+    that: __acsc_wef_wanted | length > 0
+    fail_msg: >-
+      No subscriptions resolved. acsc_wef_subscriptions is
+      {{ acsc_wef_subscriptions }} and the vendored set holds
+      {{ __acsc_wef_map | length }} files. A run that installs nothing must fail
+      rather than report ok (the house standard).
+    quiet: true
+- name: "preflight | List existing subscriptions"
+  ansible.windows.win_command: wecutil es
+  register: __acsc_wef_existing
+  changed_when: false
+  check_mode: false
+  failed_when: false
+- name: "preflight | Normalise the existing-subscription list"
+  ansible.builtin.set_fact:
+    __acsc_wef_present: >-
+      {{ (__acsc_wef_existing.stdout | default('')).splitlines()
+         | map('trim') | select | list }}
+- name: "preflight | Report what this run will do"
+  ansible.builtin.debug:
+    msg:
+      - "collector: {{ inventory_hostname }}"
+      - "requested: {{ __acsc_wef_wanted | length }} subscription(s) of {{ __acsc_wef_map | length }} vendored"
+      - "already present: {{ __acsc_wef_wanted | intersect(__acsc_wef_present) }}"
+      - "to be created: {{ __acsc_wef_wanted | difference(__acsc_wef_present) }}"
+      - "will be enabled: {{ acsc_wef_enable_subscriptions }}"
+      - "will have sources set: {{ acsc_wef_set_sources }}"

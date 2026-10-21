@@ -1,0 +1,77 @@
+---
+- name: Preflight
+  ansible.builtin.assert:
+    that: __ludus_api_key is defined
+    fail_msg: ludus_range_health needs ludus_auth to have run.
+    quiet: true
+- name: Range list --json
+  ansible.builtin.command:
+    argv: ["{{ ludus_range_health_bin }}", range, list, --json]
+  environment:
+    LUDUS_API_KEY: "{{ __ludus_api_key }}"
+  register: __ludus_h_list
+  changed_when: false
+  failed_when: false
+  no_log: true
+- name: Parse (guarded)
+  ansible.builtin.set_fact:
+    __ludus_h_json: >-
+      {{ (__ludus_h_list.stdout | from_json)
+         if ((__ludus_h_list.rc | default(1)) == 0
+             and (__ludus_h_list.stdout | default('') | trim).startswith('{'))
+         else {} }}
+- name: Assemble the health facts
+  ansible.builtin.set_fact:
+    ludus_range_health_result:
+      rangeState: "{{ __ludus_h_json.rangeState | default('UNKNOWN') }}"
+      rangeNumber: "{{ __ludus_h_json.rangeNumber | default('?') }}"
+      testingEnabled: "{{ __ludus_h_json.testingEnabled | default(false) }}"
+      vmCount: "{{ __ludus_h_json.VMs | default([]) | length }}"
+      poweredOn: "{{ __ludus_h_json.VMs | default([]) | selectattr('poweredOn', 'defined') | selectattr('poweredOn') | list | length }}"
+      noIP: >-
+        {{ __ludus_h_json.VMs | default([])
+           | selectattr('ip', 'undefined') | map(attribute='name') | list
+           + (__ludus_h_json.VMs | default([]) | selectattr('ip', 'defined')
+              | selectattr('ip', 'equalto', '') | map(attribute='name') | list) }}
+      vms: >-
+        {{ __ludus_h_json.VMs | default([])
+           | map(attribute='name') | list }}
+- name: Fetch recent logs when the state is not healthy
+  ansible.builtin.command:
+    argv: ["{{ ludus_range_health_bin }}", range, logs]
+  environment:
+    LUDUS_API_KEY: "{{ __ludus_api_key }}"
+  register: __ludus_h_logs
+  changed_when: false
+  failed_when: false
+  no_log: true
+  when: ludus_range_health_result.rangeState in ['ERROR', 'FAILED']
+- name: Compute the log tail (only when unhealthy)
+  ansible.builtin.set_fact:
+    __ludus_h_logtail: >-
+      {{ (__ludus_h_logs.stdout | default('') | regex_findall('.+'))[(-1 * (ludus_range_health_log_lines | int)) :] }}
+  when: ludus_range_health_result.rangeState in ['ERROR', 'FAILED']
+- name: Report
+  ansible.builtin.debug:
+    msg: >-
+      RANGE HEALTH — state={{ ludus_range_health_result.rangeState }},
+      range
+      testing={{ ludus_range_health_result.testingEnabled }},
+      VMs={{ ludus_range_health_result.poweredOn }}/{{ ludus_range_health_result.vmCount }} powered on{{
+      ', NO-IP: ' ~ (ludus_range_health_result.noIP | join(', ')) if (ludus_range_health_result.noIP | length) > 0 else '' }}
+- name: Log tail (unhealthy states only)
+  ansible.builtin.debug:
+    var: __ludus_h_logtail
+  when:
+    - ludus_range_health_result.rangeState in ['ERROR', 'FAILED']
+    - __ludus_h_logtail | default([]) | length > 0
+- name: Assert healthy (optional, for gate use)
+  ansible.builtin.assert:
+    that:
+      - ludus_range_health_result.rangeState == 'SUCCESS'
+      - ludus_range_health_result.vmCount | int > 0
+      - ludus_range_health_result.poweredOn | int == ludus_range_health_result.vmCount | int
+      - ludus_range_health_result.noIP | length == 0
+    fail_msg: "Range is not healthy: {{ ludus_range_health_result }}"
+    quiet: true
+  when: ludus_range_health_fail_on_unhealthy | bool

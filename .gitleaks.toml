@@ -1,0 +1,19 @@
+# gitleaks — get-sybers standard (docs/04): extend the default rule set, never
+# replace it. The allowlist covers only committed fixtures and lab content
+# corpora that carry no live credential.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Committed test fixtures and the range's synthetic AD content."
+paths = [
+  '''extensions/molecule/.*''',
+  # The FGNW Active Directory data model: every account is a Naruto character
+  # with a deliberately weak, spray-able lab password that the range creates
+  # on deploy (the lab's own attack surface, never a credential for anything
+  # outside the range). The same corpus ships three times — the blueprint's
+  # AD-build data, the ad_mgmt role's bundled contract and the Exchange seed
+  # role's mailbox roster.
+  '''blueprints/FGNW/campaign/ad/NARUTO/data/config(-small)?\.json$''',
+  '''ansible/roles/get_sybers\.range_(ad_mgmt|exchange_seed)/files/config\.json$''',
+]
