@@ -16,5 +16,4 @@ and this collection adheres to [Semantic Versioning](https://semver.org/spec/v2.
 - Initial collection: `ludus_auth`, `ludus_range_config`, `ludus_range_deploy`,
   `ludus_testing`, `ludus_range_verify`, `ludus_range_health`, `ludus_range_teardown`,
   `ghost9_ct`, `ghost9_server`, `ghost9_template`.
-[Unreleased]: <https://github.com/Get-Sybers/FGNW/compare/v0.1.0...HEAD>
-[0.1.0]: <https://github.com/Get-Sybers/FGNW/releases/tag/v0.1.0>
+[Unreleased]: <https://github.com/Get-Sybers/FGNW/compare/6581582...HEAD>
