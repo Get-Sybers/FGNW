@@ -93,7 +93,7 @@ jobs:
           path: ~/.ansible/collections
           key: galaxy-${{ runner.os }}-${{ hashFiles('requirements.yml') }}
       - name: Install pinned collections (requirements.yml)
-        run: ansible-galaxy collection install -r requirements.yml
+        run: ansible-galaxy collection install -r requirements.yml -p ~/.ansible/collections
       - name: The house gate (scripts/conform)
         run: ./scripts/conform
   all_green:

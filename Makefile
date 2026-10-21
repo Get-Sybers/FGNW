@@ -8,7 +8,7 @@ help:
 .PHONY: deps
 deps: ## install the pinned toolchain and collections
 	python3 -m pip install --quiet -r test-requirements.txt
-	ansible-galaxy collection install -r requirements.yml
+	ansible-galaxy collection install -r requirements.yml -p ~/.ansible/collections
 .PHONY: lint
 lint: ## every prek hook on every file
 	prek run --all-files --show-diff-on-failure

@@ -44,3 +44,10 @@ build/
 changelogs/.plugin-cache.yaml
 templates/*/collections/
 tests/output/
+# tests/collections/ carries only the two symlinks to the in-tree collections; a
+# collection installed there by mistake is a dependency, never content.
+/tests/collections/ansible_collections/*
+!/tests/collections/ansible_collections/get_sybers/
+/tests/collections/ansible_collections/get_sybers/*
+!/tests/collections/ansible_collections/get_sybers/range
+!/tests/collections/ansible_collections/get_sybers/templates

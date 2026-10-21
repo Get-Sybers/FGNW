@@ -5,6 +5,9 @@
 extends: default
 
 ignore: |
+  # the symlink farm that resolves the in-tree collections (ansible.cfg); the real
+  # directories under ansible/collections/ are what gets linted
+  tests/collections/
   .cache/
   .tox/
   .venv/

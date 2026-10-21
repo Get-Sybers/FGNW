@@ -19,6 +19,7 @@ config:
 globs:
   - "**/*.md"
 ignores:
+  - "tests/collections" # the symlink farm that resolves the in-tree collections
   - ".ansible" # the project-local cache ansible-lint installs the pinned collections into
   - ".cache"
   - ".tox"
