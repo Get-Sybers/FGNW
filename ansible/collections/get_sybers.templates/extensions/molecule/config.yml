@@ -1,0 +1,43 @@
+---
+# get_sybers.templates — shared molecule base config (ansible-standards §12).
+#
+# Molecule auto-discovers this file as the collection base config
+# (MOLECULE_COLLECTION_ROOT = extensions/molecule) and deep-merges each
+# scenario's molecule.yml on top. Everything common lives here once; a scenario
+# overrides only what differs (its test_sequence, and its own converge/verify).
+#
+# Substrate: a throwaway official Debian container (community.docker driver). It
+# is NOT a Proxmox node, a Windows host, or a legacy Metasploitable guest — it is
+# a disposable userspace in which the host-side logic that does not need live
+# infrastructure (argument validation, entry assertions) runs hermetically. The
+# roles whose real target is a live PVE node / a Windows guest / an ancient Linux
+# image are exercised here by negative scenarios (clean failure on bad input) and
+# against real infrastructure in CI, matching get_sybers.cluster / get_sybers.range.
+dependency:
+  name: galaxy
+  enabled: false
+driver:
+  name: docker
+platforms:
+  - name: templates-instance
+    image: templates-debian-trixie
+    dockerfile: ../Dockerfile
+    pre_build_image: false
+    command: sleep infinity
+provisioner:
+  name: ansible
+  config_options:
+    defaults:
+      inject_facts_as_vars: false
+verifier:
+  name: ansible
+scenario:
+  test_sequence:
+    - dependency
+    - syntax
+    - create
+    - prepare
+    - converge
+    - idempotence
+    - verify
+    - destroy

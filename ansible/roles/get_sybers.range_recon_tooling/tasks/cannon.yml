@@ -1,0 +1,9 @@
+---
+- name: "cannon | Create the recon-tooling directory"
+  ansible.windows.win_file:
+    path: C:\ludus\recon-tooling
+    state: directory
+- name: "cannon | Deploy the cannon-flood script"
+  ansible.windows.win_copy:
+    src: cannon-flood.ps1
+    dest: C:\ludus\recon-tooling\cannon-flood.ps1

@@ -1,0 +1,7 @@
+---
+powershell_logging_script_block_enabled: true
+powershell_logging_module_enabled: true
+powershell_logging_module_names: "*"
+powershell_logging_transcription_enabled: true
+powershell_logging_transcription_output_directory: C:\Windows\Temp\PowerShellTranscripts
+powershell_logging_invocation_header_enabled: true

@@ -1,0 +1,49 @@
+---
+- name: "deploy-tasks | phase4-content | Clear stale SSH host keys for the Linux hosts"
+  ansible.builtin.command:
+    argv: [ssh-keygen, -f, "{{ ansible_env.HOME }}/.ssh/known_hosts", -R, "{{ item }}"]
+  loop:
+    - 10.{{ __range_number }}.99.50
+    - 10.{{ __range_number }}.90.10
+    - 10.{{ __range_number }}.99.51
+    - 10.{{ __range_number }}.99.99
+  changed_when: false
+  failed_when: false
+- name: "deploy-tasks | phase4-content | Run the content plays in order (infra inventory)"
+  ansible.builtin.command:
+    argv: [ansible-playbook, -i, "{{ __tmp_infra_inv }}", "{{ item }}"]
+  args:
+    chdir: "{{ ansible_dir }}"
+  changed_when: true
+  loop:
+    - FGNW-attacker-web.yml
+    - FGNW-themed-sites.yml
+    - FGNW-recon-tooling.yml
+    - FGNW-ninjasploitable-content.yml
+    - FGNW-ninjasploitable-join.yml
+    - FGNW-persona-autologon.yml
+    - FGNW-decoy-content.yml
+    - FGNW-browser-defaults.yml
+    - FGNW-browser-extensions.yml
+    - FGNW-sysmon.yml
+    - FGNW-acsc-logging.yml
+    - FGNW-sysmon-linux.yml
+- name: "deploy-tasks | phase4-content | Dnsforwarder.yml (AD-build + provider inventories)"
+  ansible.builtin.command:
+    argv:
+      - ansible-playbook
+      - -i
+      - "{{ ad_dir }}/data/{{ __v.ad_data }}"
+      - -i
+      - "{{ __tmp_prov_inv }}"
+      - dnsforwarder.yml
+  args:
+    chdir: "{{ ansible_dir }}"
+  changed_when: true
+- name: "deploy-tasks | phase4-content | FGNW-modern-infra.yml (xl only)"
+  ansible.builtin.command:
+    argv: [ansible-playbook, -i, "{{ __tmp_infra_inv }}", FGNW-modern-infra.yml]
+  args:
+    chdir: "{{ ansible_dir }}"
+  changed_when: true
+  when: __v.modern_infra | bool

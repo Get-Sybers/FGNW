@@ -1,0 +1,61 @@
+---
+- name: Ensure nginx is installed
+  ansible.builtin.apt:
+    name: nginx
+    state: present
+    update_cache: true
+- name: Ensure themed-sites root exists
+  ansible.builtin.file:
+    path: "{{ fgnw_themed_sites_root }}"
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: "0755"
+- name: Build per-village link index
+  ansible.builtin.set_fact:
+    __village_index: "{{ __village_index | default({}) | combine({item.village: (__village_index[item.village] | default([])) + [item.url]}) }}"
+  loop: "{{ site_pages }}"
+  loop_control:
+    label: "{{ item.url }}"
+- name: Create per-domain document roots
+  ansible.builtin.file:
+    path: "{{ fgnw_themed_sites_root }}/{{ item.url }}"
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: "0755"
+  loop: "{{ site_pages }}"
+  loop_control:
+    label: "{{ item.url }}"
+- name: Render each domain's themed index.html from its archetype
+  ansible.builtin.template:
+    src: "{{ item.archetype }}.html.j2"
+    dest: "{{ fgnw_themed_sites_root }}/{{ item.url }}/index.html"
+    owner: www-data
+    group: www-data
+    mode: "0644"
+  vars:
+    page: "{{ item }}"
+    related: "{{ (__village_index[item.village] | default([])) | reject('equalto', item.url) | list }}"
+    link: "{{ (site_content_links | default({}))[item.url] | default({}) }}"
+    village_accent: "{{ (fgnw_themed_sites_village_colors | default({}))[item.village] | default('', true) }}"
+  loop: "{{ site_pages }}"
+  loop_control:
+    label: "{{ item.url }} ({{ item.archetype }})"
+- name: Deploy nginx vhost that serves each domain from its own root ($host)
+  ansible.builtin.template:
+    src: FGNW-themed-sites.conf.j2
+    dest: "{{ fgnw_themed_sites_nginx_conf }}"
+    mode: "0644"
+  notify: Reload nginx themed sites
+- name: Enable the themed-sites vhost
+  ansible.builtin.file:
+    src: "{{ fgnw_themed_sites_nginx_conf }}"
+    dest: "{{ fgnw_themed_sites_nginx_link }}"
+    state: link
+  notify: Reload nginx themed sites
+- name: Validate nginx config
+  ansible.builtin.command: nginx -t
+  register: __nginx_test
+  changed_when: false
+  failed_when: __nginx_test.rc != 0

@@ -1,0 +1,122 @@
+; POST-DEPLOY / INFRA inventory (full range). ansible_host MUST be IPv4 (RANGENUMBER
+; -> range 2nd octet). These hosts are NOT part of the Windows Shinju AD chain —
+; they are targeted by the post-deploy FGNW-*.yml playbooks and the Linux domain-join
+; step. Kept separate from the AD-build inventory (inventory.yml) so the Shinju `hosts: all`
+; plays never SSH-probe them / duplicate the srv* boxes.
+; ------------------------------------------------
+; Linux infrastructure (SSH). Ludus Debian VMs log in as the 'debian' user with a
+; per-range generated password (NOT localuser/password) — get it from
+; `ludus range inventory` (ansible_ssh_pass) and set it as ansible_ssh_pass under
+; [linux_infra:vars] below, or just run against the Ludus-generated inventory. Avoid
+; passing it as `-e ansible_ssh_pass=...` on the command line: extra-vars land in argv
+; and are visible in `ps` to any local user. Kali uses the 'kali' user.
+; ninjasploitable is ALSO domain-joined to fire.ninja by the Linux realm-join step.
+; ------------------------------------------------
+[linux_infra]
+attacker ansible_host=10.RANGENUMBER.99.50
+ninjasploitable ansible_host=10.RANGENUMBER.90.10
+; LOE 5 (docs/MODERN-INFRA.md) -- only exists in the `xl` range variant
+; (`deploy.yml -e range_variant=xl`). Debian VM, inherits [linux_infra:vars]
+; below (debian user, per-deploy generated password) -- no override needed.
+; COMMENTED OUT BY DEFAULT: on a regular or small deploy there is no backing VM, so every
+; [linux_infra]-targeted play reports it unreachable (noisy, non-fatal). Uncomment ONLY
+; when the range was deployed with -e range_variant=xl.
+; modern-infra ansible_host=10.RANGENUMBER.99.52
+; ghost9 (the ghost9 CT) and kali (Kali) are VLAN-99 auxiliary
+; infra with different default creds than the Debian boxes above (per-host overrides
+; of the [linux_infra:vars] defaults) -- added so FGNW-verify-connectivity.yml /
+; sysmon_linux-style checks can SSH to every Linux host in the range, not just the two
+; Debian ones. localuser/password and kali/kali are the Ludus template defaults for
+; these two templates (unlike Debian, which randomizes ansible_ssh_pass per deploy) --
+; if a template ever changes this, get the real creds from `ludus range inventory`
+; and override with -e ansible_ssh_pass=...
+; COMMENTED OUT (issue
+; via community.proxmox.proxmox_pct_remote and configured by get_sybers.lxc.lxc_ghost9
+; (ghost9-range-ct.yml, phase 1b) -- it is NOT an SSH host.
+; Leaving this line active makes every [linux_infra] play hang on an SSH host that
+; no longer exists. The CT keeps the same 10.RANGENUMBER.99.51 API/UI endpoints.
+; ghosts ansible_host=10.RANGENUMBER.99.51 ansible_user=localuser ansible_ssh_pass=password
+kali ansible_host=10.RANGENUMBER.99.99 ansible_user=kali ansible_ssh_pass=kali ansible_become_pass=kali
+[linux_infra:vars]
+ansible_connection=ssh
+ansible_user=debian
+ansible_port=22
+; ------------------------------------------------
+; GHOSTS-client workstations (real hostnames — persona-timelines.yml is keyed by them).
+; Same boxes as srv02..srv10 in the AD inventory, addressed by real name here.
+; ------------------------------------------------
+[ghosts_clients]
+konoha-ws1 ansible_host=10.RANGENUMBER.10.21
+konoha-ws2 ansible_host=10.RANGENUMBER.10.22
+konoha-ws3 ansible_host=10.RANGENUMBER.10.23
+konoha-ws4 ansible_host=10.RANGENUMBER.10.24
+konoha-ws5 ansible_host=10.RANGENUMBER.10.25
+oto-ws1 ansible_host=10.RANGENUMBER.30.11
+akatsuki-ws1 ansible_host=10.RANGENUMBER.87.11
+akatsuki-ws2 ansible_host=10.RANGENUMBER.87.12
+; ------------------------------------------------
+; Exchange 2019 mail servers (real hostnames — aliases of srv-konoha/srv-suna/srv-oto/
+; srv-akatsuki). Domain-joined by the AD chain first, then targeted by FGNW-exchange.yml.
+; ------------------------------------------------
+[exchange_servers]
+konoha-mail ansible_host=10.RANGENUMBER.10.20
+oto-mail ansible_host=10.RANGENUMBER.30.20
+dark-mail ansible_host=10.RANGENUMBER.87.20
+; DCs by REAL hostname (all 6 forest/domain controllers) — targeted by post-deploy
+; playbooks that need every DC (FGNW-decoy-content.yml's konoha/oto/akatsuki hosts,
+; FGNW-acsc-logging.yml, etc). Same boxes as dc01-dc06 in the AD-build inventory.
+[village_dcs]
+fire-dc1 ansible_host=10.RANGENUMBER.10.15
+konoha-dc1 ansible_host=10.RANGENUMBER.10.10
+wind-dc1 ansible_host=10.RANGENUMBER.20.15
+suna-dc1 ansible_host=10.RANGENUMBER.20.10
+oto-dc1 ansible_host=10.RANGENUMBER.30.10
+akatsuki-dc1 ansible_host=10.RANGENUMBER.87.10
+; Every Windows host in the full range, by real hostname — the target for playbooks that
+; apply to all Windows VMs regardless of role (FGNW-acsc-logging.yml,
+; FGNW-verify-connectivity.yml). Mirrors the [windows_realname] group already defined
+; in inventory-small-infra.yml.
+[windows_realname:children]
+ghosts_clients
+village_dcs
+exchange_servers
+[windows_realname:vars]
+ansible_connection=winrm
+ansible_user=localuser
+ansible_password=password
+ansible_port=5986
+ansible_winrm_scheme=https
+ansible_winrm_server_cert_validation=ignore
+; winrm defaults for the ghosts_clients + exchange_servers (Windows) groups.
+; linux_infra overrides these to ssh above.
+[ghosts_clients:vars]
+ansible_connection=winrm
+ansible_user=localuser
+ansible_password=password
+ansible_port=5986
+ansible_winrm_scheme=https
+ansible_winrm_server_cert_validation=ignore
+[exchange_servers:vars]
+ansible_connection=winrm
+ansible_user=localuser
+ansible_password=password
+ansible_port=5986
+ansible_winrm_scheme=https
+ansible_winrm_server_cert_validation=ignore
+; ------------------------------------------------
+; macOS hosts — Hidden Sand Village (Sunagakure) conversion. SSH, not WinRM. Creds are the
+; macos-sequoia-15 template defaults (localuser/password), NOT the per-range Debian password,
+; so nothing is injected here at materialize time. suna-ws1 = Gaara's workstation (mac-dev +
+; GHOSTS Universal + Thunderbird); suna-mail = the Sand mail server (Postfix/Dovecot). The two
+; Sand DCs (wind-dc1, suna-dc1) stay Windows and remain in [village_dcs] — macOS has no AD DS.
+; ------------------------------------------------
+[macos_dev]
+suna-ws1 ansible_host=10.RANGENUMBER.20.11
+suna-mail ansible_host=10.RANGENUMBER.20.20
+
+[macos_dev:vars]
+ansible_connection=ssh
+ansible_user=localuser
+ansible_ssh_pass=password
+ansible_become_pass=password
+ansible_python_interpreter=/usr/bin/python3

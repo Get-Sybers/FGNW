@@ -1,0 +1,67 @@
+---
+range_telemetry_registry:
+  - { path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection, name: AllowTelemetry, data: 0, type: dword }
+  - { path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection, name: DoNotShowFeedbackNotifications, data: 1, type: dword }
+  - { path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection, name: DisableOneSettingsDownloads, data: 1, type: dword }
+  - { path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection, name: AllowDeviceNameInTelemetry, data: 0, type: dword }
+  - { path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection, name: AllowCommercialDataPipeline, data: 0, type: dword }
+  - { path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection, name: LimitDiagnosticLogCollection, data: 1, type: dword }
+  - { path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection, name: MaxTelemetryAllowed, data: 0, type: dword }
+  - { path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollection, name: AllowTelemetry, data: 0, type: dword }
+  - { path: HKLM:\SOFTWARE\Microsoft\PolicyManager\default\System\AllowTelemetry, name: value, data: 0, type: dword }
+  - { path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppCompat, name: AITEnable, data: 0, type: dword }
+  - { path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppCompat, name: AllowTelemetry, data: 0, type: dword }
+  - { path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppCompat, name: DisableInventory, data: 1, type: dword }
+  - { path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppCompat, name: DisableUAR, data: 1, type: dword }
+  - { path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\TelemetryController, name: RunsBlocked, data: 1, type: dword }
+  - { path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\AIT, name: AITEnable, data: 0, type: dword }
+  - path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\ClientTelemetry
+    name: IsCensusDisabled
+    data: 1
+    type: dword
+  - { path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\ClientTelemetry, name: TaskEnableRun, data: 0, type: dword }
+  - { path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Diagnostics\DiagTrack, name: Disabled, data: 1, type: dword }
+  - { path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Diagnostics\DiagTrack, name: TelemetryServiceDisabled, data: 1, type: dword }
+  - { path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Diagnostics\DiagTrack, name: DiagTrackAuthorization, data: 0, type: dword }
+  - path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Diagnostics\DiagTrack\EventTranscriptKey
+    name: EnableEventTranscript
+    data: 0
+    type: dword
+  - { path: HKLM:\SOFTWARE\Policies\Microsoft\SQMClient\Windows, name: CEIPEnable, data: 0, type: dword }
+  - { path: HKLM:\SOFTWARE\Microsoft\SQMClient\Windows, name: CEIPEnable, data: 0, type: dword }
+  - { path: HKLM:\SYSTEM\CurrentControlSet\Control\WMI\AutoLogger\AutoLogger-Diagtrack-Listener, name: Start, data: 0, type: dword }
+  - { path: HKLM:\SYSTEM\CurrentControlSet\Control\WMI\AutoLogger\Diagtrack-Listener, name: Start, data: 0, type: dword }
+  - { path: HKLM:\SYSTEM\CurrentControlSet\Control\WMI\AutoLogger\SQMLogger, name: Start, data: 0, type: dword }
+  - { path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\ScriptedDiagnosticsProvider\Policy, name: EnableDiagnostics, data: 0, type: dword }
+  - { path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\ScheduledDiagnostics, name: EnabledExecution, data: 0, type: dword }
+  - { path: HKLM:\SOFTWARE\Microsoft\Windows\Windows Error Reporting, name: Disabled, data: 1, type: dword }
+  - { path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting, name: Disabled, data: 1, type: dword }
+  - { path: HKLM:\SOFTWARE\Policies\Microsoft\PCHealth\ErrorReporting, name: DoReport, data: 0, type: dword }
+  - { path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization, name: DODownloadMode, data: 0, type: dword }
+  - { path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Device Metadata, name: PreventDeviceMetadataFromNetwork, data: 1, type: dword }
+  - { path: HKLM:\SYSTEM\DriverDatabase\Policies\Settings, name: DisableSendGenericDriverNotFoundToWER, data: 1, type: dword }
+  - { path: HKLM:\SYSTEM\CurrentControlSet\Services\DiagTrack, name: Start, data: 4, type: dword }
+  - { path: HKLM:\SYSTEM\CurrentControlSet\Services\dmwappushservice, name: Start, data: 4, type: dword }
+  - { path: HKLM:\SYSTEM\CurrentControlSet\Services\diagnosticshub.standardcollector.service, name: Start, data: 4, type: dword }
+  - { path: HKLM:\SYSTEM\CurrentControlSet\Services\diagsvc, name: Start, data: 4, type: dword }
+range_telemetry_scheduled_tasks:
+  - \Microsoft\Windows\Application Experience\Microsoft Compatibility Appraiser
+  - \Microsoft\Windows\Application Experience\ProgramDataUpdater
+  - \Microsoft\Windows\Application Experience\StartupAppTask
+  - \Microsoft\Windows\Application Experience\AITAgent
+  - \Microsoft\Windows\Customer Experience Improvement Program\Consolidator
+  - \Microsoft\Windows\Customer Experience Improvement Program\KernelCeipTask
+  - \Microsoft\Windows\Customer Experience Improvement Program\UsbCeip
+  - \Microsoft\Windows\Customer Experience Improvement Program\BthSQM
+  - \Microsoft\Windows\Device Information\Device
+  - \Microsoft\Windows\Diagnosis\Scheduled
+  - \Microsoft\Windows\DiskDiagnostic\Microsoft-Windows-DiskDiagnosticDataCollector
+  - \Microsoft\Windows\Feedback\Siuf\DmClient
+  - \Microsoft\Windows\Feedback\Siuf\DmClientOnScenarioDownload
+  - \Microsoft\Windows\Flighting\FeatureConfig\UsageDataFlushing
+  - \Microsoft\Windows\Flighting\FeatureConfig\UsageDataReporting
+  - \Microsoft\Windows\NetTrace\GatherNetworkInfo
+  - \Microsoft\Windows\PI\Sqm-Tasks
+  - \Microsoft\Windows\Power Efficiency Diagnostics\AnalyzeSystem
+  - \Microsoft\Windows\User Profile Service\HiveUploadTask
+  - \Microsoft\Windows\Windows Error Reporting\QueueReporting

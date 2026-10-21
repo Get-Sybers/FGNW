@@ -1,0 +1,31 @@
+---
+galaxy_info:
+  role_name: zeek_sensor
+  namespace: get_sybers
+  author: Get-Sybers
+  description: >-
+    Zeek network security monitor deployed as a passive sensor, with the vantage
+    point treated as something to be PROVEN rather than assumed. Two profiles:
+    'hypervisor' (PVE cluster nodes, capturing on the SDN VNet bridge devices —
+    the only vantage point that sees same-VLAN VM-to-VM traffic) and
+    'chokepoint' (the Ludus range router or a mirror-fed sensor VM, which sees
+    inter-VLAN and egress only). Refuses to install unless a bounded promiscuous
+    probe proves the interfaces actually deliver unicast frames, and verifies by
+    reading Zeek's own packet counters rather than trusting the service state.
+    Adapted from juju4/ansible-zeek (BSD-2-Clause) — see README.md § Provenance.
+  license: AGPL-3.0-only
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Debian
+      versions: [bullseye, bookworm, trixie]
+    - name: Ubuntu
+      versions: [jammy, noble]
+  galaxy_tags:
+    - zeek
+    - nsm
+    - ids
+    - network
+    - monitoring
+    - dfir
+    - linux
+dependencies: []

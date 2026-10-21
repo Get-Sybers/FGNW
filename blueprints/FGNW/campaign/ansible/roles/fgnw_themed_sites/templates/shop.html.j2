@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ page.url }} — Shop</title>
+<style>
+ body{margin:0;font-family:'Segoe UI',Arial,sans-serif;background: #f4f4f4;
+ header{background:{{ village_accent | default('#e8721f', true) }};color: #fff;
+ header h1{margin:0;font-size:1.35rem}
+ .cart{background: #f4f4f4;
+ .hero{background: #f4f4f4;
+ .grid{max-width:900px;margin:22px auto;padding:0 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:18px}
+ .item{border:1px solid
+ .item .ph{background: #f4f4f4;
+ .item .b{padding:10px 12px}
+ .item .n{font-weight:bold;font-size:.9rem}
+ .item .p{color:{{ village_accent | default('#e8721f', true) }};font-weight:bold;margin-top:4px}
+ .item button{margin-top:8px;width:100%;padding:7px;background:{{ village_accent | default('#e8721f', true) }};color: #fff;
+ .rel{max-width:900px;margin:10px auto 30px;padding:0 20px}
+ .rel a{color:{{ village_accent | default('#e8721f', true) }};text-decoration:none;margin-right:12px;font-size:.82rem}
+ footer{background: #2c3e50;
+</style></head>
+<body>
+<header><h1>🛒 {{ page.url }}</h1><span class="cart">Cart (0)</span></header>
+<div class="hero">{{ page.description }}. Fast delivery to all five nations. {{ page.village }} storefront.</div>
+<div class="grid">
+{% set icons = ['🍥','🗡️','🥷','📜','🧪','🥋','🍢','🔩','🧭','🎋'] %}
+{% for i in range(6) %}
+ <div class="item"><div class="ph">{{ icons[i % icons|length] }}</div>
+  <div class="b"><div class="n">{{ page.category }} item
+   <div class="p">¥{{ (i + 1) * 1200 + 800 }}</div>
+   <button>Add to cart</button></div></div>
+{% endfor %}
+</div>
+<div class="rel"><strong style="font-size:.82rem">Other {{ page.village }} stores:</strong>
+{% for r in related[:12] %}<a href="http://{{ r }}/">{{ r }}</a>{% endfor %}{% if related|length == 0 %}<em>None.</em>{% endif %}
+</div>
+<footer>{{ page.url }} &middot; Fourth Great Ninja War (fictional storefront). No real transactions.</footer>
+</body></html>

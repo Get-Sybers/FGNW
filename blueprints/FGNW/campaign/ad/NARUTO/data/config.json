@@ -1,0 +1,1784 @@
+{
+    "lab": {
+        "hosts": {
+            "dc01": {
+                "hostname": "fire-dc1",
+                "type": "dc",
+                "local_admin_password": "AnsibleAutomation123!",
+                "domain": "fire.ninja",
+                "path": "DC=fire,DC=ninja",
+                "scripts": [],
+                "vulns": [
+                    "disable_firewall"
+                ],
+                "security": []
+            },
+            "dc02": {
+                "hostname": "konoha-dc1",
+                "type": "dc",
+                "local_admin_password": "AnsibleAutomation123!",
+                "domain": "konohagakure.fire.ninja",
+                "path": "DC=konohagakure,DC=fire,DC=ninja",
+                "scripts": [
+                    "sidhistory.ps1"
+                ],
+                "vulns": [
+                    "disable_firewall"
+                ],
+                "security": []
+            },
+            "dc03": {
+                "hostname": "wind-dc1",
+                "type": "dc",
+                "local_admin_password": "AnsibleAutomation123!",
+                "domain": "wind.ninja",
+                "path": "DC=wind,DC=ninja",
+                "scripts": [],
+                "vulns": [
+                    "disable_firewall"
+                ],
+                "security": []
+            },
+            "dc04": {
+                "hostname": "suna-dc1",
+                "type": "dc",
+                "local_admin_password": "AnsibleAutomation123!",
+                "domain": "sunagakure.wind.ninja",
+                "path": "DC=sunagakure,DC=wind,DC=ninja",
+                "scripts": [],
+                "vulns": [
+                    "disable_firewall"
+                ]
+            },
+            "dc05": {
+                "hostname": "oto-dc1",
+                "type": "dc",
+                "local_admin_password": "AnsibleAutomation123!",
+                "domain": "otogakure.ninja",
+                "path": "DC=otogakure,DC=ninja",
+                "scripts": [],
+                "vulns": [
+                    "disable_firewall"
+                ]
+            },
+            "dc06": {
+                "hostname": "akatsuki-dc1",
+                "type": "dc",
+                "local_admin_password": "AnsibleAutomation123!",
+                "domain": "akatsuki.dark",
+                "path": "DC=akatsuki,DC=dark",
+                "scripts": [],
+                "vulns": [
+                    "disable_firewall"
+                ]
+            },
+            "srv03": {
+                "hostname": "konoha-ws1",
+                "type": "server",
+                "local_admin_password": "AnsibleAutomation123!",
+                "domain": "konohagakure.fire.ninja",
+                "path": "DC=konohagakure,DC=fire,DC=ninja",
+                "use_laps": false,
+                "local_groups": {
+                    "Remote Desktop Users": [
+                        "KONOHA\\naruto.uzumaki"
+                    ]
+                },
+                "scripts": [],
+                "vulns": [
+                    "disable_firewall"
+                ]
+            },
+            "srv04": {
+                "hostname": "konoha-ws2",
+                "type": "server",
+                "local_admin_password": "AnsibleAutomation123!",
+                "domain": "konohagakure.fire.ninja",
+                "path": "DC=konohagakure,DC=fire,DC=ninja",
+                "use_laps": false,
+                "local_groups": {
+                    "Remote Desktop Users": [
+                        "KONOHA\\shikamaru.nara"
+                    ]
+                },
+                "scripts": [],
+                "vulns": [
+                    "disable_firewall"
+                ]
+            },
+            "srv05": {
+                "hostname": "konoha-ws3",
+                "type": "server",
+                "local_admin_password": "AnsibleAutomation123!",
+                "domain": "konohagakure.fire.ninja",
+                "path": "DC=konohagakure,DC=fire,DC=ninja",
+                "use_laps": false,
+                "local_groups": {
+                    "Remote Desktop Users": [
+                        "KONOHA\\kakashi.hatake"
+                    ]
+                },
+                "scripts": [],
+                "vulns": [
+                    "disable_firewall"
+                ]
+            },
+            "srv06": {
+                "hostname": "konoha-ws4",
+                "type": "server",
+                "local_admin_password": "AnsibleAutomation123!",
+                "domain": "konohagakure.fire.ninja",
+                "path": "DC=konohagakure,DC=fire,DC=ninja",
+                "use_laps": false,
+                "local_groups": {
+                    "Remote Desktop Users": [
+                        "KONOHA\\tsunade"
+                    ]
+                },
+                "scripts": [],
+                "vulns": [
+                    "disable_firewall"
+                ]
+            },
+            "srv07": {
+                "hostname": "konoha-ws5",
+                "type": "server",
+                "local_admin_password": "AnsibleAutomation123!",
+                "domain": "konohagakure.fire.ninja",
+                "path": "DC=konohagakure,DC=fire,DC=ninja",
+                "use_laps": false,
+                "local_groups": {
+                    "Remote Desktop Users": [
+                        "KONOHA\\might.guy"
+                    ]
+                },
+                "scripts": [],
+                "vulns": [
+                    "disable_firewall"
+                ]
+            },
+            "srv08": {
+                "hostname": "oto-ws1",
+                "type": "server",
+                "local_admin_password": "AnsibleAutomation123!",
+                "domain": "otogakure.ninja",
+                "path": "DC=otogakure,DC=ninja",
+                "use_laps": false,
+                "local_groups": {
+                    "Remote Desktop Users": [
+                        "OTO\\orochimaru"
+                    ]
+                },
+                "scripts": [],
+                "vulns": [
+                    "disable_firewall"
+                ]
+            },
+            "srv09": {
+                "hostname": "akatsuki-ws1",
+                "type": "server",
+                "local_admin_password": "AnsibleAutomation123!",
+                "domain": "akatsuki.dark",
+                "path": "DC=akatsuki,DC=dark",
+                "use_laps": false,
+                "local_groups": {
+                    "Remote Desktop Users": [
+                        "AKATSUKI\\pain"
+                    ]
+                },
+                "scripts": [],
+                "vulns": [
+                    "disable_firewall"
+                ]
+            },
+            "srv10": {
+                "hostname": "akatsuki-ws2",
+                "type": "server",
+                "local_admin_password": "AnsibleAutomation123!",
+                "domain": "akatsuki.dark",
+                "path": "DC=akatsuki,DC=dark",
+                "use_laps": false,
+                "local_groups": {
+                    "Remote Desktop Users": [
+                        "AKATSUKI\\zetsu"
+                    ]
+                },
+                "scripts": [],
+                "vulns": [
+                    "disable_firewall"
+                ]
+            },
+            "srv-konoha": {
+                "hostname": "konoha-mail",
+                "type": "server",
+                "local_admin_password": "AnsibleAutomation123!",
+                "domain": "konohagakure.fire.ninja",
+                "path": "DC=konohagakure,DC=fire,DC=ninja",
+                "use_laps": false,
+                "scripts": [],
+                "vulns": [
+                    "disable_firewall"
+                ]
+            },
+            "srv-oto": {
+                "hostname": "oto-mail",
+                "type": "server",
+                "local_admin_password": "AnsibleAutomation123!",
+                "domain": "otogakure.ninja",
+                "path": "DC=otogakure,DC=ninja",
+                "use_laps": false,
+                "scripts": [],
+                "vulns": [
+                    "disable_firewall"
+                ]
+            },
+            "srv-akatsuki": {
+                "hostname": "dark-mail",
+                "type": "server",
+                "local_admin_password": "AnsibleAutomation123!",
+                "domain": "akatsuki.dark",
+                "path": "DC=akatsuki,DC=dark",
+                "use_laps": false,
+                "scripts": [],
+                "vulns": [
+                    "disable_firewall"
+                ]
+            }
+        },
+        "domains": {
+            "fire.ninja": {
+                "dc": "dc01",
+                "netbios_name": "FIRE",
+                "domain_password": "password",
+                "trust": "otogakure.ninja",
+                "organisation_units": {
+                    "Land Administration": {
+                        "path": "DC=fire,DC=ninja"
+                    },
+                    "Daimyo Council": {
+                        "path": "DC=fire,DC=ninja"
+                    }
+                },
+                "groups": {
+                    "universal": {},
+                    "global": {
+                        "Fire Daimyo Council": {
+                            "path": "OU=Daimyo Council,DC=fire,DC=ninja"
+                        },
+                        "Land Administrators": {
+                            "path": "OU=Land Administration,DC=fire,DC=ninja"
+                        }
+                    }
+                },
+                "users": {
+                    "fire.daimyo": {
+                        "firstname": "Fire",
+                        "surname": "Daimyo",
+                        "password": "wC6BwiQElq47UFQ",
+                        "city": "Land of Fire",
+                        "description": "Feudal lord of the Land of Fire, funds and has final civil authority over Konohagakure, presided over the Chunin Exams and the Five Kage Summit",
+                        "groups": [
+                            "Fire Daimyo Council"
+                        ],
+                        "path": "OU=Daimyo Council,DC=fire,DC=ninja"
+                    },
+                    "shijimi": {
+                        "firstname": "Shijimi",
+                        "surname": "Shijimi",
+                        "password": "RjgX8iQcF3FVf2R",
+                        "city": "Land of Fire",
+                        "description": "Wife of the Fire Daimyo, owner of the cat Tora (a running D-rank mission target for Konoha genin teams)",
+                        "groups": [
+                            "Fire Daimyo Council"
+                        ],
+                        "path": "OU=Daimyo Council,DC=fire,DC=ninja"
+                    }
+                }
+            },
+            "konohagakure.fire.ninja": {
+                "dc": "dc02",
+                "netbios_name": "KONOHA",
+                "domain_password": "password",
+                "organisation_units": {
+                    "Kage Office": {
+                        "path": "DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "Jonin Corps": {
+                        "path": "DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "Special Operations": {
+                        "path": "DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "Medical Wing": {
+                        "path": "DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "Academy": {
+                        "path": "DC=konohagakure,DC=fire,DC=ninja"
+                    }
+                },
+                "groups": {
+                    "universal": {},
+                    "global": {
+                        "Hokage": {
+                            "path": "OU=Kage Office,DC=konohagakure,DC=fire,DC=ninja"
+                        },
+                        "Kage Council": {
+                            "path": "OU=Kage Office,DC=konohagakure,DC=fire,DC=ninja"
+                        },
+                        "The Sannin": {
+                            "path": "OU=Kage Office,DC=konohagakure,DC=fire,DC=ninja"
+                        },
+                        "Twelve Guardian Ninja": {
+                            "path": "OU=Kage Office,DC=konohagakure,DC=fire,DC=ninja"
+                        },
+                        "Konoha Jonin": {
+                            "path": "OU=Jonin Corps,DC=konohagakure,DC=fire,DC=ninja",
+                            "members": [
+                                "Team 7",
+                                "Team 8",
+                                "Team 10",
+                                "Team Guy",
+                                "Team Minato",
+                                "Team Konohamaru"
+                            ]
+                        },
+                        "Team 7": {
+                            "path": "OU=Jonin Corps,DC=konohagakure,DC=fire,DC=ninja"
+                        },
+                        "Team 8": {
+                            "path": "OU=Jonin Corps,DC=konohagakure,DC=fire,DC=ninja"
+                        },
+                        "Team 10": {
+                            "path": "OU=Jonin Corps,DC=konohagakure,DC=fire,DC=ninja"
+                        },
+                        "Team Guy": {
+                            "path": "OU=Jonin Corps,DC=konohagakure,DC=fire,DC=ninja"
+                        },
+                        "Team Minato": {
+                            "path": "OU=Jonin Corps,DC=konohagakure,DC=fire,DC=ninja"
+                        },
+                        "Team Konohamaru": {
+                            "path": "OU=Academy,DC=konohagakure,DC=fire,DC=ninja"
+                        },
+                        "ANBU": {
+                            "path": "OU=Special Operations,DC=konohagakure,DC=fire,DC=ninja",
+                            "members": [
+                                "Root"
+                            ]
+                        },
+                        "Root": {
+                            "path": "OU=Special Operations,DC=konohagakure,DC=fire,DC=ninja"
+                        },
+                        "Intelligence Division": {
+                            "path": "OU=Special Operations,DC=konohagakure,DC=fire,DC=ninja"
+                        },
+                        "T&I Division": {
+                            "path": "OU=Special Operations,DC=konohagakure,DC=fire,DC=ninja"
+                        },
+                        "Konoha Military Police": {
+                            "path": "OU=Special Operations,DC=konohagakure,DC=fire,DC=ninja"
+                        },
+                        "Medical Corps": {
+                            "path": "OU=Medical Wing,DC=konohagakure,DC=fire,DC=ninja"
+                        },
+                        "Konoha Academy": {
+                            "path": "OU=Academy,DC=konohagakure,DC=fire,DC=ninja"
+                        },
+                        "Hyuga Clan": {
+                            "path": "OU=Academy,DC=konohagakure,DC=fire,DC=ninja"
+                        },
+                        "Uchiha Clan": {
+                            "path": "OU=Academy,DC=konohagakure,DC=fire,DC=ninja"
+                        },
+                        "Nara Clan": {
+                            "path": "OU=Academy,DC=konohagakure,DC=fire,DC=ninja"
+                        },
+                        "Yamanaka Clan": {
+                            "path": "OU=Academy,DC=konohagakure,DC=fire,DC=ninja"
+                        },
+                        "Akimichi Clan": {
+                            "path": "OU=Academy,DC=konohagakure,DC=fire,DC=ninja"
+                        },
+                        "Aburame Clan": {
+                            "path": "OU=Academy,DC=konohagakure,DC=fire,DC=ninja"
+                        },
+                        "Inuzuka Clan": {
+                            "path": "OU=Academy,DC=konohagakure,DC=fire,DC=ninja"
+                        },
+                        "Sarutobi Clan": {
+                            "path": "OU=Academy,DC=konohagakure,DC=fire,DC=ninja"
+                        },
+                        "Senju Clan": {
+                            "path": "OU=Academy,DC=konohagakure,DC=fire,DC=ninja"
+                        },
+                        "Uzumaki Clan": {
+                            "path": "OU=Academy,DC=konohagakure,DC=fire,DC=ninja"
+                        },
+                        "Ichiraku Ramen Staff": {
+                            "path": "OU=Academy,DC=konohagakure,DC=fire,DC=ninja"
+                        }
+                    }
+                },
+                "users": {
+                    "hayate.gekkou": {
+                        "firstname": "Hayate",
+                        "surname": "Gekkou",
+                        "password": "N7ITxKLUkX0vyOY",
+                        "city": "Hidden Leaf Village",
+                        "description": "Exam proctor; ninja, headband",
+                        "groups": [
+                            "Konoha Jonin"
+                        ],
+                        "path": "OU=Jonin Corps,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "sakura.haruno": {
+                        "firstname": "Sakura",
+                        "surname": "Haruno",
+                        "password": "x6tzSnWQ36xgB0O",
+                        "city": "Hidden Leaf Village",
+                        "description": "ninja, headband, medic, student of Tsunade",
+                        "groups": [
+                            "Team 7",
+                            "Medical Corps"
+                        ],
+                        "path": "OU=Medical Wing,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "tsunade": {
+                        "firstname": "Tsunade",
+                        "surname": "Senju",
+                        "password": "z5eGSQw4zzZVZtQ",
+                        "city": "Hidden Leaf Village",
+                        "description": "5th Hokage, Legendary Sannin, medical expert, gambling",
+                        "groups": [
+                            "The Sannin",
+                            "Hokage",
+                            "Medical Corps"
+                        ],
+                        "path": "OU=Kage Office,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "shizune": {
+                        "firstname": "Shizune",
+                        "surname": "Shizune",
+                        "password": "b1wMhDp9kY2uRS6",
+                        "city": "Hidden Leaf Village",
+                        "description": "Aide to Tsunade, medical-nin, Ton-Ton pig companion",
+                        "groups": [
+                            "Medical Corps"
+                        ],
+                        "path": "OU=Medical Wing,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "kurenai.yuhi": {
+                        "firstname": "Kurenai",
+                        "surname": "Yuhi",
+                        "password": "6MDMqZmJeOHNKXc",
+                        "city": "Hidden Leaf Village",
+                        "description": "Genjutsu specialist, Team 8 leader, red eyes",
+                        "groups": [
+                            "Konoha Jonin",
+                            "Team 8"
+                        ],
+                        "path": "OU=Jonin Corps,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "moegi.kazamatsuri": {
+                        "firstname": "Moegi",
+                        "surname": "Kazamatsuri",
+                        "password": "eA9P5NdRbOmmgsm",
+                        "city": "Hidden Leaf Village",
+                        "description": "Konohamaru squad member, orange hair, pigtails",
+                        "groups": [
+                            "Team Konohamaru"
+                        ],
+                        "path": "OU=Academy,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "tobirama.senju": {
+                        "firstname": "Tobirama",
+                        "surname": "Senju",
+                        "password": "CV6ZKuaY7NvBKYo",
+                        "city": "Hidden Leaf Village",
+                        "description": "2nd Hokage, Water Style, Reanimation Jutsu creator, white hair",
+                        "groups": [
+                            "Hokage",
+                            "Senju Clan"
+                        ],
+                        "path": "OU=Kage Office,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "anko.mitarashi": {
+                        "firstname": "Anko",
+                        "surname": "Mitarashi",
+                        "password": "JcXJUPt25nNlHHH",
+                        "city": "Hidden Leaf Village",
+                        "description": "Former student of Orochimaru, curse mark, snake style, exam proctor",
+                        "groups": [
+                            "T&I Division"
+                        ],
+                        "path": "OU=Special Operations,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "hanabi.hyuga": {
+                        "firstname": "Hanabi",
+                        "surname": "Hyuga",
+                        "password": "lXQdVFTVLD5bZHF",
+                        "city": "Hidden Leaf Village",
+                        "description": "Hyuga main branch, Byakugan, Hinata's younger sister",
+                        "groups": [
+                            "Hyuga Clan"
+                        ],
+                        "path": "OU=Academy,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "shikamaru.nara": {
+                        "firstname": "Shikamaru",
+                        "surname": "Nara",
+                        "password": "IWPU7wVJZKPqqeT",
+                        "city": "Hidden Leaf Village",
+                        "description": "Shadow jutsu, genius IQ, lazy demeanor, strategist",
+                        "groups": [
+                            "Team 10",
+                            "Nara Clan"
+                        ],
+                        "path": "OU=Academy,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "kiba.inuzuka": {
+                        "firstname": "Kiba",
+                        "surname": "Inuzuka",
+                        "password": "i8d5ku0fmC8I1q4",
+                        "city": "Hidden Leaf Village",
+                        "description": "Dog partner Akamaru, fang-over-fang, animal style, facial markings",
+                        "groups": [
+                            "Team 8",
+                            "Inuzuka Clan"
+                        ],
+                        "path": "OU=Academy,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "kakashi.hatake": {
+                        "firstname": "Kakashi",
+                        "surname": "Hatake",
+                        "password": "dJjBwMT467cBsVj",
+                        "city": "Hidden Leaf Village",
+                        "description": "Copy ninja, Sharingan (gifted), Team 7 leader, Icha-Icha reader, headband over eye",
+                        "groups": [
+                            "Team 7",
+                            "ANBU",
+                            "Konoha Jonin"
+                        ],
+                        "path": "OU=Special Operations,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "naruto.uzumaki": {
+                        "firstname": "Naruto",
+                        "surname": "Uzumaki",
+                        "password": "dODwyenwQRPMqTn",
+                        "city": "Hidden Leaf Village",
+                        "description": "Nine-tails jinchuriki, spiky blonde hair, blue eyes, whisker marks, headband, Rasengan",
+                        "groups": [
+                            "Team 7",
+                            "Uzumaki Clan"
+                        ],
+                        "path": "OU=Academy,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "jiraiya": {
+                        "firstname": "Jiraiya",
+                        "surname": "Jiraiya",
+                        "password": "miEzNBJqkoT1vzN",
+                        "city": "Hidden Leaf Village",
+                        "description": "Toad Sage, Legendary Sannin, Rasengan creator, adult novelist, white hair, long hair",
+                        "groups": [
+                            "The Sannin"
+                        ],
+                        "path": "OU=Kage Office,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "neji.hyuga": {
+                        "firstname": "Neji",
+                        "surname": "Hyuga",
+                        "password": "mZW9N7A7kTENSOu",
+                        "city": "Hidden Leaf Village",
+                        "description": "Byakugan, Gentle Fist, Hyuga branch house, long dark hair, fate philosophy",
+                        "groups": [
+                            "Team Guy",
+                            "Hyuga Clan"
+                        ],
+                        "path": "OU=Jonin Corps,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "minato.namikaze": {
+                        "firstname": "Minato",
+                        "surname": "Namikaze",
+                        "password": "cbIMmPBtW89IuXz",
+                        "city": "Hidden Leaf Village",
+                        "description": "4th Hokage, Yellow Flash, Rasengan inventor, blonde hair, Naruto's father, Flying Thunder God",
+                        "groups": [
+                            "Hokage"
+                        ],
+                        "path": "OU=Kage Office,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "choji.akimichi": {
+                        "firstname": "Choji",
+                        "surname": "Akimichi",
+                        "password": "3wo6t5CLy9OyjN0",
+                        "city": "Hidden Leaf Village",
+                        "description": "Size expansion jutsu, food lover, round face, headband, chip obsession",
+                        "groups": [
+                            "Team 10",
+                            "Akimichi Clan"
+                        ],
+                        "path": "OU=Academy,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "rock.lee": {
+                        "firstname": "Rock",
+                        "surname": "Lee",
+                        "password": "rWVpy0TfDSavf17",
+                        "city": "Hidden Leaf Village",
+                        "description": "No ninjutsu, taijutsu specialist, Eight Inner Gates, bowl cut, green jumpsuit, thick eyebrows",
+                        "groups": [
+                            "Team Guy"
+                        ],
+                        "path": "OU=Academy,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "shino.aburame": {
+                        "firstname": "Shino",
+                        "surname": "Aburame",
+                        "password": "rFH0M6yic28GLym",
+                        "city": "Hidden Leaf Village",
+                        "description": "Insect techniques, sunglasses, dark clothing, reserved personality, Aburame clan",
+                        "groups": [
+                            "Team 8",
+                            "Aburame Clan"
+                        ],
+                        "path": "OU=Academy,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "might.guy": {
+                        "firstname": "Might",
+                        "surname": "Guy",
+                        "password": "OChQptdFYTnwIv7",
+                        "city": "Hidden Leaf Village",
+                        "description": "Taijutsu master, Eight Inner Gates, green jumpsuit, bowl cut, thick eyebrows, eternal rival of Kakashi",
+                        "groups": [
+                            "Team Guy",
+                            "Konoha Jonin"
+                        ],
+                        "path": "OU=Jonin Corps,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "ibiki.morino": {
+                        "firstname": "Ibiki",
+                        "surname": "Morino",
+                        "password": "rLgR2R8jGXLQPcP",
+                        "city": "Hidden Leaf Village",
+                        "description": "Head of T&I Division, psychological interrogation, scarred head, chunin exam proctor",
+                        "groups": [
+                            "T&I Division"
+                        ],
+                        "path": "OU=Special Operations,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "konohamaru.sarutobi": {
+                        "firstname": "Konohamaru",
+                        "surname": "Sarutobi",
+                        "password": "JFsbjjDf63PUNF7",
+                        "city": "Hidden Leaf Village",
+                        "description": "3rd Hokage's grandson, idolises Naruto, scarf, goggles, Rasengan learner",
+                        "groups": [
+                            "Team Konohamaru",
+                            "Sarutobi Clan"
+                        ],
+                        "path": "OU=Academy,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "udon": {
+                        "firstname": "Udon",
+                        "surname": "Ise",
+                        "password": "DVUblYmkpWoPcTO",
+                        "city": "Hidden Leaf Village",
+                        "description": "Konohamaru squad, runny nose, glasses, smart",
+                        "groups": [
+                            "Team Konohamaru"
+                        ],
+                        "path": "OU=Academy,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "ebisu": {
+                        "firstname": "Ebisu",
+                        "surname": "Ebisu",
+                        "password": "ZCDTZzRtWubSBwY",
+                        "city": "Hidden Leaf Village",
+                        "description": "Elite personal trainer, round sunglasses, tutor to Konohamaru and Naruto, pervy-obsessed mannerisms",
+                        "groups": [
+                            "Team Konohamaru"
+                        ],
+                        "path": "OU=Jonin Corps,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "iruka.umino": {
+                        "firstname": "Iruka",
+                        "surname": "Umino",
+                        "password": "OgYkfTa6tOQ2mkR",
+                        "city": "Hidden Leaf Village",
+                        "description": "Academy teacher, scar across nose, headband, surrogate father figure to Naruto",
+                        "groups": [
+                            "Konoha Academy"
+                        ],
+                        "path": "OU=Academy,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "misumi.tsurugi": {
+                        "firstname": "Misumi",
+                        "surname": "Tsurugi",
+                        "password": "mgfkJP6zKMp765d",
+                        "city": "Hidden Leaf Village",
+                        "description": "Chunin Exam participant, soft-body technique, minor antagonist",
+                        "groups": [
+                            "Konoha Academy"
+                        ],
+                        "path": "OU=Academy,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "homura.mitokado": {
+                        "firstname": "Homura",
+                        "surname": "Mitokado",
+                        "password": "BoRYAv2JDEVmeee",
+                        "city": "Hidden Leaf Village",
+                        "description": "Village Elder, advisor to Hokage, grey hair, glasses",
+                        "groups": [
+                            "Kage Council"
+                        ],
+                        "path": "OU=Kage Office,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "teuchi": {
+                        "firstname": "Teuchi",
+                        "surname": "Teuchi",
+                        "password": "2PQixrLyba7ZR68",
+                        "city": "Hidden Leaf Village",
+                        "description": "Ichiraku Ramen owner, Naruto's favourite ramen chef, white chef hat",
+                        "groups": [
+                            "Ichiraku Ramen Staff"
+                        ],
+                        "path": "OU=Academy,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "koharu.utatane": {
+                        "firstname": "Koharu",
+                        "surname": "Utatane",
+                        "password": "pdIJ7h2Pz9rHJ6s",
+                        "city": "Hidden Leaf Village",
+                        "description": "Village Elder, advisor to Hokage, grey hair, glasses",
+                        "groups": [
+                            "Kage Council"
+                        ],
+                        "path": "OU=Kage Office,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "jiraiya.young": {
+                        "firstname": "Jiraiya",
+                        "surname": "(Young)",
+                        "password": "jS6a22AtFxcXQua",
+                        "city": "Hidden Leaf Village",
+                        "description": "Young Jiraiya flashback version, student of 3rd Hokage",
+                        "groups": [
+                            "The Sannin"
+                        ],
+                        "path": "OU=Academy,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "hiruzen.young": {
+                        "firstname": "Hiruzen",
+                        "surname": "Sarutobi",
+                        "password": "WMdfWYd0WxZBNAz",
+                        "city": "Hidden Leaf Village",
+                        "description": "Young Hiruzen flashback, future 3rd Hokage, student of Tobirama Senju",
+                        "groups": [
+                            "Sarutobi Clan"
+                        ],
+                        "path": "OU=Jonin Corps,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "hashirama.senju": {
+                        "firstname": "Hashirama",
+                        "surname": "Senju",
+                        "password": "ElaF9R2lmeBmf9J",
+                        "city": "Hidden Leaf Village",
+                        "description": "1st Hokage, founder of Konoha, Wood Release, God of Shinobi, brown hair",
+                        "groups": [
+                            "Hokage",
+                            "Senju Clan"
+                        ],
+                        "path": "OU=Kage Office,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "sasuke.uchiha": {
+                        "firstname": "Sasuke",
+                        "surname": "Uchiha",
+                        "password": "OHYZkAo4M1f9oGl",
+                        "city": "Hidden Leaf Village",
+                        "description": "Sharingan, Rinnegan, avenger, rival of Naruto, chidori, dark hair",
+                        "groups": [
+                            "Team 7",
+                            "Uchiha Clan"
+                        ],
+                        "path": "OU=Academy,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "hinata.hyuga": {
+                        "firstname": "Hinata",
+                        "surname": "Hyuga",
+                        "password": "BbB98HIWtgT7Ous",
+                        "city": "Hidden Leaf Village",
+                        "description": "Byakugan, Gentle Fist, Hyuga main branch, shy, dark blue hair, loves Naruto",
+                        "groups": [
+                            "Team 8",
+                            "Hyuga Clan"
+                        ],
+                        "path": "OU=Academy,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "ino.yamanaka": {
+                        "firstname": "Ino",
+                        "surname": "Yamanaka",
+                        "password": "dT4Fx0ubXxLLv6S",
+                        "city": "Hidden Leaf Village",
+                        "description": "Mind Transfer Jutsu, blonde ponytail, medic, Sakura's rival, Yamanaka Clan",
+                        "groups": [
+                            "Team 10",
+                            "Yamanaka Clan",
+                            "Medical Corps"
+                        ],
+                        "path": "OU=Medical Wing,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "tenten": {
+                        "firstname": "TenTen",
+                        "surname": "TenTen",
+                        "password": "ng5IbS8dzSHzcZz",
+                        "city": "Hidden Leaf Village",
+                        "description": "Weapon specialist, twin buns, scroll summoning, no known surname",
+                        "groups": [
+                            "Team Guy"
+                        ],
+                        "path": "OU=Academy,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "rin.nohara": {
+                        "firstname": "Rin",
+                        "surname": "Nohara",
+                        "password": "aPcRNBUDfuMHNCJ",
+                        "city": "Hidden Leaf Village",
+                        "description": "Three-tails jinchuriki (forced), Kakashi and Obito's teammate, medic, brown hair",
+                        "groups": [
+                            "Team Minato",
+                            "Medical Corps"
+                        ],
+                        "path": "OU=Medical Wing,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "sai": {
+                        "firstname": "Sai",
+                        "surname": "Yamanaka",
+                        "password": "G9nfDLR2XxVxcjj",
+                        "city": "Hidden Leaf Village",
+                        "description": "Ink style, ROOT operative, pale skin, black hair, emotionless upbringing, replaces Sasuke",
+                        "groups": [
+                            "Team 7",
+                            "Root"
+                        ],
+                        "path": "OU=Special Operations,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "yamato": {
+                        "firstname": "Yamato",
+                        "surname": "Yamato",
+                        "password": "goZNAkimQ0qyEve",
+                        "city": "Hidden Leaf Village",
+                        "description": "Wood Release, Hashirama cell transplant, Team 7 temp leader, wears mask, real name Tenzou",
+                        "groups": [
+                            "Team 7",
+                            "ANBU",
+                            "Root"
+                        ],
+                        "path": "OU=Special Operations,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "asuma.sarutobi": {
+                        "firstname": "Asuma",
+                        "surname": "Sarutobi",
+                        "password": "xNnk0M4ErZIZfR7",
+                        "city": "Hidden Leaf Village",
+                        "description": "Wind chakra blades, beard, smoker, Team 10 leader, Shikamaru's teacher, Hiruzen's son",
+                        "groups": [
+                            "Team 10",
+                            "Sarutobi Clan",
+                            "Twelve Guardian Ninja"
+                        ],
+                        "path": "OU=Jonin Corps,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "danzo.shimura": {
+                        "firstname": "Danzo",
+                        "surname": "Shimura",
+                        "password": "rEqjUgWn45jTSkj",
+                        "city": "Hidden Leaf Village",
+                        "description": "ROOT Foundation leader, bandaged arm with Sharingan eyes, Izanagi, hawkish ideology, acting Hokage",
+                        "groups": [
+                            "Root",
+                            "Kage Council"
+                        ],
+                        "path": "OU=Kage Office,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "torune.aburame": {
+                        "firstname": "Torune",
+                        "surname": "Aburame",
+                        "password": "cQadpYwhtmQeUGB",
+                        "city": "Hidden Leaf Village",
+                        "description": "Nano-sized insects, ROOT operative, Aburame clan, Shino's childhood friend",
+                        "groups": [
+                            "Root",
+                            "Aburame Clan"
+                        ],
+                        "path": "OU=Special Operations,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "fu.yamanaka": {
+                        "firstname": "Fu",
+                        "surname": "Yamanaka",
+                        "password": "NHK7yU8zfmZlT1x",
+                        "city": "Hidden Leaf Village",
+                        "description": "ROOT member, Mind Body Disturbance, short hair, bodyguard of Danzo",
+                        "groups": [
+                            "Root",
+                            "Yamanaka Clan"
+                        ],
+                        "path": "OU=Special Operations,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "kido": {
+                        "firstname": "Kidō",
+                        "surname": "Kidō",
+                        "password": "Tn8SHQ6dU6pgsJu",
+                        "city": "Hidden Leaf Village",
+                        "description": "Konoha Jonin, minor appearance",
+                        "groups": [
+                            "Konoha Jonin"
+                        ],
+                        "path": "OU=Jonin Corps,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "shisui.uchiha": {
+                        "firstname": "Shisui",
+                        "surname": "Uchiha",
+                        "password": "su4s6cqAuvSfP5I",
+                        "city": "Hidden Leaf Village",
+                        "description": "Kotoamatsukami genjutsu, Itachi's friend, dark hair, self-sacrificed, speed like teleportation",
+                        "groups": [
+                            "ANBU",
+                            "Uchiha Clan"
+                        ],
+                        "path": "OU=Special Operations,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "fugaku.uchiha": {
+                        "firstname": "Fugaku",
+                        "surname": "Uchiha",
+                        "password": "WLrIrc4u41d7iBF",
+                        "city": "Hidden Leaf Village",
+                        "description": "Uchiha clan head, Itachi and Sasuke's father, Konoha Military Police Chief, Mangekyo Sharingan",
+                        "groups": [
+                            "Uchiha Clan",
+                            "Konoha Military Police"
+                        ],
+                        "path": "OU=Special Operations,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "mikoto.uchiha": {
+                        "firstname": "Mikoto",
+                        "surname": "Uchiha",
+                        "password": "4FPYKvkMyHQbCeL",
+                        "city": "Hidden Leaf Village",
+                        "description": "Itachi and Sasuke's mother, kind demeanor, Kushina's friend, killed in Uchiha Massacre",
+                        "groups": [
+                            "Uchiha Clan"
+                        ],
+                        "path": "OU=Jonin Corps,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "hiashi.hyuga": {
+                        "firstname": "Hiashi",
+                        "surname": "Hyuga",
+                        "password": "m4SIyVtnYHFRNNA",
+                        "city": "Hidden Leaf Village",
+                        "description": "Hyuga clan head, main branch, Byakugan, twin brother of Hizashi, Hinata's father",
+                        "groups": [
+                            "Hyuga Clan"
+                        ],
+                        "path": "OU=Jonin Corps,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "hizashi.hyuga": {
+                        "firstname": "Hizashi",
+                        "surname": "Hyuga",
+                        "password": "KCTLizyVyleqviq",
+                        "city": "Hidden Leaf Village",
+                        "description": "Branch house, Neji's father, sacrificed himself, Hiashi's twin, Byakugan",
+                        "groups": [
+                            "Hyuga Clan"
+                        ],
+                        "path": "OU=Jonin Corps,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "shikaku.nara": {
+                        "firstname": "Shikaku",
+                        "surname": "Nara",
+                        "password": "PKrTHqggNliwRAi",
+                        "city": "Hidden Leaf Village",
+                        "description": "Konoha chief strategist, Shikamaru's father, Shadow Paralysis, lazy like his son",
+                        "groups": [
+                            "Nara Clan"
+                        ],
+                        "path": "OU=Jonin Corps,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "inoichi.yamanaka": {
+                        "firstname": "Inoichi",
+                        "surname": "Yamanaka",
+                        "password": "GhPjGyS7wQBJbX7",
+                        "city": "Hidden Leaf Village",
+                        "description": "Mind reading expert, Ino's father, Konoha Intelligence Division head, blond hair",
+                        "groups": [
+                            "Yamanaka Clan",
+                            "Intelligence Division"
+                        ],
+                        "path": "OU=Special Operations,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "choza.akimichi": {
+                        "firstname": "Choza",
+                        "surname": "Akimichi",
+                        "password": "tfyUyNGDXbgd7Kp",
+                        "city": "Hidden Leaf Village",
+                        "description": "Choji's father, expansion jutsu, large build, ex-Team Minato peer group, ponytail",
+                        "groups": [
+                            "Akimichi Clan"
+                        ],
+                        "path": "OU=Jonin Corps,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "tsume.inuzuka": {
+                        "firstname": "Tsume",
+                        "surname": "Inuzuka",
+                        "password": "XjoSeTbV8d6NcL9",
+                        "city": "Hidden Leaf Village",
+                        "description": "Kiba's mother, dog partner Kuromaru, fierce personality, Inuzuka clan",
+                        "groups": [
+                            "Inuzuka Clan"
+                        ],
+                        "path": "OU=Jonin Corps,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "shibi.aburame": {
+                        "firstname": "Shibi",
+                        "surname": "Aburame",
+                        "password": "HNbKS3uXjN0vptM",
+                        "city": "Hidden Leaf Village",
+                        "description": "Shino's father, insect techniques, quiet demeanor, Aburame clan head",
+                        "groups": [
+                            "Aburame Clan"
+                        ],
+                        "path": "OU=Jonin Corps,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "nawaki": {
+                        "firstname": "Nawaki",
+                        "surname": "Senju",
+                        "password": "Tt8v6t9NzZWvTlc",
+                        "city": "Hidden Leaf Village",
+                        "description": "Tsunade's younger brother, wore Senju necklace, died young in war, resembled Naruto",
+                        "groups": [
+                            "Konoha Academy"
+                        ],
+                        "path": "OU=Academy,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "dan.kato": {
+                        "firstname": "Dan",
+                        "surname": "Kato",
+                        "password": "IN3z6gBBzoCWOeo",
+                        "city": "Hidden Leaf Village",
+                        "description": "Tsunade's lover, died in Second Shinobi War, Spirit Release, reanimated by Kabuto",
+                        "groups": [
+                            "Konoha Academy"
+                        ],
+                        "path": "OU=Jonin Corps,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "narukami": {
+                        "firstname": "Narukami",
+                        "surname": "Narukami",
+                        "password": "aTTHlzrWMLvqCle",
+                        "city": "Hidden Leaf Village",
+                        "description": "Minor Konoha character, filler",
+                        "groups": [
+                            "Konoha Academy"
+                        ],
+                        "path": "OU=Academy,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "zaji": {
+                        "firstname": "Zaji",
+                        "surname": "Zaji",
+                        "password": "aIOquCbOsKoHEzh",
+                        "city": "Hidden Leaf Village",
+                        "description": "Konoha genin, minor Fourth Shinobi War participant",
+                        "groups": [
+                            "Konoha Academy"
+                        ],
+                        "path": "OU=Academy,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "sai.anbu": {
+                        "firstname": "Sai",
+                        "surname": "(Anbu)",
+                        "password": "wdXaXoGNqLDs1Cl",
+                        "city": "Hidden Leaf Village",
+                        "description": "Young Sai flashback, ROOT child training, lost brother Shin",
+                        "groups": [
+                            "Root"
+                        ],
+                        "path": "OU=Special Operations,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "shin": {
+                        "firstname": "Shin",
+                        "surname": "Shin",
+                        "password": "HRb8QUuRDzMJLc1",
+                        "city": "Hidden Leaf Village",
+                        "description": "Sai's ROOT brother figure, died of illness, inspires Sai's love of art",
+                        "groups": [
+                            "Root"
+                        ],
+                        "path": "OU=Special Operations,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "sajin": {
+                        "firstname": "Sajin",
+                        "surname": "Sajin",
+                        "password": "pO1Z07EOUIlE2U8",
+                        "city": "Hidden Leaf Village",
+                        "description": "Minor Konoha ninja, filler character",
+                        "groups": [
+                            "Konoha Academy"
+                        ],
+                        "path": "OU=Academy,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "mecha.naruto": {
+                        "firstname": "Mecha",
+                        "surname": "Naruto",
+                        "password": "rtKk4EI3t2zIDLJ",
+                        "city": "Hidden Leaf Village",
+                        "description": "Filler arc robot replica of Naruto, comedic villain",
+                        "groups": [
+                            "Konoha Academy"
+                        ],
+                        "path": "OU=Academy,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "ayame": {
+                        "firstname": "Ayame",
+                        "surname": "Ayame",
+                        "password": "HABcjvRgNyvg23X",
+                        "city": "Hidden Leaf Village",
+                        "description": "Teuchi's daughter, Ichiraku Ramen waitress, friendly to Naruto, long dark hair",
+                        "groups": [
+                            "Ichiraku Ramen Staff"
+                        ],
+                        "path": "OU=Academy,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "sasuke.uchiha.adult": {
+                        "firstname": "Sasuke",
+                        "surname": "Uchiha",
+                        "password": "J7poxqkOC6o2vgF",
+                        "city": "Hidden Leaf Village",
+                        "description": "Adult Sasuke post-war, travels world atoning, Rinnegan and Sharingan, ponytail hair",
+                        "groups": [
+                            "Team 7",
+                            "Uchiha Clan"
+                        ],
+                        "path": "OU=Jonin Corps,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "naruto.hokage": {
+                        "firstname": "Naruto",
+                        "surname": "Uzumaki",
+                        "password": "teOcJ6hnSS5omGY",
+                        "city": "Hidden Leaf Village",
+                        "description": "7th Hokage, achieved dream, Kyubi Chakra Mode, adult Naruto post-war, married Hinata",
+                        "groups": [
+                            "Hokage",
+                            "Team 7",
+                            "Uzumaki Clan"
+                        ],
+                        "path": "OU=Kage Office,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "sakura.haruno.adult": {
+                        "firstname": "Sakura",
+                        "surname": "Haruno",
+                        "password": "BLPAR13g3289cZb",
+                        "city": "Hidden Leaf Village",
+                        "description": "Adult Sakura, married Sasuke, heads medical facilities, short hair, surpasses Tsunade",
+                        "groups": [
+                            "Team 7",
+                            "Medical Corps"
+                        ],
+                        "path": "OU=Medical Wing,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "hinata.hyuga.adult": {
+                        "firstname": "Hinata",
+                        "surname": "Hyuga",
+                        "password": "iRoKUawJ51FHNdm",
+                        "city": "Hidden Leaf Village",
+                        "description": "Adult Hinata, married Naruto, mother of Boruto and Himawari, Byakugan, long dark hair",
+                        "groups": [
+                            "Hyuga Clan"
+                        ],
+                        "path": "OU=Jonin Corps,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "hiruzen.sarutobi": {
+                        "firstname": "Hiruzen",
+                        "surname": "Sarutobi",
+                        "password": "eHu1GivII8YruI1",
+                        "city": "Hidden Leaf Village",
+                        "description": "3rd Hokage, God of Shinobi, pipe smoker, all elements, grey hair, Monkey King Enma",
+                        "groups": [
+                            "Domain Admins"
+                        ],
+                        "path": "CN=Users,DC=konohagakure,DC=fire,DC=ninja"
+                    },
+                    "itachi.uchiha": {
+                        "firstname": "Itachi",
+                        "surname": "Uchiha",
+                        "password": "Dq8gCsh8cc8mWTr",
+                        "city": "Hidden Leaf Village",
+                        "description": "MISSING-NIN (banished) - last known role: S-Rank Missing-nin",
+                        "groups": [
+                            "Uchiha Clan",
+                            "ANBU"
+                        ],
+                        "path": "OU=Special Operations,DC=konohagakure,DC=fire,DC=ninja",
+                        "enabled": false
+                    },
+                    "orochimaru": {
+                        "firstname": "Orochimaru",
+                        "surname": "Orochimaru",
+                        "password": "Vrf4QiojU4kgHix",
+                        "city": "Hidden Leaf Village",
+                        "description": "MISSING-NIN (banished) - last known role: S-Rank Criminal / Sannin",
+                        "groups": [
+                            "The Sannin"
+                        ],
+                        "path": "OU=Kage Office,DC=konohagakure,DC=fire,DC=ninja",
+                        "enabled": false
+                    },
+                    "madara.uchiha": {
+                        "firstname": "Madara",
+                        "surname": "Uchiha",
+                        "password": "UOrWekOr9HAqBbB",
+                        "city": "Hidden Leaf Village",
+                        "description": "MISSING-NIN (banished) - last known role: S-Rank Criminal / Kage-level",
+                        "groups": [
+                            "Uchiha Clan"
+                        ],
+                        "path": "OU=Academy,DC=konohagakure,DC=fire,DC=ninja",
+                        "enabled": false
+                    },
+                    "obito.uchiha": {
+                        "firstname": "Obito",
+                        "surname": "Uchiha",
+                        "password": "S5m36rFtS30q56S",
+                        "city": "Hidden Leaf Village",
+                        "description": "MISSING-NIN (banished) - last known role: S-Rank Criminal",
+                        "groups": [
+                            "Uchiha Clan"
+                        ],
+                        "path": "OU=Academy,DC=konohagakure,DC=fire,DC=ninja",
+                        "enabled": false
+                    },
+                    "kabuto.yakushi": {
+                        "firstname": "Kabuto",
+                        "surname": "Yakushi",
+                        "password": "yhNJ3Hq30luGHv6",
+                        "city": "Hidden Leaf Village",
+                        "description": "MISSING-NIN (banished) - last known role: S-Rank Criminal",
+                        "groups": [
+                            "Konoha Academy"
+                        ],
+                        "path": "OU=Academy,DC=konohagakure,DC=fire,DC=ninja",
+                        "enabled": false
+                    },
+                    "hiruko": {
+                        "firstname": "Hiruko",
+                        "surname": "Hiruko",
+                        "password": "F201DiBVrCRP8Ki",
+                        "city": "Hidden Leaf Village",
+                        "description": "MISSING-NIN (banished) - last known role: S-Rank Criminal",
+                        "groups": [
+                            "Konoha Academy"
+                        ],
+                        "path": "OU=Academy,DC=konohagakure,DC=fire,DC=ninja",
+                        "enabled": false
+                    }
+                }
+            },
+            "wind.ninja": {
+                "dc": "dc03",
+                "netbios_name": "WIND",
+                "domain_password": "password",
+                "organisation_units": {
+                    "Land Administration": {
+                        "path": "DC=wind,DC=ninja"
+                    },
+                    "Daimyo Council": {
+                        "path": "DC=wind,DC=ninja"
+                    }
+                },
+                "groups": {
+                    "universal": {},
+                    "global": {
+                        "Wind Daimyo Council": {
+                            "path": "OU=Daimyo Council,DC=wind,DC=ninja"
+                        },
+                        "Land Administrators": {
+                            "path": "OU=Land Administration,DC=wind,DC=ninja"
+                        }
+                    }
+                },
+                "users": {
+                    "wind.daimyo": {
+                        "firstname": "Wind",
+                        "surname": "Daimyo",
+                        "password": "KgR1AcpIPk5Uued",
+                        "city": "Land of Wind",
+                        "description": "Feudal lord of the Land of Wind, funds and has final civil authority over Sunagakure",
+                        "groups": [
+                            "Wind Daimyo Council"
+                        ],
+                        "path": "OU=Daimyo Council,DC=wind,DC=ninja"
+                    }
+                }
+            },
+            "sunagakure.wind.ninja": {
+                "dc": "dc04",
+                "netbios_name": "SUNA",
+                "domain_password": "password",
+                "organisation_units": {
+                    "Kazekage Office": {
+                        "path": "DC=sunagakure,DC=wind,DC=ninja"
+                    },
+                    "Jonin Division": {
+                        "path": "DC=sunagakure,DC=wind,DC=ninja"
+                    },
+                    "Puppet Corps": {
+                        "path": "DC=sunagakure,DC=wind,DC=ninja"
+                    },
+                    "Recruits": {
+                        "path": "DC=sunagakure,DC=wind,DC=ninja"
+                    }
+                },
+                "groups": {
+                    "universal": {},
+                    "global": {
+                        "Kazekage": {
+                            "path": "OU=Kazekage Office,DC=sunagakure,DC=wind,DC=ninja"
+                        },
+                        "Kage Assembly": {
+                            "path": "OU=Kazekage Office,DC=sunagakure,DC=wind,DC=ninja"
+                        },
+                        "Sand Jonin": {
+                            "path": "OU=Jonin Division,DC=sunagakure,DC=wind,DC=ninja",
+                            "members": [
+                                "Sand Siblings"
+                            ]
+                        },
+                        "Sand Siblings": {
+                            "path": "OU=Jonin Division,DC=sunagakure,DC=wind,DC=ninja"
+                        },
+                        "Puppet Brigade": {
+                            "path": "OU=Puppet Corps,DC=sunagakure,DC=wind,DC=ninja"
+                        },
+                        "Hidden Sand Village": {
+                            "path": "OU=Recruits,DC=sunagakure,DC=wind,DC=ninja"
+                        }
+                    }
+                },
+                "users": {
+                    "temari": {
+                        "firstname": "Temari",
+                        "surname": "Nara",
+                        "password": "GsxYdOLNuFWerJN",
+                        "city": "Hidden Sand Village",
+                        "description": "Wind-style fan user, sand siblings, daughter of 4th Kazekage",
+                        "groups": [
+                            "Hidden Sand Village",
+                            "Sand Siblings"
+                        ],
+                        "path": "OU=Jonin Division,DC=sunagakure,DC=wind,DC=ninja"
+                    },
+                    "kankurou": {
+                        "firstname": "Kankurou",
+                        "surname": "Kankurou",
+                        "password": "jWt1tX8Yk2ZryVJ",
+                        "city": "Hidden Sand Village",
+                        "description": "Puppet master, face paint, dark hood, sand siblings, Gaara and Temari's brother",
+                        "groups": [
+                            "Hidden Sand Village",
+                            "Sand Siblings"
+                        ],
+                        "path": "OU=Jonin Division,DC=sunagakure,DC=wind,DC=ninja"
+                    },
+                    "chiyo": {
+                        "firstname": "Chiyo",
+                        "surname": "Chiyo",
+                        "password": "Ul1Ovpw2uIMaWxC",
+                        "city": "Hidden Sand Village",
+                        "description": "Puppet master, sand elder, sacrificed herself to revive Gaara, grandmother of Sasori",
+                        "groups": [
+                            "Hidden Sand Village",
+                            "Puppet Brigade"
+                        ],
+                        "path": "OU=Puppet Corps,DC=sunagakure,DC=wind,DC=ninja"
+                    },
+                    "baki": {
+                        "firstname": "Baki",
+                        "surname": "Baki",
+                        "password": "3o3XOHv7OELAoiV",
+                        "city": "Hidden Sand Village",
+                        "description": "Hidden Sand Jonin, mentor of Gaara's siblings, curved sword, dark complexion",
+                        "groups": [
+                            "Hidden Sand Village",
+                            "Sand Jonin"
+                        ],
+                        "path": "OU=Jonin Division,DC=sunagakure,DC=wind,DC=ninja"
+                    },
+                    "ebizo": {
+                        "firstname": "Ebizo",
+                        "surname": "Ebizo",
+                        "password": "owq4njRtRJ3EQzQ",
+                        "city": "Hidden Sand Village",
+                        "description": "Elder of the Sand, Chiyo's brother, white hair, cane",
+                        "groups": [
+                            "Hidden Sand Village"
+                        ],
+                        "path": "OU=Recruits,DC=sunagakure,DC=wind,DC=ninja"
+                    },
+                    "pakura": {
+                        "firstname": "Pakura",
+                        "surname": "Pakura",
+                        "password": "XdqOsRubkHuXh4u",
+                        "city": "Hidden Sand Village",
+                        "description": "Scorch Release, Hidden Sand hero, reanimated in war, orange hair, green clothes",
+                        "groups": [
+                            "Hidden Sand Village"
+                        ],
+                        "path": "OU=Jonin Division,DC=sunagakure,DC=wind,DC=ninja"
+                    },
+                    "gaara": {
+                        "firstname": "Gaara",
+                        "surname": "Gaara",
+                        "password": "TdOjf67OGnZFmT6",
+                        "city": "Hidden Sand Village",
+                        "description": "One-tail jinchuriki, sand control, teal eyes, kanji on forehead, 5th Kazekage",
+                        "groups": [
+                            "Domain Admins"
+                        ],
+                        "path": "CN=Users,DC=sunagakure,DC=wind,DC=ninja"
+                    },
+                    "sasori": {
+                        "firstname": "Sasori",
+                        "surname": "Akasuna",
+                        "password": "2JxAkonpb8KIw3l",
+                        "city": "Hidden Sand Village",
+                        "description": "MISSING-NIN (banished) - last known role: S-Rank Missing-nin",
+                        "groups": [
+                            "Hidden Sand Village"
+                        ],
+                        "path": "OU=Recruits,DC=sunagakure,DC=wind,DC=ninja",
+                        "enabled": false
+                    }
+                }
+            },
+            "otogakure.ninja": {
+                "dc": "dc05",
+                "netbios_name": "OTO",
+                "domain_password": "password",
+                "trust": "fire.ninja",
+                "organisation_units": {
+                    "Sound Council": {
+                        "path": "DC=otogakure,DC=ninja"
+                    },
+                    "Sound Five": {
+                        "path": "DC=otogakure,DC=ninja"
+                    },
+                    "Sound Recruits": {
+                        "path": "DC=otogakure,DC=ninja"
+                    }
+                },
+                "groups": {
+                    "universal": {},
+                    "global": {
+                        "Sound Village": {
+                            "path": "OU=Sound Council,DC=otogakure,DC=ninja"
+                        },
+                        "The Sannin": {
+                            "path": "OU=Sound Council,DC=otogakure,DC=ninja"
+                        },
+                        "Sound Five": {
+                            "path": "OU=Sound Five,DC=otogakure,DC=ninja",
+                            "members": [
+                                "Kaguya Clan"
+                            ]
+                        },
+                        "Kaguya Clan": {
+                            "path": "OU=Sound Five,DC=otogakure,DC=ninja"
+                        }
+                    }
+                },
+                "users": {
+                    "kimimaro": {
+                        "firstname": "Kimimaro",
+                        "surname": "Kaguya",
+                        "password": "KFY4v3hTth4Ksz1",
+                        "city": "Hidden Grass Village",
+                        "description": "Bone manipulation, Sound Five leader, Kaguya clan, loyal to Orochimaru, white hair",
+                        "groups": [
+                            "Sound Village",
+                            "Sound Five",
+                            "Kaguya Clan"
+                        ],
+                        "path": "OU=Sound Five,DC=otogakure,DC=ninja"
+                    },
+                    "kabuto.yakushi": {
+                        "firstname": "Kabuto",
+                        "surname": "Yakushi",
+                        "password": "cDrEAuZtRoViEtN",
+                        "city": "Hidden Leaf Village",
+                        "description": "Medical genius, snake sage mode, spy, glasses, silver hair, Edo Tensei reanimator",
+                        "groups": [
+                            "Sound Village"
+                        ],
+                        "path": "OU=Sound Council,DC=otogakure,DC=ninja"
+                    },
+                    "sakon": {
+                        "firstname": "Sakon",
+                        "surname": "Sakon",
+                        "password": "BHbC8v5AYTUywEO",
+                        "city": "Hidden Sound Village",
+                        "description": "Sound Five leader, shares body with twin Ukon, spiky hair, fierce personality",
+                        "groups": [
+                            "Sound Village",
+                            "Sound Five"
+                        ],
+                        "path": "OU=Sound Five,DC=otogakure,DC=ninja"
+                    },
+                    "tayuya": {
+                        "firstname": "Tayuya",
+                        "surname": "Tayuya",
+                        "password": "eF6UqgEvGwdoCA4",
+                        "city": "Hidden Sound Village",
+                        "description": "Sound Five, flute-based genjutsu, red hair, aggressive foul mouth, Shikamaru's opponent",
+                        "groups": [
+                            "Sound Village",
+                            "Sound Five"
+                        ],
+                        "path": "OU=Sound Five,DC=otogakure,DC=ninja"
+                    },
+                    "kidomaru": {
+                        "firstname": "Kidomaru",
+                        "surname": "Kidomaru",
+                        "password": "6g3HPgf6hNnE0Xz",
+                        "city": "Hidden Sound Village",
+                        "description": "Sound Five, six arms, spider web jutsu, cursed mark, fought Neji",
+                        "groups": [
+                            "Sound Village",
+                            "Sound Five"
+                        ],
+                        "path": "OU=Sound Five,DC=otogakure,DC=ninja"
+                    },
+                    "jirobo": {
+                        "firstname": "Jirobo",
+                        "surname": "Jirobo",
+                        "password": "945XSC3upuYsZJf",
+                        "city": "Hidden Sound Village",
+                        "description": "Sound Five, Earth Release, absorbs chakra, large build, Choji's opponent",
+                        "groups": [
+                            "Sound Village",
+                            "Sound Five"
+                        ],
+                        "path": "OU=Sound Five,DC=otogakure,DC=ninja"
+                    },
+                    "guren": {
+                        "firstname": "Guren",
+                        "surname": "Guren",
+                        "password": "uEoMY1baigwmLOr",
+                        "city": "Hidden Sound Village",
+                        "description": "Crystal Release, Orochimaru's subordinate, protective of Yuukimaru, filler arc",
+                        "groups": [
+                            "Sound Village"
+                        ],
+                        "path": "OU=Sound Council,DC=otogakure,DC=ninja"
+                    },
+                    "orochimaru": {
+                        "firstname": "Orochimaru",
+                        "surname": "Orochimaru",
+                        "password": "HwOqG5z0IjJlqao",
+                        "city": "Hidden Leaf Village",
+                        "description": "Snake summons, Legendary Sannin, body-transfer jutsu, immortality seeker, pale skin, yellow eyes",
+                        "groups": [
+                            "Domain Admins"
+                        ],
+                        "path": "CN=Users,DC=otogakure,DC=ninja"
+                    }
+                }
+            },
+            "akatsuki.dark": {
+                "dc": "dc06",
+                "netbios_name": "AKATSUKI",
+                "domain_password": "password",
+                "organisation_units": {
+                    "Leadership": {
+                        "path": "DC=akatsuki,DC=dark"
+                    },
+                    "Pairs": {
+                        "path": "DC=akatsuki,DC=dark"
+                    },
+                    "Support": {
+                        "path": "DC=akatsuki,DC=dark"
+                    }
+                },
+                "users": {
+                    "itachi.uchiha": {
+                        "firstname": "Itachi",
+                        "surname": "Uchiha",
+                        "password": "qjztbR3T40Dzb1i",
+                        "city": "Akatsuki",
+                        "description": "Akatsuki, Sharingan, Mangekyou Sharingan, former ANBU, Uchiha massacre",
+                        "groups": [
+                            "Akatsuki",
+                            "Uchiha Clan"
+                        ],
+                        "path": "OU=Leadership,DC=akatsuki,DC=dark"
+                    },
+                    "deidara": {
+                        "firstname": "Deidara",
+                        "surname": "Dawn",
+                        "password": "Su7Remy2dGZG4M5",
+                        "city": "Akatsuki",
+                        "description": "Akatsuki, explosive clay art, long hair, Hidden Rock defector",
+                        "groups": [
+                            "Akatsuki"
+                        ],
+                        "path": "OU=Pairs,DC=akatsuki,DC=dark"
+                    },
+                    "sasori": {
+                        "firstname": "Sasori",
+                        "surname": "Dawn",
+                        "password": "p1Ak66JUuLboA8V",
+                        "city": "Akatsuki",
+                        "description": "Puppet master, living puppet body, Akatsuki, Hidden Sand defector",
+                        "groups": [
+                            "Akatsuki"
+                        ],
+                        "path": "OU=Pairs,DC=akatsuki,DC=dark"
+                    },
+                    "kisame.hoshigaki": {
+                        "firstname": "Kisame",
+                        "surname": "Hoshigaki",
+                        "password": "bagwkTH3RHC4XKe",
+                        "city": "Akatsuki",
+                        "description": "Samehada sword, shark appearance, blue skin, Akatsuki partner of Itachi",
+                        "groups": [
+                            "Akatsuki"
+                        ],
+                        "path": "OU=Pairs,DC=akatsuki,DC=dark"
+                    },
+                    "kakuzu": {
+                        "firstname": "Kakuzu",
+                        "surname": "Dawn",
+                        "password": "fBV8s5P6QkLP4ge",
+                        "city": "Akatsuki",
+                        "description": "Five hearts, money obsessed, black threads, Akatsuki partner of Hidan, immortal body",
+                        "groups": [
+                            "Akatsuki"
+                        ],
+                        "path": "OU=Pairs,DC=akatsuki,DC=dark"
+                    },
+                    "hidan": {
+                        "firstname": "Hidan",
+                        "surname": "Dawn",
+                        "password": "vovzYTy6BSYwn7d",
+                        "city": "Akatsuki",
+                        "description": "Immortal, scythe, Jashin ritual, Akatsuki partner of Kakuzu, profane language",
+                        "groups": [
+                            "Akatsuki",
+                            "Jashinism"
+                        ],
+                        "path": "OU=Pairs,DC=akatsuki,DC=dark"
+                    },
+                    "zetsu": {
+                        "firstname": "Zetsu",
+                        "surname": "Dawn",
+                        "password": "bHXhiDmcdGCJQ4y",
+                        "city": "Akatsuki",
+                        "description": "Dual personality (Black/White), plant-like body, spy and information gatherer, Venus flytrap form",
+                        "groups": [
+                            "Akatsuki"
+                        ],
+                        "path": "OU=Pairs,DC=akatsuki,DC=dark"
+                    },
+                    "madara.uchiha": {
+                        "firstname": "Madara",
+                        "surname": "Uchiha",
+                        "password": "ElkvsHtEwatSX09",
+                        "city": "Akatsuki",
+                        "description": "Legendary Uchiha, Rinnegan, Sharingan, Six Paths power, long black hair, co-founder of Hidden Leaf",
+                        "groups": [
+                            "Akatsuki",
+                            "Uchiha Clan"
+                        ],
+                        "path": "OU=Leadership,DC=akatsuki,DC=dark"
+                    },
+                    "obito.uchiha": {
+                        "firstname": "Obito",
+                        "surname": "Uchiha",
+                        "password": "k6ID2EkFv5AQdRo",
+                        "city": "Akatsuki",
+                        "description": "Tobi alias, Kamui Sharingan, half-Zetsu body, Kakashi's former teammate, manipulated Akatsuki",
+                        "groups": [
+                            "Akatsuki",
+                            "Uchiha Clan"
+                        ],
+                        "path": "OU=Leadership,DC=akatsuki,DC=dark"
+                    },
+                    "pain": {
+                        "firstname": "Pain",
+                        "surname": "Dawn",
+                        "password": "O2wheZe2nDrUrgW",
+                        "city": "Akatsuki",
+                        "path": "OU=Leadership,DC=akatsuki,DC=dark",
+                        "description": "Six Paths of Pain, Nagato's puppet bodies, Rinnegan, orange hair (Nagato), Hidden Rain",
+                        "groups": [
+                            "Domain Admins"
+                        ]
+                    },
+                    "konan": {
+                        "firstname": "Konan",
+                        "surname": "Dawn",
+                        "password": "S4Q38DMh37WHVH1",
+                        "city": "Akatsuki",
+                        "description": "Paper ninjutsu, blue hair, origami flowers, co-founder of Akatsuki with Nagato",
+                        "groups": [
+                            "Akatsuki"
+                        ],
+                        "path": "OU=Pairs,DC=akatsuki,DC=dark"
+                    },
+                    "nagato": {
+                        "firstname": "Nagato",
+                        "surname": "Dawn",
+                        "password": "ZkMxrQbyfeTAd7I",
+                        "city": "Akatsuki",
+                        "description": "True identity of Pain, Rinnegan granted by Madara, emaciated body, orange hair, founding member of Akatsuki",
+                        "groups": [
+                            "Akatsuki"
+                        ],
+                        "path": "OU=Pairs,DC=akatsuki,DC=dark"
+                    },
+                    "black.zetsu": {
+                        "firstname": "Black Zetsu",
+                        "surname": "Dawn",
+                        "password": "t90qnCUWSLeb5H3",
+                        "city": "Akatsuki",
+                        "description": "Kaguya's will manifested, manipulated history for centuries, black half of Zetsu, master manipulator",
+                        "groups": [
+                            "Akatsuki"
+                        ],
+                        "path": "OU=Pairs,DC=akatsuki,DC=dark"
+                    },
+                    "white.zetsu": {
+                        "firstname": "White Zetsu",
+                        "surname": "Dawn",
+                        "password": "9isOIKqJuzclmJ5",
+                        "city": "Akatsuki",
+                        "description": "Hashirama cell-based clone army member, white half of Zetsu, spies and infiltrates",
+                        "groups": [
+                            "Akatsuki"
+                        ],
+                        "path": "OU=Pairs,DC=akatsuki,DC=dark"
+                    }
+                },
+                "groups": {
+                    "universal": {},
+                    "global": {
+                        "Akatsuki": {
+                            "path": "OU=Pairs,DC=akatsuki,DC=dark"
+                        },
+                        "Uchiha Clan": {
+                            "path": "OU=Leadership,DC=akatsuki,DC=dark"
+                        },
+                        "Jashinism": {
+                            "path": "OU=Support,DC=akatsuki,DC=dark"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

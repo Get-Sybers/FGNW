@@ -1,0 +1,71 @@
+---
+- name: "install-nexus-apt | Install (nexus) — probe Nexus before touching apt"
+  ansible.builtin.uri:
+    url: "http://{{ zeek_sensor_nexus_host }}:{{ zeek_sensor_nexus_port }}/service/rest/v1/status"
+    method: GET
+    status_code: [200]
+    timeout: 10
+  register: __zeek_nexus_probe
+  retries: 6
+  delay: 10
+  until: __zeek_nexus_probe is succeeded
+  changed_when: false
+- name: "install-nexus-apt | Install (nexus) — HARD GATE: Nexus is the only source"
+  ansible.builtin.assert:
+    that: __zeek_nexus_probe is succeeded
+    fail_msg: >-
+      Nexus at {{ zeek_sensor_nexus_host }}:{{ zeek_sensor_nexus_port }} is not
+      answering. There is deliberately NO internet fallback (rule 4 / repo
+      policy). Bring Nexus up, or pinhole it for a contained range with
+      `ludus testing allow -i {{ zeek_sensor_nexus_host }}`, then re-run.
+    quiet: true
+- name: "install-nexus-apt | Install (nexus) — push the repository signing key"
+  ansible.builtin.include_tasks: install-nexus-keyring.yml
+  when: zeek_sensor_nexus_keyring_src | length > 0
+- name: "install-nexus-apt | Install (nexus) — the signed-by keyring is present"
+  ansible.builtin.stat:
+    path: "{{ zeek_sensor_nexus_keyring }}"
+  register: __zeek_keyring
+- name: "install-nexus-apt | Install (nexus) — assert the keyring exists"
+  ansible.builtin.assert:
+    that: __zeek_keyring.stat.exists | default(false)
+    fail_msg: >-
+      signed-by keyring {{ zeek_sensor_nexus_keyring }} is missing. A Nexus apt
+      proxy passes the UPSTREAM repository's signatures straight through, so the
+      key must be the key of the repo being proxied. Install
+      debian-archive-keyring, or push the right key with
+      zeek_sensor_nexus_keyring_src.
+    quiet: true
+- name: "install-nexus-apt | Install (nexus) — register the apt-proxy repository"
+  ansible.builtin.copy:
+    dest: "{{ zeek_sensor_apt_list }}"
+    owner: root
+    group: root
+    mode: "0644"
+    content: >
+      deb [arch=amd64 signed-by={{ zeek_sensor_nexus_keyring }}]
+      http://{{ zeek_sensor_nexus_host }}:{{ zeek_sensor_nexus_port }}/repository/{{ zeek_sensor_nexus_repo }}
+      {{ zeek_sensor_nexus_repo_codename }} {{ zeek_sensor_nexus_repo_components }}
+  register: __zeek_apt_list
+- name: "install-nexus-apt | Install (nexus) — refresh only the Zeek repository"
+  ansible.builtin.command:
+    argv:
+      - apt-get
+      - update
+      - -o
+      - "Dir::Etc::sourcelist={{ zeek_sensor_apt_list }}"
+      - -o
+      - "Dir::Etc::sourceparts=-"
+      - -o
+      - "APT::Get::List-Cleanup=0"
+  register: __zeek_apt_update
+  changed_when: false
+- name: "install-nexus-apt | Install (nexus) — install Zeek and the capture tooling"
+  ansible.builtin.apt:
+    name: "{{ zeek_sensor_packages + zeek_sensor_support_packages }}"
+    state: present
+    update_cache: false
+  register: __zeek_apt_install
+  retries: 3
+  delay: 10
+  until: __zeek_apt_install is succeeded

@@ -1,0 +1,8 @@
+---
+- name: "capture-packets-skipped | Capture-gate — WARN: packet gate was disabled for this run"
+  ansible.builtin.debug:
+    msg: >-
+      zeek_sensor_require_packets=false — the packet-visibility gate did NOT
+      run. This sensor is UNVERIFIED: it may be watching interfaces that carry
+      nothing. Re-run this role with the default (true) once the range is
+      deployed and traffic is flowing, or the deployment is decorative.

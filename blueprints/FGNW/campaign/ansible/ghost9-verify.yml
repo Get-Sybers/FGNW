@@ -1,0 +1,189 @@
+---
+# Read-only verification of the range's GHOSTS server (the ghost9 CT that
+# ghost9-range-ct.yml creates from the get_sybers.lxc ghost9 template). Run from
+# the Ludus host against the range VLAN; nothing here changes anything:
+#   ansible-playbook ghost9-verify.yml -e ghost9_ct_range_number=<N>
+# It proves the API is GHOSTS API v9 and publishes the paths the range content
+# drives, that /api/machines answers (the database is behind the API), that the
+# UI is served on :4200, and — when the play runs on the PVE node that hosts the
+# CT, where pct is — that the guest carries the lxc_guest baseline marker and
+# the ghost9 template marker at the pinned release.
+- name: "Ghost9 verify | prove the GHOSTS server answers on the range VLAN"
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    ghost9_ct_range_number: ""
+    ghost9_ct_vlan: 99
+    ghost9_ct_last_octet: 51
+    ghost9_ct_hostname_suffix: ghost9
+    ghost9_ct_api_port: 5000
+    ghost9_ct_ui_port: 4200
+    ghost9_ct_api_version: 9
+    # The template release and the GHOSTS version its marker records
+    # (range-config.yml ludus_extensions.ghost9.template_version; GHOSTS 9.3.0).
+    ghost9_ct_template_version: "0.1.1"
+    ghost9_ct_ghosts_version: "9.3.0"
+    ghost9_ct_baseline_marker_path: /etc/get-sybers-lxc-baseline
+    ghost9_ct_template_marker_path: /etc/get-sybers-lxc-template
+    # The paths FGNW-verify-emulation.yml, FGNW-ghosts-npc-setup.yml and
+    # FGNW-ghosts-activity.yml drive.
+    ghost9_ct_required_api_paths:
+      - /api/machines
+      - /api/npcs
+      - /api/timelines
+      - /api/machinegroups
+    ghost9_ct_ip: "10.{{ ghost9_ct_range_number }}.{{ ghost9_ct_vlan }}.{{ ghost9_ct_last_octet }}"
+    ghost9_ct_vmid: "{{ 9000 + (ghost9_ct_range_number | int) }}"
+    ghost9_ct_hostname: "r{{ ghost9_ct_range_number }}-{{ ghost9_ct_hostname_suffix }}"
+    ghost9_ct_api_base: "http://{{ ghost9_ct_ip }}:{{ ghost9_ct_api_port }}"
+  tasks:
+    - name: "Verify: The range number is set and numeric"
+      ansible.builtin.assert:
+        that:
+          - ghost9_ct_range_number | string is match('^[0-9]+$')
+          - ghost9_ct_range_number | int > 0
+          - ghost9_ct_range_number | int < 255
+        fail_msg: >-
+          Pass -e ghost9_ct_range_number=<N> (the range's second octet, from
+          `ludus range list`): the server address 10.<N>.{{ ghost9_ct_vlan }}.{{ ghost9_ct_last_octet }}
+          derives from it.
+        quiet: true
+    - name: "Verify: GET the OpenAPI document"
+      ansible.builtin.uri:
+        url: "{{ ghost9_ct_api_base }}/swagger/v{{ ghost9_ct_api_version }}/swagger.json"
+        method: GET
+        return_content: true
+        status_code: 200
+        timeout: 30
+      register: __g9_swagger
+      retries: 12
+      delay: 5
+      until: __g9_swagger.status | default(0) == 200
+      changed_when: false
+      check_mode: false
+    - name: "Verify: It is GHOSTS API v9 and publishes the paths this range drives"
+      ansible.builtin.assert:
+        that:
+          - __g9_swagger.json.info.version == 'v' ~ ghost9_ct_api_version
+          - __g9_swagger.json.paths | length > 0
+          - ghost9_ct_required_api_paths | difference(__g9_swagger.json.paths.keys() | map('lower') | list) | length == 0
+        fail_msg: >-
+          OpenAPI document mismatch. version={{ __g9_swagger.json.info.version | default('?') }}
+          (wanted v{{ ghost9_ct_api_version }}); missing paths:
+          {{ ghost9_ct_required_api_paths
+             | difference(__g9_swagger.json.paths.keys() | map('lower') | list)
+             | join(', ') or 'none' }}.
+          FGNW-verify-emulation.yml polls /api/machines and FGNW-ghosts-npc-setup.yml
+          drives /api/npcs — a document without them means the range content cannot
+          work against this server.
+        quiet: true
+    - name: "Verify: GET /api/machines (this one has to reach PostgreSQL)"
+      ansible.builtin.uri:
+        url: "{{ ghost9_ct_api_base }}/api/machines"
+        method: GET
+        return_content: true
+        status_code: 200
+        timeout: 30
+      register: __g9_machines
+      retries: 12
+      delay: 5
+      until: __g9_machines.status | default(0) == 200
+      changed_when: false
+      check_mode: false
+    - name: "Verify: The database is genuinely behind the API"
+      ansible.builtin.assert:
+        that:
+          - __g9_machines.status == 200
+          - __g9_machines.json | default(none) is iterable
+          - __g9_machines.json | default(none) is not string
+        fail_msg: >-
+          /api/machines did not return a JSON collection
+          (status={{ __g9_machines.status | default('?') }}). GHOSTS serves /swagger
+          even when its database initialisation threw, so this is the check that
+          distinguishes "running" from "working".
+        quiet: true
+    - name: "Verify: GET the UI"
+      ansible.builtin.uri:
+        url: "http://{{ ghost9_ct_ip }}:{{ ghost9_ct_ui_port }}/"
+        method: GET
+        return_content: true
+        status_code: 200
+        timeout: 30
+      register: __g9_ui
+      changed_when: false
+      check_mode: false
+    - name: "Verify: The UI is served as the built Angular app"
+      ansible.builtin.assert:
+        that: "'<app-root' in __g9_ui.content or '<script' in __g9_ui.content"
+        fail_msg: >-
+          http://{{ ghost9_ct_ip }}:{{ ghost9_ct_ui_port }}/ answered 200 but not with
+          the built GHOSTS UI (nginx serving something else?).
+        quiet: true
+    - name: "Verify: Stat the pct binary (the marker checks need the CT's node)"
+      ansible.builtin.stat:
+        path: /usr/sbin/pct
+      register: __g9_pct
+      check_mode: false
+    - name: "Verify: Read the CT status through pct"
+      ansible.builtin.command:
+        argv: [pct, status, "{{ ghost9_ct_vmid }}"]
+      register: __g9_pct_status
+      changed_when: false
+      check_mode: false
+      failed_when: false
+      when: __g9_pct.stat.exists
+    - name: "Verify: The guest markers (only where the CT is local to this node)"
+      when:
+        - __g9_pct.stat.exists
+        - (__g9_pct_status.rc | default(1)) == 0
+      block:
+        - name: "Verify: Read the baseline and template markers through pct"
+          ansible.builtin.command:
+            argv: [pct, exec, "{{ ghost9_ct_vmid }}", --, cat, "{{ __g9_marker }}"]
+          register: __g9_markers
+          changed_when: false
+          check_mode: false
+          failed_when: false
+          loop:
+            - "{{ ghost9_ct_baseline_marker_path }}"
+            - "{{ ghost9_ct_template_marker_path }}"
+          loop_control:
+            loop_var: __g9_marker
+        - name: "Verify: Parse the template marker"
+          ansible.builtin.set_fact:
+            __g9_tmpl_fields: >-
+              {{ dict((__g9_markers.results[1].stdout | default('')).splitlines()
+                      | select('search', '=') | map('split', '=', 1) | list) }}
+        - name: "Verify: The guest carries the lxc_guest baseline and the pinned ghost9 template"
+          ansible.builtin.assert:
+            that:
+              - __g9_markers.results[0].rc == 0
+              - "'baseline=' in __g9_markers.results[0].stdout"
+              - __g9_tmpl_fields['name'] | default('') == 'ghost9'
+              - __g9_tmpl_fields['version'] | default('') == ghost9_ct_template_version | string
+              - __g9_tmpl_fields['service'] | default('') == ghost9_ct_ghosts_version | string
+            fail_msg: >-
+              CT {{ ghost9_ct_vmid }} markers: baseline rc={{ __g9_markers.results[0].rc }};
+              {{ ghost9_ct_template_marker_path }} says
+              name={{ __g9_tmpl_fields['name'] | default('<absent>') }}
+              version={{ __g9_tmpl_fields['version'] | default('<absent>') }}
+              service={{ __g9_tmpl_fields['service'] | default('<absent>') }} —
+              wanted name=ghost9 version={{ ghost9_ct_template_version }}
+              service={{ ghost9_ct_ghosts_version }}. The guest was not created from
+              the pinned get_sybers.lxc ghost9 template.
+            quiet: true
+    - name: "Verify: The goal holds"
+      ansible.builtin.assert:
+        that:
+          - __g9_swagger.json.info.version == 'v' ~ ghost9_ct_api_version
+          - __g9_machines.status == 200
+          - __g9_ui.status == 200
+        fail_msg: Ghost9 range LXC verification failed — see the assert above this one.
+        success_msg: >-
+          GHOSTS {{ ghost9_ct_ghosts_version }} ({{ __g9_swagger.json.info.version }})
+          serving on {{ ghost9_ct_api_base }}/api — DB-backed, UI on
+          :{{ ghost9_ct_ui_port }}; markers
+          {{ 'checked through pct' if (__g9_tmpl_fields is defined) else 'not checked (pct or CT ' ~ ghost9_ct_vmid ~ ' not on this host)' }}.
+          Point GHOSTS clients at {{ ghost9_ct_api_base }}/api.
+        quiet: true

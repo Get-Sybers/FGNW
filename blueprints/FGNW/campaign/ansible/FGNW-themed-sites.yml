@@ -1,0 +1,12 @@
+---
+- name: Deploy themed per-domain web content on the attacker/web server
+  hosts: attacker
+  become: true
+  vars_files:
+    - ../content/www/site-archetypes.yml
+    - ../content/www/site-content-links.yml
+    - ../content/www/character-profiles.yml
+  tasks:
+    - name: Render + serve themed sites
+      ansible.builtin.include_role:
+        name: fgnw_themed_sites

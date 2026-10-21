@@ -1,0 +1,31 @@
+---
+- name: "groups | Create universal groups from the contract"
+  microsoft.ad.group:
+    name: "{{ item.key }}"
+    scope: universal
+    path: "{{ item.value.path }}"
+    managed_by: "{{ item.value.managed_by | default(omit) }}"
+    state: present
+  loop: "{{ (ad_groups.universal | default({})) | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+- name: "groups | Create global groups from the contract"
+  microsoft.ad.group:
+    name: "{{ item.key }}"
+    scope: global
+    path: "{{ item.value.path }}"
+    managed_by: "{{ item.value.managed_by | default(omit) }}"
+    state: present
+  loop: "{{ (ad_groups.global | default({})) | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+- name: "groups | Create domainlocal groups from the contract"
+  microsoft.ad.group:
+    name: "{{ item.key }}"
+    scope: domainlocal
+    path: "{{ item.value.path }}"
+    managed_by: "{{ item.value.managed_by | default(omit) }}"
+    state: present
+  loop: "{{ (ad_groups.domainlocal | default({})) | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"

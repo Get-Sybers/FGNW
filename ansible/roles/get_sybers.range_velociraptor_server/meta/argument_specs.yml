@@ -1,0 +1,59 @@
+---
+argument_specs:
+  main:
+    short_description: Install and configure the Velociraptor DFIR server on a range Linux host
+    description:
+      - Downloads the checksum-pinned linux-amd64 binary, renders and generates the server config, splits out the client config, builds and installs the server
+        .deb, creates the administrator user, restarts only on change (a handler), then verifies. velociraptor_host is baked into the generated server config
+        via templates/server.merge.json.j2.
+    options: &range_velociraptor_server_options
+      velociraptor_host:
+        type: str
+        required: true
+        description:
+          - Hostname/IP the generated server config advertises to agents (client server_urls, GUI public_url, API/Frontend hostname). Genuinely no default --
+            deployment-specific. Rendered unconditionally into the merge template, so marked required.
+      velociraptor_admin_password:
+        type: str
+        required: true
+        description:
+          - Password for the Velociraptor administrator account. Genuinely no default on purpose -- a secret must never carry a hardcoded fallback in version
+            control. Consumed unconditionally by the admin-user task (which sets no_log).
+      velociraptor_admin_user:
+        type: str
+        default: admin
+        description:
+          - Administrator username created via `velociraptor user add`.
+      velociraptor_frontend_port:
+        type: int
+        default: 8000
+        description:
+          - Frontend port agents connect to; baked into the server config and probed by verify. Single source for this literal (standards §1).
+      velociraptor_gui_port:
+        type: int
+        default: 8889
+        description:
+          - GUI/API HTTPS port; baked into the server config and probed by verify. Single source for this literal (standards §1).
+      velociraptor_version:
+        type: str
+        default: v0.77.1
+        description:
+          - Pinned Velociraptor release tag. Override together with velociraptor_checksum or the checksum-guarded download fails loudly.
+      velociraptor_version_patch:
+        type: str
+        default: 0.77.1
+        description:
+          - Version string embedded in the release asset filename; may differ from the tag (e.g. v0.73.2 vs 0.73.2-rc1).
+      velociraptor_checksum:
+        type: str
+        default: sha256:6636020f3ce03ea4eff5d5b96d635c400e51d2636c823a8f0bd458ddc7c4d28a
+        description:
+          - sha256 of the linux-amd64 binary for the pinned version; get_url refuses a mismatch. Re-pin whenever the version changes.
+      velociraptor_install_path:
+        type: str
+        default: /opt/velociraptor
+        description:
+          - Directory the server binary, configs and .deb are written to.
+  verify:
+    short_description: Assert the Velociraptor server service, ports, and configs are healthy
+    options: *range_velociraptor_server_options

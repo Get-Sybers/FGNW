@@ -1,0 +1,26 @@
+---
+argument_specs:
+  main:
+    short_description: Resolve and validate the Ludus API identity.
+    description:
+      - Delegates to the shared C(get_sybers.ludus_auth_check) role, an ENV-ONLY check -- the exported C(LUDUS_API_KEY) is the only key source (there is no file
+        fallback; the sanctioned injection wrapper is C(get_sybers.cluster) C(playbooks/ludus-ra-auth.yml)). Validates the key's shape, confirms via C(/whoami)
+        that it authenticates as the expected identity, and publishes it as a C(no_log) fact C(__ludus_api_key) for the rest of the collection.
+    options:
+      ludus_auth_api_url:
+        type: str
+        default: https://127.0.0.1:8080/api/v2
+        description: Base URL of the local Ludus v2 API.
+      ludus_auth_expected_user:
+        type: str
+        default: RA
+        description: The userID the key MUST authenticate as.
+      ludus_auth_skip_liveness:
+        type: bool
+        default: false
+        description: Skip the live C(/whoami) round-trip and validate the key shape only.
+  verify:
+    short_description: Verify ludus_auth (positive identity + negative control).
+    description:
+      - Runs the shared C(get_sybers.ludus_auth_check) role's verification tasks -- a positive check that the expected identity was established, plus a negative
+        control that a known-invalid key is rejected.

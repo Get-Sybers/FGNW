@@ -1,0 +1,33 @@
+---
+- name: "load | Extract every key the rendered ruleset declares"
+  ansible.builtin.set_fact:
+    acsc_auditd_expected_keys: >-
+      {{ (__acsc_auditd_rendered.content | b64decode).splitlines()
+         | reject('match', '\s*#') | join('\n')
+         | regex_findall('(?:-F key=|-k )([A-Za-z0-9_.-]+)') | unique | sort }}
+- name: "load | What is loaded in the kernel right now?"
+  ansible.builtin.command: auditctl -l
+  register: __acsc_auditd_loaded_pre
+  changed_when: false
+  check_mode: false
+- name: "load | Read the applied-ruleset marker"
+  ansible.builtin.slurp:
+    src: "{{ acsc_auditd_state_dir }}/rules.applied"
+  register: __acsc_auditd_marker
+  failed_when: false
+- name: "load | Decide whether the ruleset needs loading"
+  ansible.builtin.set_fact:
+    __acsc_auditd_missing_keys: >-
+      {{ acsc_auditd_expected_keys
+         | reject('in', __acsc_auditd_loaded_pre.stdout
+                        | regex_findall('(?:-F key=|-k )([A-Za-z0-9_.-]+)'))
+         | list }}
+    __acsc_auditd_marker_stale: >-
+      {{ (__acsc_auditd_marker.content | default('') | b64decode | trim)
+         != (__acsc_auditd_rendered.content | b64decode | hash('sha256')) }}
+- name: "load | Load the ruleset into the kernel"
+  ansible.builtin.include_tasks: load-apply.yml
+  when: >-
+    __acsc_auditd_marker_stale | bool
+    or __acsc_auditd_missing_keys | length > 0
+    or __acsc_auditd_stale_removed is changed

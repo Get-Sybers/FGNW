@@ -1,0 +1,17 @@
+---
+- name: Organisational units
+  ansible.builtin.include_tasks: ous.yml
+- name: Groups
+  ansible.builtin.include_tasks: groups.yml
+- name: Users
+  ansible.builtin.include_tasks: users.yml
+- name: Group memberships
+  ansible.builtin.include_tasks: memberships.yml
+- name: Ensure the built-in Administrator is a Domain Admin
+  microsoft.ad.group:
+    identity: Domain Admins
+    scope: global
+    members:
+      add:
+        - Administrator
+    state: present

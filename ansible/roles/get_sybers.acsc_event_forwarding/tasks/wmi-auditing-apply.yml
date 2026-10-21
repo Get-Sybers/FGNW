@@ -1,0 +1,14 @@
+---
+- name: "wmi-auditing-apply | Wmi — stage the ACSC script"
+  ansible.windows.win_copy:
+    src: wmi_auditing.ps1
+    dest: "{{ acsc_wef_stage_dir }}\\wmi_auditing.ps1"
+- name: "wmi-auditing-apply | Wmi — enable WMI namespace auditing"
+  ansible.windows.win_shell: |
+    $DebugPreference = 'Continue'
+    $ret = @(& '{{ acsc_wef_stage_dir }}\wmi_auditing.ps1')
+    if ($ret.Count -eq 0) { exit 1 }
+    exit [int]$ret[-1]
+  register: __acsc_wmi_run
+  changed_when: __acsc_wmi_run.rc == 0
+  failed_when: __acsc_wmi_run.rc != 0

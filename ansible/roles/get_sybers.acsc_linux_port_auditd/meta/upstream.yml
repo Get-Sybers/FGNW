@@ -1,0 +1,49 @@
+---
+schema_version: 1
+role: get_sybers.acsc_linux_port_auditd
+baseline: ACSC-Linux-Port-Auditd
+status: promoted
+variable_prefix: acsc_auditd_
+derived_from:
+  - name: Neo23x0/auditd
+    url: https://github.com/Neo23x0/auditd
+    commit: 038e70832e487b76cfd2a2e4f07f360a40989be9
+    commit_is: last-change-to-vendored-content
+    branch: master
+    licence: Apache-2.0
+    licence_file: files/upstream/LICENSE
+    relationship: vendored-and-adapted
+    vendored:
+      - local: files/upstream/Neo23x0-audit.rules
+        upstream: audit.rules
+        sha256: 922b43e7b7c4ce386749a0e63c3a228a13854277de2ef092eddb536a8fa4142e
+      - local: files/upstream/LICENSE
+        upstream: LICENSE
+        sha256: c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4
+    derived:
+      - local: templates/acsc-linux-port-auditd.rules.j2
+        from: audit.rules
+        note: >-
+          Every deviation is marked in place: [+] added, [~] adapted,
+          [-] not rendered plus the reason. Upstream key names are preserved so
+          Sigma content written against Neo23x0 keys still matches.
+  - name: ACSC Windows Event Logging and Forwarding
+    # the ACSC page URL has no break point
+    # yamllint disable-line rule:line-length
+    url: https://www.cyber.gov.au/resources-business-and-government/maintaining-devices-and-systems/system-hardening-and-administration/system-hardening/windows-event-logging-and-forwarding
+    relationship: conceptual-baseline
+    licence: n/a
+    note: >-
+      Supplies the retention intent (>=18 months) that tasks/retention.yml
+      ports onto auditd's own rotation levers. auditd has no age lever at all,
+      only max_log_file x num_logs, so this is weaker than the journald port in
+      the sibling Sysmon role — stated as "aims at", never "achieves".
+verify: |
+  git clone --depth 1 https://github.com/Neo23x0/auditd /tmp/neo-auditd
+  cmp files/upstream/Neo23x0-audit.rules /tmp/neo-auditd/audit.rules
+  cmp files/upstream/LICENSE             /tmp/neo-auditd/LICENSE
+update: |
+  git clone https://github.com/Neo23x0/auditd /tmp/neo-auditd
+  git -C /tmp/neo-auditd log --oneline -- audit.rules
+  cp /tmp/neo-auditd/audit.rules files/upstream/Neo23x0-audit.rules
+  cp /tmp/neo-auditd/LICENSE     files/upstream/LICENSE

@@ -1,0 +1,31 @@
+---
+__acsc_auditd_suppressed: >-
+  {{ (acsc_auditd_sysmon_covered if acsc_auditd_sysmon_complement | bool else [])
+     + (acsc_auditd_hypervisor_suppress if acsc_auditd_profile == 'hypervisor' else []) }}
+__acsc_auditd_watches: >-
+  {{ acsc_auditd_watch_candidates
+     + (acsc_auditd_hypervisor_watch_candidates if acsc_auditd_profile == 'hypervisor' else [])
+     + acsc_auditd_extra_watch_candidates }}
+__acsc_auditd_all_paths: >-
+  {{ (acsc_auditd_exclusions | map(attribute='path') | list)
+     + (__acsc_auditd_watches | map(attribute='path') | list)
+     + acsc_auditd_failed_access_dirs
+     + ['/home']
+     | unique }}
+__acsc_auditd_settings: >-
+  {{
+    [
+      {'key': 'max_log_file',            'value': acsc_auditd_max_log_file_mb},
+      {'key': 'num_logs',                'value': acsc_auditd_num_logs},
+      {'key': 'max_log_file_action',     'value': acsc_auditd_max_log_file_action},
+      {'key': 'space_left',              'value': acsc_auditd_space_left_mb},
+      {'key': 'space_left_action',       'value': acsc_auditd_space_left_action},
+      {'key': 'admin_space_left',        'value': acsc_auditd_admin_space_left_mb},
+      {'key': 'admin_space_left_action', 'value': acsc_auditd_admin_space_left_action},
+      {'key': 'disk_full_action',        'value': acsc_auditd_disk_full_action},
+      {'key': 'disk_error_action',       'value': acsc_auditd_disk_error_action},
+      {'key': 'flush',                   'value': acsc_auditd_flush},
+      {'key': 'freq',                    'value': acsc_auditd_freq}
+    ]
+    + ([{'key': 'log_format', 'value': acsc_auditd_log_format}] if acsc_auditd_log_format else [])
+  }}

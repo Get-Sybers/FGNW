@@ -1,0 +1,27 @@
+---
+- name: "Preflight"
+  ansible.builtin.include_tasks: preflight.yml
+  tags: [always]
+- name: "Configure the Windows Event Collector service"
+  ansible.builtin.include_tasks: collector.yml
+  when: acsc_wef_configure_collector | bool
+- name: "Stage and create the requested subscriptions"
+  ansible.builtin.include_tasks: subscriptions.yml
+- name: "Update existing subscriptions whose XML changed"
+  ansible.builtin.include_tasks: update-existing.yml
+  when:
+    - acsc_wef_update_existing | bool
+    - __acsc_wef_staged is changed
+    - __acsc_wef_wanted | intersect(__acsc_wef_present) | length > 0
+- name: "Enable WMI namespace auditing (prerequisite)"
+  ansible.builtin.include_tasks: wmi-auditing.yml
+  when:
+    - acsc_wef_wmi_auditing | bool
+    - __acsc_wef_wanted | select('match', '^WMI Auditing') | list | length > 0
+- name: "Point subscriptions at their source computers (SDDL)"
+  ansible.builtin.include_tasks: sources.yml
+  when: acsc_wef_set_sources | bool
+- name: "Set the enabled state of every subscription"
+  ansible.builtin.include_tasks: enable.yml
+- name: "Verify"
+  ansible.builtin.include_tasks: verify.yml

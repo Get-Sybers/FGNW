@@ -1,0 +1,27 @@
+---
+argument_specs:
+  main:
+    short_description: "Install Microsoft's official Sysmon for Linux on Debian-family hosts via the Ludus Nexus apt-proxy."
+    description:
+      - >-
+        Resolves the distro to its packages.microsoft.com repo path, asserts the
+        shared Ludus Nexus apt-proxy is reachable (no internet fallback, by
+        policy), installs the vendored pre-dearmored Microsoft signing key,
+        registers the Microsoft repo through Nexus, refreshes only that source
+        list, installs sysmonforlinux, deploys the baseline config to
+        /etc/sysmon/config.xml and registers/starts the sysmon service.
+        Debian/Ubuntu (Kali best-effort); needs root. A converged re-run is a
+        no-op.
+      - >-
+        The Nexus endpoint is the range-level identity nexus_host / nexus_port
+        (defined once in the range config; the role falls back to 192.0.2.2:8081).
+    options:
+      sysmon_linux_kali_debian_version:
+        type: str
+        required: false
+        default: "12"
+        description:
+          - >-
+            On Kali — not an officially supported Microsoft apt target — which
+            Debian major version's Microsoft repo to register (12 = bookworm,
+            13 = trixie). Ignored on Debian and Ubuntu, whose own version is used.

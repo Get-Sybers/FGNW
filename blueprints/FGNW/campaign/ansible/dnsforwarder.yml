@@ -1,0 +1,5 @@
+---
+- name: Set up cross-village DNS conditional forwarders between all domains
+  hosts: dc
+  roles:
+    - dnsforwarder

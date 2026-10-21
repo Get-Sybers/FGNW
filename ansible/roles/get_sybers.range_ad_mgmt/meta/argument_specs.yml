@@ -1,0 +1,20 @@
+---
+argument_specs:
+  main:
+    short_description: Realize an FGNW AD domain's OUs, groups, users and memberships from the bundled contract
+    description:
+      - Self-loads the AD contract shipped in files/ and, keyed by the C(domain) role_var, creates that domain's organisational units, groups (per scope), users
+        (with their group memberships) and the declared nested-group memberships, then ensures the built-in Administrator is a Domain Admin.
+      - Runs on the domain's DC at the Ludus user-defined-roles stage (S2).
+    options:
+      domain:
+        type: str
+        required: true
+        description:
+          - FQDN of the AD domain to realize; selects C(domains[domain]) from the contract (e.g. konohagakure.fire.ninja). Injected per DC via role_vars. It has
+            no default and is referenced unconditionally in main.yml, so it is genuinely required.
+      ad_contract_file:
+        type: str
+        default: config.json
+        description:
+          - Filename, resolved under the role's files/ directory, of the AD contract to load. Override only to point at an alternative bundled contract.

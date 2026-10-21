@@ -1,0 +1,53 @@
+# --- secrets: never committed (ansible-standards §9, §20). The password that
+# unlocks a vaulted file is never a file in the tree.
+.vault-pass
+*.vault-pass
+.vault_pass
+.vault_pass.txt
+vault-pass.txt
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+# --- editors / OS ---
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+# --- tool caches ---
+.cache/
+.lycheecache
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+__pycache__/
+.tox/
+.nox/
+.venv/
+venv/
+node_modules/
+# --- build output ---
+dist/
+build/
+*.log
+*.tmp
+# Ansible: the retry files, the per-project lint/galaxy cache, antsibull's
+# scratch plugin cache (changelogs/config.yaml, changelog.yaml and fragments/
+# ARE committed), and the collection the Packer templates install at build time
+# (requirements.yml beside each template); none of these are content.
+*.retry
+.ansible/
+changelogs/.plugin-cache.yaml
+templates/*/collections/
+tests/output/
+# tests/collections/ carries only the two symlinks to the in-tree collections; a
+# collection installed there by mistake is a dependency, never content.
+/tests/collections/ansible_collections/*
+!/tests/collections/ansible_collections/get_sybers/
+/tests/collections/ansible_collections/get_sybers/*
+!/tests/collections/ansible_collections/get_sybers/range
+!/tests/collections/ansible_collections/get_sybers/templates

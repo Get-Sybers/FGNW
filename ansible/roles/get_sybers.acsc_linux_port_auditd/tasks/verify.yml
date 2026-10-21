@@ -1,0 +1,102 @@
+---
+- name: "verify | The deployed ruleset is present"
+  ansible.builtin.slurp:
+    src: "{{ acsc_auditd_rules_path }}"
+  register: __acsc_auditd_v_file
+- name: "verify | Every key the deployed ruleset declares"
+  ansible.builtin.set_fact:
+    __acsc_auditd_v_keys: >-
+      {{ (__acsc_auditd_v_file.content | b64decode).splitlines()
+         | reject('match', '\s*#') | join('\n')
+         | regex_findall('(?:-F key=|-k )([A-Za-z0-9_.-]+)') | unique | sort }}
+- name: "verify | Read the service states"
+  ansible.builtin.service_facts:
+- name: "verify | Auditd unit is active"
+  ansible.builtin.assert:
+    that: ansible_facts.services['auditd.service'].state | default('') == 'running'
+    fail_msg: "auditd is not running: {{ ansible_facts.services['auditd.service'] | default('unit not found') }}"
+    quiet: true
+- name: "verify | Read kernel audit state"
+  ansible.builtin.command: auditctl -s
+  register: __acsc_auditd_v_status
+  changed_when: false
+  check_mode: false
+- name: "verify | Read the loaded rule list"
+  ansible.builtin.command: auditctl -l
+  register: __acsc_auditd_v_rules
+  changed_when: false
+  check_mode: false
+- name: "verify | VERIFY — the control block reached the kernel"
+  vars:
+    __s: "{{ __acsc_auditd_v_status.stdout_lines }}"
+    __want_enabled: "{{ 2 if acsc_auditd_immutable | bool else 1 }}"
+  ansible.builtin.assert:
+    that:
+      - __s | select('match', '^enabled\s+' ~ __want_enabled ~ '$') | list | length == 1
+      - __s | select('match', '^failure\s+' ~ acsc_auditd_failure_mode ~ '$') | list | length == 1
+      - __s | select('match', '^backlog_limit\s+' ~ acsc_auditd_backlog_limit ~ '$') | list | length == 1
+      - __s | select('match', '^backlog_wait_time\s+' ~ acsc_auditd_backlog_wait_time ~ '$') | list | length == 1
+      - __s | select('match', '^rate_limit\s+' ~ acsc_auditd_rate_limit ~ '$') | list | length == 1
+    success_msg: >-
+      Kernel audit state matches the rendered control block: enabled={{ __want_enabled }},
+      failure={{ acsc_auditd_failure_mode }}, backlog_limit={{ acsc_auditd_backlog_limit }},
+      backlog_wait_time={{ acsc_auditd_backlog_wait_time }} (non-blocking),
+      rate_limit={{ acsc_auditd_rate_limit }}.
+    fail_msg: >-
+      The kernel's audit state is not what {{ acsc_auditd_rules_path }} asked
+      for. Expected enabled={{ __want_enabled }}, failure={{ acsc_auditd_failure_mode }},
+      backlog_limit={{ acsc_auditd_backlog_limit }},
+      backlog_wait_time={{ acsc_auditd_backlog_wait_time }},
+      rate_limit={{ acsc_auditd_rate_limit }}; got:
+      {{ __acsc_auditd_v_status.stdout }}.
+      The classic cause is load ORDER — augenrules concatenates
+      /etc/audit/rules.d/* lexically and Debian's stock `audit.rules` both
+      begins with `-D` and sets --backlog_wait_time 60000, so a ruleset whose
+      filename sorts BEFORE "audit.rules" is silently wiped by it. Check that
+      {{ acsc_auditd_rules_path | basename }} still sorts last.
+- name: "verify | VERIFY — every rendered key is loaded in the kernel"
+  vars:
+    __loaded: >-
+      {{ __acsc_auditd_v_rules.stdout | regex_findall('(?:-F key=|-k )([A-Za-z0-9_.-]+)') | unique }}
+    __missing: "{{ __acsc_auditd_v_keys | reject('in', __loaded) | list }}"
+  ansible.builtin.assert:
+    that: __missing | length == 0
+    success_msg: >-
+      All {{ __acsc_auditd_v_keys | length }} keys declared by
+      {{ acsc_auditd_rules_path }} are loaded
+      ({{ __acsc_auditd_v_rules.stdout_lines | length }} rules in the kernel).
+    fail_msg: >-
+      {{ __missing | length }} key(s) declared by {{ acsc_auditd_rules_path }} are
+      NOT loaded in the kernel: {{ __missing }}.
+      The ruleset is partial, so anything keyed on those is silently collecting
+      nothing. Run `augenrules --load` by hand and read its output — it names the
+      offending line. Common causes: a syscall name this libaudit does not know,
+      a path that vanished between the stat and the load, or a duplicate rule.
+- name: "verify | Verify (e2e) — prove the pipeline end to end"
+  ansible.builtin.include_tasks: verify-e2e.yml
+  when: "'audit_tools' in __acsc_auditd_v_keys"
+- name: "verify | Is kernel auditing enabled from boot?"
+  ansible.builtin.slurp:
+    src: /proc/cmdline
+  register: __acsc_auditd_v_cmdline
+  failed_when: false
+- name: "verify | Summary"
+  vars:
+    __cmdline: "{{ __acsc_auditd_v_cmdline.content | default('') | b64decode }}"
+  ansible.builtin.debug:
+    msg:
+      - >-
+        {{ inventory_hostname }}: ACSC-Linux-Port-Auditd profile={{ acsc_auditd_profile }} —
+        {{ __acsc_auditd_v_rules.stdout_lines | length }} rules loaded,
+        {{ __acsc_auditd_v_keys | length }} keys, mutable={{ not acsc_auditd_immutable | bool }},
+        backlog_wait_time={{ acsc_auditd_backlog_wait_time }}.
+      - "Keys: {{ __acsc_auditd_v_keys | join(', ') }}"
+      - >-
+        {{ 'Kernel cmdline has audit=1 — events before auditd starts ARE captured.'
+           if 'audit=1' in __cmdline
+           else 'NOTE: kernel cmdline does NOT set audit=1, so events occurring BEFORE auditd starts are not captured. '
+                ~ 'Changing that needs a reboot and is left as an operator-scheduled follow-up.' }}
+      - >-
+        Query: `ausearch --input-logs -k <key> -ts today` (--input-logs is required from Ansible).
+        Retention is a SIZE ceiling only: {{ acsc_auditd_num_logs }} x {{ acsc_auditd_max_log_file_mb }} MiB —
+        auditd has no age-based setting, so >=18 months is aimed at, not guaranteed.

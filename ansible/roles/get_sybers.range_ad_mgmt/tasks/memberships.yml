@@ -1,0 +1,28 @@
+---
+- name: "memberships | Add declared members to universal groups"
+  microsoft.ad.group:
+    identity: "{{ item.key }}"
+    members:
+      add: "{{ item.value.members }}"
+    state: present
+  loop: "{{ (ad_groups.universal | default({})) | dict2items | selectattr('value.members', 'defined') | list }}"
+  loop_control:
+    label: "{{ item.key }}"
+- name: "memberships | Add declared members to global groups"
+  microsoft.ad.group:
+    identity: "{{ item.key }}"
+    members:
+      add: "{{ item.value.members }}"
+    state: present
+  loop: "{{ (ad_groups.global | default({})) | dict2items | selectattr('value.members', 'defined') | list }}"
+  loop_control:
+    label: "{{ item.key }}"
+- name: "memberships | Add declared members to domainlocal groups"
+  microsoft.ad.group:
+    identity: "{{ item.key }}"
+    members:
+      add: "{{ item.value.members }}"
+    state: present
+  loop: "{{ (ad_groups.domainlocal | default({})) | dict2items | selectattr('value.members', 'defined') | list }}"
+  loop_control:
+    label: "{{ item.key }}"

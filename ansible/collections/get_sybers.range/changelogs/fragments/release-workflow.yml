@@ -1,0 +1,12 @@
+---
+added:
+  - >-
+    ``.github/workflows/release.yaml`` — the Standard 04 release workflow: on a
+    published GitHub release (tag ``v<version>`` equal to ``galaxy.yml``
+    ``version``) it builds the collection from its own directory and publishes
+    it to Automation Hub and then Galaxy under the ``release`` environment (§31).
+  - >-
+    ``changelogs/`` — antsibull-changelog (§26) is now the generator of this
+    collection's ``CHANGELOG.md``: Keep a Changelog sections, Markdown output,
+    one fragment per change, ``antsibull-changelog release`` at release time; the
+    CI ``changelog`` job lints it and requires a fragment on content PRs (§2, §31).

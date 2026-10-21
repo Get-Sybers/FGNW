@@ -1,0 +1,65 @@
+{{ ansible_managed | comment }}
+redef Site::local_nets = {
+{% for net in zeek_sensor_local_nets %}
+    {{ net }},
+{% endfor %}
+};
+redef digest_salt = "{{ zeek_sensor_digest_salt }}";
+redef ignore_checksums = T;
+@load misc/loaded-scripts
+@load misc/capture-loss
+@load misc/stats
+@load frameworks/telemetry/log
+{% if zeek_sensor_profile == 'hypervisor' %}
+{% else %}
+{% endif %}
+{% if zeek_sensor_vlan_logging %}
+@load policy/protocols/conn/vlan-logging
+{% endif %}
+{% if zeek_sensor_mac_logging %}
+@load policy/protocols/conn/mac-logging
+{% endif %}
+{% if zeek_sensor_community_id %}
+@load policy/protocols/conn/community-id-logging
+@load policy/frameworks/notice/community-id
+{% endif %}
+@load base/protocols/smb
+@load protocols/conn/known-hosts
+@load protocols/conn/known-services
+@load protocols/ssl/known-certs
+@load protocols/ssl/validate-certs
+@load protocols/ssl/log-hostcerts-only
+@load protocols/ssl/expiring-certs
+redef SSL::notify_certs_expiration = ALL_HOSTS;
+@load policy/protocols/ssl/heartbleed
+@load frameworks/software/vulnerable
+@load frameworks/software/version-changes
+@load protocols/ftp/software
+@load protocols/smtp/software
+@load protocols/ssh/software
+@load protocols/http/software
+@load protocols/ssh/detect-bruteforcing
+@load protocols/ssh/interesting-hostnames
+@load protocols/http/detect-sql-injection
+@load protocols/http/header-names
+redef HTTP::log_server_header_names = T;
+@load protocols/ftp/detect
+@load protocols/dns/detect-external-names
+@load-sigs frameworks/signatures/detect-windows-shells
+@load frameworks/files/hash-all-files
+{% if zeek_sensor_capture_passwords %}
+redef FTP::default_capture_password = T;
+redef HTTP::default_capture_password = T;
+{% endif %}
+{% if zeek_sensor_json_logs %}
+@load policy/tuning/json-logs.zeek
+{% endif %}
+{% if zeek_sensor_intel_files | length > 0 %}
+redef Intel::read_files += {
+{% for f in zeek_sensor_intel_files %}
+    "{{ f }}",
+{% endfor %}
+};
+@load policy/frameworks/intel/seen
+@load policy/frameworks/intel/do_notice
+{% endif %}

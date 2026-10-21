@@ -1,0 +1,286 @@
+---
+argument_specs:
+  main:
+    short_description: "ACSC-Linux-Port-Auditd: the auditd half of the Linux port of the ACSC Windows Event Logging baseline."
+    description:
+      - >-
+        Installs auditd, renders a ruleset derived from Neo23x0/auditd (vendored
+        with provenance in meta/upstream.yml, every deviation marked in the
+        template) with every path-bearing rule existence-filtered against the
+        host, loads it, applies the ACSC >=18-month retention intent to auditd's
+        own rotation, and verifies that every key the deployed file declares is
+        actually loaded in the kernel.
+      - >-
+        Two profiles: 'hypervisor' (PVE cluster nodes — a few high-volume rule
+        groups suppressed, the PVE admin surface watched) and 'guest' (infra VM
+        guests and range Linux VMs — the full ruleset). Refuses to run in an LXC
+        container, where the kernel audit subsystem cannot be reached.
+        Debian/Ubuntu; needs root.
+    options:
+      acsc_auditd_profile:
+        type: str
+        required: false
+        default: guest
+        choices: [hypervisor, guest]
+        description: "Which ruleset profile to render. Anything else fails the preflight rather than silently picking one."
+      acsc_auditd_allow_container:
+        type: bool
+        required: false
+        default: false
+        description: "Override the refusal to run in a container. Set true ONLY after proving `auditctl -s` succeeds on the target."
+      acsc_auditd_package_version:
+        type: str
+        required: false
+        default: ""
+        description: "auditd package version to install; \"\" installs whatever the configured repos offer. Pin for reproducibility."
+      acsc_auditd_install_plugins:
+        type: bool
+        required: false
+        default: true
+        description: "Also install audispd-plugins (au-remote/syslog dispatchers). Installed, not configured — forwarding is a separate decision."
+      acsc_auditd_min_auditctl_version:
+        type: str
+        required: false
+        default: "3.0"
+        description: >-
+          Minimum auditctl version, asserted in preflight: older libaudit does not know every syscall name the ruleset uses and would abort the whole
+          load.
+      acsc_auditd_rules_path:
+        type: str
+        required: false
+        default: /etc/audit/rules.d/zz-acsc-linux-port-auditd.rules
+        description: "Where the rendered ruleset is written. The zz- prefix sorts it after audit.rules so augenrules keeps it."
+      acsc_auditd_stale_rule_files:
+        type: list
+        elements: str
+        required: false
+        default: []
+        description: "Bare filenames (no '/') of rule files a rename left behind in rules.d, removed before loading so augenrules does not concatenate both."
+      acsc_auditd_state_dir:
+        type: str
+        required: false
+        default: /var/lib/acsc-linux-port-auditd
+        description: >-
+          Directory for the role's load-state marker, so a run that failed between writing the file and flushing the load is detected and re-loaded.
+      acsc_auditd_backlog_limit:
+        type: int
+        required: false
+        default: 8192
+        description: "Kernel audit backlog (`-b`), large enough to absorb bursts."
+      acsc_auditd_backlog_wait_time:
+        type: int
+        required: false
+        default: 0
+        description: >-
+          `--backlog_wait_time`; 0 = never block a syscall waiting for backlog space (the stock 60000 converts audit pressure into IO stalls on a live
+          hypervisor).
+      acsc_auditd_failure_mode:
+        type: int
+        required: false
+        default: 1
+        choices: [0, 1]
+        description: "Kernel failure mode (`-f`): 1 = printk. NEVER 2 (panic) on a clustered hypervisor; 0 hides audit loss."
+      acsc_auditd_rate_limit:
+        type: int
+        required: false
+        default: 0
+        description: "Rate limit (`-r`); 0 = unlimited. Volume is controlled by rule selectivity, not by dropping records."
+      acsc_auditd_immutable:
+        type: bool
+        required: false
+        default: false
+        description: "Render `-e 2` (immutable until reboot). An operator decision with a maintenance window, not a role default."
+      acsc_auditd_ignore_errors:
+        type: bool
+        required: false
+        default: false
+        description: "Render upstream's `-i` so a rule that fails to load is skipped instead of aborting the load. verify.yml still catches a silent drop."
+      acsc_auditd_uid_min:
+        type: int
+        required: false
+        default: 1000
+        description: >-
+          The UID_MIN substituted into upstream's rules. The preflight reads /etc/login.defs and FAILS if it disagrees, so rules cannot silently match
+          nobody.
+      acsc_auditd_sysmon_complement:
+        type: bool
+        required: false
+        default: true
+        description: >-
+          Suppress the rule groups Sysmon for Linux already collects at higher fidelity (acsc_auditd_sysmon_covered). false on a host without Sysmon.
+      acsc_auditd_sysmon_covered:
+        type: list
+        elements: str
+        required: false
+        default: [process_creation, network_connect, network_socket_created]
+        description: "Rule group names dropped when acsc_auditd_sysmon_complement is true."
+      acsc_auditd_hypervisor_suppress:
+        type: list
+        elements: str
+        required: false
+        default: [unauthedfileaccess_system, ipc, system_binary_writes]
+        description: "Rule group names dropped on the 'hypervisor' profile for volume. [] renders the full set on a node measured to carry it."
+      acsc_auditd_exclusions:
+        type: list
+        elements: dict
+        required: false
+        default:
+          - {path: /dev/shm/, kind: dir, key: sharedmemaccess, why: "high-volume, low-value shared-memory access (upstream filter)"}
+          - {path: /var/lock/lvm/, kind: dir, key: locklvm, why: "LVM lock churn (upstream filter; absent on a ZFS-root node)"}
+        description: "`never` rules rendered FIRST (audit is first-match-wins), existence-filtered like every other path-bearing rule."
+        options:
+          path:
+            type: str
+            required: true
+            description: "Path to exclude."
+          kind:
+            type: str
+            required: true
+            choices: [dir, file]
+            description: "Intent (dir vs file); the template renders dir=/path= from what stat observed."
+          key:
+            type: str
+            required: true
+            description: "Audit key."
+          why:
+            type: str
+            required: false
+            description: "Rationale, rendered as a comment."
+      acsc_auditd_watch_candidates:
+        type: list
+        elements: dict
+        required: false
+        description:
+          - >-
+            The upstream-derived watch list (`-a always,exit -F dir=|path= -F perm=
+            -F key=`), keyed with UPSTREAM's key names so Sigma/SIEM content
+            written against Neo23x0 matches. Default: the full list in
+            defaults/main.yml ([+] marks additions beyond upstream). Every path is
+            existence-filtered on the host.
+        options:
+          path:
+            type: str
+            required: true
+            description: "Path to watch."
+          kind:
+            type: str
+            required: true
+            choices: [dir, file]
+            description: "Intent (dir vs file); the template renders dir=/path= from what stat observed and reports mismatches."
+          perm:
+            type: str
+            required: true
+            description: "Permission filter (any of r, w, x, a)."
+          key:
+            type: str
+            required: true
+            description: "Audit key."
+          why:
+            type: str
+            required: false
+            description: "Rationale, rendered as a comment."
+          group:
+            type: str
+            required: false
+            description: "Optional rule group name hooking the entry into acsc_auditd_hypervisor_suppress."
+      acsc_auditd_hypervisor_watch_candidates:
+        type: list
+        elements: dict
+        required: false
+        description: >-
+          The PVE admin surface (pct, qm, pvesh, pvecm, pveum, ceph, zfs, /etc/ceph, /etc/frr), rendered only on the 'hypervisor' profile. Same entry
+          shape as acsc_auditd_watch_candidates; default in defaults/main.yml.
+      acsc_auditd_extra_watch_candidates:
+        type: list
+        elements: dict
+        required: false
+        default: []
+        description: >-
+          Site-specific watches appended to whichever list applies — paths the role has no business knowing about. Same entry shape as
+          acsc_auditd_watch_candidates.
+      acsc_auditd_failed_access_dirs:
+        type: list
+        elements: str
+        required: false
+        default: [/etc, /bin, /sbin, /usr/bin, /usr/sbin, /var, /home, /srv]
+        description: "Directories for upstream's unauthedfileaccess rule (failed opens by a human login session). Existence-filtered."
+      acsc_auditd_manage_retention:
+        type: bool
+        required: false
+        default: true
+        description: "Manage auditd.conf's rotation keys (the ACSC >=18-month retention intent, a SIZE ceiling only). false leaves auditd.conf alone."
+      acsc_auditd_conf_path:
+        type: str
+        required: false
+        default: /etc/audit/auditd.conf
+        description: "auditd.conf location."
+      acsc_auditd_log_dir:
+        type: str
+        required: false
+        default: /var/log/audit
+        description: "Directory holding auditd's log_file; used only for the free-space preflight (the role does not relocate the log)."
+      acsc_auditd_max_log_file_mb:
+        type: int
+        required: false
+        default: 256
+        description: "auditd.conf max_log_file (MiB). Times num_logs is the whole retention ceiling."
+      acsc_auditd_num_logs:
+        type: int
+        required: false
+        default: 16
+        description: "auditd.conf num_logs."
+      acsc_auditd_max_log_file_action:
+        type: str
+        required: false
+        default: ROTATE
+        description: "auditd.conf max_log_file_action. ROTATE, never SUSPEND/HALT/SINGLE on a hypervisor."
+      acsc_auditd_space_left_mb:
+        type: int
+        required: false
+        default: 2000
+        description: "auditd.conf space_left (MiB)."
+      acsc_auditd_space_left_action:
+        type: str
+        required: false
+        default: SYSLOG
+        description: "auditd.conf space_left_action."
+      acsc_auditd_admin_space_left_mb:
+        type: int
+        required: false
+        default: 1000
+        description: "auditd.conf admin_space_left (MiB)."
+      acsc_auditd_admin_space_left_action:
+        type: str
+        required: false
+        default: SYSLOG
+        description: "auditd.conf admin_space_left_action (Debian's stock SUSPEND stops a hypervisor logging on a full /var)."
+      acsc_auditd_disk_full_action:
+        type: str
+        required: false
+        default: ROTATE
+        description: "auditd.conf disk_full_action (the stock value can wedge a hypervisor outright)."
+      acsc_auditd_disk_error_action:
+        type: str
+        required: false
+        default: SYSLOG
+        description: "auditd.conf disk_error_action."
+      acsc_auditd_flush:
+        type: str
+        required: false
+        default: INCREMENTAL_ASYNC
+        description: "auditd.conf flush. INCREMENTAL_ASYNC batches fsyncs; sync/data would fsync every record (write amplification on a Ceph node)."
+      acsc_auditd_freq:
+        type: int
+        required: false
+        default: 50
+        description: "auditd.conf freq, records between flushes under INCREMENTAL_ASYNC."
+      acsc_auditd_log_format:
+        type: str
+        required: false
+        default: ""
+        description: "auditd.conf log_format; \"\" leaves it unmanaged (ENRICHED changes the on-disk format every downstream parser sees)."
+      acsc_auditd_min_free_headroom_mb:
+        type: int
+        required: false
+        default: 2048
+        description: "Free space demanded on the audit log filesystem ON TOP of the full rotation ceiling, asserted in preflight before the ceiling is applied."

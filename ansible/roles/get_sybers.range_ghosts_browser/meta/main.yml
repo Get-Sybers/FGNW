@@ -1,0 +1,21 @@
+---
+galaxy_info:
+  role_name: range_ghosts_browser
+  namespace: get_sybers
+  author: get-sybers
+  description: >-
+    Installs Google Chrome + a version-matched chromedriver on a Fourth Great Ninja War
+    GHOSTS workstation so the native BrowserChrome timeline handler can drive a real,
+    non-headless browser in the persona's interactive session. UNTESTED (2026-07-19).
+  license: GPL-3.0-only
+  min_ansible_version: "2.12"
+  platforms:
+    - name: Windows
+      versions:
+        - "2022"
+  galaxy_tags:
+    - windows
+    - ghosts
+    - browser
+    - emulation
+dependencies: []

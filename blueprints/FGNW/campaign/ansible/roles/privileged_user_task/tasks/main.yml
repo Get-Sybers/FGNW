@@ -1,0 +1,39 @@
+---
+- name: Assert the privileged identity and credential were supplied
+  ansible.builtin.assert:
+    that:
+      - privileged_user_task_username | default('') | length > 0
+      - privileged_user_task_domain | default('') | length > 0
+      - privileged_user_task_password | default('') | length > 0
+    fail_msg: >-
+      privileged_user_task needs privileged_user_task_username, privileged_user_task_domain and
+      privileged_user_task_password. The password has no default on purpose (a role must not ship a
+      secret) — the invoking play (e.g. lat.yml) sources it from the AD data model
+      (config.json). Provide all three, or the scheduled task cannot authenticate.
+    quiet: true
+- name: Register the boot-triggered process that runs as the privileged account
+  community.windows.win_scheduled_task:
+    name: "{{ privileged_user_task_persistent_process_name }}"
+    description: "{{ privileged_user_task_persistent_process_description }}"
+    actions:
+      - path: C:\Windows\System32\cmd.exe
+        arguments: /c "timeout /t {{ privileged_user_task_persistent_process_duration }} /nobreak > nul"
+    triggers:
+      - type: boot
+        execution_time_limit: "{{ privileged_user_task_trigger_execution_time_limit }}"
+    settings:
+      execution_time_limit: "{{ privileged_user_task_execution_time_limit }}"
+      stop_if_going_on_batteries: "{{ privileged_user_task_stop_if_going_on_batteries }}"
+      start_when_available: "{{ privileged_user_task_start_when_available }}"
+      restart_on_failure: "{{ privileged_user_task_restart_on_failure }}"
+      restart_count: "{{ privileged_user_task_restart_count }}"
+    username: "{{ privileged_user_task_username }}@{{ privileged_user_task_domain }}"
+    password: "{{ privileged_user_task_password }}"
+    logon_type: "{{ privileged_user_task_logon_type }}"
+    run_level: "{{ privileged_user_task_run_level }}"
+    state: present
+  no_log: true
+- name: Start the resident process now so the token is available without a reboot
+  ansible.windows.win_command: schtasks /run /tn "{{ privileged_user_task_persistent_process_name }}"
+  register: __privileged_task_run
+  changed_when: __privileged_task_run.rc == 0

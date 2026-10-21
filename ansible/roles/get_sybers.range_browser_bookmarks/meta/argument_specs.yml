@@ -1,0 +1,39 @@
+---
+argument_specs:
+  main:
+    short_description: Create browser bookmark files, a desktop shortcut and an access-instructions file for a range web GUI
+    description:
+      - Writes Netscape-format bookmark HTML (one for Firefox, one for Chrome), a Firefox desktop shortcut and a desktop C(*-Access-Instructions.txt) onto
+        C:\Users\Public\Desktop of a range Windows VM. Runs preflight first.
+    options: &range_browser_bookmarks_options
+      bookmark_url:
+        type: str
+        default: ""
+        description:
+          - URL to bookmark, e.g. C(https://server:8889).
+          - Effectively required, but NOT marked `required:` here — defaults/main.yml supplies "", so the spec validator would always see a value and never
+            fire. The real guard is tasks/preflight.yml, which asserts it is non-empty.
+      bookmark_title:
+        type: str
+        default: ""
+        description:
+          - Display title for the bookmark and the basename of the desktop files, e.g. C(Velociraptor DFIR Server).
+          - Effectively required, but NOT marked `required:` here — defaults/main.yml supplies "". The real guard is tasks/preflight.yml.
+      bookmark_category:
+        type: str
+        default: Lab Resources
+        description:
+          - Bookmark folder name shown when importing the HTML files.
+      bookmark_username:
+        type: str
+        default: ""
+        description:
+          - Optional login username written into the access-instructions file. Empty string omits the Username line entirely.
+      bookmark_password:
+        type: str
+        default: ""
+        description:
+          - Optional login password written into the access-instructions file (the writing task carries no_log). Empty string omits the Password line entirely.
+  preflight:
+    short_description: Assert bookmark_url and bookmark_title are set before anything is written
+    options: *range_browser_bookmarks_options

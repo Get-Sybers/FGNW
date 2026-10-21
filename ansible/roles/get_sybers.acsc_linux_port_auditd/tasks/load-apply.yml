@@ -1,0 +1,32 @@
+---
+- name: "load-apply | Load the ruleset (augenrules)"
+  ansible.builtin.command: augenrules --load
+  register: __acsc_auditd_load
+  changed_when: true
+- name: "load-apply | Assert the load reported no errors"
+  ansible.builtin.assert:
+    that:
+      - "'error' not in (__acsc_auditd_load.stdout | default('') | lower)"
+      - "'error' not in (__acsc_auditd_load.stderr | default('') | lower)"
+    fail_msg: >-
+      augenrules exited {{ __acsc_auditd_load.rc | default('?') }} but reported an
+      error, so the ruleset in the kernel is PARTIAL:
+      stdout={{ __acsc_auditd_load.stdout | default('') }}
+      stderr={{ __acsc_auditd_load.stderr | default('') }}.
+      The usual cause is a syscall or field name this host's libaudit does not
+      know — check the reported line in {{ acsc_auditd_rules_path }}.
+    quiet: true
+- name: "load-apply | Ensure the state directory exists"
+  ansible.builtin.file:
+    path: "{{ acsc_auditd_state_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+- name: "load-apply | Record which ruleset has been loaded"
+  ansible.builtin.copy:
+    content: "{{ __acsc_auditd_rendered.content | b64decode | hash('sha256') }}"
+    dest: "{{ acsc_auditd_state_dir }}/rules.applied"
+    owner: root
+    group: root
+    mode: "0600"

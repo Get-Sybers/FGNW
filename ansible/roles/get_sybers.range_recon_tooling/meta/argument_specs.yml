@@ -1,0 +1,52 @@
+---
+argument_specs:
+  main:
+    short_description: Deploy the cannon DoS script and portable nmap onto the recon workstation, then verify
+    description:
+      - Deploys LOE 2's recon/DoS tooling — a rate-capped PowerShell TCP-flood script and a portable (Npcap-free) nmap plus its VC++/Npcap runtime prerequisites
+        — onto the attacker workstation, then confirms nmap runs. Runs in Phase 3 (post-deploy composition), before containment.
+    options: &range_recon_tooling_options
+      range_recon_tooling_nmap_version:
+        type: str
+        default: "7.92"
+        description:
+          - nmap version. 7.92 is the last portable (installer-free, Npcap-free) win32 release; -sT connect scans are all this range needs.
+      range_recon_tooling_nmap_zip_url:
+        type: str
+        default: http://192.0.2.2:8081/repository/raw-hosted/tools/nmap-{{ range_recon_tooling_nmap_version }}-win32.zip
+        description:
+          - Nexus-cached URL for the portable nmap zip (NOT nmap.org — range VMs must not reach the internet). Derives from range_recon_tooling_nmap_version.
+      range_recon_tooling_nmap_zip_sha256:
+        type: str
+        default: b54c54d4b478cad19567a504c7c6b7230dfd80acd881dc2e9015a628a3efa71e
+        description:
+          - sha256 the downloaded zip is checksum-pinned against (fail-closed).
+      range_recon_tooling_nmap_install_dir:
+        type: str
+        default: C:\Tools
+        description:
+          - Directory the zip extracts under and that is added to the system PATH.
+      range_recon_tooling_nmap_vcredist_exe:
+        type: str
+        default: VC_redist.x86.exe
+        description:
+          - VC++ x86 runtime installer filename (bundled in the nmap zip and served by the tool-cache). nmap.exe will not start without it.
+      range_recon_tooling_nmap_npcap_exe:
+        type: str
+        default: npcap-1.50.exe
+        description:
+          - Npcap installer filename (bundled/tool-cached). Only raw -sS scans need it; install is bounded and best-effort.
+      range_recon_tooling_npcap_install_timeout:
+        type: int
+        default: 300
+        description:
+          - Seconds bounding the silent Npcap install so it can never repeat the unattended hang the full nmap installer once caused.
+  cannon:
+    short_description: Deploy the rate-capped cannon-flood PowerShell DoS script
+    options: *range_recon_tooling_options
+  nmap:
+    short_description: Install portable nmap and its VC++/Npcap runtime prerequisites
+    options: *range_recon_tooling_options
+  verify:
+    short_description: Assert nmap runs (connect-scan capable)
+    options: *range_recon_tooling_options

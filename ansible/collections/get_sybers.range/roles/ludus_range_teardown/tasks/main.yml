@@ -1,0 +1,118 @@
+---
+- name: Preflight
+  ansible.builtin.assert:
+    that: __ludus_api_key is defined
+    fail_msg: ludus_range_teardown needs ludus_auth to have run.
+    quiet: true
+- name: Read state + VM count + testing
+  ansible.builtin.command:
+    argv: ["{{ ludus_range_teardown_bin }}", range, list, --json]
+  environment:
+    LUDUS_API_KEY: "{{ __ludus_api_key }}"
+  register: __ludus_td_list
+  changed_when: false
+  failed_when: false
+  no_log: true
+  retries: 3
+  delay: 2
+  until: (__ludus_td_list.rc | default(1)) == 0 and (__ludus_td_list.stdout | default('') | trim).startswith('{')
+- name: Parse
+  ansible.builtin.set_fact:
+    __ludus_td_state: >-
+      {{ ((__ludus_td_list.stdout | from_json).rangeState | default('UNKNOWN'))
+         if ((__ludus_td_list.rc | default(1)) == 0 and (__ludus_td_list.stdout | default('') | trim).startswith('{')) else 'UNKNOWN' }}
+    __ludus_td_vms: >-
+      {{ ((__ludus_td_list.stdout | from_json).VMs | default([]) | length)
+         if ((__ludus_td_list.rc | default(1)) == 0 and (__ludus_td_list.stdout | default('') | trim).startswith('{')) else 0 }}
+    __ludus_td_testing: >-
+      {{ ((__ludus_td_list.stdout | from_json).testingEnabled | default(false))
+         if ((__ludus_td_list.rc | default(1)) == 0 and (__ludus_td_list.stdout | default('') | trim).startswith('{')) else false }}
+- name: Nothing to do (destroyed/absent AND 0 VMs)
+  ansible.builtin.debug:
+    msg: Range is {{ __ludus_td_state }} with 0 VMs — nothing to tear down.
+  when:
+    - __ludus_td_state in ['DESTROYED', 'NEVER DEPLOYED', 'UNKNOWN']
+    - __ludus_td_vms | int == 0
+- name: Destroy path (state says empty but VMs exist, OR range is live)
+  when: not (__ludus_td_state in ['DESTROYED', 'NEVER DEPLOYED', 'UNKNOWN'] and __ludus_td_vms | int == 0)
+  block:
+    - name: "Warn if state is 'empty' yet VMs survive (ERR-14 class)"
+      ansible.builtin.debug:
+        msg: rangeState={{ __ludus_td_state }} but {{ __ludus_td_vms }} VM(s) exist — tearing down anyway (state is not proof).
+      when: __ludus_td_state in ['DESTROYED', 'NEVER DEPLOYED']
+    - name: "Stop testing first (safe: VMs are about to be destroyed)"
+      when: __ludus_td_testing | bool
+      block:
+        - name: Ludus testing stop
+          ansible.builtin.command:
+            argv: ["{{ ludus_range_teardown_bin }}", testing, stop]
+          environment:
+            LUDUS_API_KEY: "{{ __ludus_api_key }}"
+          register: __ludus_td_tstop
+          changed_when: true
+          failed_when: false
+          no_log: true
+        - name: Poll until testingEnabled=false
+          ansible.builtin.command:
+            argv: ["{{ ludus_range_teardown_bin }}", range, list, --json]
+          environment:
+            LUDUS_API_KEY: "{{ __ludus_api_key }}"
+          register: __ludus_td_tpoll
+          changed_when: false
+          failed_when: false
+          no_log: true
+          retries: "{{ ludus_range_teardown_testing_poll_retries | int }}"
+          delay: "{{ ludus_range_teardown_testing_poll_delay | int }}"
+          until: >-
+            (__ludus_td_tpoll.rc | default(1)) == 0
+            and (__ludus_td_tpoll.stdout | default('') | trim).startswith('{')
+            and not ((__ludus_td_tpoll.stdout | from_json).testingEnabled | default(true)) | bool
+    - name: "Step 1/2: ludus range rm --no-prompt (range VMs only)"
+      ansible.builtin.command:
+        argv: ["{{ ludus_range_teardown_bin }}", range, rm, --no-prompt]
+      environment:
+        LUDUS_API_KEY: "{{ __ludus_api_key }}"
+      register: __ludus_td_rm
+      changed_when: true
+      failed_when: false
+      no_log: true
+    - name: "Step 2/2: poll until DESTROYED AND 0 VMs remain"
+      ansible.builtin.command:
+        argv: ["{{ ludus_range_teardown_bin }}", range, list, --json]
+      environment:
+        LUDUS_API_KEY: "{{ __ludus_api_key }}"
+      register: __ludus_td_poll
+      changed_when: false
+      failed_when: false
+      no_log: true
+      retries: "{{ ludus_range_teardown_poll_retries | int }}"
+      delay: "{{ ludus_range_teardown_poll_delay | int }}"
+      until: >-
+        (__ludus_td_poll.rc | default(1)) == 0
+        and (__ludus_td_poll.stdout | default('') | trim).startswith('{')
+        and (
+          (((__ludus_td_poll.stdout | from_json).rangeState | default('')) == 'DESTROYED'
+           and ((__ludus_td_poll.stdout | from_json).VMs | default([]) | length) == 0)
+          or ((__ludus_td_poll.stdout | from_json).rangeState | default('')) in ['ERROR', 'FAILED']
+        )
+    - name: Parse the final state
+      ansible.builtin.set_fact:
+        __ludus_td_final_state: >-
+          {{ ((__ludus_td_poll.stdout | from_json).rangeState | default('UNKNOWN'))
+             if (__ludus_td_poll.stdout | default('') | trim).startswith('{') else 'UNKNOWN' }}
+        __ludus_td_final_vms: >-
+          {{ ((__ludus_td_poll.stdout | from_json).VMs | default([]) | length)
+             if (__ludus_td_poll.stdout | default('') | trim).startswith('{') else -1 }}
+    - name: Assert the VMs are truly gone
+      ansible.builtin.assert:
+        that:
+          - __ludus_td_final_state == 'DESTROYED'
+          - __ludus_td_final_vms | int == 0
+        fail_msg: >-
+          Teardown did NOT confirm empty: rangeState={{ __ludus_td_final_state }},
+          {{ __ludus_td_final_vms }} VM(s) still present. The normal destroy left VMs
+          behind. Escalating deletes the range OBJECT too, so it is NOT automatic —
+          run it yourself if you want it:
+          `ludus range rm-range --force --no-prompt`
+        success_msg: Teardown complete — range DESTROYED, 0 VMs remain (Nexus untouched).
+        quiet: true

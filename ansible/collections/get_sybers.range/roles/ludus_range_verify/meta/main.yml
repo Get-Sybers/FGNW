@@ -1,0 +1,18 @@
+---
+galaxy_info:
+  author: Get-Sybers
+  namespace: get_sybers
+  description: >-
+    Range lifecycle (S4): assert the Ludus-observable end state of a range. Positive
+    checks (rangeState SUCCESS, every VM powered on, every VM holds an IP, optional
+    exact VM count) plus a negative control that a bogus VM name is absent, so an
+    empty VM list cannot pass everything. Read-only; drives the Ludus API only;
+    touches no guest.
+  role_name: ludus_range_verify
+  license: AGPL-3.0-only
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Debian
+      versions:
+        - all
+dependencies: []

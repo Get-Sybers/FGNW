@@ -1,0 +1,6 @@
+---
+ludus_range_config_src: ""
+ludus_range_config_blueprint_src: ""
+ludus_range_config_template_check: true
+ludus_range_config_users_root: /opt/ludus/users
+ludus_range_config_bin: /usr/local/bin/ludus

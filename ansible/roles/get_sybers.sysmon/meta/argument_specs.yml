@@ -1,0 +1,35 @@
+---
+argument_specs:
+  main:
+    short_description: "Install and configure Sysmon (Sysinternals) on Windows hosts, converged without a telemetry gap."
+    description:
+      - >-
+        Downloads Sysmon.zip through the shared Ludus Nexus cache, deploys the
+        ACSC Sysmon baseline config, and then either installs the service
+        (absent), reconfigures the RUNNING Sysmon in place with `-c` (present and
+        config bytes changed), or does nothing (present and unchanged). Sysmon is
+        never uninstalled and reinstalled on a converged re-run. Windows only;
+        needs local administrator rights. Idempotent.
+    options:
+      sysmon_download_url:
+        type: str
+        required: false
+        default: "http://192.0.2.2:8081/repository/sysinternals-proxy/files/Sysmon.zip"
+        description: >-
+          Where Sysmon.zip is fetched from. Routed through the shared Ludus Nexus cache so it works under `ludus testing` containment; override for a
+          different mirror.
+      sysmon_zip_checksum:
+        type: str
+        required: false
+        default: ""
+        description:
+          - >-
+            Checksum in get_url form ("sha256:<hex>"). Sysinternals ships a
+            ROLLING Sysmon.zip with no stable published digest, so "" (no
+            checksum, parameter omitted) is the default; set it to pin a vetted
+            build for a reproducible range.
+  verify:
+    short_description: "Verify the Sysmon64 service is running (tag: verify)."
+    description:
+      - "Ensures the Sysmon64 service is started with automatic start, cleans up the downloaded zip after a
+          successful install, and reads the service state back."

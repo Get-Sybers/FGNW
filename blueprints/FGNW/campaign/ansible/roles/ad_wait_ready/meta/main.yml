@@ -1,0 +1,17 @@
+---
+galaxy_info:
+  author: Get-Sybers
+  description: >
+    Reusable Active Directory readiness gate. Waits until AD Web Services and the
+    directory are actually serving after a DC reboot (services + Get-ADDomain, and
+    optionally the host's DC identity plus SYSVOL/NETLOGON shares). Replaces the
+    ad-hoc per-role post-reboot waits. Original work of Get-Sybers.
+  role_name: ad_wait_ready
+  license: MIT
+  min_ansible_version: "2.12"
+  platforms:
+    - name: Windows
+      versions:
+        - "2019"
+        - "2022"
+dependencies: []

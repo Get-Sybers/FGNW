@@ -1,0 +1,19 @@
+---
+galaxy_info:
+  author: Get-Sybers
+  description: >
+    Directory realizer for the FGNW owned AD-build layer. Self-loads the config.json contract
+    (shipped in files/) and, keyed by the `domain` role_var, realizes domains[domain].{
+    organisation_units, groups, users}: creates the OUs, the groups (per scope), the users
+    (with their group memberships), and the declared group membership. Rule 8 (one task,
+    one action) throughout, driven by microsoft.ad.* module semantics. Source-delivered
+    adaptation of the campaign fgnw_ad_mgmt role for the Ludus user-defined-roles stage.
+  role_name: range_ad_mgmt
+  license: AGPL-3.0-only
+  min_ansible_version: "2.12"
+  platforms:
+    - name: Windows
+      versions:
+        - "2019"
+        - "2022"
+dependencies: []

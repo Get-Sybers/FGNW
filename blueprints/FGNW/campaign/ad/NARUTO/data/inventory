@@ -1,0 +1,156 @@
+; LAB SCENARIO CONFIGURATION -----------------------------
+; computers inside domain (mandatory)
+; usage : build.yml, ad-relations.yml, ad-servers.yml, vulnerabilities.yml
+[domain]
+dc01
+dc02
+dc03
+dc04
+dc05
+dc06
+srv03
+srv04
+srv05
+srv06
+srv07
+srv08
+srv09
+srv10
+srv-konoha
+srv-oto
+srv-akatsuki
+; domain controler (mandatory)
+; usage : ad-acl.yml, ad-data.yml, ad-relations.yml, laps.yml
+[dc]
+dc01
+dc02
+dc03
+dc04
+dc05
+dc06
+; domain server to enroll (mandatory if you want servers)
+; usage : ad-data.yml, ad-servers.yml, laps.yml
+[server]
+srv03
+srv04
+srv05
+srv06
+srv07
+srv08
+srv09
+srv10
+srv-konoha
+srv-oto
+srv-akatsuki
+; workstation to enroll (mandatory if you want workstation)
+; usage : ad-servers.yml, laps.yml
+[workstation]
+; parent domain controler (mandatory)
+; usage : ad-servers.yml
+[parent_dc]
+dc01
+dc03
+dc05
+dc06
+; child domain controler (need a fqdn child_name.parent_name)
+; usage : ad-servers.yml
+[child_dc]
+dc02
+dc04
+; external trust, need domain trust entry in config (bidirectionnal)
+; usage : ad-trusts.yml
+[trust]
+dc01
+dc05
+; install adcs
+; usage : adcs.yml
+[adcs]
+dc04
+; install custom template (dc)
+; usage : adcs.yml
+[adcs_customtemplates]
+; install iis with default website asp upload on 80
+; usage : servers.yml
+[iis]
+; install mssql
+; usage : servers.yml
+[mssql]
+; install mssql gui
+; usage : servers.yml
+[mssql_ssms]
+; install webdav
+[webdav]
+; install elk
+; usage : elk.yml
+[elk_server]
+; (no ELK server VM in this range — elk.yml is out of the active chain; add a host here + to all
+;  four lockstep files if ELK is ever wanted. Was a phantom `elk` entry with no backing VM.)
+; add log agent for elk
+; usage : elk.yml
+[elk_log]
+dc01
+dc02
+dc03
+dc04
+dc05
+dc06
+srv03
+srv04
+srv05
+srv06
+srv07
+srv08
+srv09
+srv10
+srv-konoha
+srv-oto
+srv-akatsuki
+[laps_dc]
+[laps_server]
+[laps_workstation]
+; allow computer update
+; usage : update.yml
+[update]
+; disable update
+; usage : update.yml
+[no_update]
+dc01
+dc02
+dc03
+dc04
+dc05
+dc06
+srv03
+srv04
+srv05
+srv06
+srv07
+srv08
+srv09
+srv10
+srv-konoha
+srv-oto
+srv-akatsuki
+; allow defender
+; usage : security.yml
+[defender_on]
+; disable defender
+; usage : security.yml
+[defender_off]
+dc01
+dc02
+dc03
+dc04
+dc05
+dc06
+srv03
+srv04
+srv05
+srv06
+srv07
+srv08
+srv09
+srv10
+srv-konoha
+srv-oto
+srv-akatsuki

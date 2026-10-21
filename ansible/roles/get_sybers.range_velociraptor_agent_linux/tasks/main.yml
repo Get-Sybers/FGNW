@@ -1,0 +1,75 @@
+---
+- name: Create Velociraptor directory on Linux
+  ansible.builtin.file:
+    path: /opt/velociraptor-client
+    state: directory
+    mode: "0755"
+    owner: root
+    group: root
+- name: Wait for Velociraptor server to be available
+  ansible.builtin.wait_for:
+    host: "{{ velociraptor_host }}"
+    port: 8000
+    timeout: 300
+  delegate_to: localhost
+- name: Download Velociraptor client config from server
+  ansible.builtin.get_url:
+    url: http://{{ velociraptor_host }}:8889/api/v1/DownloadFile?path=/client.config.yaml
+    dest: /opt/velociraptor-client/client.config.yaml
+    validate_certs: false
+    mode: "0644"
+  register: client_config_download
+  retries: 5
+  delay: 10
+  until: client_config_download is succeeded
+  ignore_errors: true
+- name: If download failed, fetch config from server directly
+  when: client_config_download is failed
+  block:
+    - name: Fetch client config from Velociraptor server
+      ansible.builtin.slurp:
+        src: "{{ velociraptor_install_path }}/client.config.yaml"
+      delegate_to: "{{ velociraptor_host }}"
+      register: client_config_content
+    - name: Write client config to Linux host
+      ansible.builtin.copy:
+        content: "{{ client_config_content.content | b64decode }}"
+        dest: /opt/velociraptor-client/client.config.yaml
+        mode: "0644"
+- name: Download Velociraptor Linux executable
+  ansible.builtin.get_url:
+    url: https://github.com/Velocidex/velociraptor/releases/download/{{ velociraptor_version }}/velociraptor-{{ velociraptor_version_patch }}-linux-amd64
+    dest: /opt/velociraptor-client/velociraptor
+    checksum: "{{ velociraptor_checksum }}"
+    validate_certs: false
+    mode: "0755"
+  register: velociraptor_download
+  retries: 3
+  delay: 10
+  until: velociraptor_download is succeeded
+- name: Create Velociraptor systemd service file
+  ansible.builtin.copy:
+    content: |
+      [Unit]
+      Description=Velociraptor Linux Client
+      After=network.target
+      [Service]
+      Type=simple
+      ExecStart=/opt/velociraptor-client/velociraptor --config /opt/velociraptor-client/client.config.yaml client
+      Restart=on-failure
+      RestartSec=10
+      [Install]
+      WantedBy=multi-user.target
+    dest: /etc/systemd/system/velociraptor.service
+    mode: "0644"
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: true
+- name: Enable and start Velociraptor service
+  ansible.builtin.systemd:
+    name: velociraptor
+    state: started
+    enabled: true
+- name: Verify Velociraptor agent installation
+  ansible.builtin.import_tasks: verify.yml
+  tags: [verify]

@@ -1,0 +1,734 @@
+---
+defaults:
+  target_node: pi-01
+  snapshot_with_RAM: true
+  stale_hours: 0
+  ad_domain_functional_level: Win2012R2
+  ad_forest_functional_level: Win2012R2
+  ad_domain_admin: domainadmin
+  ad_domain_admin_password: password
+  ad_domain_user: domainuser
+  ad_domain_user_password: password
+  ad_domain_safe_mode_password: password
+  timezone: America/New_York
+  enable_dynamic_wallpaper: true
+global_role_vars:
+  ghosts_config_replace: '  "ApiRootUrl": "http://10.{{ range_second_octet }}.99.51:5000/api",'
+ludus:
+  - vm_name: "{{ range_id }}-fire-dc1"
+    force_ip: true
+    target_node: pi-01
+    hostname: "{{ range_id }}-fire-dc1"
+    template: win2022-server-x64-appxfix-template
+    vlan: 10
+    ip_last_octet: 15
+    ram_gb: 6
+    cpus: 4
+    windows:
+      sysprep: true
+      gpos: [disable_defender]
+    domain:
+      fqdn: fire.ninja
+      role: primary-dc
+    testing:
+      snapshot: true
+      block_internet: true
+    role_vars:
+      ludus_trust_partner_domain: otogakure.ninja
+      ludus_trust_partner_dc_ip: 10.{{ range_second_octet }}.30.10
+      ludus_dns_forward_zone: otogakure.ninja
+      ludus_dns_forward_server: 10.{{ range_second_octet }}.30.10
+      ludus_enable_sid_history: true
+      ludus_cross_domain_group_members: []
+      domain: fire.ninja
+    roles:
+      - name: badsectorlabs.ludus_windows_utils.ludus_ad_forest_trust
+        depends_on:
+          - vm_name: "{{ range_id }}-konoha-dc1"
+            role: badsectorlabs.ludus_windows_utils.ludus_child_domain
+      - name: get_sybers.range_password_policy
+      - name: get_sybers.range_ad_mgmt
+      - name: get_sybers.sysmon
+      - name: get_sybers.acsc_event_logging
+  - vm_name: "{{ range_id }}-konoha-dc1"
+    force_ip: true
+    target_node: pi-01
+    hostname: "{{ range_id }}-konoha-dc1"
+    template: win2022-server-x64-appxfix-template
+    vlan: 10
+    ip_last_octet: 10
+    ram_gb: 8
+    cpus: 2
+    windows:
+      sysprep: true
+      gpos: [disable_defender]
+    testing:
+      snapshot: true
+      block_internet: true
+    role_vars:
+      ludus_child_domain_fqdn: konohagakure.fire.ninja
+      ludus_parent_domain_fqdn: fire.ninja
+      ludus_parent_dc_ip: 10.{{ range_second_octet }}.10.15
+      ludus_create_dns_delegation: true
+      domain: konohagakure.fire.ninja
+    roles:
+      - name: badsectorlabs.ludus_windows_utils.ludus_child_domain
+      - name: get_sybers.range_password_policy
+      - name: get_sybers.range_ad_mgmt
+      - name: get_sybers.sysmon
+      - name: get_sybers.acsc_event_logging
+  - vm_name: "{{ range_id }}-konoha-mail"
+    force_ip: true
+    target_node: pi-01
+    hostname: "{{ range_id }}-konoha-mail"
+    template: win2022-exchange2019-x64-template
+    vlan: 10
+    ip_last_octet: 20
+    ram_gb: 8
+    cpus: 4
+    windows:
+      sysprep: true
+    testing:
+      snapshot: true
+      block_internet: true
+    role_vars:
+      ludus_child_domain_fqdn: konohagakure.fire.ninja
+      ludus_child_dc_ip: 10.{{ range_second_octet }}.10.10
+      ludus_child_dc_hostname: "{{ ((range_id ~ '-konoha-dc1') | upper)[:15] }}"
+    roles:
+      - name: badsectorlabs.ludus_windows_utils.ludus_child_domain_join
+        depends_on:
+          - vm_name: "{{ range_id }}-konoha-dc1"
+            role: badsectorlabs.ludus_windows_utils.ludus_child_domain
+      - name: get_sybers.sysmon
+      - name: get_sybers.acsc_event_logging
+      - name: get_sybers.range_exchange
+        depends_on:
+          - vm_name: "{{ range_id }}-fire-dc1"
+            role: get_sybers.range_ad_mgmt
+          - vm_name: "{{ range_id }}-konoha-dc1"
+            role: get_sybers.range_ad_mgmt
+      - name: get_sybers.range_exchange_seed
+  - vm_name: "{{ range_id }}-konoha-ws1"
+    target_node: pi-03
+    hostname: "{{ range_id }}-konoha-ws1"
+    template: win10-22h2-x64-enterprise-appxfix-template
+    vlan: 10
+    ip_last_octet: 21
+    ram_gb: 6
+    cpus: 2
+    windows:
+      sysprep: true
+    testing:
+      snapshot: true
+      block_internet: true
+    role_vars:
+      ludus_child_domain_fqdn: konohagakure.fire.ninja
+      ludus_child_dc_ip: 10.{{ range_second_octet }}.10.10
+      ludus_child_dc_hostname: "{{ ((range_id ~ '-konoha-dc1') | upper)[:15] }}"
+    roles:
+      - name: badsectorlabs.ludus_windows_utils.ludus_child_domain_join
+        depends_on:
+          - vm_name: "{{ range_id }}-konoha-dc1"
+            role: badsectorlabs.ludus_windows_utils.ludus_child_domain
+      - jasonmull.ludus_ghosts_client
+      - get_sybers.range_ghosts_browser
+      - name: get_sybers.sysmon
+      - name: get_sybers.acsc_event_logging
+  - vm_name: "{{ range_id }}-konoha-ws2"
+    target_node: pi-02
+    hostname: "{{ range_id }}-konoha-ws2"
+    template: win10-22h2-x64-enterprise-appxfix-template
+    vlan: 10
+    ip_last_octet: 22
+    ram_gb: 4
+    cpus: 2
+    windows:
+      sysprep: true
+    testing:
+      snapshot: true
+      block_internet: true
+    role_vars:
+      ludus_child_domain_fqdn: konohagakure.fire.ninja
+      ludus_child_dc_ip: 10.{{ range_second_octet }}.10.10
+      ludus_child_dc_hostname: "{{ ((range_id ~ '-konoha-dc1') | upper)[:15] }}"
+    roles:
+      - name: badsectorlabs.ludus_windows_utils.ludus_child_domain_join
+        depends_on:
+          - vm_name: "{{ range_id }}-konoha-dc1"
+            role: badsectorlabs.ludus_windows_utils.ludus_child_domain
+      - jasonmull.ludus_ghosts_client
+      - get_sybers.range_ghosts_browser
+      - name: get_sybers.sysmon
+      - name: get_sybers.acsc_event_logging
+  - vm_name: "{{ range_id }}-konoha-ws3"
+    target_node: pi-01
+    hostname: "{{ range_id }}-konoha-ws3"
+    template: win10-22h2-x64-enterprise-appxfix-template
+    vlan: 10
+    ip_last_octet: 23
+    ram_gb: 4
+    cpus: 2
+    windows:
+      sysprep: true
+    testing:
+      snapshot: true
+      block_internet: true
+    role_vars:
+      ludus_child_domain_fqdn: konohagakure.fire.ninja
+      ludus_child_dc_ip: 10.{{ range_second_octet }}.10.10
+      ludus_child_dc_hostname: "{{ ((range_id ~ '-konoha-dc1') | upper)[:15] }}"
+    roles:
+      - name: badsectorlabs.ludus_windows_utils.ludus_child_domain_join
+        depends_on:
+          - vm_name: "{{ range_id }}-konoha-dc1"
+            role: badsectorlabs.ludus_windows_utils.ludus_child_domain
+      - jasonmull.ludus_ghosts_client
+      - get_sybers.range_ghosts_browser
+      - name: get_sybers.sysmon
+      - name: get_sybers.acsc_event_logging
+  - vm_name: "{{ range_id }}-konoha-ws4"
+    target_node: pi-02
+    hostname: "{{ range_id }}-konoha-ws4"
+    template: win10-22h2-x64-enterprise-appxfix-template
+    vlan: 10
+    ip_last_octet: 24
+    ram_gb: 4
+    cpus: 2
+    windows:
+      sysprep: true
+    testing:
+      snapshot: true
+      block_internet: true
+    role_vars:
+      ludus_child_domain_fqdn: konohagakure.fire.ninja
+      ludus_child_dc_ip: 10.{{ range_second_octet }}.10.10
+      ludus_child_dc_hostname: "{{ ((range_id ~ '-konoha-dc1') | upper)[:15] }}"
+    roles:
+      - name: badsectorlabs.ludus_windows_utils.ludus_child_domain_join
+        depends_on:
+          - vm_name: "{{ range_id }}-konoha-dc1"
+            role: badsectorlabs.ludus_windows_utils.ludus_child_domain
+      - jasonmull.ludus_ghosts_client
+      - get_sybers.range_ghosts_browser
+      - name: get_sybers.sysmon
+      - name: get_sybers.acsc_event_logging
+  - vm_name: "{{ range_id }}-konoha-ws5"
+    target_node: pi-02
+    hostname: "{{ range_id }}-konoha-ws5"
+    template: win10-22h2-x64-enterprise-appxfix-template
+    vlan: 10
+    ip_last_octet: 25
+    ram_gb: 4
+    cpus: 2
+    windows:
+      sysprep: true
+    testing:
+      snapshot: true
+      block_internet: true
+    role_vars:
+      ludus_child_domain_fqdn: konohagakure.fire.ninja
+      ludus_child_dc_ip: 10.{{ range_second_octet }}.10.10
+      ludus_child_dc_hostname: "{{ ((range_id ~ '-konoha-dc1') | upper)[:15] }}"
+    roles:
+      - name: badsectorlabs.ludus_windows_utils.ludus_child_domain_join
+        depends_on:
+          - vm_name: "{{ range_id }}-konoha-dc1"
+            role: badsectorlabs.ludus_windows_utils.ludus_child_domain
+      - jasonmull.ludus_ghosts_client
+      - get_sybers.range_ghosts_browser
+      - name: get_sybers.sysmon
+      - name: get_sybers.acsc_event_logging
+  - vm_name: "{{ range_id }}-wind-dc1"
+    force_ip: true
+    target_node: pi-01
+    hostname: "{{ range_id }}-wind-dc1"
+    template: win2022-server-x64-appxfix-template
+    vlan: 20
+    ip_last_octet: 15
+    ram_gb: 8
+    cpus: 2
+    windows:
+      sysprep: true
+      gpos: [disable_defender]
+    domain:
+      fqdn: wind.ninja
+      role: primary-dc
+    testing:
+      snapshot: true
+      block_internet: true
+    roles:
+      - name: get_sybers.range_password_policy
+      - name: get_sybers.range_ad_mgmt
+      - name: get_sybers.sysmon
+      - name: get_sybers.acsc_event_logging
+    role_vars:
+      domain: wind.ninja
+  - vm_name: "{{ range_id }}-suna-dc1"
+    force_ip: true
+    target_node: pi-01
+    hostname: "{{ range_id }}-suna-dc1"
+    template: win2022-server-x64-appxfix-template
+    vlan: 20
+    ip_last_octet: 10
+    ram_gb: 8
+    cpus: 2
+    windows:
+      sysprep: true
+      gpos: [disable_defender]
+    testing:
+      snapshot: true
+      block_internet: true
+    role_vars:
+      ludus_child_domain_fqdn: sunagakure.wind.ninja
+      ludus_parent_domain_fqdn: wind.ninja
+      ludus_parent_dc_ip: 10.{{ range_second_octet }}.20.15
+      ludus_create_dns_delegation: true
+      domain: sunagakure.wind.ninja
+    roles:
+      - name: badsectorlabs.ludus_windows_utils.ludus_child_domain
+      - name: get_sybers.range_password_policy
+      - name: get_sybers.range_ad_mgmt
+      - name: get_sybers.sysmon
+      - name: get_sybers.acsc_event_logging
+  - vm_name: "{{ range_id }}-suna-ws1"
+    target_node: pi-02
+    hostname: "{{ range_id }}-suna-ws1"
+    template: macos-sequoia-15-template
+    vlan: 20
+    ip_last_octet: 11
+    ram_gb: 8
+    cpus: 4
+    macos: true
+    testing:
+      snapshot: true
+      block_internet: true
+  - vm_name: "{{ range_id }}-suna-mail"
+    force_ip: true
+    target_node: pi-02
+    hostname: "{{ range_id }}-suna-mail"
+    template: macos-sequoia-15-template
+    vlan: 20
+    ip_last_octet: 20
+    ram_gb: 8
+    cpus: 4
+    macos: true
+    testing:
+      snapshot: true
+      block_internet: true
+  - vm_name: "{{ range_id }}-oto-dc1"
+    force_ip: true
+    target_node: pi-01
+    hostname: "{{ range_id }}-oto-dc1"
+    template: win2022-server-x64-appxfix-template
+    vlan: 30
+    ip_last_octet: 10
+    ram_gb: 8
+    cpus: 2
+    windows:
+      sysprep: true
+      gpos: [disable_defender]
+    domain:
+      fqdn: otogakure.ninja
+      role: primary-dc
+    testing:
+      snapshot: true
+      block_internet: true
+    role_vars:
+      ludus_trust_partner_domain: fire.ninja
+      ludus_trust_partner_dc_ip: 10.{{ range_second_octet }}.10.15
+      ludus_dns_forward_zone: fire.ninja
+      ludus_dns_forward_server: 10.{{ range_second_octet }}.10.15
+      ludus_cross_domain_group_members: []
+      domain: otogakure.ninja
+    roles:
+      - name: badsectorlabs.ludus_windows_utils.ludus_ad_forest_trust
+        depends_on:
+          - vm_name: "{{ range_id }}-konoha-dc1"
+            role: badsectorlabs.ludus_windows_utils.ludus_child_domain
+      - name: get_sybers.range_password_policy
+      - name: get_sybers.range_ad_mgmt
+      - name: get_sybers.sysmon
+      - name: get_sybers.acsc_event_logging
+  - vm_name: "{{ range_id }}-oto-ws1"
+    target_node: pi-01
+    hostname: "{{ range_id }}-oto-ws1"
+    template: win10-22h2-x64-enterprise-appxfix-template
+    vlan: 30
+    ip_last_octet: 11
+    force_ip: true
+    ram_gb: 8
+    cpus: 2
+    windows:
+      sysprep: true
+    domain:
+      fqdn: otogakure.ninja
+      role: member
+    testing:
+      snapshot: true
+      block_internet: true
+    roles:
+      - jasonmull.ludus_ghosts_client
+      - get_sybers.range_ghosts_browser
+      - name: get_sybers.sysmon
+      - name: get_sybers.acsc_event_logging
+  - vm_name: "{{ range_id }}-oto-mail"
+    force_ip: true
+    target_node: pi-02
+    hostname: "{{ range_id }}-oto-mail"
+    template: win2022-exchange2019-x64-template
+    vlan: 30
+    ip_last_octet: 20
+    ram_gb: 8
+    cpus: 4
+    windows:
+      sysprep: true
+    domain:
+      fqdn: otogakure.ninja
+      role: member
+    testing:
+      snapshot: true
+      block_internet: true
+    roles:
+      - name: get_sybers.sysmon
+      - name: get_sybers.acsc_event_logging
+      - name: get_sybers.range_exchange
+        depends_on:
+          - vm_name: "{{ range_id }}-oto-dc1"
+            role: get_sybers.range_ad_mgmt
+      - name: get_sybers.range_exchange_seed
+  - vm_name: "{{ range_id }}-akatsuki-dc1"
+    force_ip: true
+    target_node: pi-01
+    hostname: "{{ range_id }}-akatsuki-dc1"
+    template: win2022-server-x64-appxfix-template
+    vlan: 87
+    ip_last_octet: 10
+    ram_gb: 8
+    cpus: 4
+    windows:
+      sysprep: true
+      gpos: [disable_defender]
+    domain:
+      fqdn: akatsuki.dark
+      role: primary-dc
+    testing:
+      snapshot: true
+      block_internet: true
+    roles:
+      - name: get_sybers.range_password_policy
+      - name: get_sybers.range_ad_mgmt
+      - name: get_sybers.sysmon
+      - name: get_sybers.acsc_event_logging
+    role_vars:
+      domain: akatsuki.dark
+  - vm_name: "{{ range_id }}-akatsuki-ws1"
+    target_node: pi-01
+    hostname: "{{ range_id }}-akatsuki-ws1"
+    template: win10-22h2-x64-enterprise-appxfix-template
+    vlan: 87
+    ip_last_octet: 11
+    ram_gb: 6
+    cpus: 2
+    windows:
+      sysprep: true
+    domain:
+      fqdn: akatsuki.dark
+      role: member
+    testing:
+      snapshot: true
+      block_internet: true
+    roles:
+      - jasonmull.ludus_ghosts_client
+      - get_sybers.range_ghosts_browser
+      - name: get_sybers.sysmon
+      - name: get_sybers.acsc_event_logging
+  - vm_name: "{{ range_id }}-akatsuki-ws2"
+    target_node: pi-01
+    hostname: "{{ range_id }}-akatsuki-ws2"
+    template: win10-22h2-x64-enterprise-appxfix-template
+    vlan: 87
+    ip_last_octet: 12
+    ram_gb: 6
+    cpus: 2
+    windows:
+      sysprep: true
+    domain:
+      fqdn: akatsuki.dark
+      role: member
+    testing:
+      snapshot: true
+      block_internet: true
+    roles:
+      - jasonmull.ludus_ghosts_client
+      - get_sybers.range_ghosts_browser
+      - name: get_sybers.sysmon
+      - name: get_sybers.acsc_event_logging
+  - vm_name: "{{ range_id }}-dark-mail"
+    force_ip: true
+    target_node: pi-02
+    hostname: "{{ range_id }}-dark-mail"
+    template: win2022-exchange2019-x64-template
+    vlan: 87
+    ip_last_octet: 20
+    ram_gb: 8
+    cpus: 4
+    windows:
+      sysprep: true
+    domain:
+      fqdn: akatsuki.dark
+      role: member
+    testing:
+      snapshot: true
+      block_internet: true
+    roles:
+      - name: get_sybers.sysmon
+      - name: get_sybers.acsc_event_logging
+      - name: get_sybers.range_exchange
+        depends_on:
+          - vm_name: "{{ range_id }}-akatsuki-dc1"
+            role: get_sybers.range_ad_mgmt
+      - name: get_sybers.range_exchange_seed
+  - vm_name: "{{ range_id }}-ninjasploitable"
+    force_ip: true
+    target_node: pi-03
+    hostname: "{{ range_id }}-ninjasploitable"
+    template: ninjasploitable-x64-server-template
+    vlan: 90
+    ip_last_octet: 10
+    ram_gb: 4
+    cpus: 4
+    linux: true
+    testing:
+      snapshot: true
+      block_internet: true
+    roles:
+      - name: get_sybers.range_nexus_apt
+      - get_sybers.range_ninjasploitable_server
+  - vm_name: "{{ range_id }}-attacker"
+    force_ip: true
+    target_node: pi-02
+    hostname: "{{ range_id }}-attacker"
+    template: debian-12-x64-server-template
+    vlan: 99
+    ip_last_octet: 50
+    ram_gb: 6
+    cpus: 2
+    linux:
+      packages:
+        - ca-certificates
+    testing:
+      snapshot: true
+      block_internet: true
+    dns_rewrites:
+      - www.akatsuki-intranet.dark
+      - www.akatsuki-manifesto.dark
+      - www.akatsuki-ring-shop.com
+      - www.alliedshinnobiforces.org
+      - www.ame-portal.rain
+      - www.ame-weather-report.rain
+      - www.anbu-black-ops.classified
+      - www.art-is-explosion.com
+      - www.bijuu-collection-tracker.akatsuki
+      - www.bingobookwanted.com
+      - www.bloodymistreform.org
+      - www.bodymodification-oto.sound
+      - www.bountyhunter-kakuzu.com
+      - www.bushido-code-online.com
+      - www.chakramedical-journal.com
+      - www.chakranature-quiz.com
+      - www.chomei-bijuu-research.taki
+      - www.chunin-exam-results.com
+      - www.closed-borders-ame.rain
+      - www.cloudkenjutsu.com
+      - www.crows-and-crows.dark
+      - www.cursemark-community.net
+      - www.deidara-art-appreciation.com
+      - www.desert-weather-watch.sand
+      - www.desertninja-survival.com
+      - www.dustrelease-research.com
+      - www.earth-country-mining.rock
+      - www.edo-tensei-ethics.com
+      - www.eight-tails-fansite.net
+      - www.explosion-corps.iwa
+      - www.five-kage-summit-security.iron
+      - www.fivekagehq.com
+      - www.flight-jutsu-onoki.com
+      - www.fuu-jinchuriki-watch.taki
+      - www.gaara-for-kazekage.com
+      - www.gedo-statue-maintenance.akatsuki
+      - www.genjutsu-breakers-forum.com
+      - www.graduation-duel-archive.mist
+      - www.grass-country-herbs.kusa
+      - www.grass-country-neutral.kusa
+      - www.greatninja-war-memorial.org
+      - www.headband-registry.gov
+      - www.hero-water-safety.taki
+      - www.hokage-office.gov.leaf
+      - www.hozuki-clan.mist
+      - www.hunternin-orders.mist
+      - www.hyuga-incident-archive.com
+      - www.hyuga-main-branch.leaf
+      - www.iaido-tutorials.com
+      - www.ichiraku-ramen.com
+      - www.ironsand-legacy.com
+      - www.iwa-border-patrol.rock
+      - www.iwa-konoha-war-archive.com
+      - www.iwa-portal.rock
+      - www.jinchuriki-extraction.akatsuki
+      - www.jinchuriki-program-kumo.cloud
+      - www.jutsuencyclopedia.net
+      - www.kabuto-medic.com
+      - www.kazekage-guard-scheduling.sand
+      - www.kazekage-office.gov.sand
+      - www.kekkei-genkai.org
+      - www.killerb-raps.com
+      - www.kiri-kekkei-genkai-registry.mist
+      - www.kiri-portal.mist
+      - www.konoha-academy.edu
+      - www.konoha-hospital.med
+      - www.konoha-intelligence.leaf
+      - www.konoha-portal.leaf
+      - www.konoha12-fanclub.net
+      - www.kumo-intel-division.cloud
+      - www.kumo-portal.cloud
+      - www.kusa-chunin-exam-team.grass
+      - www.kusa-portal.grass
+      - www.landofiron-portal.iron
+      - www.lava-release-forum.rock
+      - www.leafanbu.classified
+      - www.lightningarmour-training.com
+      - www.medic-nin-network.com
+      - www.medicalcorps-konoha.med
+      - www.mifune-command.iron
+      - www.mightyguy-youth.com
+      - www.missionboard.net
+      - www.mist-navigation-charts.mist
+      - www.mist-swordsmanship.com
+      - www.mizukage-office.gov.mist
+      - www.mountain-weather-kumo.cloud
+      - www.nagato-resurrection-theory.com
+      - www.nara-shadow-tactics.com
+      - www.FGNW-for-hokage.com
+      - www.ninja-tool-blackmarket.dark
+      - www.ninjarank-tracker.com
+      - www.no-ninja-jurisdiction.iron
+      - www.orochimaru-research.com
+      - www.oto-loyalty-tracker.sound
+      - www.oto-portal.sound
+      - www.otsutsuki-conspiracy.net
+      - www.pain-gospel.rain
+      - www.painispeace.rain
+      - www.paperangel.rain
+      - www.philosophyofpain.com
+      - www.puppet-technique-forum.com
+      - www.puppeteer-sasori.com
+      - www.raikage-fitness-regime.com
+      - www.raikage-office.gov.cloud
+      - www.rain-sensing-network.rain
+      - www.ramen-reviews.com
+      - www.rinnegan-studies.com
+      - www.rootoperative.dark
+      - www.sage-mode-tutorials.com
+      - www.samehada-fanclub.net
+      - www.samurai-blade-registry.iron
+      - www.sand-siblings-fanpage.net
+      - www.sealmaster.net
+      - www.sevenswordsmen-legacy.com
+      - www.sharingan-users.net
+      - www.shinobi-dating.com
+      - www.shinobi-equipment-mart.com
+      - www.shinobi-world-news.com
+      - www.silentkillingtechnique.com
+      - www.slug-shikkotsu-forest.com
+      - www.snake-summons-registry.com
+      - www.snakecave-ryuchi.com
+      - www.sound-four-fanpage.com
+      - www.sound-frequency-jutsu.com
+      - www.springtimeofyouth.net
+      - www.stormrelease-research.com
+      - www.summoning-contracts.com
+      - www.suna-medical-corps.sand
+      - www.suna-portal.sand
+      - www.suna-puppet-workshop.sand
+      - www.tailed-beast-watch.net
+      - www.taki-portal.waterfall
+      - www.team7updates.leaf
+      - www.theninjapath.com
+      - www.toad-mountain-tourism.com
+      - www.tobi-is-a-good-boy.com
+      - www.tsuchikage-office.gov.rock
+      - www.uchiha-clan-archive.leaf
+      - www.waterfall-country-tourism.com
+      - www.willoffire.com
+      - www.wind-release-training.com
+      - www.yahiko-memorial.org
+      - www.yellowflash-historical.com
+      - www.zerowaste-zetsu.com
+    roles:
+      - name: get_sybers.range_nexus_apt
+  - vm_name: "{{ range_id }}-kali"
+    target_node: pi-02
+    hostname: "{{ range_id }}-kali"
+    template: kali-x64-desktop-template
+    vlan: 99
+    ip_last_octet: 99
+    ram_gb: 8
+    cpus: 4
+    linux: true
+    testing:
+      snapshot: true
+      block_internet: true
+    roles:
+      - name: get_sybers.range_nexus_apt
+  - vm_name: "{{ range_id }}-modern-infra"
+    target_node: pi-01
+    hostname: "{{ range_id }}-modern-infra"
+    template: debian-12-x64-server-template
+    vlan: 99
+    ip_last_octet: 52
+    ram_gb: 8
+    cpus: 4
+    linux:
+      packages:
+        - ca-certificates
+    testing:
+      snapshot: true
+      block_internet: true
+    roles:
+      - name: get_sybers.range_nexus_apt
+ludus_extensions:
+  variants:
+    include:
+      small: [fire-dc1, konoha-dc1, konoha-mail, konoha-ws1, oto-dc1, oto-ws1, ninjasploitable, attacker, kali]
+      xl_extra: [modern-infra]
+    target_node:
+      small: { "*": !!null "" }
+      xl: {}
+    overrides:
+      small:
+        fire-dc1: { ram_gb: 8, cpus: 4 }
+        konoha-dc1: { ram_gb: 8, cpus: 4 }
+        oto-dc1: { ram_gb: 8, cpus: 4 }
+        kali: { ram_gb: 8 }
+        konoha-ws1: { ram_gb: 6 }
+        oto-ws1: { ram_gb: 6 }
+        ninjasploitable: { ram_gb: 4 }
+        attacker: { ram_gb: 4 }
+  ghost9:
+    vlan: 99
+    ip_last_octet: 51
+    hostname_suffix: ghost9
+    api_port: 5000
+    ui_port: 4200
+    cores: 4
+    memory_mb: 6144
+    rootfs_gb: 20
+    # The get_sybers.lxc ghost9 LXC template (Debian 13, GHOSTS 9.3.0 / API v9, with
+    # n8n and Grafana as native systemd services) as its GHCR OCI image, pinned by
+    # digest: this digest is the v0.1.1 tag of ghcr.io/get-sybers/lxc/ghost9.
+    # template_version is the template release the marker inside the guest
+    # (/etc/get-sybers-lxc-template) must carry; raise both together, and remove the
+    # node's cached local:vztmpl/ghost9.tar first (lxc_guest pulls only when it is absent).
+    template_image: "ghcr.io/get-sybers/lxc/ghost9@sha256:37ff20ad1b59e9b95ae83ee9d28f2e2079da16fbf0afbce4b4a9bd69e088044c"
+    template_version: "0.1.1"

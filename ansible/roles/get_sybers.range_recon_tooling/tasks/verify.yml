@@ -1,0 +1,13 @@
+---
+- name: "verify | Verify nmap runs (connect-scan capable; no Npcap needed)"
+  ansible.windows.win_command: nmap --version
+  register: __nmap_ver
+  changed_when: false
+  failed_when: false
+- name: "verify | Show nmap version (or warn if it cannot launch — missing runtime DLL)"
+  ansible.builtin.debug:
+    msg: >-
+      {{ ((__nmap_ver.rc | default(1)) == 0)
+         | ternary(__nmap_ver.stdout_lines[0] | default('nmap installed'),
+                   'WARNING: nmap installed but cannot launch (rc=' ~ (__nmap_ver.rc | default('?'))
+                   ~ '; 0xC0000135 DLL_NOT_FOUND — needs VC++ x86 runtime / Npcap wpcap.dll).') }}

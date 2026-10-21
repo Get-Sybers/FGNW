@@ -1,0 +1,13 @@
+---
+- name: "capture_gate | Turn off receive offloads"
+  ansible.builtin.include_tasks: capture-offloads.yml
+  when: zeek_sensor_disable_offloads | length > 0
+- name: "capture_gate | Assert GRO/LRO are actually off"
+  ansible.builtin.include_tasks: capture-offloads-assert.yml
+  when: zeek_sensor_require_offloads_off | bool
+- name: "capture_gate | Prove the vantage point delivers unicast"
+  ansible.builtin.include_tasks: capture-packets.yml
+  when: zeek_sensor_require_packets | bool
+- name: "capture_gate | WARN that the packet gate was disabled"
+  ansible.builtin.include_tasks: capture-packets-skipped.yml
+  when: not (zeek_sensor_require_packets | bool)

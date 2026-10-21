@@ -1,0 +1,79 @@
+---
+- name: "Derive this host's forest identity from its VM name"
+  ansible.builtin.set_fact:
+    __rxs_self: "{{ inventory_hostname | regex_search('(konoha|suna|oto|dark)-mail') }}"
+- name: "Resolve this forest's mail (recipient) + auth (forest-root) domains"
+  ansible.builtin.set_fact:
+    __rxs_domain: "{{ range_exchange_seed_org_map[__rxs_self].domain }}"
+    __rxs_admin_domain: "{{ range_exchange_seed_forest_root_map[__rxs_self] }}"
+- name: "Probe this forest's end-of-seed marker"
+  ansible.windows.win_stat:
+    path: "{{ range_exchange_seed_sentinel }}"
+  register: __rxs_marker
+- name: Announce the seed decision
+  ansible.builtin.debug:
+    msg: >-
+      {{ inventory_hostname }} ({{ __rxs_domain }}):
+      {{ 'SEEDING — force' if (range_exchange_seed_force | bool)
+         else ('SKIPPING — end-of-seed marker present' if __rxs_marker.stat.exists
+               else 'SEEDING — no marker') }}
+- name: Deliver the corpus (skipped when already seeded)
+  when: (range_exchange_seed_force | bool) or (not __rxs_marker.stat.exists)
+  block:
+    - name: Load the bundled inbox corpus
+      ansible.builtin.include_vars:
+        file: "{{ role_path }}/files/user-inboxes.yml"
+        name: __rxs_inbox_data
+    - name: Load the bundled AD population (domain-membership ground truth)
+      ansible.builtin.include_vars:
+        file: "{{ role_path }}/files/config.json"
+        name: __rxs_ad_config
+    - name: "Which sAMAccountNames are real AD users in this host's own domain"
+      ansible.builtin.set_fact:
+        __rxs_domain_users: "{{ (__rxs_ad_config.lab.domains[__rxs_domain].users | default({})).keys() | list }}"
+    - name: Filter the corpus to recipients that are real mailboxes in this domain
+      ansible.builtin.set_fact:
+        __rxs_recipients: "{{ __rxs_inbox_data.user_inboxes | dict2items | selectattr('key', 'in', __rxs_domain_users) | list }}"
+    - name: Assert this forest has at least one real mailbox to seed
+      ansible.builtin.assert:
+        that: __rxs_recipients | length > 0
+        fail_msg: >-
+          No seedable recipients for {{ inventory_hostname }}: no corpus key matches a user of
+          domain '{{ __rxs_domain }}' in the bundled config.json ({{ __rxs_domain_users | length }}
+          users found there). Refusing to mark a zero-message forest as seeded.
+        quiet: true
+    - name: "Send each message as real SMTP mail via this forest's Exchange"
+      ansible.windows.win_shell: >-
+        Send-MailMessage -SmtpServer localhost
+        -From '{{ __from }}'
+        -To '{{ __to }}'
+        -Subject '{{ __subject }}'
+        -Body '{{ __body }}'
+      loop: "{{ __rxs_recipients | subelements('value') }}"
+      loop_control:
+        label: "{{ item.0.key }} <- {{ item.1.subject[:40] }}"
+      no_log: true
+      vars:
+        __from: "{{ item.1.from_address | regex_replace('[‘’‛]', \"'\") | replace(\"'\", \"''\") }}"
+        __to: "{{ item.0.key }}@{{ __rxs_domain }}"
+        __subject: "{{ item.1.subject | replace('\n', ' ') | regex_replace('[‘’‛]', \"'\") | replace(\"'\", \"''\") }}"
+        __body: "{{ item.1.body | regex_replace('[‘’‛]', \"'\") | replace(\"'\", \"''\") }}"
+        ansible_become: true
+        ansible_become_method: runas
+        ansible_become_user: "{{ __rxs_admin_domain }}\\Administrator"
+        ansible_become_password: "{{ range_exchange_seed_admin_password }}"
+    - name: Ensure the FGNW state directory exists
+      ansible.windows.win_file:
+        path: "{{ range_exchange_seed_state_dir }}"
+        state: directory
+    - name: Write the end-of-seed marker for this forest
+      ansible.windows.win_copy:
+        dest: "{{ range_exchange_seed_sentinel }}"
+        content: |
+          FGNW mail-seed marker — written only after every message for this forest was delivered.
+          Delete this file (or set range_exchange_seed_force=true) to deliver the corpus again;
+          doing so DUPLICATES every message already in these mailboxes.
+          domain     : {{ __rxs_domain }}
+          host       : {{ inventory_hostname }}
+          recipients : {{ __rxs_recipients | length }}
+          messages   : {{ __rxs_recipients | subelements('value') | length }}

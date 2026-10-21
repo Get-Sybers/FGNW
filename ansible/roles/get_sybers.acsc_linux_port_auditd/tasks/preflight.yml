@@ -1,0 +1,71 @@
+---
+- name: "preflight | Profile is one we actually implement"
+  ansible.builtin.assert:
+    that: acsc_auditd_profile in ['hypervisor', 'guest']
+    fail_msg: >-
+      acsc_auditd_profile is '{{ acsc_auditd_profile }}'; expected 'hypervisor'
+      (PVE cluster nodes) or 'guest' (infra VM guests, range Linux VMs).
+    quiet: true
+- name: "preflight | Platform is one this ruleset was adapted for"
+  ansible.builtin.assert:
+    that: ansible_facts.os_family == 'Debian'
+    fail_msg: >-
+      os_family is '{{ ansible_facts.os_family | default("unknown") }}'. This
+      role renders a Debian/Ubuntu-adapted ruleset: the SELinux-only upstream
+      filters are dropped, /etc/audisp/ is replaced by /etc/audit/plugins.d/,
+      and the merged-/usr duplicate watches are pruned. On an EL host the
+      vendored upstream file at files/upstream/Neo23x0-audit.rules is the right
+      starting point instead. If ansible_facts is empty here, the calling play
+      set gather_facts: false — this role needs facts.
+    quiet: true
+- name: "preflight | Stale rule filenames are bare names"
+  ansible.builtin.assert:
+    that:
+      - acsc_auditd_stale_rule_files | select('search', '/') | list | length == 0
+      - acsc_auditd_stale_rule_files | select('equalto', '') | list | length == 0
+    fail_msg: >-
+      acsc_auditd_stale_rule_files must contain bare filenames relative to
+      /etc/audit/rules.d (e.g. "zz-get-sybers.rules"), not paths. Got:
+      {{ acsc_auditd_stale_rule_files }}
+    quiet: true
+- name: "preflight | Gather virtualisation facts"
+  ansible.builtin.setup:
+    gather_subset:
+      - "!all"
+      - "virtual"
+- name: "preflight | Ask systemd whether this is a container"
+  ansible.builtin.command: systemd-detect-virt --container
+  register: __acsc_auditd_container
+  changed_when: false
+  failed_when: false
+  check_mode: false
+- name: "preflight | Read /proc/self/uid_map"
+  ansible.builtin.slurp:
+    src: /proc/self/uid_map
+  register: __acsc_auditd_uid_map
+  failed_when: false
+- name: "preflight | Refuse LXC/containers (kernel audit is not namespaced)"
+  vars:
+    __virt: "{{ __acsc_auditd_container.stdout | default('') | trim }}"
+    __map: "{{ (__acsc_auditd_uid_map.content | default('') | b64decode).split() }}"
+    __init_userns: "{{ __map | length >= 3 and __map[0:3] == ['0', '0', '4294967295'] }}"
+  ansible.builtin.assert:
+    that:
+      - acsc_auditd_allow_container | bool or __virt in ['', 'none']
+      - acsc_auditd_allow_container | bool or __init_userns | bool
+    fail_msg: >-
+      Refusing to configure auditd here.
+      systemd-detect-virt --container says '{{ __virt | default("?") }}';
+      /proc/self/uid_map says
+      {{ 'initial user namespace' if __init_userns | bool else 'a CHILD user namespace (' ~ __map[0:3] | join(" ") ~ ')' }}.
+      The kernel audit subsystem is not namespaced: audit_netlink_ok() returns
+      -ECONNREFUSED to anything outside the initial user namespace and -EPERM to
+      anything outside the initial PID namespace, so neither auditd nor auditctl
+      can work in ANY LXC container, privileged or not. auditd would start and
+      then exit with "Unable to set initial audit startup state to 'enable'".
+      This container's syscalls are already visible to the PVE node's auditd —
+      run this role on the node with acsc_auditd_profile=hypervisor instead,
+      accepting that records carry the host-side mapped uid and no container id.
+      acsc_auditd_allow_container=true overrides this, but only do that on a
+      target where you have run `auditctl -s` by hand and seen it succeed.
+    quiet: true

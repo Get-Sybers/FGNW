@@ -1,0 +1,64 @@
+---
+schema_version: 1
+role: get_sybers.acsc_event_forwarding
+baseline: ACSC Windows Event Forwarding
+status: promoted
+variable_prefix: acsc_wef_
+derived_from:
+  - name: AustralianCyberSecurityCentre/windows_event_logging
+    url: https://github.com/AustralianCyberSecurityCentre/windows_event_logging
+    commit: 59041b5d4586789a751171fb752be1624ad5e3b4
+    commit_is: sole-branch-head
+    branch: master
+    licence: BSD-3-Clause
+    licence_holder: Copyright 2017 Commonwealth of Australia
+    licence_file: files/subscriptions/LICENSE.ACSC
+    relationship: vendored-verbatim
+    vendored_set:
+      - local_glob: files/subscriptions/*_sub.xml
+        upstream_glob: events/*/*_sub.xml
+        count: 28
+        manifest_sha256: 970fe608e8c7545a1f58116338ebbdfd2f9077d1995385dd40fb13750d831d35
+        note: >-
+          Byte-identical to upstream (UTF-8 BOM and all): files/subscriptions/ is
+          excluded from the repository's formatting hooks so the payload stays
+          verbatim. Flattened on vendoring — upstream nests them one directory per event
+          category (16 categories). Basenames are unique, so the flattening is
+          lossless. Selection is by SubscriptionId read from the XML, not by
+          filename.
+    vendored:
+      - local: files/wmi_auditing.ps1
+        upstream: events/wmi_auditing/wmi_auditing.ps1
+        sha256: ab94e04306025a34f90d71fbbe2f43628ed860dcb2a112541b4955764a9f5193
+        note: >-
+          Upstream ships CRLF line endings; the repository's line-ending policy
+          (.gitattributes text=auto, the mixed-line-ending hook) stores it with LF,
+          and the hash above is of the LF form. Every byte other than the line
+          terminators is upstream's (cmp with --strip-trailing-cr in `verify`).
+          Carried UNMODIFIED despite a known defect: it appends eight SACL ACEs
+          on every run (`$Descriptor.SACL += $ACE`, unguarded) and returns 1 for
+          "complete with errors" while suppressing the errors themselves. The
+          guard lives in tasks/wmi-auditing.yml, deliberately outside the
+          vendored artefact, so this file stays byte-comparable to upstream.
+    derived:
+      - local: tasks/main.yml
+        from: events/add_subscriptions.ps1, events/set_subscriptions_sources.ps1
+        note: >-
+          Upstream re-creates every subscription unconditionally on each run.
+          The port queries `wecutil es` first and only creates what is missing,
+          updates what changed, and asserts against `wecutil gs` afterwards.
+      - local: tasks/wmi-auditing.yml
+        from: events/wmi_auditing/wmi_auditing.ps1
+        note: idempotency guard + SACL readback assert around the vendored script.
+verify: |
+  git clone --depth 1 https://github.com/AustralianCyberSecurityCentre/windows_event_logging /tmp/acsc-wel
+  for f in files/subscriptions/*_sub.xml; do
+    u=$(find /tmp/acsc-wel/events -name "$(basename "$f")")
+    cmp -s "$f" "$u" || echo "DIFFERS: $(basename "$f")"
+  done
+  diff --strip-trailing-cr files/wmi_auditing.ps1 /tmp/acsc-wel/events/wmi_auditing/wmi_auditing.ps1
+update: |
+  git clone https://github.com/AustralianCyberSecurityCentre/windows_event_logging /tmp/acsc-wel
+  find /tmp/acsc-wel/events -name '*_sub.xml' -exec cp {} files/subscriptions/ \;
+  cp /tmp/acsc-wel/events/wmi_auditing/wmi_auditing.ps1 files/
+  cp /tmp/acsc-wel/LICENSE files/subscriptions/LICENSE.ACSC

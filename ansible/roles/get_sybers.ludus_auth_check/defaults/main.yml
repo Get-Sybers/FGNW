@@ -1,0 +1,6 @@
+---
+ludus_api_url: "https://127.0.0.1:8080/api/v2"
+ludus_auth_validate_certs: false
+ludus_expected_user: RA
+ludus_auth_require_admin: false
+ludus_auth_skip_liveness: false

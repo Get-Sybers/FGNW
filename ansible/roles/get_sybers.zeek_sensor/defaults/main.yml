@@ -1,0 +1,56 @@
+---
+zeek_sensor_profile: hypervisor
+zeek_sensor_capture_interfaces: []
+zeek_sensor_hypervisor_iface_pattern: '^(r[0-9]+|ludusnat)$'
+zeek_sensor_allow_lxc: false
+zeek_sensor_install_source: nexus_apt
+zeek_sensor_nexus_host: 192.0.2.2
+zeek_sensor_nexus_port: 8081
+zeek_sensor_nexus_repo: ""
+zeek_sensor_nexus_repo_codename: ""
+zeek_sensor_nexus_repo_components: "main"
+zeek_sensor_nexus_keyring: /usr/share/keyrings/debian-archive-keyring.gpg
+zeek_sensor_nexus_keyring_src: ""
+zeek_sensor_apt_list: /etc/apt/sources.list.d/zeek-sensor-nexus.list
+zeek_sensor_artefacts: []
+zeek_sensor_stage_dir: /var/cache/get-sybers/zeek-sensor
+zeek_sensor_node_stage_dir: /var/cache/get-sybers/zeek-sensor
+zeek_sensor_packages:
+  - zeek
+zeek_sensor_support_packages:
+  - tcpdump
+  - ethtool
+zeek_sensor_user: zeek
+zeek_sensor_group: zeek
+zeek_sensor_require_packets: true
+zeek_sensor_capture_probe_seconds: 20
+zeek_sensor_capture_probe_min_packets: 1
+zeek_sensor_capture_probe_filter: "not broadcast and not multicast"
+zeek_sensor_capture_filter: ""
+zeek_sensor_disable_offloads:
+  - gro
+  - lro
+  - tso
+  - gso
+  - rx-checksumming
+zeek_sensor_require_offloads_off: true
+zeek_sensor_local_nets:
+  - 10.0.0.0/8
+  - 192.0.2.0/24
+  - 203.0.113.0/24
+  - 198.51.100.0/24
+zeek_sensor_digest_salt: "get-sybers-change-me"
+zeek_sensor_json_logs: true
+zeek_sensor_community_id: true
+zeek_sensor_vlan_logging: true
+zeek_sensor_mac_logging: true
+zeek_sensor_capture_passwords: true
+zeek_sensor_intel_files: []
+zeek_sensor_manage_retention: true
+zeek_sensor_log_expire_days: 548
+zeek_sensor_stats_log_expire_days: 30
+zeek_sensor_log_rotation_seconds: 3600
+zeek_sensor_log_max_use_mb: 20480
+zeek_sensor_log_prune_floor_days: 7
+zeek_sensor_cron_interval: "*:0/5"
+zeek_sensor_verify_settle_seconds: 25

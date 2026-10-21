@@ -1,0 +1,36 @@
+---
+argument_specs:
+  main:
+    short_description: Destroy a range's VMs and confirm they are actually gone
+    description:
+      - Reads state + VM count + testing, skips when the range is already empty, otherwise stops testing if enabled (reverting to snapshot is harmless here),
+        runs `range rm --no-prompt`, and polls until rangeState is DESTROYED AND 0 VMs remain (ERR-14 — state alone is not proof). Fails loudly rather than
+        deleting the range object or silently leaving VMs behind.
+    options:
+      ludus_range_teardown_poll_retries:
+        type: int
+        default: 90
+        description:
+          - Poll iterations waiting for DESTROYED + 0 VMs after `range rm` (with ludus_range_teardown_poll_delay = the budget). Default 90 x 10s = 15 min.
+      ludus_range_teardown_poll_delay:
+        type: int
+        default: 10
+        description:
+          - Seconds between the post-destroy state polls.
+      ludus_range_teardown_testing_poll_retries:
+        type: int
+        default: 30
+        description:
+          - Poll iterations waiting for testingEnabled=false after `testing stop` (with
+              ludus_range_teardown_testing_poll_delay = the budget). Default 30 x 10s = 5 min for the snapshot
+              revert.
+      ludus_range_teardown_testing_poll_delay:
+        type: int
+        default: 10
+        description:
+          - Seconds between the testing-stop state polls.
+      ludus_range_teardown_bin:
+        type: str
+        default: /usr/local/bin/ludus
+        description:
+          - Path to the ludus CLI binary invoked for range list, testing stop and range rm.

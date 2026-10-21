@@ -1,0 +1,253 @@
+---
+character_profiles:
+  Naruto Uzumaki:
+    jutsu:
+      - Rasengan
+      - Rasenshuriken
+      - Shadow Clone Jutsu (Kage Bunshin no Jutsu)
+      - Sage Mode
+      - Nine-Tails Chakra Mode
+      - Tailed Beast Bomb
+      - Sexy Jutsu
+      - Big Ball Rasengan
+    quotes:
+      - A true hero always arrives late.
+      - And my dream is to be the greatest Hokage! That way, people will stop disrespecting me and start treating me like I'm somebody. Someone important!
+      - Because they saved me from myself, they rescued me from my loneliness. They were the first to accept me for who I am. They're my friends.
+  Sasuke Uchiha:
+    jutsu:
+      - Chidori (Lightning Blade)
+      - Fireball Jutsu (Goukakyuu no Jutsu)
+      - Amaterasu
+      - Susanoo
+      - Izanagi
+      - Izanami
+      - Kirin
+      - "Blaze Release: Kagutsuchi"
+    quotes:
+      - (About Sakura) Was she having fun in her little make-believe fantasy of true love? As for me, I have absolutely no reason to love her and likewise, I
+        can see no reason why she would love me.
+      - Are you alright, crybaby?
+      - Don't worry, this will be over in five seconds.
+  Kakashi Hatake:
+    jutsu:
+      - Chidori
+      - Kamui
+      - Lightning Cutter
+      - Purple Lightning
+      - One Thousand Birds
+    quotes:
+      - "*making excuses for being late, as usual* A cute girl stopped me on the way, so I danced."
+      - "*making excuses for being late, as usual* Hello students, today I got lost on the road of life."
+      - "*to Naruto* You've become as strong...if not stronger than me."
+  Itachi Uchiha:
+    jutsu:
+      - Tsukuyomi
+      - Amaterasu
+      - Susanoo
+      - Crow Clone Jutsu
+    quotes:
+      - "*last words* Forgive me Sasuke... It ends with this."
+      - "*to Kisame* Those who turn their hands against their comrades are sure to die a terrible death. Be prepared."
+      - Any technique is worthless before my eyes.
+  Gaara:
+    jutsu:
+      - Sand Coffin (Sabaku Kyuu)
+      - Sand Waterfall Funeral (Sabaku Taisou)
+      - Sand Shield
+      - Desert Imperial Funeral
+      - "Ultimately Hard Absolute Defence: Shield of Shukaku"
+    quotes:
+      - "*to Naruto* I think of you as a friend. I used to think \"friend\" was just another word... Nothing
+          more, nothing less. But when I met you, I realized what was important was the word's meaning."
+      - "*to Naruto* If you're truly prepared to take up the mantle of a Kage, then as Sasuke's friend, you know what you have to do."
+      - "*young Gaara attempts to slash his wrist* It's no use, the sand gets in the way."
+  Minato Namikaze:
+    jutsu:
+      - Flying Thunder God (Hiraishin no Jutsu)
+      - Rasengan
+      - Teleportation Jutsu
+    quotes: []
+  Pain / Nagato:
+    jutsu:
+      - Almighty Push (Shinra Tensei)
+      - Planetary Devastation (Chibaku Tensei)
+      - Banshō Ten'in (Universal Pull)
+      - Animal Path Summons
+      - Human Path Soul Removal
+    quotes:
+      - If you don't share someone's pain. You can never understand them.
+      - War brings death. And wounds and pain to both sides. There's nothing harder to accept, than the deaths of those you love. So you believe they could
+        never die. Especially those who haven't known war.
+      - Do you understand pain a little now? If you don't share someone's pain, you can never understand them. But just because you understand them doesn't mean
+        you can come to an agreement. That's the truth
+  Tobirama Senju:
+    jutsu:
+      - Shadow Clone Jutsu (original inventor)
+      - Flying Thunder God
+      - Edo Tensei (Reanimation Jutsu)
+      - "Water Style: Water Dragon Jutsu"
+    quotes:
+      - Grown-ups are idiots. If they really want to bring an end to this endless fighting, they need to sit down with one another and reach a truce.
+  Hashirama Senju:
+    jutsu:
+      - "Wood Release: Wood Dragon"
+      - "Sage Art: Wood Release: True Several Thousand Hands"
+      - "Wood Style: Deep Forest Bloom"
+    quotes: []
+  Madara Uchiha:
+    jutsu:
+      - Infinite Tsukuyomi
+      - Perfect Susanoo
+      - Tengai Shinsei (Meteorite)
+      - Wood Release (via Hashirama cells)
+      - Six Paths Techniques
+    quotes:
+      - "*to Minato, about his reason for attacking Konoha* Oh, you know...it's fun, it's part of my plan...to start a war...to bring peace..."
+      - '....Would you consider dying together "Teamwork" as well?'
+      - "[Last words to Hashirama] As comrades, huh... well... if that's how... we... will.... *smiles*"
+  Rock Lee / Might Guy:
+    jutsu:
+      - Primary Lotus
+      - Hidden Lotus
+      - Eight Inner Gates
+      - Evening Elephant
+      - Night Guy
+    quotes:
+      - "*to Kakashi* What is with your attitude?! We'll never be young like this again!"
+      - "*to Kisame* A failure will win even at the cost of their own life!"
+      - "*to Neji* I was a failure when I was your age, but now I can even beat Kakashi, the elite genius.
+          It's only a matter of time until Lee finally surpasses you!"
+  Orochimaru:
+    jutsu:
+      - Eight Branches Technique
+      - Living Corpse Reincarnation
+      - "Summoning: Reanimation (Edo Tensei)"
+      - Snake Sage Mode
+    quotes:
+      - "*about Sasuke* When I watch this boy, I look back to the time I was called a genius, and think how ridiculous it was."
+      - "*talking about Naruto* This child... intrigues me to no end!"
+      - "*to Kabuto, talking about Tsunade) The best medicines always taste bitter."
+  Kabuto:
+    jutsu:
+      - "Summoning: Reanimation"
+      - Yin Healing Wound Destruction
+      - Snake Sage Mode
+    quotes:
+      - "*to Naruto* Finding a new me, that is the lesson you taught me."
+      - "*to Naruto* You've just thrown it all away! Dreams don't come true when you're dead!"
+      - "[about the inefficacy of his attack against Tsunade] Did it not penetrate deep enough because of her fat breasts?"
+  Deidara:
+    jutsu:
+      - C1 / C2 / C3 / C4 Explosive Clay
+      - C0 Ultimate Art
+    quotes:
+      - "*Before killing the Suna guards* Look at those fools. They have no appreciation for art. You have to feel art. And true art... is an EXPLOSION!"
+      - Art is a BANG!
+      - Shut up! I killed Sasuke Uchiha! And you're next, you art-hating sack of wrinkles!
+  Sasori:
+    jutsu:
+      - "Red Secret Technique: Performance of a Hundred Puppets"
+      - Iron Sand World Order
+    quotes:
+      - True beauty lies in things that last forever, never rotting or fading.
+      - What's the point of something that disappears as soon as it's born?
+  Hidan:
+    jutsu:
+      - Jashin Ritual Curse Technique
+    quotes:
+      - Kakuzu... Could you get me my body, pleeease?
+  Kakuzu:
+    jutsu:
+      - Earth Spear
+      - "Wind Mask: Pressure Damage"
+      - "Fire Mask: Intelligent Hard Work (Flames of Hell)"
+    quotes: []
+  Anko Mitarashi:
+    jutsu: []
+    quotes:
+      - "*to Naruto* Tough guys like you usually leave their blood all over this forest."
+      - "*to Orochimaru* But why? How could you do this!? I don't get it, I've looked up to you more than anyone in the world!"
+      - I wasn't cast aside. It was my choice, and mine alone.
+  Hinata Hyuuga:
+    jutsu: []
+    quotes:
+      - "*to Naruto* When I watch you, I feel strong, like I can do anything - that even I am worth something."
+      - "*to Naruto* You make mistakes... but... because of those mistakes... you get the strength to stand up
+          to them. That's why I think you are truly strong."
+      - I will never go back on my word, because that too is my ninja way!
+  Iruka Umino:
+    jutsu: []
+    quotes:
+      - "[About Naruto] Well that's typical. Not happy unless he's giving people a heart attack."
+      - "[when Naruto transforms into a woman in front of the whole class] CUT THE STUPID TRICKS! THIS IS YOUR LAST WARNING!!"
+      - I hate the fox, but the boy - I don't hate the boy.
+  Jiraiya:
+    jutsu: []
+    quotes:
+      - "*last words* The Tale of Naruto Uzumaki... yes... that has a nice ring to it."
+      - "*to Naruto* I think we all have to acknowledge you. Gamatatsu, Gamakichi, Sakura, Tsunade...and I...
+          We all admit you've worked really hard. But I wonder what's pushing you forward."
+      - "*to Orochimaru about Sasuke* Because it's no fun to train a genius!"
+  Kisame Hoshigaki:
+    jutsu: []
+    quotes:
+      - "*last words* Itachi-san... It seems that in the end... I'm not so terrible after all."
+      - "*to Asuma* My massive blade, Samehada, doesn't slice... It shreds to ribbons!"
+      - "[after learning Guy Sensei's name. Might Guy] Yeah, mighty stupid looking guy!"
+  Nara Shikamaru:
+    jutsu: []
+    quotes:
+      - "*about Ino* What a drag... I say a single thing against Sasuke, and I have to get that evil look from her eyes."
+      - "*about Temari* Subtle as a rhino... she might even be scarier than my mom."
+      - "*about women, to his father* If women made you a better person, I wouldn't want to know what you were like before."
+  Neji Hyuuga:
+    jutsu: []
+    quotes:
+      - "*about Gai* He's so childish. He acts like a seven-year-old!"
+      - "*about Lee and Gai* As usual, I can't keep up with their craziness."
+      - "[To Hinata At Chuunin Exams] So you're not going to withdraw? Then don't blame me for what happens to you."
+  Obito Uchiha:
+    jutsu: []
+    quotes:
+      - "*last words* Just when me and Kakashi were becoming friends... I couldn't bring myself to confess to Rin... I wish I had more time with everyone..."
+      - "*to Kakashi* I am Uchiha Obito and I will surpass you once I awaken my Sharingan!"
+      - "*to Kakashi* I'm about to... die... but I'll become your eye."
+  Shikaku Nara:
+    jutsu: []
+    quotes:
+      - Legends from the distant past are always exaggerated, but eventually, someone outdoes them... that's when new legends are born!
+  Tobi:
+    jutsu: []
+    quotes:
+      - It's too late to regret. Reality is just cruelly moving forward.
+      - Not one wish ever gets granted in this world.
+  Tsunade:
+    jutsu: []
+    quotes:
+      - "*about to fight Naruto* One of the Legendary Sannin taking on a snot-nosed Genin... I oughta be ashamed of myself."
+      - '*to Orochimaru about Naruto* "I will die before I let you touch him!'
+      - Grow up... Death comes with being a shinobi. There are times when death is hard to accept, but if you don't get over it, there's no future...
+  Zabuza Momochi:
+    jutsu: []
+    quotes:
+      - "*last words* You were always at my side, the least I can do is to be beside you at the end. I know it
+          cannot be, but I wish I could go to where you have gone. How I wish I could join you there, Haku."
+      - "*to Kakashi* I died as a human!"
+      - "*to Naruto* Your words cut deep, deeper than any blade."
+  Ōnoki:
+    jutsu: []
+    quotes:
+      - It's because I've experienced pain in the past, that I can even consider what would be best for the future!
+      - Never give up without even trying. Do what you can, no matter how small the effect it may have!
+general_techniques:
+  - Substitution Jutsu (Kawarimi)
+  - Transformation Jutsu (Henge)
+  - Body Flicker Technique (Shunshin)
+  - Summoning Jutsu (Kuchiyose)
+  - Sealing Jutsu
+  - "Genjutsu: Sharingan"
+  - "Dust Release: Detachment of the Primitive World"
+  - "Lava Release: Rubber Ball"
+  - "Boil Release: Skilled Mist"
+  - "Storm Release: Laser Circus"

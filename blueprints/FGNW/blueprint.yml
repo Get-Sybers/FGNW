@@ -1,0 +1,11 @@
+---
+manifest_version: 1
+id: FGNW
+name: Fourth Great Ninja War
+description: >-
+  FGNW-themed multi-domain Active Directory lateral-movement lab: Hidden Leaf/Hidden
+  Sand/Sound-village domains plus the Akatsuki forest, decoy village content, and
+  GHOSTS user emulation.
+version: 0.5.0
+config: range-config.yml
+tags: [active-directory, lateral-movement, naruto, user-emulation, macos]

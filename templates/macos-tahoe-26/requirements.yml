@@ -1,0 +1,12 @@
+---
+# The shared macOS template-baking content lives once in the get_sybers.templates
+# collection in this source (ansible-standards §2: don't repeat roles). The build
+# installs it (see the .pkr.hcl shell-local) and runs it by FQCN
+# (get_sybers.templates.build). Relative to this template directory the collection
+# is two levels up under ansible/collections/; the whole source is present at
+# build time (`ludus source add`). If a template is ever built in isolation,
+# replace the dir source below with the published git/Galaxy pin for the
+# collection (an exact version, per §9a).
+collections:
+  - name: ../../ansible/collections/get_sybers.templates
+    type: dir

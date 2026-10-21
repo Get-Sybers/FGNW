@@ -1,0 +1,13 @@
+---
+- name: "deploy-tasks | phase1-vms | Set the range config (idempotent, drift-guarded)"
+  ansible.builtin.include_role:
+    name: get_sybers.range.ludus_range_config
+  vars:
+    ludus_range_config_src: "{{ __cfg_users }}"
+    ludus_range_config_blueprint_src: "{{ __cfg_blueprint }}"
+- name: "deploy-tasks | phase1-vms | Deploy the range VMs + roles (ERR-13-guarded poll, ERROR-retry)"
+  ansible.builtin.include_role:
+    name: get_sybers.range.ludus_range_deploy
+  vars:
+    ludus_range_deploy_force: true
+    ludus_range_deploy_poll_retries: 360

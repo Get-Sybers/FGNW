@@ -1,0 +1,183 @@
+---
+acsc_auditd_profile: guest
+acsc_auditd_allow_container: false
+acsc_auditd_package_version: ""
+acsc_auditd_install_plugins: true
+acsc_auditd_min_auditctl_version: "3.0"
+acsc_auditd_rules_path: /etc/audit/rules.d/zz-acsc-linux-port-auditd.rules
+acsc_auditd_stale_rule_files: []
+acsc_auditd_state_dir: /var/lib/acsc-linux-port-auditd
+acsc_auditd_backlog_limit: 8192
+acsc_auditd_backlog_wait_time: 0
+acsc_auditd_failure_mode: 1
+acsc_auditd_rate_limit: 0
+acsc_auditd_immutable: false
+acsc_auditd_ignore_errors: false
+acsc_auditd_uid_min: 1000
+acsc_auditd_sysmon_complement: true
+acsc_auditd_sysmon_covered:
+  - process_creation
+  - network_connect
+  - network_socket_created
+acsc_auditd_hypervisor_suppress:
+  - unauthedfileaccess_system
+  - ipc
+  - system_binary_writes
+acsc_auditd_exclusions:
+  - path: /dev/shm/
+    kind: dir
+    key: sharedmemaccess
+    why: "high-volume, low-value shared-memory access (upstream filter)"
+  - path: /var/lock/lvm/
+    kind: dir
+    key: locklvm
+    why: "LVM lock churn (upstream filter; absent on a ZFS-root node)"
+acsc_auditd_watch_candidates:
+  - { path: /var/log/audit/, kind: dir, perm: wra, key: auditlog, why: "reads and writes of the audit log itself" }
+  - { path: /var/audit/, kind: dir, perm: wra, key: auditlog, why: "BSD-style audit log path; absent on Debian, filtered out" }
+  - { path: /etc/audit/, kind: dir, perm: wa, key: auditconfig, why: "audit config tampering" }
+  - { path: /etc/libaudit.conf, kind: file, perm: wa, key: auditconfig, why: "libaudit config tampering" }
+  - { path: /etc/audisp/, kind: dir, perm: wa, key: audispconfig, why: "audispd config; auditd 2.x layout, absent on Debian 13" }
+  - { path: /etc/audit/plugins.d/, kind: dir, perm: wa, key: audispconfig, why: "[+] auditd 3.x/4.x dispatcher config (replaces /etc/audisp/)" }
+  - { path: /usr/sbin/auditctl, kind: file, perm: x, key: audit_tools, why: "[+] audit tooling execution — also the e2e verification probe" }
+  - { path: /usr/sbin/auditd, kind: file, perm: x, key: audit_tools, why: "[+] audit daemon execution" }
+  - { path: /usr/sbin/augenrules, kind: file, perm: x, key: audit_tools, why: "[+] audit rule loader execution" }
+  - { path: /etc/sysctl.conf, kind: file, perm: wa, key: sysctl, why: "kernel parameter changes" }
+  - { path: /etc/sysctl.d, kind: dir, perm: wa, key: sysctl, why: "kernel parameter drop-ins" }
+  - { path: /etc/modprobe.conf, kind: file, perm: wa, key: modprobe, why: "modprobe config; pre-modprobe.d layout, absent on Debian 13" }
+  - { path: /etc/modprobe.d, kind: dir, perm: wa, key: modprobe, why: "modprobe config drop-ins" }
+  - { path: /etc/modules-load.d/, kind: dir, perm: wa, key: modprobe, why: "boot-time module loading" }
+  - { path: /etc/localtime, kind: file, perm: wa, key: localtime, why: "local time zone changes" }
+  - { path: /etc/cron.allow, kind: file, perm: wa, key: cron, why: "cron access control" }
+  - { path: /etc/cron.deny, kind: file, perm: wa, key: cron, why: "cron access control" }
+  - { path: /etc/cron.d/, kind: dir, perm: wa, key: cron, why: "cron persistence" }
+  - { path: /etc/cron.daily/, kind: dir, perm: wa, key: cron, why: "cron persistence" }
+  - { path: /etc/cron.hourly/, kind: dir, perm: wa, key: cron, why: "cron persistence" }
+  - { path: /etc/cron.monthly/, kind: dir, perm: wa, key: cron, why: "cron persistence" }
+  - { path: /etc/cron.weekly/, kind: dir, perm: wa, key: cron, why: "cron persistence" }
+  - { path: /etc/crontab, kind: file, perm: wa, key: cron, why: "cron persistence" }
+  - { path: /etc/anacrontab, kind: file, perm: wa, key: cron, why: "anacron persistence" }
+  - { path: /etc/at.allow, kind: file, perm: wa, key: cron, why: "at access control" }
+  - { path: /etc/at.deny, kind: file, perm: wa, key: cron, why: "at access control" }
+  - { path: /var/spool/cron/, kind: dir, perm: wa, key: cron, why: "per-user cron persistence" }
+  - { path: /etc/group, kind: file, perm: wa, key: etcgroup, why: "group membership changes" }
+  - { path: /etc/gshadow, kind: file, perm: wa, key: etcgroup, why: "group credential changes" }
+  - { path: /etc/passwd, kind: file, perm: wa, key: etcpasswd, why: "local account changes" }
+  - { path: /etc/shadow, kind: file, perm: wa, key: etcpasswd, why: "credential changes" }
+  - { path: /etc/nsswitch.conf, kind: file, perm: wa, key: etcpasswd, why: "name-service resolution order" }
+  - { path: /etc/sssd/, kind: dir, perm: wa, key: etcpasswd, why: "SSSD identity provider config" }
+  - { path: /etc/openldap/, kind: dir, perm: wa, key: etcpasswd, why: "LDAP client config (RHEL path)" }
+  - { path: /etc/ldap/, kind: dir, perm: wa, key: etcpasswd, why: "[+] LDAP client config (Debian path for /etc/openldap)" }
+  - { path: /etc/krb5.conf, kind: file, perm: wa, key: etcpasswd, why: "Kerberos config" }
+  - { path: /etc/krb5.conf.d/, kind: dir, perm: wa, key: etcpasswd, why: "Kerberos config drop-ins" }
+  - { path: /etc/subuid, kind: file, perm: wa, key: etcpasswd, why: "subordinate uid ranges (user-namespace mappings)" }
+  - { path: /etc/subgid, kind: file, perm: wa, key: etcpasswd, why: "subordinate gid ranges (user-namespace mappings)" }
+  - { path: /etc/pam.d/, kind: dir, perm: wa, key: pam, why: "authentication stack changes" }
+  - { path: /etc/security/, kind: dir, perm: wa, key: pam, why: "PAM limits/access policy" }
+  - { path: /etc/polkit-1/, kind: dir, perm: wa, key: pam, why: "polkit authorisation rules" }
+  - { path: /etc/sudoers, kind: file, perm: wa, key: actions, why: "sudo policy changes" }
+  - { path: /etc/sudoers.d/, kind: dir, perm: wa, key: actions, why: "sudo policy drop-ins" }
+  - { path: /etc/login.defs, kind: file, perm: wa, key: login, why: "login policy (incl. UID_MIN this role asserts on)" }
+  - { path: /etc/securetty, kind: file, perm: wa, key: login, why: "root tty allowlist" }
+  - { path: /var/log/faillog, kind: file, perm: wa, key: login, why: "failed-login record tampering" }
+  - { path: /var/log/lastlog, kind: file, perm: wa, key: login, why: "last-login record tampering" }
+  - { path: /var/log/tallylog, kind: file, perm: wa, key: login, why: "login tally tampering" }
+  - { path: /etc/hosts, kind: file, perm: wa, key: network_modifications, why: "name resolution" }
+  - { path: /etc/resolv.conf, kind: file, perm: wa, key: network_modifications, why: "resolver configuration" }
+  - { path: /etc/hostname, kind: file, perm: wa, key: network_modifications, why: "host identity" }
+  - { path: /etc/NetworkManager/, kind: dir, perm: wa, key: network_modifications, why: "NetworkManager configuration" }
+  - { path: /etc/sysconfig/, kind: dir, perm: wa, key: sysconfig, why: "RHEL sysconfig; absent on Debian, filtered out" }
+  - { path: /etc/network/, kind: dir, perm: wa, key: network, why: "ifupdown configuration (Debian/PVE node networking)" }
+  - { path: /etc/netplan/, kind: dir, perm: wa, key: network, why: "[+] netplan configuration (Ubuntu range VMs)" }
+  - { path: /etc/systemd/network/, kind: dir, perm: wa, key: network, why: "[+] systemd-networkd configuration" }
+  - { path: /etc/nftables.conf, kind: file, perm: wa, key: firewall, why: "firewall policy" }
+  - { path: /etc/iptables/, kind: dir, perm: wa, key: firewall, why: "firewall policy" }
+  - { path: /etc/issue, kind: file, perm: wa, key: etcissue, why: "login banner" }
+  - { path: /etc/issue.net, kind: file, perm: wa, key: etcissue, why: "network login banner" }
+  - { path: /etc/default/, kind: dir, perm: wa, key: svc_defaults, why: "service default arguments" }
+  - { path: /etc/fstab, kind: file, perm: wa, key: fstab, why: "filesystem table" }
+  - { path: /etc/udev/rules.d/, kind: dir, perm: wa, key: udev, why: "device rules (a persistence surface)" }
+  - { path: /etc/inittab, kind: file, perm: wa, key: init, why: "sysv init config" }
+  - { path: /etc/init.d/, kind: dir, perm: wa, key: init, why: "sysv init scripts" }
+  - { path: /etc/init/, kind: dir, perm: wa, key: init, why: "upstart config" }
+  - { path: /etc/rc.local, kind: file, perm: wa, key: init, why: "boot-time persistence" }
+  - { path: /etc/ld.so.conf, kind: file, perm: wa, key: libpath, why: "library search path" }
+  - { path: /etc/ld.so.conf.d, kind: dir, perm: wa, key: libpath, why: "library search path drop-ins" }
+  - { path: /etc/ld.so.preload, kind: file, perm: wa, key: systemwide_preloads, why: "system-wide LD_PRELOAD — a classic rootkit hook" }
+  - { path: /etc/environment, kind: file, perm: wa, key: environment, why: "system-wide environment" }
+  - { path: /etc/aliases, kind: file, perm: wa, key: mail, why: "mail aliases (a persistence surface)" }
+  - { path: /etc/postfix/, kind: dir, perm: wa, key: mail, why: "MTA configuration" }
+  - { path: /etc/exim4/, kind: dir, perm: wa, key: mail, why: "MTA configuration" }
+  - { path: /bin, kind: dir, perm: wa, key: bin_writes, group: system_binary_writes, why: "system binary tampering" }
+  - { path: /usr, kind: dir, perm: wa, key: usr_writes, group: system_binary_writes, why: "system binary tampering" }
+  - { path: /boot, kind: dir, perm: wa, key: boot_writes,
+      why: "kernel/initramfs tampering — NOT suppressed on hypervisor, writes here are rare and always interesting" }
+  - { path: /etc/ssh/, kind: dir, perm: wa, key: sshd, why: "sshd policy and host keys" }
+  - { path: /etc/dropbear/, kind: dir, perm: wa, key: sshd, why: "dropbear config" }
+  - { path: /root/.ssh, kind: dir, perm: wa, key: rootkey, why: "root authorized_keys tampering" }
+  - { path: /etc/systemd/, kind: dir, perm: wa, key: systemd, why: "unit and systemd config persistence (covers /etc/systemd/system/)" }
+  - { path: /usr/lib/systemd, kind: dir, perm: wa, key: systemd, why: "vendor unit files" }
+  - { path: /usr/local/lib/systemd/, kind: dir, perm: wa, key: systemd, why: "local unit files" }
+  - { path: /etc/selinux/, kind: dir, perm: wa, key: mac_policy, why: "SELinux policy; absent on Debian/PVE, filtered out" }
+  - { path: /etc/apparmor/, kind: dir, perm: wa, key: mac_policy, why: "AppArmor configuration — the MAC actually in use here" }
+  - { path: /etc/apparmor.d/, kind: dir, perm: wa, key: mac_policy, why: "AppArmor profiles" }
+  - { path: /etc/profile.d/, kind: dir, perm: wa, key: shell_profiles, why: "login shell persistence" }
+  - { path: /etc/profile, kind: file, perm: wa, key: shell_profiles, why: "login shell persistence" }
+  - { path: /etc/shells, kind: file, perm: wa, key: shell_profiles, why: "valid login shells" }
+  - { path: /etc/bashrc, kind: file, perm: wa, key: shell_profiles, why: "RHEL bashrc; absent on Debian, filtered out" }
+  - { path: /etc/bash.bashrc, kind: file, perm: wa, key: shell_profiles, why: "[+] Debian/Ubuntu equivalent of /etc/bashrc" }
+  - { path: /etc/csh.cshrc, kind: file, perm: wa, key: shell_profiles, why: "csh persistence" }
+  - { path: /etc/csh.login, kind: file, perm: wa, key: shell_profiles, why: "csh persistence" }
+  - { path: /etc/fish/, kind: dir, perm: wa, key: shell_profiles, why: "fish persistence" }
+  - { path: /etc/zsh/, kind: dir, perm: wa, key: shell_profiles, why: "zsh persistence" }
+  - { path: /var/run/utmp, kind: file, perm: wa, key: session, why: "current-session record tampering" }
+  - { path: /var/log/btmp, kind: file, perm: wa, key: session, why: "failed-login record tampering" }
+  - { path: /var/log/wtmp, kind: file, perm: wa, key: session, why: "login-history record tampering" }
+  - { path: /etc/apt/, kind: dir, perm: wa, key: software_mgmt, why: "package source and pinning changes" }
+  - { path: /etc/dnf/, kind: dir, perm: wa, key: software_mgmt, why: "dnf config; absent on Debian, filtered out" }
+  - { path: /etc/yum.repos.d/, kind: dir, perm: wa, key: software_mgmt, why: "yum repos; absent on Debian, filtered out" }
+  - { path: /var/lib/docker, kind: dir, perm: wa, key: docker, why: "docker state" }
+  - { path: /etc/docker, kind: dir, perm: wa, key: docker, why: "docker daemon config" }
+  - { path: /etc/containers/, kind: dir, perm: wa, key: containers, why: "podman/CRI config" }
+  - { path: /usr/bin/sudo, kind: file, perm: x, key: sudo_exec, why: "[+] privilege escalation" }
+  - { path: /usr/bin/su, kind: file, perm: x, key: su_exec, why: "[+] privilege escalation" }
+  - { path: /usr/local/sbin/, kind: dir, perm: wa, key: persistence, why: "[+] local privileged binaries" }
+  - { path: /usr/local/bin/, kind: dir, perm: wa, key: persistence, why: "[+] local binaries" }
+acsc_auditd_hypervisor_watch_candidates:
+  - { path: /usr/sbin/pct, kind: file, perm: x, key: pve_guest_admin, why: "container lifecycle" }
+  - { path: /usr/sbin/qm, kind: file, perm: x, key: pve_guest_admin, why: "VM lifecycle" }
+  - { path: /usr/bin/pvesh, kind: file, perm: x, key: pve_api, why: "direct API calls" }
+  - { path: /usr/bin/pvecm, kind: file, perm: x, key: pve_cluster, why: "cluster membership changes" }
+  - { path: /usr/sbin/pveum, kind: file, perm: x, key: pve_authz, why: "users/tokens/ACLs — the real authz boundary" }
+  - { path: /usr/bin/pveceph, kind: file, perm: x, key: ceph_admin, why: "Ceph administration" }
+  - { path: /usr/bin/ceph, kind: file, perm: x, key: ceph_admin, why: "Ceph administration" }
+  - { path: /usr/sbin/zpool, kind: file, perm: x, key: zfs_admin, why: "pool-level ZFS changes" }
+  - { path: /usr/sbin/zfs, kind: file, perm: x, key: zfs_admin, why: "dataset-level ZFS changes" }
+  - { path: /etc/ceph/, kind: dir, perm: wa, key: ceph_config, why: "Ceph configuration" }
+  - { path: /etc/frr/, kind: dir, perm: wa, key: frr_config, why: "OpenFabric storage mesh routing" }
+acsc_auditd_extra_watch_candidates: []
+acsc_auditd_failed_access_dirs:
+  - /etc
+  - /bin
+  - /sbin
+  - /usr/bin
+  - /usr/sbin
+  - /var
+  - /home
+  - /srv
+acsc_auditd_manage_retention: true
+acsc_auditd_conf_path: /etc/audit/auditd.conf
+acsc_auditd_log_dir: /var/log/audit
+acsc_auditd_max_log_file_mb: 256
+acsc_auditd_num_logs: 16
+acsc_auditd_max_log_file_action: ROTATE
+acsc_auditd_space_left_mb: 2000
+acsc_auditd_space_left_action: SYSLOG
+acsc_auditd_admin_space_left_mb: 1000
+acsc_auditd_admin_space_left_action: SYSLOG
+acsc_auditd_disk_full_action: ROTATE
+acsc_auditd_disk_error_action: SYSLOG
+acsc_auditd_flush: INCREMENTAL_ASYNC
+acsc_auditd_freq: 50
+acsc_auditd_log_format: ""
+acsc_auditd_min_free_headroom_mb: 2048

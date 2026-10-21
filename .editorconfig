@@ -1,0 +1,27 @@
+# EditorConfig — get-sybers standard (docs/04). Also carries the shfmt flags for
+# shell scripts (mvdan/sh reads them from here).
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+[*.py]
+indent_size = 4
+
+[Makefile]
+indent_style = tab
+
+[*.sh]
+shell_variant = bash
+binary_next_line = true
+switch_case_indent = true
+simplify = true
+space_redirects = true
+
+[*.bats]
+shell_variant = bats

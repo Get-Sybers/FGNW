@@ -1,0 +1,62 @@
+---
+services:
+  registry:
+    image: registry:2
+    container_name: konoha-tools-registry
+    restart: unless-stopped
+    ports:
+      - 5000:5000
+    volumes:
+      - registry-data:/var/lib/registry
+  vulnerable-app:
+    image: vulnerables/web-dvwa
+    container_name: konoha-tools-portal
+    restart: unless-stopped
+    ports:
+      - 8081:80
+  localstack:
+    image: localstack/localstack
+    container_name: konoha-cloud-backup
+    restart: unless-stopped
+    ports:
+      - 4566:4566
+    environment:
+      - SERVICES=s3,iam,sts,cloudtrail
+      - DEBUG=0
+      - PERSISTENCE=1
+    volumes:
+      - localstack-data:/var/lib/localstack
+  openemr-mysql:
+    image: mariadb:10.11
+    container_name: konoha-medical-db
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=AnsibleAutomation123!
+      - MYSQL_DATABASE=openemr
+      - MYSQL_USER=openemr
+      - MYSQL_PASSWORD=AnsibleAutomation123!
+    volumes:
+      - openemr-db-data:/var/lib/mysql
+  openemr:
+    image: openemr/openemr:7.0.2
+    container_name: konoha-medical-center
+    restart: unless-stopped
+    depends_on:
+      - openemr-mysql
+    ports:
+      - 8443:443
+    environment:
+      - MYSQL_HOST=openemr-mysql
+      - MYSQL_ROOT_PASS=AnsibleAutomation123!
+      - MYSQL_USER=openemr
+      - MYSQL_PASS=AnsibleAutomation123!
+      - OE_USER=admin
+      - OE_PASS=AnsibleAutomation123!
+      - SWARM_MODE=no
+    volumes:
+      - openemr-sites-data:/var/www/localhost/htdocs/openemr/sites
+volumes:
+  registry-data:
+  localstack-data:
+  openemr-db-data:
+  openemr-sites-data:

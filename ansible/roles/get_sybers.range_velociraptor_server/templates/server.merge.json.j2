@@ -1,0 +1,32 @@
+{
+   Rendered to <velociraptor_install_path>/server.merge.json and fed to
+   `velociraptor config generate --merge` by tasks/main.yml (standards §1:
+   deployed files come from templates, never from JSON hand-built inside a
+   shell string). The banner lives in this Jinja comment because JSON has no
+   comment syntax -- the rendered file must stay pure JSON.
+   The whole document is a Jinja dict piped through to_nice_json, so every
+   value (notably velociraptor_host) is JSON-escaped by construction; a host
+   value containing a quote can no longer break the generated config.
+{{
+  {
+    "Client": {
+      "server_urls": [
+        "wss://" ~ velociraptor_host ~ ":" ~ velociraptor_frontend_port ~ "/",
+        "https://" ~ velociraptor_host ~ ":" ~ velociraptor_frontend_port ~ "/"
+      ],
+      "use_self_signed_ssl": true
+    },
+    "API": {
+      "hostname": velociraptor_host,
+      "bind_address": "0.0.0.0"
+    },
+    "GUI": {
+      "bind_address": "0.0.0.0",
+      "public_url": "https://" ~ velociraptor_host ~ ":" ~ velociraptor_gui_port ~ "/"
+    },
+    "Frontend": {
+      "hostname": velociraptor_host,
+      "bind_address": "0.0.0.0"
+    }
+  } | to_nice_json
+}}

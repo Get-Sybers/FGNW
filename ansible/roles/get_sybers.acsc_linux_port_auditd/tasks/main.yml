@@ -1,0 +1,34 @@
+---
+- name: "Preflight"
+  ansible.builtin.include_tasks: preflight.yml
+  tags: [always]
+- name: "Install auditd and start the daemon"
+  ansible.builtin.include_tasks: install.yml
+- name: "Install audispd-plugins"
+  ansible.builtin.include_tasks: install-plugins.yml
+  when: acsc_auditd_install_plugins | bool
+- name: "Preflight (post-install)"
+  ansible.builtin.include_tasks: preflight-postinstall.yml
+- name: "Preflight — the rotation ceiling fits the filesystem"
+  ansible.builtin.include_tasks: retention-preflight.yml
+  when: acsc_auditd_manage_retention | bool
+- name: "Apply the ACSC retention target to auditd's own logs"
+  ansible.builtin.include_tasks: retention.yml
+  when: acsc_auditd_manage_retention | bool
+- name: "Resolve which candidate paths exist on this host"
+  ansible.builtin.include_tasks: paths.yml
+- name: "Render the ruleset"
+  ansible.builtin.include_tasks: ruleset.yml
+- name: "Note what --check cannot prove on an unconverged host"
+  ansible.builtin.debug:
+    msg: >-
+      --check: {{ acsc_auditd_rules_path }} does not exist yet, so the rule load
+      and every verification step are skipped. Run without --check, or re-run
+      --check against a host that has already converged, to exercise them.
+  when: __acsc_auditd_rendered.content is not defined
+- name: "Load the ruleset into the kernel"
+  ansible.builtin.include_tasks: load.yml
+  when: __acsc_auditd_rendered.content is defined
+- name: "Verify"
+  ansible.builtin.include_tasks: verify.yml
+  when: __acsc_auditd_rendered.content is defined

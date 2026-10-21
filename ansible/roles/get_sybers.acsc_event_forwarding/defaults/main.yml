@@ -1,0 +1,9 @@
+---
+acsc_wef_subscriptions: []
+acsc_wef_enable_subscriptions: false
+acsc_wef_source_sddl: "O:NSG:BAD:P(A;;GA;;;DC)(A;;GA;;;DD)S:"
+acsc_wef_set_sources: true
+acsc_wef_configure_collector: true
+acsc_wef_stage_dir: 'C:\ProgramData\acsc-wef'
+acsc_wef_wmi_auditing: true
+acsc_wef_update_existing: true

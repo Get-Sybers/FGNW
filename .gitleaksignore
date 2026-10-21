@@ -1,0 +1,11 @@
+# gitleaks fingerprint allowlist (doc/standards/04). One `commit:path:rule:line`
+# fingerprint per line, each with a comment stating why it is a false positive.
+# The hooks scan the working tree (no commit prefix); a run that scans history
+# reports the same finding with a commit-qualified fingerprint, which is added
+# beside the plain one when it appears.
+#
+# Microsoft's published KMS client setup key for Windows 10/11 Enterprise
+# (NPPR9-FWDCX-D2C8J-H872K-2YT43, from the public "KMS client activation and
+# product keys" article). It activates nothing on its own; the unattended
+# install needs a key of that shape to proceed.
+templates/win10-22h2-x64-enterprise-appxfix/Autounattend.xml:generic-api-key:76

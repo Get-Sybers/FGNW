@@ -1,0 +1,72 @@
+---
+- name: Install the AD Certificate Services role and its sub-features
+  ansible.windows.win_feature:
+    name:
+      - AD-Certificate
+      - ADCS-Cert-Authority
+      - ADCS-Web-Enrollment
+    state: present
+    include_management_tools: true
+  register: adcs_feature
+- name: Reboot when the feature install requests it
+  ansible.windows.win_reboot:
+  when: adcs_feature.reboot_required
+- name: Configure the Enterprise Root CA
+  ansible.windows.win_powershell:
+    script: |
+      [CmdletBinding()]
+      param (
+        [Parameter(Mandatory = $true)][String] $CaCommonName,
+        [Parameter(Mandatory = $true)][String] $AdminUser,
+        [Parameter(Mandatory = $true)][String] $AdminPassword
+      )
+      $secret = ConvertTo-SecureString -String $AdminPassword -AsPlainText -Force
+      $credential = New-Object System.Management.Automation.PSCredential($AdminUser, $secret)
+      try {
+        Install-AdcsCertificationAuthority `
+          -CAType EnterpriseRootCA `
+          -CACommonName $CaCommonName `
+          -CryptoProviderName "RSA#Microsoft Software Key Storage Provider" `
+          -KeyLength 2048 `
+          -HashAlgorithmName SHA256 `
+          -ValidityPeriod Years `
+          -ValidityPeriodUnits 5 `
+          -Credential $credential `
+          -Force | Out-Null
+        $Ansible.Changed = $true
+      }
+      catch {
+        if ($_.Exception.Message -match 'already installed|is already') {
+          $Ansible.Changed = $false
+        }
+        else {
+          throw
+        }
+      }
+    error_action: stop
+    parameters:
+      CaCommonName: "{{ ca_common_name }}"
+      AdminUser: "{{ adcs_domain_username }}"
+      AdminPassword: "{{ adcs_domain_password }}"
+- name: Enable the certificate web-enrollment endpoint
+  ansible.windows.win_powershell:
+    script: |
+      [CmdletBinding()]
+      param ()
+      try {
+        Install-AdcsWebEnrollment -Force | Out-Null
+        $Ansible.Changed = $true
+      }
+      catch {
+        if ($_.Exception.Message -match 'already installed|is already') {
+          $Ansible.Changed = $false
+        }
+        else {
+          throw
+        }
+      }
+    error_action: stop
+  when: adcs_ca_web_enrollment | bool
+- name: Refresh group policy so the new CA is picked up
+  ansible.windows.win_command: gpupdate /force
+  changed_when: false

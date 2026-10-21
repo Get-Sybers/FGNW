@@ -1,0 +1,19 @@
+---
+galaxy_info:
+  author: Get-Sybers
+  description: >
+    Install and configure real Exchange Server 2019 on an FGNW -mail VM at the Ludus
+    user-defined-roles stage: forest-root domain-join, Setup (via aleemladha.ludus_exchange,
+    which self-skips the ISO/prereqs baked into the win2022-exchange2019 template), the org's
+    Accepted Domain, group mail-enable, and the cross-forest send-connector mesh. Source-delivered
+    port of campaign/ansible/FGNW-exchange.yml (4 plays). Run LAST on each -mail VM, after AD.
+    FGNW
+  role_name: range_exchange
+  license: AGPL-3.0-only
+  min_ansible_version: "2.12"
+  platforms:
+    - name: Windows
+      versions:
+        - "2019"
+        - "2022"
+dependencies: []

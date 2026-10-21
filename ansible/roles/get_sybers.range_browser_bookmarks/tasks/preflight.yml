@@ -1,0 +1,11 @@
+---
+- name: "preflight | Assert required bookmark variables are set"
+  ansible.builtin.assert:
+    that:
+      - bookmark_url | default('') | length > 0
+      - bookmark_title | default('') | length > 0
+    fail_msg: >-
+      range_browser_bookmarks requires bookmark_url and bookmark_title —
+      set them where the role is included, e.g.
+      vars: {bookmark_url: "https://server:8889", bookmark_title: "My Service"}.
+      defaults/main.yml declares every tunable this role accepts.

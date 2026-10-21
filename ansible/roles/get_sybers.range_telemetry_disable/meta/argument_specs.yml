@@ -1,0 +1,26 @@
+---
+argument_specs:
+  main:
+    short_description: Disable Windows telemetry/diagnostics on a range Windows VM
+    description:
+      - Applies telemetry-disabling registry values and disables telemetry scheduled tasks, then verifies the two load-bearing signals. Curated for Windows
+        Server 2022; consumer-only Win10/11 items are excluded (see defaults/main.yml and meta/upstream.yml).
+    options: &range_telemetry_disable_options
+      range_telemetry_registry:
+        type: list
+        elements: dict
+        description:
+          - Registry values applied idempotently, one C(win_regedit) set each (service disables are expressed as C(\Services\<svc>\Start=4) so an absent service
+            is a harmless key, not a task failure). Default list lives in defaults/main.yml; override to add or remove entries.
+      range_telemetry_scheduled_tasks:
+        type: list
+        elements: str
+        description:
+          - Fully-qualified scheduled-task paths (C(\path\name)) to disable. Default list lives in defaults/main.yml; disabling an absent or already-disabled
+            task is a no-op.
+  configure:
+    short_description: Apply the telemetry-disabling registry values and scheduled-task disables
+    options: *range_telemetry_disable_options
+  verify:
+    short_description: Assert telemetry is disabled (DiagTrack Start=4, AllowTelemetry=0)
+    options: *range_telemetry_disable_options

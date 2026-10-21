@@ -1,0 +1,12 @@
+Unless mentioned otherwise in a specific file's header, the content of this
+project is released under the MIT License (see LICENSE, declared in
+source.yml): the Ludus source, the FGNW blueprint and campaign, the task-roles
+under ansible/roles/ and the Packer templates. The two collections under
+ansible/collections/ (get_sybers.range, get_sybers.templates) are released
+under the GNU Affero General Public License v3.0 only (their LICENSE,
+declared as AGPL-3.0-only in each galaxy.yml). Vendored third-party roles
+keep the licence their meta/main.yml and meta/upstream.yml name.
+
+This project is authored and maintained by the Get-Sybers lab
+(https://github.com/get-sybers): the @get-sybers/owners and
+@get-sybers/maintainers teams (see MAINTAINERS and .github/CODEOWNERS).

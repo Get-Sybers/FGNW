@@ -1,0 +1,62 @@
+---
+argument_specs:
+  main:
+    short_description: Install Chrome + a matched chromedriver for the GHOSTS BrowserChrome handler, then verify
+    description:
+      - Installs Google Chrome and a version-matched chromedriver via chocolatey/Nexus, disables Chrome auto-update, overwrites any stale chromedriver GHOSTS
+        bundled in its own dir, and verifies both are present. Runs in the build phase, before containment cuts internet.
+    options: &range_ghosts_browser_options
+      range_ghosts_browser_chrome_package:
+        type: str
+        default: googlechrome
+        description:
+          - Chocolatey package name for Chrome. Installed through the range's Nexus choco proxy (do not hardcode a source).
+      range_ghosts_browser_driver_package:
+        type: str
+        default: chromedriver
+        description:
+          - Chocolatey package name for chromedriver.
+      range_ghosts_browser_chrome_version:
+        type: str
+        default: ""
+        description:
+          - Optional exact Chrome version to pin. Empty takes chocolatey's latest; if you pin, pin the driver to the same version.
+      range_ghosts_browser_driver_version:
+        type: str
+        default: ""
+        description:
+          - Optional exact chromedriver version to pin. Empty takes chocolatey's latest; pin to the same version as Chrome.
+      range_ghosts_browser_ignore_checksums:
+        type: bool
+        default: true
+        description:
+          - Ignore chocolatey package checksums. Default true works around the googlechrome package's chronically-stale embedded MSI checksum.
+      range_ghosts_browser_chrome_exe:
+        type: str
+        default: C:\Program Files\Google\Chrome\Application\chrome.exe
+        description:
+          - Expected chrome.exe path, asserted by verify.
+      range_ghosts_browser_driver_shim:
+        type: str
+        default: C:\ProgramData\chocolatey\bin\chromedriver.exe
+        description:
+          - Chocolatey chromedriver shim on PATH, asserted by verify.
+      range_ghosts_browser_choco_lib:
+        type: str
+        default: C:\ProgramData\chocolatey\lib\chromedriver
+        description:
+          - Chocolatey lib tree holding the real chromedriver binary — the source for overwriting the driver GHOSTS bundles in its own dir.
+      range_ghosts_browser_ghosts_dir:
+        type: str
+        default: C:\ludus\ghosts-client
+        description:
+          - GHOSTS client working dir whose bundled chromedriver is overwritten with the matched one.
+  install:
+    short_description: Install Google Chrome and a version-matched chromedriver via chocolatey/Nexus
+    options: *range_ghosts_browser_options
+  configure:
+    short_description: Disable Chrome auto-update and overwrite any stale bundled chromedriver
+    options: *range_ghosts_browser_options
+  verify:
+    short_description: Confirm Chrome and chromedriver are present at their expected paths
+    options: *range_ghosts_browser_options

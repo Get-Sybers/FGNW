@@ -1,0 +1,198 @@
+---
+- name: "Preflight: assert the inventory matched the hosts this verify expects (guards against a vacuous pass)"
+  hosts: localhost
+  gather_facts: false
+  vars:
+    fgnw_variant: small
+    __expected_by_variant:
+      small: { windows_realname: 6, linux_infra: 3 }
+      regular: { windows_realname: 19, linux_infra: 3 }
+      full: { windows_realname: 19, linux_infra: 3 }
+      xl: { windows_realname: 19, linux_infra: 3 }
+    expected_hosts: "{{ __expected_by_variant[fgnw_variant] | default({}) }}"
+  pre_tasks:
+    - name: "Preflight: assert fgnw_variant is known (it selects the matched-host floor)"
+      tags: always
+      ansible.builtin.assert:
+        that: fgnw_variant in __expected_by_variant
+        fail_msg: fgnw_variant must be one of {{ __expected_by_variant.keys() | list }}, got '{{ fgnw_variant }}'.
+        quiet: true
+    - name: "Preflight: expected_hosts must define BOTH keys (a partial -e override silently zeroes the other)"
+      tags: always
+      ansible.builtin.assert:
+        that:
+          - expected_hosts is mapping
+          - "'windows_realname' in expected_hosts"
+          - "'linux_infra' in expected_hosts"
+        fail_msg: >-
+          expected_hosts must define BOTH windows_realname and linux_infra. Ansible -e REPLACES
+          the whole dict (it does not merge), so a PARTIAL override silently zeroes the omitted
+          key -- refusing to run rather than pass vacuously. Either set
+          -e fgnw_variant=small|regular|full|xl, or pass a COMPLETE dict:
+          -e '{"expected_hosts": {"windows_realname": N, "linux_infra": M}}'.
+        quiet: true
+    - name: "Preflight: assert konoha-ws1 (source of every gating HTTP check) is in the inventory"
+      tags: always
+      ansible.builtin.assert:
+        that: "'konoha-ws1' in (groups['all'] | default([]))"
+        fail_msg: >-
+          konoha-ws1 is not in the inventory -- but ALL three gating HTTP checks run FROM
+          konoha-ws1 (hosts: konoha-ws1). Without it those checks match zero hosts and their
+          results default to [], so the gate would pass vacuously. Provide an inventory that
+          includes konoha-ws1 (its reachability is then gated below).
+        quiet: true
+    - name: Assert each verified group matched at least its declared expected_hosts count
+      tags: always
+      ansible.builtin.assert:
+        that:
+          - (groups['windows_realname'] | default([]) | length) >= (expected_hosts.windows_realname | int)
+          - (groups['linux_infra'] | default([]) | length) >= (expected_hosts.linux_infra | int)
+        fail_msg: >-
+          INVENTORY UNDER-MATCHED -- refusing to run a verify that would pass vacuously on zero hosts.
+          Matched windows_realname={{ groups['windows_realname'] | default([]) | length }}
+          (expected >= {{ expected_hosts.windows_realname | int }}),
+          linux_infra={{ groups['linux_infra'] | default([]) | length }}
+          (expected >= {{ expected_hosts.linux_infra | int }}).
+          Did you forget `-i <inventory>`? Set -e fgnw_variant=small|regular|full|xl for this
+          range's floor, or DECLARE a complete override:
+          -e '{"expected_hosts": {"windows_realname": N, "linux_infra": M}}'.
+        success_msg: >-
+          Inventory matched the expected host groups (windows_realname={{ groups['windows_realname'] | default([]) | length }},
+          linux_infra={{ groups['linux_infra'] | default([]) | length }}).
+- name: HTTP reachability + OWA checks from a representative Leaf workstation
+  hosts: konoha-ws1
+  gather_facts: false
+  vars:
+    range_second_octet: "{{ ansible_host.split('.')[1] }}"
+  tasks:
+    - name: Check HTTP reachability to shared range infrastructure
+      ansible.windows.win_uri:
+        url: "{{ item.url }}"
+        method: GET
+        status_code: 200
+        validate_certs: false
+      loop:
+        - { name: attacker tool-cache, url: "http://10.{{ range_second_octet }}.99.50/" }
+        - { name: ninjasploitable report intake, url: "http://10.{{ range_second_octet }}.90.10/reports/intake.php" }
+        - { name: OWA login page (by DNS name), url: https://mail.konohagakure.fire.ninja/owa/auth/logon.aspx }
+      loop_control:
+        label: "{{ item.name }}"
+      register: fgnw_verify_http
+      ignore_errors: true
+      ignore_unreachable: true
+    - name: Per-forest OWA reachability (best-effort, cert NOT validated -- proves mail.<domain> DNS + OWA up)
+      ansible.windows.win_uri:
+        url: https://mail.{{ item }}/owa/auth/logon.aspx
+        method: GET
+        status_code: 200
+        validate_certs: false
+      loop:
+        - konohagakure.fire.ninja
+        - sunagakure.wind.ninja
+        - otogakure.ninja
+        - akatsuki.dark
+      loop_control:
+        label: mail.{{ item }}
+      register: fgnw_verify_owa_noverify
+      failed_when: false
+      ignore_unreachable: true
+    - name: Per-forest OWA cert-trust check (best-effort, validate_certs TRUE -- exercises FGNW-owa-cert.yml)
+      ansible.windows.win_uri:
+        url: https://mail.{{ item }}/owa/auth/logon.aspx
+        method: GET
+        status_code: 200
+        validate_certs: true
+      loop:
+        - konohagakure.fire.ninja
+        - sunagakure.wind.ninja
+        - otogakure.ninja
+        - akatsuki.dark
+      loop_control:
+        label: mail.{{ item }}
+      register: fgnw_verify_owa_certtrust
+      failed_when: false
+      ignore_unreachable: true
+    - name: Record HTTP results for the summary play
+      ansible.builtin.set_fact:
+        fgnw_verify_unreachable: "{{ fgnw_verify_http is unreachable }}"
+        fgnw_verify_http_results: "{{ fgnw_verify_http.results | default([]) }}"
+        fgnw_verify_owa_noverify_results: "{{ fgnw_verify_owa_noverify.results | default([]) }}"
+        fgnw_verify_owa_certtrust_results: "{{ fgnw_verify_owa_certtrust.results | default([]) }}"
+- name: Print the pass/fail summary
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: HTTP reachability summary (from konoha-ws1)
+      ansible.builtin.debug:
+        msg: >-
+          [{{ 'PASS' if item.status_code | default(0) == 200 else 'FAIL' }}]
+          {{ item.item.name }} ({{ item.item.url }})
+          {{ '' if item.status_code | default(0) == 200 else '-> status=' ~ (item.status_code | default('no response')) }}
+      loop: "{{ hostvars['konoha-ws1'].fgnw_verify_http_results | default([]) }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+    - name: Per-forest OWA reachability + cert-trust summary (from konoha-ws1, best-effort)
+      ansible.builtin.debug:
+        msg: >-
+          [{{
+            'OK' if ((item.status_code | default(0)) == 200 and (__certtrust[loop_idx].status_code | default(0)) == 200)
+            else ('WARN cert-NOT-trusted' if (item.status_code | default(0)) == 200 else 'skip forest-absent/unreachable')
+          }}]
+          mail.{{ item.item }}:
+          reachable(cert-ignored)={{ 'yes' if (item.status_code | default(0)) == 200 else 'no' }}
+          cert-trusted={{ 'yes' if (__certtrust[loop_idx].status_code | default(0)) == 200 else 'no' }}
+      loop: "{{ hostvars['konoha-ws1'].fgnw_verify_owa_noverify_results | default([]) }}"
+      loop_control:
+        label: mail.{{ item.item }}
+        index_var: loop_idx
+      vars:
+        __certtrust: "{{ hostvars['konoha-ws1'].fgnw_verify_owa_certtrust_results | default([]) }}"
+    - name: Final notes
+      ansible.builtin.debug:
+        msg:
+          - All three HTTP targets are reachable through a live testing/contained range --
+          - the HTTP targets are intra-range (attacker/ninjasploitable/OWA all live inside this range's VLANs),
+          - so none of the above SHOULD fail just because containment is active.
+          - "The per-forest OWA summary is best-effort: a [skip] just means that forest's -owa VM isn't"
+          - deployed (the small range only has konoha-mail), which is NOT a failure. A [WARN cert-NOT-trusted]
+          - IS actionable -- OWA answered but its cert isn't trusted, i.e. FGNW-owa-cert.yml (Fix 11) didn't
+          - issue/push a valid cert for that forest; do not read that as containment behaviour.
+          - If this playbook is ever extended with a genuinely internet-bound check, expect THAT check
+          - to fail while testing/contained mode is active -- that's expected behaviour, not a bug, and
+          - should be read as 'containment is working', not a regression.
+- name: "Gate: fail the run if any required (should-PASS) check failed"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Evaluate host reachability (an UNREACHABLE host is a first-class FAILURE, not a vacuous skip)
+      ansible.builtin.set_fact:
+        fgnw_verify_unreachable_hosts: >-
+          {{
+            fgnw_verify_unreachable_hosts | default([])
+            + ([item] if (hostvars[item].fgnw_verify_unreachable | default(true)) else [])
+          }}
+      loop: "{{ (groups['windows_realname'] | default([]) + groups['linux_infra'] | default([]) + ['konoha-ws1']) | unique }}"
+      loop_control:
+        label: "{{ item }}"
+    - name: Evaluate required HTTP reachability checks (attacker/ninjasploitable/OWA from konoha-ws1)
+      ansible.builtin.set_fact:
+        fgnw_verify_gate_http_fails: >-
+          {{
+            fgnw_verify_gate_http_fails | default([])
+            + ([item.item.name] if (item.status_code | default(0)) != 200 else [])
+          }}
+      loop: "{{ hostvars['konoha-ws1'].fgnw_verify_http_results | default([]) }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+    - name: "GATE: assert every required check passed"
+      ansible.builtin.assert:
+        that:
+          - (fgnw_verify_unreachable_hosts | default([])) | length == 0
+          - (fgnw_verify_gate_http_fails | default([])) | length == 0
+        fail_msg: >-
+          Required connectivity checks FAILED -- deploy is not verified healthy.
+          Unreachable hosts (now a first-class failure, not a vacuous pass): {{ fgnw_verify_unreachable_hosts | default([]) }}.
+          HTTP targets unreachable: {{ fgnw_verify_gate_http_fails | default([]) }}.
+          See the PASS/FAIL summary above for per-check detail. Per-forest OWA reachability/cert-trust
+          is intentionally warn-only and does NOT gate this assert (see the file header).
+        success_msg: All required (should-PASS) connectivity checks passed.

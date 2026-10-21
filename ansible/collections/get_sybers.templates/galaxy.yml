@@ -1,0 +1,32 @@
+---
+namespace: get_sybers
+name: templates
+version: 0.1.0
+readme: README.md
+authors:
+  - Get-Sybers <99623331+Get-Sybers@users.noreply.github.com>
+description: >-
+  Shared Packer template-baking content for the Get-Sybers Ludus sources: the
+  OpenCore-driven macOS template role (orchestrates Proxmox over its REST API in
+  PREPARE/FINALIZE phases, with a bundled stdlib-only proxmox_iso_download
+  module), the Windows .NET native-image (ngen) role, and the imported-image
+  provisioning role shared by the Metasploitable targets. Consumed by the
+  template .pkr.hcl builds via requirements.yml + ansible-galaxy, by FQCN.
+license:
+  - AGPL-3.0-only
+tags:
+  - infrastructure
+  - ludus
+  - proxmox
+  - packer
+  - templates
+repository: https://github.com/Get-Sybers/FGNW
+homepage: https://github.com/Get-Sybers/FGNW
+issues: https://github.com/Get-Sybers/FGNW/issues
+documentation: https://github.com/Get-Sybers/FGNW/blob/main/ansible/collections/get_sybers.templates/README.md
+dependencies:
+  community.windows: ">=2.4.0,<3.0.0"
+build_ignore:
+  - tests/output
+  - tox-ansible.ini
+  - changelogs/.plugin-cache.yaml

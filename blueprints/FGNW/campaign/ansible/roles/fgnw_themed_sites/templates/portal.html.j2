@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ page.url }} — Official Portal</title>
+<style>
+ body{margin:0;font-family:'Segoe UI',Arial,sans-serif;background: #f4f4f4;
+ header{background:{{ village_accent | default('#1b3a5c', true) }};color: #fff;
+ header .crest{font-size:1.4rem}
+ header h1{margin:4px 0 0;font-size:1.35rem}
+ nav{background:{{ village_accent | default('#12293f', true) }};padding:8px 28px;filter:brightness(0.75)}
+ nav a{color: #0366d6;
+ .wrap{max-width:900px;margin:24px auto;padding:0 20px;display:grid;grid-template-columns:2fr 1fr;gap:26px}
+ .notice{background: #fff3cd;
+ .card{background: #fff;
+ h2{color:{{ village_accent | default('#1b3a5c', true) }};font-size:1.05rem;margin-top:0}
+ aside a{display:block;color:{{ village_accent | default('#1b5c8c', true) }};text-decoration:none;padding:5px 0;font-size:.85rem;border-bottom:1px solid
+ footer{background:{{ village_accent | default('#12293f', true) }};color: #666;
+</style></head>
+<body>
+<header><span class="crest">⛩️</span><h1>{{ page.url }}</h1>
+ <div style="font-size:.8rem;color:#bcd4ec">Official {{ page.category }} portal &middot; {{ page.village }}</div></header>
+<nav><a href="#">Home</a><a href="#">Announcements</a><a href="#">Directory</a><a href="#">Forms</a><a href="#">Contact</a></nav>
+<div class="wrap">
+ <main>
+  <div class="notice">Official notice: this portal is for registered shinobi of {{ page.village }}. Credentials required for restricted sections.</div>
+  <div class="card"><h2>About this office</h2><p>{{ page.description }}.</p>
+   <p>The office maintains records, issues directives, and coordinates operations for {{ page.village }}. All personnel are reminded to keep their registration current and to report anomalies to the intelligence division.</p></div>
+  <div class="card"><h2>Latest directives</h2>
+   <ul><li>Standing order: verify identity before releasing mission data.</li>
+   <li>Quarterly registration renewal now open.</li>
+   <li>Border-status briefings issued to all jonin.</li></ul></div>
+ </main>
+ <aside><div class="card"><h2>{{ page.village }} services</h2>
+{% for r in related[:12] %}  <a href="http://{{ r }}/">{{ r }}</a>
+{% endfor %}{% if related|length == 0 %}  <em style="font-size:.8rem;color:#888">No affiliated services listed.</em>{% endif %}
+ </div></aside>
+</div>
+<footer>{{ page.url }} &middot; {{ page.village }} &middot; Fourth Great Ninja War (fictional). For authorized personnel only.</footer>
+</body></html>

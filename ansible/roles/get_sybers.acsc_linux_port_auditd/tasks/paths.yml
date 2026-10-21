@@ -1,0 +1,37 @@
+---
+- name: "paths | Stat every candidate path"
+  ansible.builtin.stat:
+    path: "{{ item }}"
+    follow: true
+    get_checksum: false
+    get_mime: false
+    get_attributes: false
+  loop: "{{ __acsc_auditd_all_paths }}"
+  loop_control: { label: "{{ item }}" }
+  register: __acsc_auditd_pathstat
+- name: "paths | Build the node-local path sets"
+  ansible.builtin.set_fact:
+    acsc_auditd_present_paths: >-
+      {{ __acsc_auditd_pathstat.results | selectattr('stat.exists') | map(attribute='item') | list }}
+    acsc_auditd_dir_paths: >-
+      {{ __acsc_auditd_pathstat.results | selectattr('stat.exists')
+         | selectattr('stat.isdir', 'defined') | selectattr('stat.isdir')
+         | map(attribute='item') | list }}
+    acsc_auditd_absent_paths: >-
+      {{ __acsc_auditd_pathstat.results | rejectattr('stat.exists') | map(attribute='item') | list }}
+- name: "paths | Report the node-local watch coverage"
+  vars:
+    __declared_dirs: >-
+      {{ (__acsc_auditd_watches | selectattr('kind', 'equalto', 'dir') | map(attribute='path') | list)
+         + (acsc_auditd_exclusions | selectattr('kind', 'equalto', 'dir') | map(attribute='path') | list) }}
+  ansible.builtin.debug:
+    msg:
+      - >-
+        {{ inventory_hostname }}: profile={{ acsc_auditd_profile }},
+        {{ acsc_auditd_present_paths | length }} candidate paths present,
+        {{ acsc_auditd_absent_paths | length }} skipped.
+      - "skipped (absent on this host): {{ acsc_auditd_absent_paths }}"
+      - >-
+        declared dir but observed file (rendered as path=, coverage is the inode only):
+        {{ __declared_dirs | select('in', acsc_auditd_present_paths) | reject('in', acsc_auditd_dir_paths) | list }}
+      - "suppressed rule groups: {{ __acsc_auditd_suppressed | default([]) }}"

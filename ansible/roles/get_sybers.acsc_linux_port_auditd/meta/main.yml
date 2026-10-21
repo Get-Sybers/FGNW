@@ -1,0 +1,31 @@
+---
+galaxy_info:
+  role_name: acsc_linux_port_auditd
+  namespace: get_sybers
+  author: Get-Sybers
+  description: >-
+    ACSC-Linux-Port-Auditd — the auditd half of the Linux port of the ACSC
+    "Windows Event Logging and Forwarding" baseline, built on Florian Roth /
+    Nextron Systems' "Best Practice Auditd Configuration"
+    (github.com/Neo23x0/auditd, vendored, Apache-2.0) and adapted for
+    Debian/Proxmox. Complements get_sybers.acsc_linux_port_sysmon rather than
+    duplicating it: auditd carries login-uid attribution, Sysmon carries process
+    lineage. One ruleset for PVE cluster nodes (profile: hypervisor) and infra
+    VM guests / range Linux VMs (profile: guest). Applies the ACSC >=18-month
+    retention intent to auditd's own log rotation. Not for LXC — the kernel
+    audit subsystem is not namespaced and the role refuses rather than
+    installing a daemon that can never register.
+  license: AGPL-3.0-only
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Debian
+      versions: [bookworm, trixie]
+    - name: Ubuntu
+      versions: [jammy, noble]
+  galaxy_tags:
+    - auditd
+    - acsc
+    - logging
+    - dfir
+    - linux
+dependencies: []

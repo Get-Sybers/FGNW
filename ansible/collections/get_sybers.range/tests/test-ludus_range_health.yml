@@ -1,0 +1,10 @@
+---
+- name: "Gate: ludus_range_health"
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  roles:
+    - get_sybers.range.ludus_auth
+    - role: get_sybers.range.ludus_range_health
+      vars:
+        ludus_range_health_fail_on_unhealthy: false

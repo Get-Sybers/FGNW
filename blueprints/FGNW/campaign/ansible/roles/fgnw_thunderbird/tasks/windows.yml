@@ -1,0 +1,21 @@
+---
+# Windows branch: install Thunderbird via Chocolatey (through the range's Nexus
+# `chocolatey-proxy` repo), then drop the enterprise policies.json alongside the
+# install. Thunderbird reads `C:\Program Files\Mozilla Thunderbird\distribution\
+# policies.json` at launch (same mechanism Firefox uses for its enterprise policies).
+- name: "windows | Install Thunderbird via chocolatey/Nexus"
+  chocolatey.chocolatey.win_chocolatey:
+    name: "{{ fgnw_thunderbird_choco_package }}"
+    version: "{{ fgnw_thunderbird_choco_version | default(omit, true) }}"
+    state: present
+    ignore_checksums: "{{ fgnw_thunderbird_ignore_checksums | bool }}"
+
+- name: "windows | Ensure the Thunderbird enterprise policies dir exists"
+  ansible.windows.win_file:
+    path: "{{ fgnw_thunderbird_win_distribution_dir }}"
+    state: directory
+
+- name: "windows | Install the Thunderbird policies.json (account preconfiguration)"
+  ansible.windows.win_copy:
+    dest: "{{ fgnw_thunderbird_win_distribution_dir }}\\policies.json"
+    content: "{{ lookup('template', 'policies.json.j2') }}"

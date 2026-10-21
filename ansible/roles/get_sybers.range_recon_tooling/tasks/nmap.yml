@@ -1,0 +1,91 @@
+---
+- name: "nmap | Create the tools directory for nmap"
+  ansible.windows.win_file:
+    path: "{{ range_recon_tooling_nmap_install_dir }}"
+    state: directory
+- name: "nmap | Check whether nmap is already installed (idempotency)"
+  ansible.windows.win_stat:
+    path: "{{ range_recon_tooling_nmap_install_dir }}\\nmap-{{ range_recon_tooling_nmap_version }}\\nmap.exe"
+  register: __nmap_exe
+- name: "nmap | Download the nmap portable zip (checksum-verified)"
+  ansible.windows.win_get_url:
+    url: "{{ range_recon_tooling_nmap_zip_url }}"
+    dest: C:\Windows\Temp\nmap-{{ range_recon_tooling_nmap_version }}-win32.zip
+    checksum: "{{ range_recon_tooling_nmap_zip_sha256 }}"
+    checksum_algorithm: sha256
+    timeout: 120
+  when: not __nmap_exe.stat.exists
+- name: "nmap | Extract nmap to the tools directory"
+  community.windows.win_unzip:
+    src: C:\Windows\Temp\nmap-{{ range_recon_tooling_nmap_version }}-win32.zip
+    dest: "{{ range_recon_tooling_nmap_install_dir }}"
+    creates: "{{ range_recon_tooling_nmap_install_dir }}\\nmap-{{ range_recon_tooling_nmap_version }}\\nmap.exe"
+  when: not __nmap_exe.stat.exists
+- name: "nmap | Check whether the VC++ x86 runtime is already present"
+  ansible.windows.win_stat:
+    path: C:\Windows\SysWOW64\vcruntime140.dll
+  register: __vcrt
+- name: "nmap | Fetch the VC++ redist from the Akatsuki tool-cache (preferred source)"
+  ansible.windows.win_get_url:
+    url: http://{{ hostvars['attacker'].ansible_host }}/tools/{{ range_recon_tooling_nmap_vcredist_exe }}
+    dest: C:\Windows\Temp\{{ range_recon_tooling_nmap_vcredist_exe }}
+    timeout: 120
+  register: __vc_dl
+  failed_when: false
+  when: not __vcrt.stat.exists
+- name: "nmap | Choose the VC++ redist path (tool-cache copy, else the bundled one)"
+  ansible.builtin.set_fact:
+    __vcredist_installer: >-
+      {{ 'C:\\Windows\\Temp\\' ~ range_recon_tooling_nmap_vcredist_exe
+         if (__vc_dl.status_code | default(0)) == 200
+         else range_recon_tooling_nmap_install_dir ~ '\\nmap-' ~ range_recon_tooling_nmap_version ~ '\\' ~ range_recon_tooling_nmap_vcredist_exe }}
+  when: not __vcrt.stat.exists
+- name: "nmap | Install the VC++ x86 runtime silently (nmap.exe will not start without it)"
+  ansible.windows.win_command: >-
+    "{{ __vcredist_installer }}" /install /quiet /norestart
+  register: __vc_redist
+  failed_when: __vc_redist.rc not in [0, 1638, 3010]
+  changed_when: __vc_redist.rc in [0, 3010]
+  when: not __vcrt.stat.exists
+- name: "nmap | Check whether Npcap is already installed"
+  ansible.windows.win_stat:
+    path: C:\Windows\System32\wpcap.dll
+  register: __npcap
+- name: "nmap | Fetch Npcap from the Akatsuki tool-cache (preferred source)"
+  ansible.windows.win_get_url:
+    url: http://{{ hostvars['attacker'].ansible_host }}/tools/{{ range_recon_tooling_nmap_npcap_exe }}
+    dest: C:\Windows\Temp\{{ range_recon_tooling_nmap_npcap_exe }}
+    timeout: 60
+  register: __npcap_dl
+  failed_when: false
+  when: not __npcap.stat.exists
+- name: "nmap | Choose the Npcap installer path (tool-cache copy, else the bundled one)"
+  ansible.builtin.set_fact:
+    __npcap_installer: >-
+      {{ 'C:\\Windows\\Temp\\' ~ range_recon_tooling_nmap_npcap_exe
+         if (__npcap_dl.status_code | default(0)) == 200
+         else range_recon_tooling_nmap_install_dir ~ '\\nmap-' ~ range_recon_tooling_nmap_version ~ '\\' ~ range_recon_tooling_nmap_npcap_exe }}
+  when: not __npcap.stat.exists
+- name: "nmap | Install Npcap silently (bounded, best-effort — never allowed to hang)"
+  ansible.windows.win_shell: >-
+    $p = Start-Process -FilePath '{{ __npcap_installer }}'
+    -ArgumentList '/S','/winpcap_mode=yes' -Wait -PassThru; $p.ExitCode
+  async: "{{ range_recon_tooling_npcap_install_timeout }}"
+  poll: 15
+  register: __npcap_install
+  failed_when: false
+  changed_when: (__npcap_install.rc | default(1)) == 0
+  when: not __npcap.stat.exists
+- name: "nmap | Report the Npcap outcome (absence is tolerated — only -sS needs it)"
+  ansible.builtin.debug:
+    msg: >-
+      {{ 'Npcap already present' if __npcap.stat.exists
+         else ('Npcap installed (rc=' ~ (__npcap_install.rc | default('?')) ~ ')'
+               if (__npcap_install.rc | default(1)) == 0
+               else 'Npcap NOT installed (silent install timed out or was refused) — '
+                    ~ '-sT connect scans still work; only raw -sS is unavailable.') }}
+- name: "nmap | Add nmap to the system PATH"
+  ansible.windows.win_path:
+    elements: "{{ range_recon_tooling_nmap_install_dir }}\\nmap-{{ range_recon_tooling_nmap_version }}"
+    state: present
+    scope: machine

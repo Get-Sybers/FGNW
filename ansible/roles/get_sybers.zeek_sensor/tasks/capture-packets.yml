@@ -1,0 +1,52 @@
+---
+- name: "capture-packets | Capture-gate — bounded promiscuous probe on each interface"
+  ansible.builtin.command: >-
+    timeout -s INT {{ zeek_sensor_capture_probe_seconds }}
+    tcpdump -n -i {{ item }}
+    -c {{ zeek_sensor_capture_probe_min_packets }}
+    -w /dev/null
+    {{ zeek_sensor_capture_probe_filter }}
+  loop: "{{ zeek_sensor_effective_interfaces }}"
+  register: __zeek_probe
+  changed_when: false
+  check_mode: false
+  failed_when: __zeek_probe.rc not in [0, 124]
+- name: "capture-packets | Capture-gate — count what each interface actually delivered"
+  ansible.builtin.set_fact:
+    __zeek_probe_counts: >-
+      {{ dict(__zeek_probe.results
+              | map(attribute='item') | list
+              | zip(__zeek_probe.results
+                    | map(attribute='stderr')
+                    | map('regex_findall', '([0-9]+) packets? captured')
+                    | map('default', ['0'], true)
+                    | map('first')
+                    | map('int') | list) | list) }}
+- name: "capture-packets | Capture-gate — every interface must have delivered unicast traffic"
+  ansible.builtin.assert:
+    that: >-
+      __zeek_probe_counts[item] | int >= zeek_sensor_capture_probe_min_packets | int
+    fail_msg: >-
+      Capture interface '{{ item }}' delivered
+      {{ __zeek_probe_counts[item] }} frames matching
+      '{{ zeek_sensor_capture_probe_filter }}' in
+      {{ zeek_sensor_capture_probe_seconds }}s. A Zeek pointed at it would run,
+      stay active, and report nothing — refusing rather than installing that.
+      {% if zeek_sensor_profile == 'hypervisor' %}
+      Check that VM taps are actually enslaved to this bridge
+      (`bridge link show dev {{ item }}`), that the range is deployed and its
+      VMs are running, and that the kernel is cloning forwarded frames to the
+      bridge device (`tcpdump -i {{ item }}` by hand while pinging between two
+      VMs on it). If the bridge exists but is empty, deploy the range first.
+      {% else %}
+      Check this really is a traffic chokepoint: on the Ludus range router the
+      per-VLAN interfaces carry inter-VLAN and egress traffic only — same-VLAN
+      VM-to-VM traffic never reaches it, so an idle-but-correct router still
+      looks like this when nothing is crossing VLAN boundaries.
+      {% endif %}
+      If you are converging BEFORE the range exists, set
+      zeek_sensor_require_packets=false for that run only, and re-run this role
+      once traffic is flowing — otherwise nobody ever finds out the sensor
+      is blind.
+    quiet: true
+  loop: "{{ zeek_sensor_effective_interfaces }}"

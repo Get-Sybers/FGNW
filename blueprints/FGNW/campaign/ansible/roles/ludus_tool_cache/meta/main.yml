@@ -1,0 +1,12 @@
+---
+galaxy_info:
+  author: Get-Sybers
+  description: >
+    Generic Linux tool-cache web server. Installs nginx (distro package), serves a
+    static tool-download index page, and fetches listed tool binaries. All page content
+    and tool metadata is supplied via variables — the role itself has no blueprint-specific
+    references. Suitable for any Ludus range that needs an operator staging server.
+  role_name: ludus_tool_cache
+  license: MIT
+  min_ansible_version: "2.12"
+dependencies: []

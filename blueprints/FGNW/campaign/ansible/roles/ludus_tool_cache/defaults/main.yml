@@ -1,0 +1,6 @@
+---
+ludus_tool_cache_title: Tool Cache
+ludus_tool_cache_subtitle: Pre-staged tools for range operations. All binaries are served from /tools/ for direct download.
+ludus_tool_cache_web_root: /var/www/html
+ludus_tool_cache_tools_subdir: tools
+ludus_tool_cache_categories: []

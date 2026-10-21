@@ -1,0 +1,10 @@
+---
+range_ghosts_browser_chrome_package: googlechrome
+range_ghosts_browser_driver_package: chromedriver
+range_ghosts_browser_chrome_version: ""
+range_ghosts_browser_driver_version: ""
+range_ghosts_browser_ignore_checksums: true
+range_ghosts_browser_chrome_exe: C:\Program Files\Google\Chrome\Application\chrome.exe
+range_ghosts_browser_driver_shim: C:\ProgramData\chocolatey\bin\chromedriver.exe
+range_ghosts_browser_choco_lib: C:\ProgramData\chocolatey\lib\chromedriver
+range_ghosts_browser_ghosts_dir: C:\ludus\ghosts-client

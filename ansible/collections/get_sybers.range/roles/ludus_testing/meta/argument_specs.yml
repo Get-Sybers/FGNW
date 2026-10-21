@@ -1,0 +1,38 @@
+---
+argument_specs:
+  main:
+    short_description: Enter contained testing mode and open only the required egress
+    description:
+      - Reads testing state, runs `testing start` only if not already enabled and polls until testingEnabled=true, then reads the allow-list and adds each
+        required domain/IP that is not already present (token-boundary matched). Idempotent; never runs `testing stop`.
+    options: &ludus_testing_options
+      ludus_testing_allow_domains:
+        type: list
+        elements: str
+        description:
+          - Domains the contained range is still allowed to reach (e.g. a DFIR C2 domain), added with `testing allow -d`. Default (empty) in defaults/main.yml;
+            pass an entry only when its target is actually deployed.
+      ludus_testing_allow_ips:
+        type: list
+        elements: str
+        description:
+          - IPs the contained range is still allowed to reach (e.g. a surgical Nexus window), added with `testing allow -i`. Default (empty) in
+            defaults/main.yml.
+      ludus_testing_poll_retries:
+        type: int
+        default: 30
+        description:
+          - Poll iterations waiting for testingEnabled=true after `testing start` (with ludus_testing_poll_delay = the budget). Default 30 x 10s = 5 min.
+      ludus_testing_poll_delay:
+        type: int
+        default: 10
+        description:
+          - Seconds between the testing-start state polls.
+      ludus_testing_bin:
+        type: str
+        default: /usr/local/bin/ludus
+        description:
+          - Path to the ludus CLI binary invoked for range list and testing start/allow/status.
+  verify:
+    short_description: Assert containment is on and the allow-list matches
+    options: *ludus_testing_options

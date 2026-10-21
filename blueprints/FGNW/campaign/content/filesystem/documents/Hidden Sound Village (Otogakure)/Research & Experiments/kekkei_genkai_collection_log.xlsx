@@ -1,0 +1,18 @@
+OROCHIMARU RESEARCH DIVISION — KEKKEI GENKAI SAMPLE COLLECTION LOG
+Zone C Vault Register | Clearance: Research Cadre
+Columns: Sample ID | Bloodline / Kekkei Genkai | Source Line | Acquisition | Sample State | Vault Loc | Priority
+
+Sample ID | Bloodline              | Source Line | Acquisition        | State      | Vault Loc | Priority
+KG-001    | Shikotsumyaku (bone)   | Kaguya      | Donor tissue        | Preserved  | C-3-A     | Highest
+KG-002    | Mokuton (wood)         | Senju       | Recovered cells     | Partial    | C-3-B     | Highest
+KG-003    | Sharingan (target)     | Uchiha      | Pending acquisition  | None       | reserved  | Highest
+KG-004    | Byakugan               | Hyuga       | Intel only          | None       | -         | High
+KG-005    | Ice Release            | Yuki        | Field sample        | Degraded   | C-4-A     | Moderate
+KG-006    | Explosion Release      | (unconfirmed)| Intel only         | None       | -         | Low
+KG-007    | Scorch / rare affinity | (unconfirmed)| Rumor              | None       | -         | Low
+
+Notes:
+- KG-001 source closed; the natural bearer's decline ended donor supply. Ration remaining stock.
+- KG-002 tolerated by only a rare fraction of hosts; see DNA modification notes.
+- KG-003 is the standing priority acquisition — the designated preferred vessel. All field
+  flags of Sharingan potential route directly to the Head Medic.

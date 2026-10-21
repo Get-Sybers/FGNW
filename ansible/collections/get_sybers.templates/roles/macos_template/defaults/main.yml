@@ -1,0 +1,24 @@
+---
+macos_template_guest_cpu: "Skylake-Client-v4"
+macos_template_guest_nic_model: "virtio"
+macos_template_vga: "vmware"
+macos_template_machine: "q35"
+macos_template_bios: "ovmf"
+macos_template_efitype: "4m"
+macos_template_qemu_args: ""
+macos_template_vm_memory: 8192
+macos_template_vm_cores: 4
+macos_template_vm_disk_size: 80
+macos_template_balloon: 0
+macos_template_ssh_username: "localuser"
+macos_template_ssh_password: "password"
+macos_template_skip_provision: false
+macos_template_validate_certs: false
+macos_template_task_timeout: 7200
+macos_template_ip_retries: 60
+macos_template_ssh_wait_timeout: 120
+macos_template_install_guest_agent: true
+macos_template_guest_agent_url: "https://github.com/mav2287/mac-guest-agent/releases/download/v2.5.6/mac-guest-agent"
+macos_template_guest_agent_checksum: "sha256:fa501be5d8707b92b6b112d359007bb12163d5e95b3931f1fd7307b42afc03aa"
+macos_template_install_clt: true
+macos_template_embed_opencore: true

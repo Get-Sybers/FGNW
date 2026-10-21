@@ -1,0 +1,22 @@
+---
+galaxy_info:
+  role_name: macos_template
+  namespace: get_sybers
+  author: Get-Sybers
+  description: >-
+    Build a macOS Ludus template on Proxmox via OpenCore, orchestrated over the
+    Proxmox REST API. Two phases (PREPARE / FINALIZE) around a one-time
+    interactive macOS install. Uses ansible.builtin.uri + a bundled
+    proxmox_iso_download module, so it needs no external Proxmox collection.
+  license: AGPL-3.0-only
+  min_ansible_version: "2.15"
+  platforms:
+    - name: MacOSX
+      versions: [all]
+  galaxy_tags:
+    - proxmox
+    - macos
+    - packer
+    - ludus
+    - opencore
+dependencies: []

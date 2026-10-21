@@ -1,0 +1,4 @@
+---
+ludus_range_health_log_lines: 40
+ludus_range_health_fail_on_unhealthy: false
+ludus_range_health_bin: /usr/local/bin/ludus

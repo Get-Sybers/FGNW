@@ -1,0 +1,24 @@
+{
+  "policies": {
+    "DisableAppUpdate": true,
+    "DisableTelemetry": true,
+    "EmailAccountSetup": {
+      "DefaultAccountName": "{{ fgnw_thunderbird_display_name }}",
+      "DefaultEmailAddress": "{{ fgnw_thunderbird_user }}@{{ fgnw_thunderbird_mail_domain }}",
+      "Incoming": {
+        "Hostname": "{{ fgnw_thunderbird_imap_server }}",
+        "Port": {{ fgnw_thunderbird_imap_port }},
+        "SocketType": "{{ fgnw_thunderbird_socket_type }}",
+        "Authentication": "{{ fgnw_thunderbird_authentication }}",
+        "Username": "{{ fgnw_thunderbird_user }}"
+      },
+      "Outgoing": {
+        "Hostname": "{{ fgnw_thunderbird_smtp_server }}",
+        "Port": {{ fgnw_thunderbird_smtp_port }},
+        "SocketType": "{{ fgnw_thunderbird_socket_type }}",
+        "Authentication": "{{ fgnw_thunderbird_authentication }}",
+        "Username": "{{ fgnw_thunderbird_user }}"
+      }
+    }
+  }
+}

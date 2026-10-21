@@ -1,0 +1,65 @@
+---
+- name: Enable TGT delegation for parent-child abuse on the suna domain controller - this can fail, while the trust is still building so we retry a few times
+  hosts: suna-dc1
+  tasks:
+    - name: Enable TGT delegation
+      ansible.windows.win_command: netdom.exe trust sunagakure.wind.ninja /domain:wind.ninja /EnableTGTDelegation:Yes
+      register: tgtdeleg
+      until: tgtdeleg.rc == 0
+      retries: 2
+      delay: 30
+- name: Enable TGT delegation for parent-child abuse on the Land of Wind domain controller - this can fail, while the trust is still building so we retry a few
+    times
+  hosts: wind-dc1
+  tasks:
+    - name: Enable TGT delegation
+      ansible.windows.win_command: netdom.exe trust wind.ninja /domain:sunagakure.wind.ninja /EnableTGTDelegation:Yes
+      register: tgtdeleg
+      until: tgtdeleg.rc == 0
+      retries: 2
+      delay: 30
+- name: Enable TGT delegation for parent-child abuse on the konoha domain controller - this can fail, while the trust is still building so we retry a few times
+  hosts: konoha-dc1
+  tasks:
+    - name: Enable TGT delegation
+      ansible.windows.win_command: netdom.exe trust konohagakure.fire.ninja /domain:fire.ninja /EnableTGTDelegation:Yes
+      register: tgtdeleg
+      until: tgtdeleg.rc == 0
+      retries: 2
+      delay: 30
+- name: Enable TGT delegation for parent-child abuse on the fire domain controller - this can fail, while the trust is still building so we retry a few times
+  hosts: fire-dc1
+  tasks:
+    - name: Enable TGT delegation
+      ansible.windows.win_command: netdom.exe trust fire.ninja /domain:konohagakure.fire.ninja /EnableTGTDelegation:Yes
+      register: tgtdeleg
+      until: tgtdeleg.rc == 0
+      retries: 2
+      delay: 30
+- name: Enable TGT delegation for external trust on the fire domain controller - this can fail, while the trust is still building so we retry a few times
+  hosts: fire-dc1
+  tasks:
+    - name: Enable TGT delegation
+      ansible.windows.win_command: netdom.exe trust fire.ninja /domain:otogakure.ninja /EnableTGTDelegation:Yes
+      register: tgtdeleg
+      until: tgtdeleg.rc == 0
+      retries: 2
+      delay: 30
+- name: Enable TGT delegation for external trust on the oto domain controller - this can fail, while the trust is still building so we retry a few times
+  hosts: oto-dc1
+  tasks:
+    - name: Enable TGT delegation
+      ansible.windows.win_command: netdom.exe trust otogakure.ninja /domain:fire.ninja /EnableTGTDelegation:Yes
+      register: tgtdeleg
+      until: tgtdeleg.rc == 0
+      retries: 2
+      delay: 30
+- name: Reboot all DCs to apply deleg settings
+  hosts: dc
+  tasks:
+    - name: Reboot
+      ansible.windows.win_reboot:
+    - name: Wait for machines to come back online
+      ansible.builtin.wait_for_connection:
+        delay: 10
+        timeout: 300

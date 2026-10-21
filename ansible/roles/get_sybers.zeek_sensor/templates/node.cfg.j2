@@ -1,0 +1,25 @@
+{{ ansible_managed | comment }}
+{% for iface in zeek_sensor_effective_interfaces %}
+{% endfor %}
+{% if zeek_sensor_effective_interfaces | length == 1 %}
+[zeek]
+type=standalone
+host=localhost
+interface={{ zeek_sensor_effective_interfaces[0] }}
+{% else %}
+[logger]
+type=logger
+host=localhost
+[manager]
+type=manager
+host=localhost
+[proxy-1]
+type=proxy
+host=localhost
+{% for iface in zeek_sensor_effective_interfaces %}
+[worker-{{ iface | regex_replace('[^A-Za-z0-9]', '_') }}]
+type=worker
+host=localhost
+interface={{ iface }}
+{% endfor %}
+{% endif %}

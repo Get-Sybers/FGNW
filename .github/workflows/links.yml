@@ -1,0 +1,45 @@
+---
+# Nightly lychee run over the whole repository; broken links are reported into
+# a single "Link checker report" issue (opened, then updated in place on later
+# runs), and the job itself stays green so a transient outage is not recorded
+# as a red run.
+name: Links
+on:
+  schedule:
+    - cron: "45 17 * * *"
+  workflow_dispatch:
+permissions: {}
+jobs:
+  links:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Link checker
+        id: lychee
+        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
+        with:
+          args: "--no-progress ."
+          output: lychee-report.md
+          fail: false
+      - name: Open or update the report issue
+        if: steps.lychee.outputs.exit_code != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LABEL: link-checker
+        run: |
+          gh label create "$LABEL" --force --color FBCA04 \
+            --description "Automated lychee link-check report" >/dev/null 2>&1 || true
+          number="$(gh issue list --state open --label "$LABEL" --limit 1 \
+            --json number --jq '.[0].number // empty')"
+          if [ -n "$number" ]; then
+            gh issue edit "$number" --title "Link checker report" --body-file lychee-report.md
+          else
+            gh issue create --title "Link checker report" --label "$LABEL" \
+              --body-file lychee-report.md
+          fi

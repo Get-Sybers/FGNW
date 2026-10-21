@@ -1,0 +1,16 @@
+---
+fgnw_themed_sites_root: /var/www/sites
+fgnw_themed_sites_nginx_conf: /etc/nginx/sites-available/FGNW-themed-sites.conf
+fgnw_themed_sites_nginx_link: /etc/nginx/sites-enabled/FGNW-themed-sites.conf
+fgnw_themed_sites_village_colors:
+  Hidden Leaf Village: "#2f6b3a"
+  Hidden Sand Village: "#b8860b"
+  Hidden Mist Village: "#2b7a78"
+  Hidden Cloud Village: "#2f6fa8"
+  Hidden Rock Village: "#6b5b45"
+  Hidden Rain Village: "#34495e"
+  Hidden Sound Village: "#6a2ca0"
+  Hidden Waterfall Village: "#1a9e9e"
+  Hidden Grass Village: "#5c8a3a"
+  Land of Iron: "#6c7a89"
+  Akatsuki: "#4a0e0e"

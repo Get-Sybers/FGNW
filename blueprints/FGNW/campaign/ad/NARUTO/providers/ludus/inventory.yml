@@ -1,0 +1,64 @@
+[default]
+; Note: ansible_host *MUST* be an IPv4 address. RANGENUMBER -> range 2nd octet.
+;
+; AD-BUILD inventory (Windows AD hosts ONLY). Consumed by the Shinju AD chain.
+; The chain's plays load the AD data model (config.json) via vars_files and target the
+; Windows AD host groups, so ONLY Windows AD members may live here. Linux infra (attacker/ninjasploitable), the
+; GHOSTS-client aliases, and the Exchange (OWA) aliases are addressed by real hostname in
+; the separate post-deploy inventory (inventory-infra.yml) and would break the AD chain
+; if present here (SSH fact-gather / duplicate hosts).
+;
+; AD hosts are NAMED by dict_key; dns_domain points at the dict_key of that host's DNS
+; server (its DC). Real hostnames live in config.json (lab.hosts[dict_key].hostname).
+;   dc01 fire-dc1 (fire.ninja root, DNS=self)      dc02 konoha-dc1 (child, DNS=dc01)
+;   srv-konoha konoha-mail (DNS=dc02)               srv03..07 konoha-ws1..5 (DNS=dc02)
+;   dc03 wind-dc1 (wind.ninja root, DNS=self)      dc04 suna-dc1 (child, DNS=dc03)
+;   (srv02 suna-ws1 + srv-suna suna-mail are macOS now — see inventory-infra.yml [macos_dev])
+;   dc05 oto-dc1 (otogakure.ninja root, DNS=self)  srv08 oto-ws1 (DNS=dc05)  srv-oto oto-mail (DNS=dc05)
+;   dc06 akatsuki-dc1 (akatsuki.dark root, DNS=self) srv09/10 akatsuki-ws1/2 (DNS=dc06)  srv-akatsuki dark-mail (DNS=dc06)
+; ------------------------------------------------ fire.ninja / konohagakure — VLAN 10
+dc01 ansible_host=10.RANGENUMBER.10.15 dns_domain=dc01 dict_key=dc01
+dc02 ansible_host=10.RANGENUMBER.10.10 dns_domain=dc01 dict_key=dc02
+srv-konoha ansible_host=10.RANGENUMBER.10.20 dns_domain=dc02 dict_key=srv-konoha
+srv03 ansible_host=10.RANGENUMBER.10.21 dns_domain=dc02 dict_key=srv03
+srv04 ansible_host=10.RANGENUMBER.10.22 dns_domain=dc02 dict_key=srv04
+srv05 ansible_host=10.RANGENUMBER.10.23 dns_domain=dc02 dict_key=srv05
+srv06 ansible_host=10.RANGENUMBER.10.24 dns_domain=dc02 dict_key=srv06
+srv07 ansible_host=10.RANGENUMBER.10.25 dns_domain=dc02 dict_key=srv07
+; ------------------------------------------------ wind.ninja / sunagakure — VLAN 20
+dc03 ansible_host=10.RANGENUMBER.20.15 dns_domain=dc03 dict_key=dc03
+dc04 ansible_host=10.RANGENUMBER.20.10 dns_domain=dc03 dict_key=dc04
+; srv02 (suna-ws1) and srv-suna (suna-mail) are macOS now — they bind to sunagakure.wind.ninja
+; via dsconfigad after Phase 3, not built by the Shinju Windows chain. See providers/ludus/
+; inventory-infra.yml [macos_dev]. The two Sand DCs (dc03/dc04) stay Windows.
+; ------------------------------------------------ otogakure.ninja — VLAN 30
+dc05 ansible_host=10.RANGENUMBER.30.10 dns_domain=dc05 dict_key=dc05
+srv08 ansible_host=10.RANGENUMBER.30.11 dns_domain=dc05 dict_key=srv08
+srv-oto ansible_host=10.RANGENUMBER.30.20 dns_domain=dc05 dict_key=srv-oto
+; ------------------------------------------------ akatsuki.dark — VLAN 87
+dc06 ansible_host=10.RANGENUMBER.87.10 dns_domain=dc06 dict_key=dc06
+srv09 ansible_host=10.RANGENUMBER.87.11 dns_domain=dc06 dict_key=srv09
+srv10 ansible_host=10.RANGENUMBER.87.12 dns_domain=dc06 dict_key=srv10
+srv-akatsuki ansible_host=10.RANGENUMBER.87.20 dns_domain=dc06 dict_key=srv-akatsuki
+[all:vars]
+; domain_name : folder inside ad/
+domain_name=NARUTO
+force_dns_server=yes
+dns_server=10.RANGENUMBER.10.254
+two_adapters=no
+nat_adapter=Ethernet
+domain_adapter=Ethernet
+; winrm connection (windows) — this range listens on WinRM https/5986 (5985 closed);
+; pin port+scheme or ansible defaults to 5985 and fails to connect.
+ansible_user=localuser
+ansible_password=password
+ansible_connection=winrm
+ansible_port=5986
+ansible_winrm_scheme=https
+ansible_winrm_server_cert_validation=ignore
+ansible_winrm_operation_timeout_sec=400
+ansible_winrm_read_timeout_sec=500
+; proxy settings (the lab needs internet for some installs; set a proxy here if behind one)
+enable_http_proxy=no
+ad_http_proxy=http://x.x.x.x:xxxx
+ad_https_proxy=http://x.x.x.x:xxxx

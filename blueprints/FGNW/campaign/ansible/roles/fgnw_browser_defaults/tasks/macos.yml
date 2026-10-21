@@ -1,0 +1,76 @@
+---
+# macOS (Firefox + Chrome) half of fgnw_browser_defaults. Consumes fgnw_browser_defaults_homepage and
+# fgnw_browser_defaults_bookmark_list set by tasks/main.yml. Logic is unchanged from the old
+# fgnw_mac_browser_defaults role — this file replaces it after the OS merge.
+#
+# Firefox: /Applications/Firefox.app/Contents/Resources/distribution/policies.json
+#          (the macOS app-bundle distribution location — the Linux/Windows path under
+#          /Library/Application Support/Mozilla/distribution is NOT read by macOS Firefox).
+#          Carries Homepage + ManagedBookmarks shaped {name, url}.
+# Chrome : /Library/Managed Preferences/com.google.Chrome.plist
+#          (CFPreferences managed-policies plist; cfprefsd exposes this to Chrome as forced
+#          policies). Carries HomepageLocation + RestoreOnStartup=4 — the macOS equivalent
+#          of the HKLM keys windows.yml writes.
+- name: "macos | Ensure the Firefox app-bundle distribution directory exists"
+  ansible.builtin.file:
+    path: /Applications/Firefox.app/Contents/Resources/distribution
+    state: directory
+    mode: "0755"
+  become: true
+
+# Firefox's ManagedBookmarks policy wants each entry as {name, url}; the village corpus
+# stores entries as {category, title, url} with bare hostnames, so map title -> name and
+# prepend http:// so Firefox treats each as a valid URL. The mapping is rendered as JSON
+# into policies.json below; no intermediate set_fact needed.
+- name: "macos | Render the Firefox enterprise policies.json"
+  ansible.builtin.copy:
+    content: |
+      {
+        "policies": {
+          "Homepage": {
+            "URL": "{{ fgnw_browser_defaults_homepage }}",
+            "Locked": false,
+            "StartPage": "homepage"
+          },
+          "ManagedBookmarks": [
+            {"toplevel_name": "{{ fgnw_browser_defaults_village }}"}
+            {% for b in fgnw_browser_defaults_bookmark_list -%}
+            , {"name": {{ b.title | to_json }}, "url": {{ ('http://' ~ b.url) | to_json }}}
+            {% endfor %}
+          ]
+        }
+      }
+    dest: /Applications/Firefox.app/Contents/Resources/distribution/policies.json
+    mode: "0644"
+  become: true
+
+- name: "macos | Ensure the Chrome managed-policies directory exists"
+  ansible.builtin.file:
+    path: /Library/Managed Preferences
+    state: directory
+    mode: "0755"
+  become: true
+
+- name: "macos | Write the Chrome managed-preferences plist (homepage + startup URL)"
+  ansible.builtin.copy:
+    content: |
+      <?xml version="1.0" encoding="UTF-8"?>
+      <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+        "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+      <plist version="1.0">
+      <dict>
+        <key>HomepageLocation</key>
+        <string>{{ fgnw_browser_defaults_homepage }}</string>
+        <key>HomepageIsNewTabPage</key>
+        <false/>
+        <key>RestoreOnStartup</key>
+        <integer>4</integer>
+        <key>RestoreOnStartupURLs</key>
+        <array>
+          <string>{{ fgnw_browser_defaults_homepage }}</string>
+        </array>
+      </dict>
+      </plist>
+    dest: /Library/Managed Preferences/com.google.Chrome.plist
+    mode: "0644"
+  become: true

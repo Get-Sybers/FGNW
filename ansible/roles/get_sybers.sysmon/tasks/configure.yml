@@ -1,0 +1,11 @@
+---
+- name: "configure | Deploy the ACSC Sysmon config (Australian Cyber Security Centre / cyber.gov.au baseline)"
+  ansible.windows.win_copy:
+    src: acsc-sysmon-config.xml
+    dest: C:\Sysmon\sysmonconfig.xml
+    backup: true
+  register: sysmon_config_copy
+- name: "configure | Read whether the Sysmon64 service is already installed"
+  ansible.windows.win_service_info:
+    name: Sysmon64
+  register: sysmon64_info

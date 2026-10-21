@@ -1,0 +1,20 @@
+---
+# Thin wrapper around Apple's own `dsconfigad` command — the macOS-supported way to make a
+# Mac a client of a Windows AD domain. The role performs the bind only when the host is not
+# already bound; a re-run is a no-op.
+#
+# Credentials are NOT carried in defaults — the play passes them in via role vars (same
+# pattern the FGNW-exchange.yml play uses for its lab principal). The DC's address and DNS
+# resolution are provided by Ludus's VLAN networking; this role does not change the
+# resolver.
+fgnw_mac_dsconfigad_domain: sunagakure.wind.ninja
+
+# AD computer object name. AD caps the pre-Windows-2000 name at 15 chars.
+fgnw_mac_dsconfigad_computer: "{{ (inventory_hostname | upper)[:15] }}"
+
+# Optional OU path. Empty = Apple's default (the Computers container of the target domain).
+fgnw_mac_dsconfigad_ou: ""
+
+# Required at play-time, left blank here so a missing value fails loudly.
+fgnw_mac_dsconfigad_admin_user: ""
+fgnw_mac_dsconfigad_admin_password: ""

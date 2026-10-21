@@ -1,0 +1,12 @@
+Before opening a pull request, read CONTRIBUTING.md: every commit is signed,
+every pull request passes `make conform`, and a change to the source manifest,
+the blueprint, the version pins or the gate is reviewed by the owners.
+
+Maintainer
+----------
+
+Committers              : the @get-sybers/owners team (see .github/CODEOWNERS)
+Send pull requests at   : https://github.com/Get-Sybers/FGNW
+Report vulnerabilities  : Security → Report a vulnerability on the repository (see SECURITY.md)
+Git location            : https://github.com/Get-Sybers/FGNW
+Ludus source            : ludus source add https://github.com/Get-Sybers/FGNW --blueprints FGNW

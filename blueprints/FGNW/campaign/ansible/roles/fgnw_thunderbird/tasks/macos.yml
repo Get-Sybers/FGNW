@@ -1,0 +1,19 @@
+---
+# macOS branch: Thunderbird itself was installed as a Homebrew cask in Phase 1c
+# (FGNW-mac-dev.yml -> homebrew_casks: [thunderbird]), because Phase 2 containment
+# seals internet egress and a `brew install --cask` would fail at this point. This
+# branch only drops the enterprise policies.json alongside the app bundle, which
+# Thunderbird reads at launch.
+- name: "macos | Ensure the Thunderbird enterprise policies dir exists"
+  ansible.builtin.file:
+    path: "{{ fgnw_thunderbird_mac_distribution_dir }}"
+    state: directory
+    mode: "0755"
+  become: true
+
+- name: "macos | Install the Thunderbird policies.json (account preconfiguration)"
+  ansible.builtin.copy:
+    dest: "{{ fgnw_thunderbird_mac_distribution_dir }}/policies.json"
+    mode: "0644"
+    content: "{{ lookup('template', 'policies.json.j2') }}"
+  become: true

@@ -1,0 +1,32 @@
+---
+acsc_sysmon_profile: guest
+acsc_sysmon_container_policy: ignore
+acsc_sysmon_artefacts: []
+acsc_sysmon_stage_dir: /var/cache/get-sybers/audit-logging
+acsc_sysmon_node_stage_dir: /var/cache/get-sybers/audit-logging
+acsc_sysmon_config_path: /etc/sysmon/config.xml
+acsc_sysmon_schema_version: "4.90"
+acsc_sysmon_hash_algorithms: sha256
+# Destination prefixes the hypervisor profile leaves out of NetworkConnect: the
+# RFC 5737 documentation ranges the examples use plus loopback. Operators add
+# their own management and storage networks.
+acsc_sysmon_excluded_dest_prefixes:
+  - "192.0.2."
+  - "203.0.113."
+  - "127."
+  - "::1"
+acsc_sysmon_watched_paths:
+  - /etc/
+  - /root/.ssh/
+  - /usr/local/sbin/
+  - /usr/local/bin/
+  - /var/spool/cron/
+  - /lib/systemd/system/
+acsc_sysmon_manage_retention: true
+acsc_sysmon_journal_storage: persistent
+acsc_sysmon_journal_max_retention: 18month
+acsc_sysmon_journal_max_use: 4G
+acsc_sysmon_journal_keep_free: 2G
+acsc_sysmon_journal_max_file_size: 256M
+acsc_sysmon_validate_config: true
+acsc_sysmon_validate_command: "xmllint --noout %s"

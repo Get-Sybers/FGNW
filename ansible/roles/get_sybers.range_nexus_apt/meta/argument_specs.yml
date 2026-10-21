@@ -1,0 +1,29 @@
+---
+argument_specs:
+  main:
+    short_description: Repoint an apt-based range VM at the Nexus apt proxies so apt works under containment
+    description:
+      - Writes Nexus proxy sources for the detected distro (Debian, Kali), disables the stock public sources, optionally relaxes apt's Valid-Until date check
+        for range clock skew, and refreshes the cache. A distro with no Nexus base-OS proxy (e.g. Ubuntu) ends the host early.
+    options:
+      range_nexus_apt_base:
+        type: str
+        default: http://192.0.2.2:8081/repository
+        description:
+          - Base URL of the range's Nexus repository endpoint. The per-distro deb lines are built from this.
+      range_nexus_apt_sources:
+        type: dict
+        description:
+          - Per-distro Nexus apt source lines, keyed by ansible_distribution (Debian, Kali). Default map lives in defaults/main.yml; a distro absent from the
+            map is skipped (end_host).
+      range_nexus_apt_tolerate_clock_skew:
+        type: bool
+        default: true
+        description:
+          - When true, write /etc/apt/apt.conf.d/99-nexus-clockskew to tolerate a reverted range VM's clock running behind the upstream-dated Release files the
+            Nexus proxies serve.
+      range_nexus_apt_max_future_seconds:
+        type: str
+        default: "86400"
+        description:
+          - Acquire::Max-FutureTime value (seconds) written when clock-skew tolerance is enabled.

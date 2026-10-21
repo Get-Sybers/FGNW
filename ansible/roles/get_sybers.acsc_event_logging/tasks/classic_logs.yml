@@ -1,0 +1,22 @@
+---
+- name: "classic_logs | Set Security log MaxSize to 2 GB (ACSC baseline)"
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Services\EventLog\Security
+    name: MaxSize
+    data: 2147483648
+    type: dword
+  notify: "Apply the classic log sizes with wevtutil"
+- name: "classic_logs | Set Application log MaxSize to 64 MB (ACSC baseline)"
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Services\EventLog\Application
+    name: MaxSize
+    data: 67108864
+    type: dword
+  notify: "Apply the classic log sizes with wevtutil"
+- name: "classic_logs | Set System log MaxSize to 64 MB (ACSC baseline)"
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Services\EventLog\System
+    name: MaxSize
+    data: 67108864
+    type: dword
+  notify: "Apply the classic log sizes with wevtutil"

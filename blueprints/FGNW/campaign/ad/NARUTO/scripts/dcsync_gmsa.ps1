@@ -1,0 +1,97 @@
+$UserName = "gMSA-obelix$"
+$DomainController = "village.sunagakure.wind.ninja"
+$DomainDistinguishedName = (Get-ADDomain -Server $DomainController).DistinguishedName
+$objGroup = Get-ADServiceAccount -Identity $UserName -Server $DomainController
+$extendedrightsmap = @{
+    "Manage Replication Topology" = "1131F6AA-9C07-11D1-F79F-00C04FC2DCD2"
+    "Replicating Directory Changes" = "1131F6AD-9C07-11D1-F79F-00C04FC2DCD2"
+    "Replicating Directory Changes All" = "1131F6AE-9C07-11D1-F79F-00C04FC2DCD2"
+    "Replicating Directory Changes In Filtered Set" = "89E95B76-444D-4C62-991A-0FACEDA6D00E"
+    "Replication Synchronization" = "1131F6AB-9C07-11D1-F79F-00C04FC2DCD2"
+}
+Function ManageReplicationTopology {
+    Param($objGroup, $objOU, $inheritanceType)
+    If ($inheritanceType -eq "Descendents") { $inheritanceType = "All" }
+    ElseIf ($inheritanceType -eq "Children") { $inheritanceType = "None" }
+    $groupSID = New-Object System.Security.Principal.SecurityIdentifier $objGroup.SID
+    $objAcl = Get-Acl $objOU
+    $objAcl.AddAccessRule((New-Object System.DirectoryServices.ActiveDirectoryAccessRule $groupSID,"ExtendedRight","Allow",$extendedrightsmap["Manage Replication Topology"],$inheritanceType,"00000000-0000-0000-0000-000000000000"))
+    try {
+        Set-Acl -AclObject $objAcl -Path $objOU -ErrorAction Stop
+    } catch {
+        Write-Host -ForegroundColor Red "ERROR: Unable to grant Manage Replication Topology permissions."
+    }
+    If (!$error) {
+        Write-Host -ForegroundColor Green "INFORMATION: Granted Manage Replication Topology permissions."
+    }
+}
+Function ReplicatingDirectoryChanges {
+    Param($objGroup, $objOU, $inheritanceType)
+    If ($inheritanceType -eq "Descendents") { $inheritanceType = "All" }
+    ElseIf ($inheritanceType -eq "Children") { $inheritanceType = "None" }
+    $groupSID = New-Object System.Security.Principal.SecurityIdentifier $objGroup.SID
+    $objAcl = Get-Acl $objOU
+    $objAcl.AddAccessRule((New-Object System.DirectoryServices.ActiveDirectoryAccessRule $groupSID,"ExtendedRight","Allow",$extendedrightsmap["Replicating Directory Changes"],$inheritanceType,"00000000-0000-0000-0000-000000000000"))
+    try {
+        Set-Acl -AclObject $objAcl -Path $objOU -ErrorAction Stop
+    } catch {
+        Write-Host -ForegroundColor Red "ERROR: Unable to grant Replicating Directory Changes permissions."
+    }
+    If (!$error) {
+        Write-Host -ForegroundColor Green "INFORMATION: Granted Replicating Directory Changes permissions."
+    }
+}
+Function ReplicatingDirectoryChangesAll {
+    Param($objGroup, $objOU, $inheritanceType)
+    If ($inheritanceType -eq "Descendents") { $inheritanceType = "All" }
+    ElseIf ($inheritanceType -eq "Children") { $inheritanceType = "None" }
+    $groupSID = New-Object System.Security.Principal.SecurityIdentifier $objGroup.SID
+    $objAcl = Get-Acl $objOU
+    $objAcl.AddAccessRule((New-Object System.DirectoryServices.ActiveDirectoryAccessRule $groupSID,"ExtendedRight","Allow",$extendedrightsmap["Replicating Directory Changes All"],$inheritanceType,"00000000-0000-0000-0000-000000000000"))
+    try {
+        Set-Acl -AclObject $objAcl -Path $objOU -ErrorAction Stop
+    } catch {
+        Write-Host -ForegroundColor Red "ERROR: Unable to grant Replicating Directory Changes All permissions."
+    }
+    If (!$error) {
+        Write-Host -ForegroundColor Green "INFORMATION: Granted Replicating Directory Changes All permissions."
+    }
+}
+Function ReplicatingDirectoryChangesInFilteredSet {
+    Param($objGroup, $objOU, $inheritanceType)
+    If ($inheritanceType -eq "Descendents") { $inheritanceType = "All" }
+    ElseIf ($inheritanceType -eq "Children") { $inheritanceType = "None" }
+    $groupSID = New-Object System.Security.Principal.SecurityIdentifier $objGroup.SID
+    $objAcl = Get-Acl $objOU
+    $objAcl.AddAccessRule((New-Object System.DirectoryServices.ActiveDirectoryAccessRule $groupSID,"ExtendedRight","Allow",$extendedrightsmap["Replicating Directory Changes In Filtered Set"],$inheritanceType,"00000000-0000-0000-0000-000000000000"))
+    try {
+        Set-Acl -AclObject $objAcl -Path $objOU -ErrorAction Stop
+    } catch {
+        Write-Host -ForegroundColor Red "ERROR: Unable to grant Replicating Directory Changes In Filtered Set permissions."
+    }
+    If (!$error) {
+        Write-Host -ForegroundColor Green "INFORMATION: Granted Replicating Directory Changes In Filtered Set permissions."
+    }
+}
+Function ReplicationSynchronization {
+    Param($objGroup, $objOU, $inheritanceType)
+    If ($inheritanceType -eq "Descendents") { $inheritanceType = "All" }
+    ElseIf ($inheritanceType -eq "Children") { $inheritanceType = "None" }
+    $groupSID = New-Object System.Security.Principal.SecurityIdentifier $objGroup.SID
+    $objAcl = Get-Acl $objOU
+    $objAcl.AddAccessRule((New-Object System.DirectoryServices.ActiveDirectoryAccessRule $groupSID,"ExtendedRight","Allow",$extendedrightsmap["Replication Synchronization"],$inheritanceType,"00000000-0000-0000-0000-000000000000"))
+    try {
+        Set-Acl -AclObject $objAcl -Path $objOU -ErrorAction Stop
+    } catch {
+        Write-Host -ForegroundColor Red "ERROR: Unable to grant Replication Synchronization permissions."
+    }
+    If (!$error) {
+        Write-Host -ForegroundColor Green "INFORMATION: Granted Replication Synchronization permissions."
+    }
+}
+$OU = "AD:$DomainDistinguishedName"
+ManageReplicationTopology -objGroup $objGroup -objOU $OU -inheritanceType "Descendents"
+ReplicatingDirectoryChanges -objGroup $objGroup -objOU $OU -inheritanceType "Descendents"
+ReplicatingDirectoryChangesAll -objGroup $objGroup -objOU $OU -inheritanceType "Descendents"
+ReplicatingDirectoryChangesInFilteredSet -objGroup $objGroup -objOU $OU -inheritanceType "Descendents"
+ReplicationSynchronization -objGroup $objGroup -objOU $OU -inheritanceType "Descendents"

@@ -1,0 +1,8 @@
+---
+- name: "install-nexus-keyring | Install (nexus) — push the repository signing key"
+  ansible.builtin.copy:
+    src: "{{ zeek_sensor_nexus_keyring_src }}"
+    dest: "{{ zeek_sensor_nexus_keyring }}"
+    owner: root
+    group: root
+    mode: "0644"

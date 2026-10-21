@@ -1,0 +1,4 @@
+---
+- name: "retention-daemon-reload | Retention — reload systemd"
+  ansible.builtin.systemd_service:
+    daemon_reload: true

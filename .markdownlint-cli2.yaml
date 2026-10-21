@@ -1,0 +1,26 @@
+---
+# markdownlint-cli2 — get-sybers Ansible standard (docs/04).
+# Enforces ATX headings, dash bullets, fenced code with a language, and no bare
+# URLs. Prose and tables are not wrapped at a column (the YAML gate owns line
+# length); role READMEs open with a prose summary rather than a heading.
+config:
+  default: true
+  MD013: false # line-length: descriptive prose and tables run long by design
+  MD041: false # first-line-heading: role READMEs open with a prose summary
+  MD033: false # inline HTML: permitted where a table or detail needs it
+  MD024:
+    siblings_only: true # Keep a Changelog repeats section names across versions
+  MD003:
+    style: atx
+  MD004:
+    style: dash
+  MD040: true # fenced code blocks must name a language
+  MD034: true # no bare URLs
+globs:
+  - "**/*.md"
+ignores:
+  - "tests/collections" # the symlink farm that resolves the in-tree collections
+  - ".ansible" # the project-local cache ansible-lint installs the pinned collections into
+  - ".cache"
+  - ".tox"
+  - ".venv"

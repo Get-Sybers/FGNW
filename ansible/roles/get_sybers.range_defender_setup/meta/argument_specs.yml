@@ -1,0 +1,28 @@
+---
+argument_specs:
+  main:
+    short_description: Enable and configure Microsoft Defender on a range Windows VM, then report status
+    description:
+      - Enables the Windows-Defender features, renders and runs a check-then-set Defender configuration script (real-time, cloud-delivered and network
+        protection; sample submission; scheduled quick-scan time), asserts it succeeded, and drops operator onboarding reference files.
+      - Runs at the Ludus user-defined-roles stage (S2).
+    options: &range_defender_setup_options
+      range_defender_setup_dir:
+        type: str
+        default: C:\DefenderSetup
+        description:
+          - Directory on the target VM that holds the generated Configure-Defender.ps1 and README.txt.
+      range_defender_setup_quick_scan_time:
+        type: int
+        default: 120
+        description:
+          - Scheduled Defender quick-scan time, in minutes after midnight (120 = 02:00).
+  install:
+    short_description: Create the setup directory and enable the Windows-Defender features
+    options: *range_defender_setup_options
+  configure:
+    short_description: Render and run the check-then-set Defender configuration script, then assert it succeeded
+    options: *range_defender_setup_options
+  verify:
+    short_description: Report the final Defender setup status
+    options: *range_defender_setup_options

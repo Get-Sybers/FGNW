@@ -1,0 +1,48 @@
+---
+- name: "preflight-postinstall | Preflight — auditctl version"
+  ansible.builtin.command: auditctl -v
+  register: __acsc_auditd_auditctl_v
+  changed_when: false
+  check_mode: false
+- name: "preflight-postinstall | Preflight — auditctl is new enough for the syscalls we name"
+  vars:
+    __ver: >-
+      {{ __acsc_auditd_auditctl_v.stdout
+         | regex_search('([0-9]+\.[0-9]+(\.[0-9]+)?)') | default('', true) }}
+  ansible.builtin.assert:
+    that:
+      - __ver | length > 0
+      - __ver is version(acsc_auditd_min_auditctl_version, '>=')
+    fail_msg: >-
+      auditctl reports '{{ __acsc_auditd_auditctl_v.stdout | trim }}'
+      (parsed: '{{ __ver }}'); this ruleset needs
+      >= {{ acsc_auditd_min_auditctl_version }} because it names openat2,
+      fsconfig, fsmount, move_mount, open_tree and io_uring_setup. On an older
+      libaudit either upgrade, or set acsc_auditd_ignore_errors=true to restore
+      upstream's `-i` — note that `-i` makes the load silently PARTIAL, and the
+      only reason that is survivable here is that tasks/verify.yml asserts every
+      rendered key is present in `auditctl -l` and will fail on the gap.
+    quiet: true
+- name: "preflight-postinstall | Preflight — read UID_MIN from /etc/login.defs"
+  ansible.builtin.slurp:
+    src: /etc/login.defs
+  register: __acsc_auditd_login_defs
+  failed_when: false
+- name: "preflight-postinstall | Preflight — UID_MIN matches acsc_auditd_uid_min"
+  vars:
+    __uid_min: >-
+      {{ (__acsc_auditd_login_defs.content | default('') | b64decode).splitlines()
+         | select('match', '^\s*UID_MIN\s+')
+         | map('regex_replace', '^\s*UID_MIN\s+([0-9]+).*$', '\1')
+         | list }}
+  ansible.builtin.assert:
+    that:
+      - __uid_min | length == 1
+      - __uid_min[0] | int == acsc_auditd_uid_min | int
+    fail_msg: >-
+      /etc/login.defs reports UID_MIN={{ __uid_min | default([]) | join(',') or '(not found)' }}
+      but acsc_auditd_uid_min is {{ acsc_auditd_uid_min }}. Every upstream rule
+      that targets human users is rendered as `-F auid>={{ acsc_auditd_uid_min }}
+      -F auid!=unset`, so a mismatch means those rules quietly match the wrong
+      set of users. Set acsc_auditd_uid_min to this host's real UID_MIN.
+    quiet: true

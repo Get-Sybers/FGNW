@@ -1,0 +1,43 @@
+---
+- name: "retention | /etc/systemd/journald.conf.d exists"
+  ansible.builtin.file:
+    path: /etc/systemd/journald.conf.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+- name: "retention | Write the ACSC journald drop-in"
+  ansible.builtin.copy:
+    dest: /etc/systemd/journald.conf.d/10-acsc-linux-port-sysmon.conf
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      [Journal]
+      Storage={{ acsc_sysmon_journal_storage }}
+      MaxRetentionSec={{ acsc_sysmon_journal_max_retention }}
+      SystemMaxUse={{ acsc_sysmon_journal_max_use }}
+      SystemKeepFree={{ acsc_sysmon_journal_keep_free }}
+      SystemMaxFileSize={{ acsc_sysmon_journal_max_file_size }}
+  notify: Restart journald to load the drop-in
+- name: "retention | Create the persistent journal directory"
+  ansible.builtin.include_tasks: retention-persistent-dir.yml
+  when: acsc_sysmon_journal_storage == 'persistent'
+- name: "retention | Apply the journald restart before reading the effective config back"
+  ansible.builtin.meta: flush_handlers
+- name: "retention | Read back journald's effective config"
+  ansible.builtin.command: systemd-analyze cat-config systemd/journald.conf
+  register: __acsc_journald_effective
+  changed_when: false
+- name: "retention | Assert our values are the effective ones"
+  ansible.builtin.assert:
+    that:
+      - "'MaxRetentionSec=' ~ acsc_sysmon_journal_max_retention in __acsc_journald_effective.stdout"
+      - "'SystemMaxUse=' ~ acsc_sysmon_journal_max_use in __acsc_journald_effective.stdout"
+      - "'Storage=' ~ acsc_sysmon_journal_storage in __acsc_journald_effective.stdout"
+    fail_msg: >-
+      The journald drop-in was written but is not what journald reports as
+      effective. Something later in the drop-in order is overriding it — check
+      `systemd-analyze cat-config systemd/journald.conf` for a file sorting
+      after 10-acsc-linux-port-sysmon.conf.
+    quiet: true

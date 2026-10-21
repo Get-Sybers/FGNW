@@ -1,0 +1,21 @@
+---
+- name: "deploy-tasks | phase5-emulation | Guard: emulation must start inside a contained (sealed) range"
+  ansible.builtin.debug:
+    msg: >-
+      WARNING: range_testing is false — emulation is starting on an UNCONTAINED range.
+      This is not the normal end state. GHOSTS traffic will be generated against an open
+      network, not the sealed posture produced by containment. Set range_testing=true (the
+      default) or run containment first unless this is an explicit dev/debug run.
+  when: not (range_testing | default(true) | bool)
+- name: "deploy-tasks | phase5-emulation | FGNW-ghosts-activity.yml"
+  ansible.builtin.command:
+    argv: [ansible-playbook, -i, "{{ __tmp_infra_inv }}", FGNW-ghosts-activity.yml]
+  args:
+    chdir: "{{ ansible_dir }}"
+  changed_when: true
+- name: "deploy-tasks | phase5-emulation | FGNW-ghosts-npc-setup.yml"
+  ansible.builtin.command:
+    argv: [ansible-playbook, -i, "{{ __tmp_infra_inv }}", FGNW-ghosts-npc-setup.yml]
+  args:
+    chdir: "{{ ansible_dir }}"
+  changed_when: true

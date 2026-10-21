@@ -1,0 +1,30 @@
+---
+- name: "verify-packets | Verify — Zeek has received packets, not merely started"
+  ansible.builtin.assert:
+    that: __zeek_recvd | int > 0
+    fail_msg: >-
+      Zeek is running but its own counters report recvd=0. The service is
+      healthy and the sensor is blind — the exact silent success this role
+      exists to refuse. The capture gate proved
+      {{ zeek_sensor_effective_interfaces | join(', ') }} delivers frames, so
+      the fault is between the interface and the analyser: check node.cfg names
+      the same interfaces ({{ zeek_sensor_cfgdir }}/node.cfg), and check
+      PcapFilter in {{ zeek_sensor_cfgdir }}/zeekctl.cfg is not discarding
+      everything (currently '{{ zeek_sensor_capture_filter | default("", true) }}').
+      Raw netstats: {{ __zeek_netstats.stdout | trim }}
+    quiet: true
+- name: "verify-packets | Verify — locate a live conn.log in the spool"
+  ansible.builtin.command: "find {{ zeek_sensor_spooldir }} -name conn.log -newermt '-1 hour'"
+  register: __zeek_connlog
+  changed_when: false
+  failed_when: false
+- name: "verify-packets | Verify — Zeek is producing connection logs"
+  ansible.builtin.assert:
+    that: __zeek_connlog.stdout_lines | length > 0
+    fail_msg: >-
+      Zeek received {{ __zeek_recvd }} frames but no conn.log has been written
+      under {{ zeek_sensor_spooldir }} in the last hour. The analyser is
+      consuming packets and producing no evidence — check the logging framework
+      settings in {{ zeek_sensor_sitedir }}/local.zeek and
+      `{{ zeek_sensor_bin }} diag`.
+    quiet: true

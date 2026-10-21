@@ -1,0 +1,45 @@
+---
+# Post-containment half of fgnw_mac_ghosts_client. Runs in Phase 4d. Requires prestage.yml
+# to have already installed the client under fgnw_mac_ghosts_client_install_dir (Phase 1c does this
+# while github.com is still reachable).
+- name: "service | Write the ghosts launchd daemon plist"
+  ansible.builtin.copy:
+    content: |
+      <?xml version="1.0" encoding="UTF-8"?>
+      <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+        "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+      <plist version="1.0">
+      <dict>
+        <key>Label</key>
+        <string>{{ fgnw_mac_ghosts_client_daemon_label }}</string>
+        <key>ProgramArguments</key>
+        <array>
+          <string>{{ fgnw_mac_ghosts_client_install_dir }}/ghosts</string>
+        </array>
+        <key>WorkingDirectory</key>
+        <string>{{ fgnw_mac_ghosts_client_install_dir }}</string>
+        <key>RunAtLoad</key>
+        <true/>
+        <key>KeepAlive</key>
+        <true/>
+        <key>StandardOutPath</key>
+        <string>{{ fgnw_mac_ghosts_client_log_dir }}/stdout.log</string>
+        <key>StandardErrorPath</key>
+        <string>{{ fgnw_mac_ghosts_client_log_dir }}/stderr.log</string>
+      </dict>
+      </plist>
+    dest: "/Library/LaunchDaemons/{{ fgnw_mac_ghosts_client_daemon_label }}.plist"
+    mode: "0644"
+    owner: root
+    group: wheel
+  become: true
+
+- name: "service | Bootstrap the ghosts launchd service"
+  ansible.builtin.command:
+    cmd: "launchctl bootstrap system /Library/LaunchDaemons/{{ fgnw_mac_ghosts_client_daemon_label }}.plist"
+  register: __fgnw_mac_ghosts_client_bootstrap
+  changed_when: __fgnw_mac_ghosts_client_bootstrap.rc == 0
+  failed_when: >-
+    __fgnw_mac_ghosts_client_bootstrap.rc != 0
+    and 'service already loaded' not in (__fgnw_mac_ghosts_client_bootstrap.stderr | default(''))
+  become: true

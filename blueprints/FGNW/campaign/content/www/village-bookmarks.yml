@@ -1,0 +1,458 @@
+---
+shared_bookmarks:
+  - category: News
+    title: Breaking news across the five nations
+    url: www.shinobi-world-news.com
+  - category: Missions
+    title: Official D through S rank mission listings
+    url: www.missionboard.net
+  - category: Security
+    title: Public missing-nin registry
+    url: www.bingobookwanted.com
+  - category: Education
+    title: Find your elemental affinity
+    url: www.chakranature-quiz.com
+  - category: Career
+    title: Promotion history and exam schedules
+    url: www.ninjarank-tracker.com
+  - category: Government
+    title: Official five kage summit communiqués
+    url: www.fivekagehq.com
+  - category: Government
+    title: Wartime alliance portal
+    url: www.alliedshinnobiforces.org
+  - category: Reference
+    title: Community-maintained technique database
+    url: www.jutsuencyclopedia.net
+  - category: Reference
+    title: Registered summon animal directory
+    url: www.summoning-contracts.com
+  - category: Lifestyle
+    title: Motivational blog for genin
+    url: www.theninjapath.com
+  - category: Research
+    title: Bloodline limit research and registry
+    url: www.kekkei-genkai.org
+  - category: Security
+    title: Jinchuriki monitoring network
+    url: www.tailed-beast-watch.net
+  - category: Medical
+    title: Peer reviewed medical ninjutsu papers
+    url: www.chakramedical-journal.com
+  - category: Education
+    title: Fuinjutsu theory and tutorials
+    url: www.sealmaster.net
+  - category: Government
+    title: Official village headband issuance portal
+    url: www.headband-registry.gov
+  - category: Career
+    title: Live leaderboard during exams
+    url: www.chunin-exam-results.com
+  - category: Social
+    title: Jiraiya research site
+    url: www.shinobi-dating.com
+  - category: Education
+    title: Tips for detecting illusions
+    url: www.genjutsu-breakers-forum.com
+  - category: Medical
+    title: Tsunade-approved medical portal
+    url: www.medic-nin-network.com
+  - category: Tourism
+    title: Mount Myoboku visitor information
+    url: www.toad-mountain-tourism.com
+  - category: Tourism
+    title: Katsuyu habitat awareness page
+    url: www.slug-shikkotsu-forest.com
+  - category: Tourism
+    title: Ryuchi Cave unofficial tour guide
+    url: www.snakecave-ryuchi.com
+  - category: Shopping
+    title: Kunai shuriken and wire bulk orders
+    url: www.shinobi-equipment-mart.com
+  - category: Food
+    title: Naruto definitive ramen ranking blog
+    url: www.ramen-reviews.com
+  - category: Shopping
+    title: Grey market weapons supplier
+    url: www.ninja-tool-blackmarket.dark
+  - category: Lifestyle
+    title: Existential blog popular in Rain Country
+    url: www.philosophyofpain.com
+  - category: Memorial
+    title: Fourth Shinobi War remembrance site
+    url: www.greatninja-war-memorial.org
+  - category: Education
+    title: Mount Myoboku certified training guides
+    url: www.sage-mode-tutorials.com
+  - category: Forums
+    title: Hagoromo theorist community
+    url: www.otsutsuki-conspiracy.net
+village_bookmarks:
+  Akatsuki:
+    - category: Intranet
+      title: Member-only operations portal
+      url: www.akatsuki-intranet.dark
+    - category: Missions
+      title: Target tracking and seal procedures
+      url: www.jinchuriki-extraction.akatsuki
+    - category: Entertainment
+      title: Tobi personal comedy blog
+      url: www.tobi-is-a-good-boy.com
+    - category: Lifestyle
+      title: Philosophical propaganda outlet
+      url: www.painispeace.rain
+    - category: Missions
+      title: Kakuzu personal bounty tracking ledger
+      url: www.bountyhunter-kakuzu.com
+    - category: Entertainment
+      title: Deidara explosive art portfolio
+      url: www.art-is-explosion.com
+    - category: Entertainment
+      title: Sasori puppet collection showcase
+      url: www.puppeteer-sasori.com
+    - category: Security
+      title: Itachi encrypted communication channel
+      url: www.crows-and-crows.dark
+    - category: Security
+      title: Zetsu information brokerage
+      url: www.zerowaste-zetsu.com
+    - category: Shopping
+      title: Unofficial merchandise site
+      url: www.akatsuki-ring-shop.com
+    - category: Reference
+      title: Outer Path statue upkeep portal
+      url: www.gedo-statue-maintenance.akatsuki
+    - category: Missions
+      title: Tailed beast acquisition progress
+      url: www.bijuu-collection-tracker.akatsuki
+  Hidden Cloud Village:
+    - category: Intranet
+      title: Kumogakure village intranet
+      url: www.kumo-portal.cloud
+    - category: Government
+      title: Official Raikage bulletins
+      url: www.raikage-office.gov.cloud
+    - category: Education
+      title: A-rank speed enhancement tutorials
+      url: www.lightningarmour-training.com
+    - category: Entertainment
+      title: Killer B official rap mixtape archive
+      url: www.killerb-raps.com
+    - category: Social
+      title: Gyuki appreciation community
+      url: www.eight-tails-fansite.net
+    - category: Education
+      title: Sword and lightning technique forum
+      url: www.cloudkenjutsu.com
+    - category: Reference
+      title: Historical diplomatic record
+      url: www.hyuga-incident-archive.com
+    - category: Security
+      title: Intelligence ops portal restricted
+      url: www.kumo-intel-division.cloud
+    - category: Research
+      title: Darui fan theory site
+      url: www.stormrelease-research.com
+    - category: Education
+      title: Tailed beast host training portal
+      url: www.jinchuriki-program-kumo.cloud
+    - category: News
+      title: High altitude weather forecasts
+      url: www.mountain-weather-kumo.cloud
+    - category: Lifestyle
+      title: Fourth Raikage strength training blog
+      url: www.raikage-fitness-regime.com
+  Hidden Grass Village:
+    - category: Intranet
+      title: Kusagakure village intranet
+      url: www.kusa-portal.grass
+    - category: Government
+      title: Neutrality treaty information
+      url: www.grass-country-neutral.kusa
+    - category: Career
+      title: Chunin exam participant portal
+      url: www.kusa-chunin-exam-team.grass
+    - category: Medical
+      title: Medicinal plant database
+      url: www.grass-country-herbs.kusa
+  Hidden Leaf Village:
+    - category: Intranet
+      title: Konoha village intranet homepage
+      url: www.konoha-portal.leaf
+    - category: Government
+      title: Official Hokage announcements
+      url: www.hokage-office.gov.leaf
+    - category: Lifestyle
+      title: Philosophy blog celebrating the Will of Fire
+      url: www.willoffire.com
+    - category: Medical
+      title: Medical ninja appointment booking
+      url: www.konoha-hospital.med
+    - category: Security
+      title: ANBU internal ops restricted
+      url: www.leafanbu.classified
+    - category: Security
+      title: Danzo ROOT intranet very restricted
+      url: www.rootoperative.dark
+    - category: Reference
+      title: Uchiha history and sharingan records
+      url: www.uchiha-clan-archive.leaf
+    - category: Clan
+      title: Hyuga clan official portal
+      url: www.hyuga-main-branch.leaf
+    - category: Research
+      title: Nara clan strategy papers
+      url: www.nara-shadow-tactics.com
+    - category: Food
+      title: Menu hours and Naruto loyalty card
+      url: www.ichiraku-ramen.com
+    - category: Education
+      title: Student portal and graduation results
+      url: www.konoha-academy.edu
+    - category: Social
+      title: Unofficial fan site for the Konoha 12
+      url: www.konoha12-fanclub.net
+    - category: Missions
+      title: Kakashi mission debriefs rarely updated
+      url: www.team7updates.leaf
+    - category: Lifestyle
+      title: Guy sensei motivational fitness blog
+      url: www.mightyguy-youth.com
+    - category: Lifestyle
+      title: Rock Lee training diary
+      url: www.springtimeofyouth.net
+    - category: Forums
+      title: Uchiha eye technique forum
+      url: www.sharingan-users.net
+    - category: Government
+      title: Naruto campaign site
+      url: www.FGNW-for-hokage.com
+    - category: Security
+      title: T&I division intel portal
+      url: www.konoha-intelligence.leaf
+    - category: Medical
+      title: Medical corps staff intranet
+      url: www.medicalcorps-konoha.med
+    - category: Security
+      title: ANBU black ops secure channel
+      url: www.anbu-black-ops.classified
+  Hidden Mist Village:
+    - category: Intranet
+      title: Kirigakure village intranet
+      url: www.kiri-portal.mist
+    - category: Government
+      title: Official Mizukage directives
+      url: www.mizukage-office.gov.mist
+    - category: Reference
+      title: Archive of the legendary seven blades
+      url: www.sevenswordsmen-legacy.com
+    - category: Social
+      title: Enthusiasts of the sentient sword
+      url: www.samehada-fanclub.net
+    - category: Education
+      title: Mist assassination technique forum
+      url: www.silentkillingtechnique.com
+    - category: Government
+      title: Post-reform transparency portal
+      url: www.bloodymistreform.org
+    - category: Missions
+      title: Hunter-nin mission assignments classified
+      url: www.hunternin-orders.mist
+    - category: Clan
+      title: Liquification technique family portal
+      url: www.hozuki-clan.mist
+    - category: Education
+      title: Blade combat tutorials
+      url: www.mist-swordsmanship.com
+    - category: Government
+      title: Bloodline limit protection registry
+      url: www.kiri-kekkei-genkai-registry.mist
+    - category: Reference
+      title: Historical graduation records
+      url: www.graduation-duel-archive.mist
+    - category: Reference
+      title: Fog and sea navigation maps
+      url: www.mist-navigation-charts.mist
+  Hidden Rain Village:
+    - category: Intranet
+      title: Amegakure village intranet
+      url: www.ame-portal.rain
+    - category: Government
+      title: Pain philosophical edicts
+      url: www.pain-gospel.rain
+    - category: Research
+      title: Theoretical six paths research
+      url: www.rinnegan-studies.com
+    - category: Social
+      title: Konan origami and ninjutsu community
+      url: www.paperangel.rain
+    - category: Memorial
+      title: Tribute to the founder of the original Akatsuki
+      url: www.yahiko-memorial.org
+    - category: Reference
+      title: Original peace mission statement
+      url: www.akatsuki-manifesto.dark
+    - category: Government
+      title: Immigration restriction portal
+      url: www.closed-borders-ame.rain
+    - category: Security
+      title: Amegakure surveillance grid status
+      url: www.rain-sensing-network.rain
+    - category: News
+      title: Perpetual rain forecast
+      url: www.ame-weather-report.rain
+    - category: Forums
+      title: Rinne Rebirth conspiracy forums
+      url: www.nagato-resurrection-theory.com
+  Hidden Rock Village:
+    - category: Intranet
+      title: Iwagakure village intranet
+      url: www.iwa-portal.rock
+    - category: Government
+      title: Official Tsuchikage decrees
+      url: www.tsuchikage-office.gov.rock
+    - category: Research
+      title: Particle style theory papers
+      url: www.dustrelease-research.com
+    - category: Missions
+      title: Demolition unit internal portal
+      url: www.explosion-corps.iwa
+    - category: Social
+      title: Explosive art fan community
+      url: www.deidara-art-appreciation.com
+    - category: Reference
+      title: Historical record of Minatos impact on Iwa
+      url: www.yellowflash-historical.com
+    - category: Reference
+      title: Third Shinobi War documentation
+      url: www.iwa-konoha-war-archive.com
+    - category: Forums
+      title: Kekkei genkai discussion board
+      url: www.lava-release-forum.rock
+    - category: Lifestyle
+      title: Onoki personal levitation blog
+      url: www.flight-jutsu-onoki.com
+    - category: Industry
+      title: Mining and resource extraction portal
+      url: www.earth-country-mining.rock
+    - category: Missions
+      title: Border security mission assignments
+      url: www.iwa-border-patrol.rock
+  Hidden Sand Village:
+    - category: Intranet
+      title: Sunagakure village intranet
+      url: www.suna-portal.sand
+    - category: Government
+      title: Official Kazekage decrees
+      url: www.kazekage-office.gov.sand
+    - category: Education
+      title: Desert combat and survival tips
+      url: www.desertninja-survival.com
+    - category: Forums
+      title: Sasori fans and puppet enthusiasts
+      url: www.puppet-technique-forum.com
+    - category: Memorial
+      title: Tribute to the Third Kazekage
+      url: www.ironsand-legacy.com
+    - category: Social
+      title: Gaara Temari Kankuro fan site
+      url: www.sand-siblings-fanpage.net
+    - category: Education
+      title: Wind nature chakra tutorials
+      url: www.wind-release-training.com
+    - category: Government
+      title: Archived campaign site from his election
+      url: www.gaara-for-kazekage.com
+    - category: Shopping
+      title: Puppet parts requisition portal
+      url: www.suna-puppet-workshop.sand
+    - category: News
+      title: Sand storm and climate alerts
+      url: www.desert-weather-watch.sand
+    - category: Medical
+      title: Sand village medical staff portal
+      url: www.suna-medical-corps.sand
+    - category: Missions
+      title: Gaara bodyguard shift planner
+      url: www.kazekage-guard-scheduling.sand
+  Hidden Sound Village:
+    - category: Intranet
+      title: Otogakure intranet
+      url: www.oto-portal.sound
+    - category: Research
+      title: Immortality and jutsu development blog
+      url: www.orochimaru-research.com
+    - category: Social
+      title: Sound Four fan and support group
+      url: www.cursemark-community.net
+    - category: Reference
+      title: Ryuchi Cave contractor listings
+      url: www.snake-summons-registry.com
+    - category: Social
+      title: Sakon Tayuya Kidomaru Jirobo fan archive
+      url: www.sound-four-fanpage.com
+    - category: Research
+      title: Experiment volunteer portal
+      url: www.bodymodification-oto.sound
+    - category: Forums
+      title: Controversial reanimation debate forum
+      url: www.edo-tensei-ethics.com
+    - category: Medical
+      title: Kabuto medical ninjutsu research notes
+      url: www.kabuto-medic.com
+    - category: Education
+      title: Acoustic technique tutorials
+      url: www.sound-frequency-jutsu.com
+    - category: Security
+      title: Employee loyalty monitoring system
+      url: www.oto-loyalty-tracker.sound
+  Hidden Waterfall Village:
+    - category: Intranet
+      title: Takigakure village intranet
+      url: www.taki-portal.waterfall
+    - category: Reference
+      title: Hero Water handling guidelines
+      url: www.hero-water-safety.taki
+    - category: Security
+      title: Seven tails host monitoring
+      url: www.fuu-jinchuriki-watch.taki
+    - category: Tourism
+      title: Takigakure visitor information
+      url: www.waterfall-country-tourism.com
+    - category: Research
+      title: Seven tails academic papers
+      url: www.chomei-bijuu-research.taki
+  Land of Iron:
+    - category: Intranet
+      title: Land of Iron samurai intranet
+      url: www.landofiron-portal.iron
+    - category: Government
+      title: General Mifune official orders
+      url: www.mifune-command.iron
+    - category: Reference
+      title: Samurai honour code reference
+      url: www.bushido-code-online.com
+    - category: Government
+      title: Explaining the neutral zone to outsiders
+      url: www.no-ninja-jurisdiction.iron
+    - category: Reference
+      title: Certified sword ownership records
+      url: www.samurai-blade-registry.iron
+    - category: Education
+      title: Sword drawing technique guides
+      url: www.iaido-tutorials.com
+    - category: Missions
+      title: Summit security planning portal
+      url: www.five-kage-summit-security.iron
+village_homepage:
+  Akatsuki: www.akatsuki-intranet.dark
+  Hidden Cloud Village: www.kumo-portal.cloud
+  Hidden Grass Village: www.kusa-portal.grass
+  Hidden Leaf Village: www.konoha-portal.leaf
+  Hidden Mist Village: www.kiri-portal.mist
+  Hidden Rain Village: www.ame-portal.rain
+  Hidden Rock Village: www.iwa-portal.rock
+  Hidden Sand Village: www.suna-portal.sand
+  Hidden Sound Village: www.oto-portal.sound
+  Hidden Waterfall Village: www.taki-portal.waterfall
+  Land of Iron: www.landofiron-portal.iron

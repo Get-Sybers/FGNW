@@ -1,0 +1,9 @@
+---
+- name: "preflight-container-warn | Preflight — note eBPF-hostile platform"
+  ansible.builtin.debug:
+    msg: >-
+      virtualization_type
+      '{{ ansible_facts.virtualization_type | default("unknown") }}' — if this CT
+      was not built with the capabilities sysinternalsebpf needs (CAP_BPF /
+      CAP_SYS_ADMIN, bpf(2), tracefs, perf events), the probes will not load.
+      That is a container-build setting, not a Sysmon one. Installing.

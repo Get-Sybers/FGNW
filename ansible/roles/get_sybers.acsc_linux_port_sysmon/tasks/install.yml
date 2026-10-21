@@ -1,0 +1,48 @@
+---
+- name: "install | Create the target staging directory"
+  ansible.builtin.file:
+    path: "{{ acsc_sysmon_node_stage_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0750"
+- name: "install | Push the digest-gated .debs"
+  ansible.builtin.copy:
+    src: "{{ acsc_sysmon_stage_dir }}/{{ item.deb }}"
+    dest: "{{ acsc_sysmon_node_stage_dir }}/{{ item.deb }}"
+    owner: root
+    group: root
+    mode: "0640"
+  loop: "{{ acsc_sysmon_artefacts }}"
+  loop_control: { label: "{{ item.deb }}" }
+- name: "install | Re-verify the pushed artefact digests"
+  ansible.builtin.stat:
+    path: "{{ acsc_sysmon_node_stage_dir }}/{{ item.deb }}"
+    checksum_algorithm: sha256
+  loop: "{{ acsc_sysmon_artefacts }}"
+  loop_control: { label: "{{ item.deb }}" }
+  register: __acsc_sysmon_digest
+  failed_when: __acsc_sysmon_digest.stat.checksum != item.sha256
+- name: "install | Gather installed-package facts"
+  ansible.builtin.package_facts:
+    manager: apt
+- name: "install | Resolve which artefacts are not already at the pinned version"
+  ansible.builtin.set_fact:
+    __acsc_sysmon_to_install: >-
+      {{ __acsc_sysmon_to_install | default([]) + ([item] if item.version not in
+         (ansible_facts.packages[item.name] | default([]) | map(attribute='version') | list)
+         else []) }}
+  loop: "{{ acsc_sysmon_artefacts }}"
+  loop_control: { label: "{{ item.deb }}" }
+- name: "install | Report the install plan"
+  ansible.builtin.debug:
+    msg: >-
+      {{ __acsc_sysmon_to_install | map(attribute='deb') | list | default([]) }}
+      to install;
+      {{ acsc_sysmon_artefacts | map(attribute='deb') | difference(__acsc_sysmon_to_install | map(attribute='deb') | list) }}
+      already at the pinned version.
+- name: "install | Install sysinternalsebpf then sysmonforlinux"
+  ansible.builtin.apt:
+    deb: "{{ acsc_sysmon_node_stage_dir }}/{{ item.deb }}"
+  loop: "{{ __acsc_sysmon_to_install }}"
+  loop_control: { label: "{{ item.deb }}" }

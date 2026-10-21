@@ -1,0 +1,19 @@
+---
+- name: "configure | Create the config directory"
+  ansible.builtin.file:
+    path: "{{ acsc_sysmon_config_path | dirname }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0750"
+- name: "configure | Deploy the ACSC-Linux-Port-Sysmon config"
+  ansible.builtin.template:
+    src: acsc-linux-port-sysmon.xml.j2
+    dest: "{{ acsc_sysmon_config_path }}"
+    owner: root
+    group: root
+    mode: "0640"
+    validate: "{{ acsc_sysmon_validate_command if acsc_sysmon_validate_config | bool else omit }}"
+  register: __acsc_sysmon_cfg
+- name: "configure | Gather service facts (is the unit present yet?)"
+  ansible.builtin.service_facts:

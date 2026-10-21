@@ -1,0 +1,56 @@
+---
+- name: Converge the Default Domain Policy to the lab password/lockout values
+  ansible.windows.win_powershell:
+    script: |
+      [CmdletBinding(SupportsShouldProcess)]
+      param (
+          [String]$LockoutThreshold,
+          [String]$MinPasswordLength,
+          [String]$LockoutDuration,
+          [String]$LockoutObservationWindow,
+          [Boolean]$ComplexityEnabled
+      )
+      $ErrorActionPreference = 'Stop'
+      $Ansible.Changed = $false
+      $wantThreshold   = [Int]$LockoutThreshold
+      $wantLength      = [Int]$MinPasswordLength
+      $wantDuration    = [TimeSpan]$LockoutDuration
+      $wantObservation = [TimeSpan]$LockoutObservationWindow
+      $wantComplexity  = [Boolean]$ComplexityEnabled
+      $wantReversible  = $false
+      $wantMaxAge      = [TimeSpan]'10675199.00:00:00'
+      $domain = (Get-CimInstance -ClassName Win32_ComputerSystem).Domain
+      $current = Get-ADDefaultDomainPasswordPolicy -Identity $domain -AuthType Negotiate
+      $drift = [System.Collections.Generic.List[String]]::new()
+      if ([Int]$current.LockoutThreshold        -ne $wantThreshold)   { $drift.Add('LockoutThreshold') }
+      if ([Int]$current.MinPasswordLength        -ne $wantLength)      { $drift.Add('MinPasswordLength') }
+      if ($current.LockoutDuration               -ne $wantDuration)    { $drift.Add('LockoutDuration') }
+      if ($current.LockoutObservationWindow      -ne $wantObservation) { $drift.Add('LockoutObservationWindow') }
+      if ([Boolean]$current.ComplexityEnabled    -ne $wantComplexity)  { $drift.Add('ComplexityEnabled') }
+      if ([Boolean]$current.ReversibleEncryptionEnabled -ne $wantReversible) { $drift.Add('ReversibleEncryptionEnabled') }
+      if ($current.MaxPasswordAge                -ne $wantMaxAge)      { $drift.Add('MaxPasswordAge') }
+      if ($drift.Count -gt 0) {
+          $Ansible.Changed = $true
+          if ($PSCmdlet.ShouldProcess("Default Domain Policy for $domain", "set $($drift -join ', ')")) {
+              Set-ADDefaultDomainPasswordPolicy -Identity $domain -AuthType Negotiate `
+                  -LockoutThreshold $wantThreshold `
+                  -LockoutDuration $wantDuration `
+                  -LockoutObservationWindow $wantObservation `
+                  -MinPasswordLength $wantLength `
+                  -ComplexityEnabled $wantComplexity `
+                  -ReversibleEncryptionEnabled $wantReversible `
+                  -MaxPasswordAge $wantMaxAge
+          }
+      }
+      $Ansible.Result = @{ drifted_settings = [String[]]$drift }
+    error_action: stop
+    parameters:
+      LockoutThreshold: "{{ password_policy_try_before_lock }}"
+      MinPasswordLength: "{{ password_policy_pass_length }}"
+      LockoutDuration: "{{ password_policy_lock_duration }}"
+      LockoutObservationWindow: "{{ password_policy_lock_observation }}"
+      ComplexityEnabled: "{{ password_policy_complexity }}"
+  register: __pw_policy_result
+  until: __pw_policy_result is succeeded
+  retries: 12
+  delay: 15

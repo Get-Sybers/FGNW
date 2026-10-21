@@ -1,0 +1,149 @@
+---
+- name: Install ADCS on Sand CA host(s)
+  hosts: adcs
+  gather_facts: false
+  vars_files:
+    - "{{ data_path }}/config.json"
+  vars:
+    data_path: ../ad/NARUTO/data
+    adcs_forest_root_domain: wind.ninja
+    adcs_domain_username: "{{ adcs_forest_root_domain }}\\Administrator"
+    adcs_domain_password: "{{ lab.domains[adcs_forest_root_domain].adcs_domain_password }}"
+    ca_common_name: Sunagakure Root CA
+    adcs_ca_web_enrollment: true
+  tasks:
+    - name: Install Enterprise Root CA role/services
+      ansible.builtin.include_role:
+        name: adcs
+      vars:
+        adcs_domain_username: "{{ adcs_domain_username }}"
+        adcs_domain_password: "{{ adcs_domain_password }}"
+      no_log: true
+    - name: Validate ADCS service is installed and running
+      ansible.windows.win_service_info:
+        name: CertSvc
+      register: adcs_certsvc
+      until:
+        - adcs_certsvc.exists | default(false)
+        - (adcs_certsvc.services | default([]) | length) > 0
+        - (adcs_certsvc.services[0].state | default('')) in ['started', 'running']
+      retries: 12
+      delay: 5
+    - name: Fail when CertSvc is not running
+      ansible.builtin.assert:
+        that:
+          - adcs_certsvc.exists | default(false)
+          - adcs_certsvc.services | length > 0
+          - adcs_certsvc.services[0].state in ['started', 'running']
+        fail_msg: "ADCS validation failed: CertSvc service is not running after ADCS install."
+    - name: Validate CA responds to certutil ping
+      ansible.windows.win_powershell:
+        script: |
+          certutil -ping | Out-Null
+          if ($LASTEXITCODE -ne 0) {
+            throw "ADCS validation failed: certutil -ping returned exit code $LASTEXITCODE."
+          }
+      changed_when: false
+      vars:
+        ansible_become: true
+        ansible_become_method: runas
+        ansible_become_user: "{{ adcs_domain_username }}"
+        ansible_become_password: "{{ adcs_domain_password }}"
+      no_log: true
+    - name: Create ESC1 template (SunaVulnUser) if missing
+      ansible.windows.win_powershell:
+        script: |
+          $ErrorActionPreference = 'Stop'
+          $templateName = 'SunaVulnUser'
+          $configNC = ([ADSI]'LDAP://RootDSE').configurationNamingContext
+          $baseDN = "CN=Certificate Templates,CN=Public Key Services,CN=Services,$configNC"
+          $templatesEntry = [ADSI]"LDAP://$baseDN"
+          $existing = [ADSI]"LDAP://CN=$templateName,$baseDN"
+          if ($existing.Guid) { Write-Output 'ADCS_TEMPLATE_EXISTS'; return }
+          $src = [ADSI]"LDAP://CN=User,$baseDN"
+          if (-not $src.Guid) { throw "Source template 'User' was not found in Certificate Templates." }
+          $newTemplate = $templatesEntry.Create('pKICertificateTemplate', "CN=$templateName")
+          $copyAttrs = @('flags','revision','pKIDefaultKeySpec','pKIKeyUsage','pKIMaxIssuingDepth',
+                         'pKICriticalExtensions','pKIExpirationPeriod','pKIOverlapPeriod','pKIExtendedKeyUsage',
+                         'pKIDefaultCSPs','msPKI-RA-Signature','msPKI-Enrollment-Flag','msPKI-Private-Key-Flag',
+                         'msPKI-Certificate-Application-Policy','msPKI-Minimal-Key-Size','msPKI-Template-Schema-Version',
+                         'msPKI-Template-Minor-Revision','msPKI-Cert-Template-OID')
+          foreach ($a in $copyAttrs) {
+            $v = $src.Properties[$a]
+            if ($null -ne $v -and $v.Count -gt 0) { $newTemplate.Properties[$a].Value = $v.Value }
+          }
+          $newTemplate.Properties['displayName'].Value = $templateName
+          $nameFlag = 0
+          if ($src.Properties['msPKI-Certificate-Name-Flag'].Count -gt 0) {
+            $nameFlag = [int]$src.Properties['msPKI-Certificate-Name-Flag'].Value
+          }
+          $newTemplate.Properties['msPKI-Certificate-Name-Flag'].Value = ($nameFlag -bor 1)
+          $newTemplate.SetInfo()
+          Write-Output 'ADCS_TEMPLATE_CREATED'
+      register: adcs_template_create
+      changed_when: "'ADCS_TEMPLATE_CREATED' in (adcs_template_create.stdout | default(''))"
+      vars:
+        ansible_become: true
+        ansible_become_method: runas
+        ansible_become_user: "{{ adcs_domain_username }}"
+        ansible_become_password: "{{ adcs_domain_password }}"
+      no_log: true
+      failed_when: false
+    - name: Publish ESC1 template on the CA if not already published
+      ansible.windows.win_powershell:
+        script: |
+          $templateName = 'SunaVulnUser'
+          Add-PSSnapin AdcsAdministration -ErrorAction SilentlyContinue
+          function Publish-TemplateWithCertutil {
+            param([string]$TemplateToPublish)
+            certutil -setcatemplates +$TemplateToPublish | Out-Null
+            if ($LASTEXITCODE -ne 0) {
+              throw "certutil failed to publish template '$TemplateToPublish' (exit code $LASTEXITCODE)."
+            }
+          }
+          if (Get-Command Get-CATemplate -ErrorAction SilentlyContinue) {
+            $publishedTemplates = @(Get-CATemplate | ForEach-Object { $_.Name })
+            if ($publishedTemplates -notcontains $templateName) {
+              if (Get-Command Add-CATemplate -ErrorAction SilentlyContinue) {
+                try {
+                  Add-CATemplate -Name $templateName -ErrorAction Stop | Out-Null
+                } catch {
+                  throw "Add-CATemplate failed to publish template '$templateName': $($_.Exception.Message)"
+                }
+              } else {
+                Publish-TemplateWithCertutil -TemplateToPublish $templateName
+              }
+              Write-Output 'ADCS_TEMPLATE_PUBLISHED'
+            } else {
+              Write-Output 'ADCS_TEMPLATE_ALREADY_PUBLISHED'
+            }
+          } else {
+            $published = (certutil -catemplates) -join "`n"
+            if ($LASTEXITCODE -ne 0) {
+              throw "certutil failed to list templates (exit code $LASTEXITCODE)."
+            }
+            $escapedTemplateName = [regex]::Escape($templateName)
+            if ($published -notmatch "(?m)^\s*$escapedTemplateName\s*$") {
+              Publish-TemplateWithCertutil -TemplateToPublish $templateName
+              Write-Output 'ADCS_TEMPLATE_PUBLISHED'
+            } else {
+              Write-Output 'ADCS_TEMPLATE_ALREADY_PUBLISHED'
+            }
+          }
+      register: adcs_template_publish
+      changed_when: "'ADCS_TEMPLATE_PUBLISHED' in (adcs_template_publish.stdout | default(''))"
+      vars:
+        ansible_become: true
+        ansible_become_method: runas
+        ansible_become_user: "{{ adcs_domain_username }}"
+        ansible_become_password: "{{ adcs_domain_password }}"
+      no_log: true
+      failed_when: false
+    - name: "Warn if the ESC1 template did not publish (best-effort, #356)"
+      ansible.builtin.debug:
+        msg: >-
+          ESC1 template SunaVulnUser was not published on the CA (needs a minted enterprise OID —
+          The CA itself is healthy; this only affects the optional ESC1 attack path. Continuing.
+      when: >-
+        'ADCS_TEMPLATE_PUBLISHED' not in (adcs_template_publish.stdout | default(''))
+        and 'ALREADY_PUBLISHED' not in (adcs_template_publish.stdout | default(''))

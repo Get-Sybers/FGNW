@@ -1,0 +1,22 @@
+---
+- name: "verify-e2e | Verify (e2e) — is the auditctl execution retrievable?"
+  ansible.builtin.command: "ausearch --input-logs -k audit_tools -ts today"
+  register: __acsc_auditd_v_search
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  retries: 6
+  delay: 5
+  until: "'auditctl' in (__acsc_auditd_v_search.stdout | default(''))"
+- name: "verify-e2e | VERIFY — a real syscall against a watched target was captured"
+  ansible.builtin.assert:
+    that: "'auditctl' in (__acsc_auditd_v_search.stdout | default(''))"
+    success_msg: >-
+      auditd end-to-end proven: execution of a watched binary was captured by
+      the kernel, written by the daemon, and retrieved with ausearch.
+    fail_msg: >-
+      auditd is running and every rule is loaded, but executing a watched binary
+      produced NO retrievable record — the ruleset is loaded and ineffective,
+      which is the worst of the three states because everything else looks
+      healthy. Check `auditctl -s` for a non-zero `lost` counter (backlog
+      overflow), and that /var/log/audit is writable and not full.

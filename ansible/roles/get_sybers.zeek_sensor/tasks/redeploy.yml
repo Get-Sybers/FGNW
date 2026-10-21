@@ -1,0 +1,5 @@
+---
+- name: "redeploy | Restart the sensor"
+  ansible.builtin.systemd_service:
+    name: zeek-sensor
+    state: restarted

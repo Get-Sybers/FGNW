@@ -1,0 +1,11 @@
+---
+- name: Enable Windows Defender features
+  ansible.builtin.include_tasks: install.yml
+- name: Render and run Defender configuration script
+  ansible.builtin.include_tasks: configure.yml
+- name: Report setup status
+  ansible.builtin.include_tasks:
+    file: verify.yml
+    apply:
+      tags: [verify]
+  tags: [verify]

@@ -1,0 +1,19 @@
+---
+ludus_stock_pins_meta:
+  generated_by: scripts/sync-ludus-stock-pins.py
+  do_not_hand_edit: true
+  ludus_ref: 2.2.0
+  upstream: https://gitlab.com/badsectorlabs/ludus/-/raw/2.2.0/ludus-server/ansible/requirements.yml
+ludus_stock_collections:
+  ansible.windows: 2.7.0
+  ansible.posix: 1.6.2
+  ansible.utils: 5.1.2
+  community.general: 10.3.0
+  community.windows: 2.3.0
+  chocolatey.chocolatey: 1.5.3
+  microsoft.ad: 1.8.0
+  vladgh.samba: 3.4.0
+ludus_stock_roles:
+  lae.proxmox: v1.10.0
+  geerlingguy.packer: 1.0.2
+  ansible-thoteam.nexus3-oss: v2.5.2

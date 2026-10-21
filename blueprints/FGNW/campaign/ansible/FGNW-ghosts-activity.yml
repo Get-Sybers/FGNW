@@ -1,0 +1,202 @@
+---
+- name: Seed flagship GHOSTS clients with FGNW persona activity
+  hosts: ghosts_clients
+  vars:
+    ghosts_stop_wait_seconds: 5
+    range_second_octet: "{{ ansible_host.split('.')[1] }}"
+    ghosts_api_root: http://10.{{ range_second_octet }}.99.51:5000/api
+  tasks:
+    - name: Load persona timeline data (generated baseline)
+      ansible.builtin.include_vars:
+        file: "{{ playbook_dir }}/../content/ghosts/persona-timelines.yml"
+        name: fgnw_ghosts
+    - name: Load flagship persona overrides (hand-authored)
+      ansible.builtin.include_vars:
+        file: "{{ playbook_dir }}/../content/ghosts/persona-overrides.yml"
+        name: fgnw_ghosts_ov
+    - name: Fail if this host has no persona defined
+      ansible.builtin.fail:
+        msg: >-
+          No persona for '{{ inventory_hostname }}' in content/ghosts/persona-timelines.yml.
+          Add it (and regenerate the file) or remove the host from [ghosts_clients].
+      when: inventory_hostname not in fgnw_ghosts.ghosts_personas
+    - name: Resolve this host's persona (baseline) and override into template vars
+      ansible.builtin.set_fact:
+        __persona: "{{ fgnw_ghosts.ghosts_personas[inventory_hostname] }}"
+        __ov: "{{ fgnw_ghosts_ov.ghosts_overrides[inventory_hostname] | default({}) }}"
+    - name: Bind persona fields the timeline template consumes
+      ansible.builtin.set_fact:
+        ghosts_browse_urls: "{{ __persona.browse_urls }}"
+        ghosts_ad_domain: "{{ __persona.ad_domain }}"
+        ghosts_owa_user: "{{ __persona.sam }}"
+        ghosts_has_owa_inbox: "{{ __persona.has_owa_inbox }}"
+        ghosts_signature_urls: "{{ __ov.signature_urls | default([]) }}"
+        ghosts_pace: "{{ __ov.pace | default('normal') }}"
+        ghosts_admin_activity: "{{ __ov.admin_activity | default(false) }}"
+        ghosts_submits_reports: "{{ __persona.ad_domain == 'konohagakure.fire.ninja' }}"
+        ghosts_owa_octet: >-
+          {{ {'fire.ninja': 10, 'konohagakure.fire.ninja': 10,
+              'sunagakure.wind.ninja': 20, 'wind.ninja': 20,
+              'otogakure.ninja': 30, 'akatsuki.dark': 87}[__persona.ad_domain] | default(10) }}
+    - name: Bind LOE 2 recon/vuln-scan/DoS legs (Zetsu only)
+      ansible.builtin.set_fact:
+        ghosts_recon_legs: "{{ __ov.recon_legs }}"
+      when: __ov.recon_legs is defined
+    - name: Use ghosts_autologon_override if one was passed
+      ansible.builtin.set_fact:
+        ghosts_autologon_user: "{{ ghosts_autologon_override }}"
+      when: ghosts_autologon_override is defined
+    - name: Otherwise default ghosts_autologon_user to this persona's own domain account
+      ansible.builtin.set_fact:
+        ghosts_autologon_user: "{{ __persona.netbios }}\\{{ __persona.sam }}"
+      when: ghosts_autologon_override is not defined
+    - name: Resolve the timezone that active_hours are expressed in
+      ansible.builtin.set_fact:
+        fgnw_ghosts_tz_offset: "{{ fgnw_ghosts_tz_offset | default(lookup('pipe', 'date +%z'), true) }}"
+    - name: Convert this host's local active_hours into the UTC window GHOSTS expects
+      ansible.builtin.set_fact:
+        ghosts_time_on: "{{ '%02d:%02d:00' | format(__on_utc | int // 60, __on_utc | int % 60) }}"
+        ghosts_time_off: "{{ '%02d:%02d:00' | format(__off_utc | int // 60, __off_utc | int % 60) }}"
+        ghosts_local_window: "{{ __local_on }}-{{ __local_off }} (UTC{{ fgnw_ghosts_tz_offset }})"
+      vars:
+        __local_on: "{{ __ov.active_hours.start | default('08:00:00') }}"
+        __local_off: "{{ __ov.active_hours.end | default('18:00:00') }}"
+        __tz_sign: "{{ 1 if fgnw_ghosts_tz_offset[0] == '+' else -1 }}"
+        __tz_min: "{{ (__tz_sign | int) * ((fgnw_ghosts_tz_offset[1:3] | int) * 60 + (fgnw_ghosts_tz_offset[3:5] | int)) }}"
+        __on_min: "{{ (__local_on.split(':')[0] | int) * 60 + (__local_on.split(':')[1] | int) }}"
+        __off_min: "{{ (__local_off.split(':')[0] | int) * 60 + (__local_off.split(':')[1] | int) }}"
+        __on_utc: "{{ ((__on_min | int) - (__tz_min | int)) % 1440 }}"
+        __off_utc: "{{ ((__off_min | int) - (__tz_min | int)) % 1440 }}"
+    - name: Convert this host's local lunch hour into the UTC dip window GHOSTS expects
+      ansible.builtin.set_fact:
+        ghosts_lunch_on: "{{ '%02d:%02d:00' | format(__lon_utc | int // 60, __lon_utc | int % 60) }}"
+        ghosts_lunch_off: "{{ '%02d:%02d:00' | format(__loff_utc | int // 60, __loff_utc | int % 60) }}"
+        ghosts_lunch_factor: "{{ fgnw_ghosts_lunch_dip | default(4.0) | float }}"
+      vars:
+        __tz_sign: "{{ 1 if fgnw_ghosts_tz_offset[0] == '+' else -1 }}"
+        __tz_min: "{{ (__tz_sign | int) * ((fgnw_ghosts_tz_offset[1:3] | int) * 60 + (fgnw_ghosts_tz_offset[3:5] | int)) }}"
+        __lon_utc: "{{ (720 - (__tz_min | int)) % 1440 }}"
+        __loff_utc: "{{ (780 - (__tz_min | int)) % 1440 }}"
+      when:
+        - (fgnw_ghosts_lunch_dip | default(4.0) | float) > 1.0
+        - >-
+          720 > ((__ov.active_hours.start | default('08:00:00')).split(':')[0] | int) * 60
+          + ((__ov.active_hours.start | default('08:00:00')).split(':')[1] | int)
+        - >-
+          780 < ((__ov.active_hours.end | default('18:00:00')).split(':')[0] | int) * 60
+          + ((__ov.active_hours.end | default('18:00:00')).split(':')[1] | int)
+    - name: Size the after-hours shift
+      ansible.builtin.set_fact:
+        ghosts_night_factor: >-
+          {{ (((1440 - (__day_min | int)) / ((__day_min | int) or 1440)) * ((1.0 - (__p | float)) / ((__p | float) or 1.0))) | round(2) }}
+      vars:
+        __p: "{{ fgnw_ghosts_night_share | default(0.10) | float }}"
+        __day_min: "{{ ((__off_m | int) - (__on_m | int)) % 1440 }}"
+        __on_m: "{{ (ghosts_time_on.split(':')[0] | int) * 60 + (ghosts_time_on.split(':')[1] | int) }}"
+        __off_m: "{{ (ghosts_time_off.split(':')[0] | int) * 60 + (ghosts_time_off.split(':')[1] | int) }}"
+      when:
+        - (fgnw_ghosts_night_share | default(0.10) | float) > 0
+        - (((ghosts_time_off.split(':')[0] | int) * 60 + (ghosts_time_off.split(':')[1] | int)) - ((ghosts_time_on.split(':')[0] | int) * 60 +
+          (ghosts_time_on.split(':')[1] | int))) % 1440 <= 1380
+    - name: Show the rendered activity window
+      ansible.builtin.debug:
+        msg: >-
+          {{ inventory_hostname }}: local {{ ghosts_local_window }} -> UTC {{ ghosts_time_on }}-{{ ghosts_time_off }};
+          after-hours shift {{ ('UTC ' ~ ghosts_time_off ~ '-' ~ ghosts_time_on ~ ' at ' ~ ghosts_night_factor ~ 'x delays ('
+             ~ ((fgnw_ghosts_night_share | default(0.10) | float) * 100) | round(0) | int ~ '% of activity)')
+             if ghosts_night_factor is defined else 'none (persona runs ~24/7)' }}
+    - name: Check that GHOSTS is installed
+      ansible.windows.win_stat:
+        path: C:\ludus\ghosts-client\ghosts.exe
+      register: fgnw_ghosts_client
+    - name: Fail if the GHOSTS client role has not been applied yet
+      ansible.builtin.fail:
+        msg: GHOSTS is not installed on {{ inventory_hostname }} yet. Deploy the range with jasonmull.ludus_ghosts_client before running this playbook.
+      when: not fgnw_ghosts_client.stat.exists
+    - name: Validate the IPv4 ansible_host used to derive the range number
+      ansible.builtin.assert:
+        that:
+          - ansible_host is match('^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$')
+        fail_msg: This playbook expects ansible_host to be an IPv4 address so it can derive the range second octet.
+    - name: Point application.json at the dedicated GHOSTS API server
+      community.windows.win_lineinfile:
+        path: C:\ludus\ghosts-client\config\application.json
+        regexp: '^\s*"ApiRootUrl":'
+        line: '  "ApiRootUrl": "{{ ghosts_api_root }}",'
+        backup: true
+    - name: Preflight the REQUIRED attacker sinkhole landing page (hard)
+      ansible.windows.win_uri:
+        url: http://10.{{ range_second_octet }}.99.50/
+        method: GET
+        status_code: 200
+      register: fgnw_ghosts_sinkhole
+      retries: 6
+      delay: 10
+      until: (fgnw_ghosts_sinkhole.status_code | default(0)) == 200
+    - name: Preflight this persona's own-forest OWA login page by hostname (best-effort -- warn only)
+      ansible.windows.win_uri:
+        url: https://mail.{{ ghosts_ad_domain }}/owa/auth/logon.aspx
+        method: GET
+        status_code: 200
+        validate_certs: false
+      register: fgnw_ghosts_owa
+      failed_when: false
+    - name: Warn if this persona's forest OWA is not reachable (expected where that forest has no -owa VM)
+      ansible.builtin.debug:
+        msg: >-
+          [warn] OWA login page https://mail.{{ ghosts_ad_domain }}/owa/auth/logon.aspx returned
+          {{ fgnw_ghosts_owa.status_code | default('no connection / DNS name not registered') }};
+          this persona's webmail browsing will no-op. Expected when this forest has no -owa VM in the
+          deployed range (the small range only has konoha-mail, so mail.<forest> is only registered for
+          Leaf). If you expected OWA here, check konoha-mail's Exchange install and that the dnsforwarder
+          role registered mail.{{ ghosts_ad_domain }}.
+      when: (fgnw_ghosts_owa.status_code | default(0)) != 200
+    - name: Deploy the persona's FGNW GHOSTS timeline
+      ansible.windows.win_template:
+        src: templates/FGNW-ghosts.timeline.json.j2
+        dest: C:\ludus\ghosts-client\config\timeline.json
+    - name: Stop any existing GHOSTS process
+      ansible.windows.win_shell: |
+        $proc = Get-Process -Name ghosts -ErrorAction SilentlyContinue
+        if ($proc) {
+          $proc | Stop-Process -ErrorAction SilentlyContinue
+          Start-Sleep -Seconds {{ ghosts_stop_wait_seconds }}
+          $procStillRunning = Get-Process -Name ghosts -ErrorAction SilentlyContinue
+          if ($procStillRunning) {
+            $procStillRunning | Stop-Process -Force
+          }
+          Write-Output 'stopped'
+        } else {
+          Write-Output 'not-running'
+        }
+      register: fgnw_ghosts_stop
+      changed_when: "'stopped' in fgnw_ghosts_stop.stdout"
+    - name: Compute this host's deterministic boot stagger (H6, 0–120s)
+      ansible.builtin.set_fact:
+        ghosts_boot_stagger_seconds: "{{ (inventory_hostname | hash('md5'))[:8] | int(0, 16) % 121 }}"
+    - name: Start GHOSTS with the new timeline (interactive scheduled task)
+      ansible.windows.win_shell: |
+        $a = New-ScheduledTaskAction -Execute 'C:\ludus\ghosts-client\ghosts.exe' -WorkingDirectory 'C:\ludus\ghosts-client'
+        $t = New-ScheduledTaskTrigger -AtLogOn
+        $t.Delay = 'PT{{ ghosts_boot_stagger_seconds }}S'
+        $p = New-ScheduledTaskPrincipal -UserId '{{ ghosts_autologon_user | default("localuser") }}' -LogonType Interactive -RunLevel Limited
+        Register-ScheduledTask -TaskName 'ghosts' -Action $a -Trigger $t -Principal $p -Force | Out-Null
+        Start-Sleep -Seconds {{ ghosts_boot_stagger_seconds }}
+        Start-ScheduledTask -TaskName 'ghosts'
+        Start-Sleep -Seconds 8
+        if (Get-Process -Name ghosts -ErrorAction SilentlyContinue) {
+          Write-Output 'started'
+        } else {
+          Write-Error 'ghosts.exe did not start in the interactive session'
+          exit 1
+        }
+      register: fgnw_ghosts_launch
+      changed_when: "'started' in fgnw_ghosts_launch.stdout"
+    - name: Confirm GHOSTS restarted
+      ansible.windows.win_shell: |
+        Get-Process -Name ghosts -ErrorAction Stop | Select-Object -First 1 -ExpandProperty ProcessName
+      register: fgnw_ghosts_started
+      changed_when: false
+      retries: 5
+      delay: 2
+      until: fgnw_ghosts_started.rc == 0 and 'ghosts' in fgnw_ghosts_started.stdout.lower()

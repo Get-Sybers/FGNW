@@ -1,0 +1,32 @@
+---
+namespace: get_sybers
+name: range
+version: 0.1.0
+readme: README.md
+authors:
+  - Get-Sybers <99623331+Get-Sybers@users.noreply.github.com>
+description: >-
+  Range-orchestration foundation for the Ludus platform: authenticate, set range
+  config, deploy and poll to SUCCESS (ERR-13-guarded), enter and verify
+  containment (testing mode), positive+negative range verification, a fused
+  range-health diagnostic, and ERR-14-correct opt-in teardown. Drives the ludus
+  CLI / v2 API only — never the MCP.
+license:
+  - AGPL-3.0-only
+tags:
+  - infrastructure
+  - ludus
+  - orchestration
+  - cyberrange
+  - proxmox
+repository: https://github.com/Get-Sybers/FGNW
+homepage: https://github.com/Get-Sybers/FGNW
+issues: https://github.com/Get-Sybers/FGNW/issues
+documentation: https://github.com/Get-Sybers/FGNW/blob/main/ansible/collections/get_sybers.range/README.md
+dependencies:
+  ansible.utils: ">=2.12.0,<6.0.0"
+  community.general: ">=8.4.0,<11.0.0"
+build_ignore:
+  - tests/output
+  - tox-ansible.ini
+  - changelogs/.plugin-cache.yaml

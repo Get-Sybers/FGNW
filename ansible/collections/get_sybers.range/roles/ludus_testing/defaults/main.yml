@@ -1,0 +1,6 @@
+---
+ludus_testing_allow_domains: []
+ludus_testing_allow_ips: []
+ludus_testing_poll_retries: 30
+ludus_testing_poll_delay: 10
+ludus_testing_bin: /usr/local/bin/ludus

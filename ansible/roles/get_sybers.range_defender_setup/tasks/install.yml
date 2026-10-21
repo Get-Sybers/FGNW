@@ -1,0 +1,12 @@
+---
+- name: "install | Create Defender setup directory"
+  ansible.windows.win_file:
+    path: "{{ range_defender_setup_dir }}"
+    state: directory
+- name: "install | Enable Windows Defender features"
+  ansible.windows.win_feature:
+    name:
+      - Windows-Defender
+      - Windows-Defender-GUI
+    state: present
+  register: defender_features

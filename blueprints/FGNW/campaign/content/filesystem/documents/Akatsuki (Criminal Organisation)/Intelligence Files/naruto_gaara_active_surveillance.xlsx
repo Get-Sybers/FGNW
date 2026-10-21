@@ -1,0 +1,32 @@
+ACTIVE SURVEILLANCE LOG — NINE-TAILS & ONE-TAILS HOSTS
+Compiled by: Zetsu (field observation)
+Distribution: Leader, Pain only. Do not copy.
+
+Target 1 — Uzumaki Naruto (Kurama / Nine-Tails)
+  Location: Konohagakure, Hidden Leaf Village
+  Status: HOLD FOR LAST per Leader's directive (see tailed_beast_capture_order.docx)
+  Guard posture: Heavy. Kakashi Hatake, ANBU rotation, and the Hokage's own attention on
+    this host specifically. Direct extraction attempt would draw the full village.
+  Current approach: Passive. Perimeter reconnaissance of the Leaf network only —
+    host enumeration, service discovery, no contact. Log everything, engage nothing.
+  Observation window: ongoing, low frequency, timed to village activity patterns to
+    avoid pattern-of-life detection.
+
+Target 2 — Gaara (Shukaku / One-Tail)
+  Location: Sunagakure, Hidden Sand Village
+  Status: extraction already logged as COMPLETE in an earlier operation (see
+    shukaku_extraction_report.docx) — host was later revived by outside intervention.
+    Beast remains sealed in the Statue; the host himself is no longer a live target for
+    re-extraction, but Sand's response posture to the earlier incident makes their
+    network worth continued mapping regardless (kage-level target, useful regardless
+    of biju status).
+  Current approach: same passive reconnaissance profile as the Leaf target — no direct
+    contact, enumeration only.
+
+Standing instruction: neither of these are to become an active extraction op without
+Leader's word. Everything logged here is preparation, not authorization. Discovery risk
+is to be minimized — this is why the work looks like routine scanning noise rather than
+a coordinated operation, should anyone on their end be watching.
+
+Cross-reference: jinchuriki_host_profiles.xlsx (registry), tailed_beast_capture_order.docx
+(sequencing).

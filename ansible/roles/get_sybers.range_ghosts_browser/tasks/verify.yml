@@ -1,0 +1,11 @@
+---
+- name: "verify | Confirm Chrome is installed at the expected path"
+  ansible.windows.win_stat:
+    path: "{{ range_ghosts_browser_chrome_exe }}"
+  register: __ngb_chrome
+  failed_when: not __ngb_chrome.stat.exists
+- name: "verify | Confirm the chromedriver shim is present on PATH"
+  ansible.windows.win_stat:
+    path: "{{ range_ghosts_browser_driver_shim }}"
+  register: __ngb_driver
+  failed_when: not __ngb_driver.stat.exists

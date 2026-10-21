@@ -1,0 +1,9 @@
+---
+galaxy_info:
+  author: Get-Sybers
+  namespace: get_sybers
+  description: Install and configure Sysmon (Sysinternals) on Windows hosts
+  role_name: sysmon
+  license: AGPL-3.0-only
+  min_ansible_version: "2.15"
+dependencies: []

@@ -1,0 +1,10 @@
+---
+- name: Wait until AD is serving{{ ' as a DC (SYSVOL/NETLOGON advertised)' if ad_wait_ready_require_dc | bool else '' }}
+  ansible.builtin.script: wait-ad-ready.ps1
+  environment:
+    AD_WAIT_REQUIRE_DC: "{{ ad_wait_ready_require_dc | bool | ternary('true', 'false') }}"
+  register: ad_wait_ready_result
+  until: ad_wait_ready_result.rc == 0
+  retries: "{{ ad_wait_ready_retries | int }}"
+  delay: "{{ ad_wait_ready_delay | int }}"
+  changed_when: false

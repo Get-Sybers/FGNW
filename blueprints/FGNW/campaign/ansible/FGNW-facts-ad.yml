@@ -1,0 +1,166 @@
+---
+# The harvest scripts below are PowerShell / bash one-liners carried verbatim in
+# literal blocks, and the manifest expressions are single Jinja dict literals;
+# wrapping either would change what runs, so the line-length rule is off here.
+# yamllint disable rule:line-length
+- name: Harvest AD / identity facts from every domain controller
+  hosts: dc
+  gather_facts: false
+  vars:
+    facts_out: latest
+    __ad_dir: "{{ playbook_dir }}/../facts-local/{{ facts_out }}/ad"
+  tasks:
+    - name: Ensure the AD facts output dir exists (controller-side)
+      ansible.builtin.file:
+        path: "{{ __ad_dir }}"
+        state: directory
+        mode: "0700"
+      delegate_to: localhost
+      run_once: true
+      changed_when: false
+    - name: Stage the harvest script on the DC (avoids the cmdline length limit)
+      ansible.windows.win_copy:
+        content: |
+          param([string]$Category = 'domain')
+          $ErrorActionPreference = 'Stop'
+          function J($o){ if ($null -eq $o) { '[]' } else { ConvertTo-Json -InputObject $o -Depth 6 -Compress } }
+          try {
+            switch ($Category) {
+              'domain'   { J (Get-ADDomain | Select-Object Name,DNSRoot,NetBIOSName,DistinguishedName,DomainSID,DomainMode,ParentDomain,ChildDomains,InfrastructureMaster,RIDMaster,PDCEmulator) }
+              'forest'   { J (Get-ADForest | Select-Object Name,RootDomain,ForestMode,Domains,GlobalCatalogs,SchemaMaster,DomainNamingMaster,Sites) }
+              'trusts'   { J (Get-ADTrust -Filter * | Select-Object Name,Source,Target,Direction,TrustType,ForestTransitive,IntraForest,SIDFilteringForestAware,SIDFilteringQuarantined,TGTDelegation,DisallowTransivity) }
+              'users'    { J (Get-ADUser -Filter * -Properties DisplayName,Description,servicePrincipalName,userAccountControl,Enabled,DoesNotRequirePreAuth,PasswordNeverExpires,TrustedForDelegation,TrustedToAuthForDelegation,adminCount,memberOf,l,Company,Department | Select-Object SamAccountName,UserPrincipalName,DisplayName,Description,DistinguishedName,Enabled,DoesNotRequirePreAuth,PasswordNeverExpires,TrustedForDelegation,TrustedToAuthForDelegation,adminCount,servicePrincipalName,userAccountControl,memberOf) }
+              'groups'   { J (Get-ADGroup -Filter * -Properties Description,GroupScope,GroupCategory,member,memberOf,managedBy | Select-Object Name,SamAccountName,DistinguishedName,GroupScope,GroupCategory,Description,member,memberOf,managedBy) }
+              'ous'      { J (Get-ADOrganizationalUnit -Filter * -Properties Description | Select-Object Name,DistinguishedName,Description) }
+              'computers'{ J (Get-ADComputer -Filter * -Properties OperatingSystem,DNSHostName,TrustedForDelegation,TrustedToAuthForDelegation,'msDS-AllowedToDelegateTo','PrincipalsAllowedToDelegateToAccount',servicePrincipalName | Select-Object Name,DNSHostName,DistinguishedName,OperatingSystem,TrustedForDelegation,TrustedToAuthForDelegation,servicePrincipalName,'msDS-AllowedToDelegateTo') }
+              'pwdpolicy'{ J (Get-ADDefaultDomainPasswordPolicy | Select-Object ComplexityEnabled,MinPasswordLength,LockoutThreshold,MaxPasswordAge,MinPasswordAge,PasswordHistoryCount,ReversibleEncryptionEnabled) }
+              'privgroups'{ $r=@{}; foreach($g in 'Domain Admins','Enterprise Admins','Schema Admins','Administrators','DnsAdmins','Backup Operators','Account Operators','Server Operators','Print Operators','Group Policy Creator Owners','Cert Publishers','Remote Desktop Users','Protected Users','Distributed COM Users'){ try { $r[$g]=@(Get-ADGroupMember -Identity $g -Recursive -ErrorAction Stop | Select-Object -Expand SamAccountName) } catch { $r[$g]="_na" } }; J $r }
+              'adminroles'{ J @{
+                  adminCountUsers = @(Get-ADUser -LDAPFilter '(adminCount=1)' -Properties adminCount,memberOf,Description | Select-Object SamAccountName,DistinguishedName,Description,memberOf)
+                  adminCountGroups= @(Get-ADGroup -LDAPFilter '(adminCount=1)' -Properties adminCount,member | Select-Object Name,DistinguishedName,member)
+                  builtinAdmins   = $(try { @(Get-ADGroup -Filter 'GroupCategory -eq "Security"' -Properties member,Description | Where-Object { $_.Name -match 'Admin|Operator|Owner' } | Select-Object Name,DistinguishedName,Description,member) } catch { "_na" })
+                  spnAccounts     = @(Get-ADUser -Filter 'servicePrincipalName -like "*"' -Properties servicePrincipalName,memberOf,adminCount | Select-Object SamAccountName,servicePrincipalName,adminCount,memberOf)
+                  delegation      = @(Get-ADObject -LDAPFilter '(|(msDS-AllowedToDelegateTo=*)(userAccountControl:1.2.840.113556.1.4.803:=524288))' -Properties samAccountName,'msDS-AllowedToDelegateTo',userAccountControl | Select-Object Name,samAccountName,'msDS-AllowedToDelegateTo',userAccountControl)
+                } }
+              'objectacls'{ $r=@{}; try {
+                  $dn=(Get-ADDomain).DistinguishedName
+                  $targets=@($dn, "CN=AdminSDHolder,CN=System,$dn")
+                  $targets+=@(Get-ADOrganizationalUnit -Filter * | Select-Object -Expand DistinguishedName)
+                  $targets+=@(Get-ADGroup -Filter 'GroupCategory -eq "Security"' | Where-Object { $_.Name -match 'Admin|Operator|Owner' } | Select-Object -Expand DistinguishedName)
+                  foreach($t in ($targets | Select-Object -Unique)){
+                    try {
+                      $acl=Get-Acl -Path "AD:$t" -ErrorAction Stop
+                      $r[$t]=@($acl.Access | Where-Object { -not $_.IsInherited -and $_.IdentityReference -notmatch 'NT AUTHORITY|BUILTIN|CREATOR OWNER|S-1-5-32' } |
+                        Select-Object @{n='Identity';e={$_.IdentityReference.Value}},ActiveDirectoryRights,AccessControlType,ObjectType,InheritedObjectType)
+                    } catch { $r[$t]="_na" }
+                  }
+                  $r['_owner_domainroot']=(Get-Acl -Path "AD:$dn" -ErrorAction SilentlyContinue).Owner
+                } catch { $r['_error']="$($_.Exception.Message)" }; J $r }
+              'dnsfwd'   { J @{ forwarders=(Get-DnsServerForwarder | Select-Object -Expand IPAddress | ForEach-Object { $_.IPAddressToString }); conditional=(Get-DnsServerZone | Where-Object { $_.ZoneType -eq 'Forwarder' } | Select-Object ZoneName,MasterServers) } }
+              'gpo'      { J (Get-GPO -All | Select-Object DisplayName,Id,GpoStatus,CreationTime) }
+              'gporeport'{ $r=@{}; foreach($g in (Get-GPO -All)){ try { $r[$g.DisplayName]=(Get-GPOReport -Guid $g.Id -ReportType Xml) } catch { $r[$g.DisplayName]="_na" } }; J $r }
+              'gpolinks' { $r=@{}; foreach($ou in @((Get-ADDomain).DistinguishedName) + @(Get-ADOrganizationalUnit -Filter * | Select-Object -Expand DistinguishedName)){ try { $i=Get-GPInheritance -Target $ou -ErrorAction Stop; $r[$ou]=@{ blocked=$i.GpoInheritanceBlocked; links=@($i.GpoLinks | Select-Object DisplayName,Enabled,Enforced,Order) } } catch { $r[$ou]="_na" } }; J $r }
+              'gpofilter'{ $r=@{}; foreach($g in (Get-GPO -All)){ try { $r[$g.DisplayName]=@(Get-GPPermission -Guid $g.Id -All | Select-Object @{n='Trustee';e={$_.Trustee.Name}},Permission,@{n='TrusteeType';e={$_.Trustee.SidType}}) } catch { $r[$g.DisplayName]="_na" } }; J $r }
+              'psopolicy'{ J (Get-ADFineGrainedPasswordPolicy -Filter * -ErrorAction SilentlyContinue | Select-Object Name,Precedence,MinPasswordLength,ComplexityEnabled,LockoutThreshold,MaxPasswordAge,MinPasswordAge,PasswordHistoryCount,ReversibleEncryptionEnabled,AppliesTo) }
+              'secpolicy'{ $f="$env:TEMP\secpol-harvest.inf"; secedit /export /cfg $f /quiet 2>$null | Out-Null; $c = if (Test-Path $f) { [string]::Join("`n", (Get-Content $f)) } else { "_na" }; Remove-Item $f -ErrorAction SilentlyContinue; J @{ secedit=$c } }
+              'dnszones' { J (Get-DnsServerZone | Select-Object ZoneName,ZoneType,IsDsIntegrated,IsReverseLookupZone,IsAutoCreated,DynamicUpdate,ReplicationScope,MasterServers) }
+              'dnsrecords'{ $r=@{}; foreach($z in (Get-DnsServerZone | Where-Object { -not $_.IsAutoCreated -and $_.ZoneType -ne 'Forwarder' })){ try { $r[$z.ZoneName]=@(Get-DnsServerResourceRecord -ZoneName $z.ZoneName -ErrorAction Stop | Select-Object HostName,RecordType,@{n='Data';e={ if ($_.RecordData.IPv4Address) { $_.RecordData.IPv4Address.IPAddressToString } elseif ($_.RecordData.NameServer) { $_.RecordData.NameServer } elseif ($_.RecordData.HostNameAlias) { $_.RecordData.HostNameAlias } elseif ($_.RecordData.DomainName) { $_.RecordData.DomainName } else { ($_.RecordData | Out-String).Trim() } }}) } catch { $r[$z.ZoneName]="_na" } }; J $r }
+              'services' { J (Get-CimInstance Win32_Service | Select-Object Name,DisplayName,State,StartMode,StartName,PathName) }
+              'shares'   { J @{
+                  shares      = @(Get-SmbShare -ErrorAction SilentlyContinue | Select-Object Name,Path,Description,ShareType,FolderEnumerationMode,CachingMode,EncryptData,CurrentUsers)
+                  shareacl    = $(try { $s=@{}; foreach($sh in (Get-SmbShare -ErrorAction Stop)){ try { $s[$sh.Name]=@(Get-SmbShareAccess -Name $sh.Name -ErrorAction Stop | Select-Object AccountName,AccessRight,AccessControlType) } catch { $s[$sh.Name]="_na" } }; $s } catch { "_na" })
+                  ntfsacl     = $(try { $n=@{}; foreach($sh in (Get-SmbShare -Special $false -ErrorAction Stop)){ try { $a=Get-Acl -Path $sh.Path -ErrorAction Stop; $n[$sh.Name]=@{ owner=$a.Owner; access=@($a.Access | Select-Object @{n='Identity';e={$_.IdentityReference.Value}},FileSystemRights,AccessControlType,IsInherited) } } catch { $n[$sh.Name]="_na" } }; $n } catch { "_na" })
+                  smbserver   = $(try { Get-SmbServerConfiguration -ErrorAction Stop | Select-Object EnableSMB1Protocol,EnableSMB2Protocol,RequireSecuritySignature,EnableSecuritySignature,EncryptData,RejectUnencryptedAccess,AutoShareServer,AutoShareWorkstation,NullSessionShares,NullSessionPipes } catch { "_na" })
+                  smbclient   = $(try { Get-SmbClientConfiguration -ErrorAction Stop | Select-Object RequireSecuritySignature,EnableSecuritySignature,EnableInsecureGuestLogons } catch { "_na" })
+                  sessions    = @(Get-SmbSession -ErrorAction SilentlyContinue | Select-Object ClientComputerName,ClientUserName,NumOpens)
+                  sysvol      = $(try { @(Get-ChildItem "\\$($env:COMPUTERNAME)\SYSVOL" -Recurse -Depth 4 -File -ErrorAction Stop | Where-Object { $_.Extension -match '\.(bat|cmd|ps1|vbs|ini|xml|pol)$' } | Select-Object -First 100 FullName,Length,LastWriteTime) } catch { "_na" })
+                  netlogon    = $(try { @(Get-ChildItem "\\$($env:COMPUTERNAME)\NETLOGON" -Recurse -File -ErrorAction Stop | Select-Object -First 50 FullName,Length,LastWriteTime) } catch { "_na" })
+                } }
+              'localsettings' { J @{
+                  localusers  = @(Get-LocalUser -ErrorAction SilentlyContinue | Select-Object Name,Enabled,Description,PasswordRequired,PasswordExpires,LastLogon,PrincipalSource)
+                  localgroups = @(Get-LocalGroup -ErrorAction SilentlyContinue | Select-Object Name,Description,PrincipalSource)
+                  localmembers= $(try { $m=@{}; foreach($g in (Get-LocalGroup)){ try { $m[$g.Name]=@(Get-LocalGroupMember -Group $g.Name -ErrorAction Stop | Select-Object Name,ObjectClass,PrincipalSource) } catch { $m[$g.Name]="_na" } }; $m } catch { "_na" })
+                  rights      = $(try { $f="$env:TEMP\rights-harvest.inf"; secedit /export /areas USER_RIGHTS /cfg $f /quiet 2>$null | Out-Null; $c=if (Test-Path $f) { [string]::Join("`n", (Get-Content $f)) } else { "_na" }; Remove-Item $f -ErrorAction SilentlyContinue; $c } catch { "_na" })
+                  firewall    = @(Get-NetFirewallProfile -ErrorAction SilentlyContinue | Select-Object Name,Enabled,DefaultInboundAction,DefaultOutboundAction,LogFileName)
+                  fwrules     = @(Get-NetFirewallRule -ErrorAction SilentlyContinue | Where-Object { $_.Enabled -eq 'True' -and $_.Direction -eq 'Inbound' } | Select-Object DisplayName,Profile,Action,Direction -First 200)
+                  shares      = @(Get-SmbShare -ErrorAction SilentlyContinue | Select-Object Name,Path,Description,ShareType)
+                  shareacl    = $(try { $s=@{}; foreach($sh in (Get-SmbShare -Special $false -ErrorAction Stop)){ try { $s[$sh.Name]=@(Get-SmbShareAccess -Name $sh.Name -ErrorAction Stop | Select-Object AccountName,AccessRight,AccessControlType) } catch { $s[$sh.Name]="_na" } }; $s } catch { "_na" })
+                  rdp         = @{ enabled=(Get-ItemProperty 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name fDenyTSConnections -ErrorAction SilentlyContinue).fDenyTSConnections; nla=(Get-ItemProperty 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name UserAuthentication -ErrorAction SilentlyContinue).UserAuthentication }
+                  autologon   = $(try { $k=Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon' -ErrorAction Stop; @{ AutoAdminLogon=$k.AutoAdminLogon; DefaultUserName=$k.DefaultUserName; DefaultDomainName=$k.DefaultDomainName } } catch { "_na" })
+                  uac         = $(try { $k=Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System' -ErrorAction Stop; @{ EnableLUA=$k.EnableLUA; ConsentPromptBehaviorAdmin=$k.ConsentPromptBehaviorAdmin; LocalAccountTokenFilterPolicy=$k.LocalAccountTokenFilterPolicy; FilterAdministratorToken=$k.FilterAdministratorToken } } catch { "_na" })
+                  defender    = $(try { Get-MpPreference -ErrorAction Stop | Select-Object DisableRealtimeMonitoring,DisableIOAVProtection,DisableBehaviorMonitoring,ExclusionPath,ExclusionProcess,ExclusionExtension } catch { "_na" })
+                  smb         = $(try { Get-SmbServerConfiguration -ErrorAction Stop | Select-Object EnableSMB1Protocol,EnableSMB2Protocol,RequireSecuritySignature,EnableSecuritySignature } catch { "_na" })
+                  netadapters = @(Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue | Where-Object { $_.IPAddress -notlike '127.*' } | Select-Object InterfaceAlias,IPAddress,PrefixLength)
+                  dnsclient   = @(Get-DnsClientServerAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue | Where-Object { $_.ServerAddresses } | Select-Object InterfaceAlias,ServerAddresses)
+                  installed   = @(Get-ItemProperty 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*','HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*' -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName } | Select-Object DisplayName,DisplayVersion,Publisher)
+                  features    = @(Get-WindowsFeature -ErrorAction SilentlyContinue | Where-Object { $_.Installed } | Select-Object Name,DisplayName)
+                } }
+              'fsmo'     { J @{ fsmo=(netdom query fsmo) } }
+              'schtasks' { J (Get-ScheduledTask | Where-Object { $_.TaskPath -notlike '\Microsoft\*' } | Select-Object TaskName,TaskPath,State,@{n='Actions';e={$_.Actions.Execute}},@{n='Principal';e={$_.Principal.UserId}}) }
+              default    { J @{ _error = 'unknown category' } }
+            }
+          } catch { J @{ _error = "$($_.Exception.Message)" } }
+        dest: C:\Windows\Temp\FGNW-facts-harvest.ps1
+      changed_when: false
+    - name: Query AD structure (one JSON blob per category)
+      ansible.windows.win_shell: >-
+        powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass
+        -File C:\Windows\Temp\FGNW-facts-harvest.ps1 -Category '{{ item.key }}'
+      register: __ad_q
+      changed_when: false
+      failed_when: false
+      loop: "{{ __categories | dict2items }}"
+      vars:
+        __categories:
+          domain: 1
+          forest: 1
+          trusts: 1
+          users: 1
+          groups: 1
+          ous: 1
+          computers: 1
+          pwdpolicy: 1
+          privgroups: 1
+          dnsfwd: 1
+          gpo: 1
+          gporeport: 1
+          gpolinks: 1
+          gpofilter: 1
+          psopolicy: 1
+          secpolicy: 1
+          dnszones: 1
+          dnsrecords: 1
+          services: 1
+          localsettings: 1
+          adminroles: 1
+          objectacls: 1
+          shares: 1
+          fsmo: 1
+          schtasks: 1
+      loop_control:
+        label: "{{ inventory_hostname }}:{{ item.key }}"
+    - name: Write each category's JSON to the controller
+      ansible.builtin.copy:
+        content: "{{ (item.stdout | default('')) | trim }}\n"
+        dest: "{{ __ad_dir }}/{{ inventory_hostname }}.{{ item.item.key }}.json"
+        mode: "0600"
+      delegate_to: localhost
+      loop: "{{ __ad_q.results | default([]) }}"
+      loop_control:
+        label: "{{ inventory_hostname }}.{{ item.item.key }}.json"
+      changed_when: false
+      when: __ad_q is defined
+    - name: Note any category that returned an error string
+      ansible.builtin.debug:
+        msg: "{{ inventory_hostname }}:{{ item.item.key }} -> {{ item.stdout | default('NO STDOUT') | trim }}"
+      loop: "{{ __ad_q.results | default([]) }}"
+      loop_control:
+        label: "{{ inventory_hostname }}:{{ item.item.key }}"
+      when:
+        - __ad_q is defined
+        - (item.stdout | default('')) is search('_error')
+    - name: Remove the staged harvest script (leave the DC as we found it)
+      ansible.windows.win_file:
+        path: C:\Windows\Temp\FGNW-facts-harvest.ps1
+        state: absent
+      changed_when: false

@@ -1,0 +1,91 @@
+========================================================================
+ALLIED SHINOBI INTELLIGENCE DIVISION
+THREAT INTELLIGENCE PROFILE
+CLASSIFICATION: JONIN AND ABOVE — HIDDEN LEAF LIAISON DESK
+========================================================================
+
+DOCUMENT ID:      ASID-TIP-0047
+ACTOR DESIGNATION: UNREGISTERED RECON ACTOR (working name: "SILENT UNDERGROWTH")
+LAST UPDATED:     Current as of most recent RECON ALERT / DOS ALERT bulletin
+CONFIDENCE:       MODERATE (behavioural attribution only — no confirmed identity)
+DISTRIBUTION:     Jonin+, Intel Division, Kage office on escalation
+
+------------------------------------------------------------------------
+1. SUMMARY
+------------------------------------------------------------------------
+This profile tracks a single recurring reconnaissance signature observed against Land of
+Fire (including the forest root itself), Hidden Leaf, and Hidden Sand network infrastructure.
+It is compiled from repeated RECON ALERT and DOS ALERT bulletins issued by this desk. It
+exists so field shinobi and duty officers can recognise the pattern on sight instead of
+re-assessing it as a fresh unknown every time it recurs.
+
+This is a LIVING PROFILE — behavioural details below reflect the actor's observed conduct
+to date. If future activity deviates from this profile (different targeting, different
+tooling signature, credentialed access), treat it as a SEPARATE incident, not a continuation.
+
+------------------------------------------------------------------------
+2. ATTRIBUTION
+------------------------------------------------------------------------
+Origin traced to an unregistered endpoint with no confirmed village attribution. This desk's
+working theory points toward Akatsuki tradecraft, consistent with historical enumeration
+behaviour attributed to their operatives (cross-village portal cycling, bingo-book lookups) —
+but this is an ASSESSMENT, not a confirmed identity, and should be presented as such in any
+briefing. Do not state Akatsuki involvement as settled fact until corroborated by a second
+independent source.
+
+Motivation, as best assessed: preparatory reconnaissance ahead of a larger operation, not an
+end in itself. Everything observed to date is consistent with mapping the target networks
+before a real intrusion attempt, not with an attempt already in progress.
+
+------------------------------------------------------------------------
+3. VICTIMOLOGY / TARGETING
+------------------------------------------------------------------------
+Confirmed targets to date:
+  - Land of Fire forest root network (structural — no shinobi accounts, DC infrastructure only)
+  - Hidden Leaf Village network (Konohagakure) — portals, mail infrastructure, workstations
+  - Hidden Sand Village network (Sunagakure) — directory services
+
+Notably, the actor has never been observed operating FROM any of the above — only against
+them. Traffic authoring these signatures originates entirely outside all three networks.
+
+------------------------------------------------------------------------
+4. OBSERVED TTPs (MITRE ATT&CK-style mapping)
+------------------------------------------------------------------------
+  TECHNIQUE                                    | STAGE  | NOTES
+  ----------------------------------------------|--------|---------------------------------
+  T1595.001 — Active Scanning: Scanning IP      | Recon  | Whole-subnet sweeps, not
+    Blocks                                       |        | single-host — Fire/Leaf block
+                                                  |        | and Sand block swept separately.
+  T1595.002 — Active Scanning: Vulnerability     | Recon  | Follows the sweep immediately;
+    Scanning                                     |        | systematic, script-driven,
+                                                  |        | every discovered host checked.
+  T1498.001 — Network Denial of Service:         | Recon  | Short bounded bursts (~30s) at
+    Direct Network Flood                         |        | a capped rate against one
+                                                  |        | service — never sustained.
+
+All three stages share a signature: LOUD and UNCONCEALED. No attempt is made to blend into
+normal traffic, throttle to avoid detection, or use stealth scan techniques. This is either
+poor tradecraft or (this desk's working assessment) deliberate — a probe that expects, and is
+prepared for, being caught.
+
+------------------------------------------------------------------------
+5. WHAT THIS PROFILE DOES NOT COVER
+------------------------------------------------------------------------
+This actor has NEVER been observed using valid credentials, moving laterally, or accessing
+any resource requiring authentication. If a bulletin ever describes credentialed access,
+lateral movement across workstations, ticket-based authentication abuse, or privileged-token
+activity, that is OUTSIDE this profile and represents a materially different, more serious
+threat — escalate to the Kage office immediately rather than filing it under this actor.
+
+------------------------------------------------------------------------
+6. RECOMMENDED ACTIONS
+------------------------------------------------------------------------
+  - On RECON ALERT: log and monitor. No lockdown action required — this actor has never
+    escalated past reconnaissance within any single observed episode.
+  - On DOS ALERT immediately following a RECON ALERT: consistent with this profile, no
+    additional escalation needed beyond standard logging.
+  - Any deviation from the pattern above (credential use, sustained flood beyond ~60s,
+    targeting outside Fire/Leaf/Sand): escalate immediately, this profile no longer applies.
+
+— Filed by Allied Intelligence Division, Hidden Leaf liaison desk
+========================================================================

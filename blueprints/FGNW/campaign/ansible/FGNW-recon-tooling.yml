@@ -1,0 +1,27 @@
+---
+- name: Deploy recon tooling (nmap from the Akatsuki tool-cache, never the internet)
+  hosts: akatsuki-ws2
+  gather_facts: false
+  vars:
+    __toolcache_host: "{{ hostvars['attacker'].ansible_host | default('') }}"
+    range_recon_tooling_nmap_zip_url: http://{{ __toolcache_host }}/tools/nmap-7.92-win32.zip
+  pre_tasks:
+    - name: Assert the tool-cache IP resolved from the infra inventory
+      ansible.builtin.assert:
+        that: __toolcache_host | length > 0
+        fail_msg: >-
+          Could not resolve the attacker/tool-cache IP. Run with the infra inventory
+          (-i /tmp/infra-inv.yml or providers/ludus/inventory-infra.yml) so
+          hostvars['attacker'].ansible_host is defined.
+        quiet: true
+    - name: "Preflight: confirm nmap is being served by the tool-cache (fail fast if attacker-web hasn't run)"
+      ansible.windows.win_uri:
+        url: "{{ range_recon_tooling_nmap_zip_url }}"
+        method: HEAD
+        status_code: [200]
+      register: __nmap_head
+      retries: 5
+      delay: 10
+      until: __nmap_head.status_code | default(0) == 200
+  roles:
+    - get_sybers.range_recon_tooling

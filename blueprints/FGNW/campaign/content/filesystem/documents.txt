@@ -1,0 +1,875 @@
+---
+```
+Documents/
+│
+├── Mission Reports/
+│   ├── active/
+│   │   ├── current_mission_brief.docx
+│   │   ├── konoha_field_notes.docx
+│   │   └── fire_country_patrol_log.docx
+│   ├── completed/
+│   │   ├── mission_log.xlsx
+│   │   ├── chunin_exam_debrief.docx
+│   │   └── konoha_crush_incident_report.docx
+│   ├── classified/
+│   │   ├── root_operation_files.docx
+│   │   ├── uchiha_massacre_report_classified.docx
+│   │   ├── nine_tails_containment_log.docx
+│   │   └── akatsuki_ttp_profile.docx
+│   └── archive/
+│       ├── first_shinobi_war_summary.docx
+│       ├── second_shinobi_war_summary.docx
+│       ├── third_shinobi_war_summary.docx
+│       └── pain_invasion_after_action.docx
+│
+├── Jutsu Scrolls/
+│   ├── known_jutsu/
+│   │   ├── jutsu_reference.docx
+│   │   ├── fire_release_techniques.docx
+│   │   ├── lightning_release_techniques.docx
+│   │   └── wood_release_restricted.docx
+│   ├── training/
+│   │   ├── academy_curriculum.docx
+│   │   ├── tree_walking_exercise.docx
+│   │   ├── water_walking_exercise.docx
+│   │   └── chakra_nature_training.docx
+│   ├── forbidden/
+│   │   ├── scroll_of_seals_inventory.docx
+│   │   ├── edo_tensei_ban_notice.docx
+│   │   └── eight_gates_waiver.docx
+│   └── seals/
+│       ├── four_symbols_seal_reference.docx
+│       ├── eight_trigrams_seal_reference.docx
+│       └── flying_thunder_god_notes.docx
+│
+├── Team Rosters/
+│   ├── team_7_roster.docx
+│   ├── team_8_roster.docx
+│   ├── team_10_roster.docx
+│   ├── team_guy_roster.docx
+│   ├── anbu_division_roster.xlsx
+│   ├── root_operative_list_classified.xlsx
+│   ├── medical_corps_roster.xlsx
+│   ├── chunin_exam_participants.xlsx
+│   ├── jonin_active_duty_list.xlsx
+│   └── konoha_12_contact_sheet.docx
+│
+├── Village Laws & Policies/
+│   ├── constitution/
+│   │   ├── will_of_fire_charter.docx
+│   │   ├── first_hokage_founding_decree.docx
+│   │   └── village_hidden_in_the_leaves_act.docx
+│   ├── rank_regulations/
+│   │   ├── academy_graduation_requirements.docx
+│   │   ├── genin_team_assignment_policy.docx
+│   │   ├── chunin_exam_eligibility.docx
+│   │   ├── jonin_promotion_criteria.docx
+│   │   ├── anbu_selection_process.docx
+│   │   └── hokage_succession_protocol.docx
+│   ├── clan_policies/
+│   │   ├── uchiha_clan_regulations.docx
+│   │   ├── hyuga_main_branch_policy.docx
+│   │   ├── hyuga_branch_house_seal_policy.docx
+│   │   ├── nara_clan_intelligence_sharing.docx
+│   │   ├── aburame_clan_insect_use_policy.docx
+│   │   └── inuzuka_clan_ninken_registry.docx
+│   ├── disciplinary/
+│   │   ├── missing_nin_protocol.docx
+│   │   ├── sharingan_use_policy.docx
+│   │   ├── jinchuriki_containment_directive.docx
+│   │   └── bingo_book_update_procedure.docx
+│   └── civilian/
+│       ├── fire_country_civilian_protection.docx
+│       ├── daimyo_liaison_procedures.docx
+│       └── ichiraku_vendor_permit.docx
+│
+├── Personal Records/
+│   ├── identity/
+│   │   ├── shinobi_registration_card.docx
+│   │   ├── clan_affiliation_cert.docx
+│   │   └── konoha_headband_issuance.docx
+│   ├── performance/
+│   │   ├── academy_exam_results.xlsx
+│   │   ├── chunin_exam_scores.xlsx
+│   │   ├── promotion_history.xlsx
+│   │   └── hokage_commendations.docx
+│   ├── medical/
+│   │   ├── hospital_records.docx
+│   │   ├── chakra_reserve_assessment.docx
+│   │   ├── curse_mark_disclosure.docx
+│   │   └── jinchuriki_health_log.xlsx
+│   └── personal/
+│       ├── welcome_to_konoha.docx
+│       ├── will_of_fire_pledge.docx
+│       ├── personal_ninja_way_statement.docx
+│       └── naruto_academy_disciplinary_record.docx
+│
+├── Bingo Book/
+│   ├── konoha_bingo_book.docx
+│   ├── s_rank_missing_nin.xlsx
+│   ├── akatsuki_threat_files/
+│   │   ├── itachi_uchiha_profile.docx
+│   │   ├── kisame_profile.docx
+│   │   └── tobi_unknown_identity.docx
+│   ├── orochimaru_file.docx
+│   ├── sasuke_uchiha_file.docx
+│   └── threat_level_matrix.xlsx
+│
+├── Hokage Office/
+│   ├── hokage_succession_records.xlsx
+│   ├── first_hokage_edicts.docx
+│   ├── second_hokage_policies.docx
+│   ├── third_hokage_memoirs.docx
+│   ├── fourth_hokage_last_will.docx
+│   ├── fifth_hokage_medical_reforms.docx
+│   ├── sixth_hokage_anbu_review.docx
+│   └── seventh_hokage_era_reforms.docx
+│
+├── Intel & Surveillance/
+│   ├── village_threat_reports/
+│   │   ├── sound_village_threat.docx
+│   │   ├── akatsuki_activity_log.xlsx
+│   │   └── tailed_beast_sightings.docx
+│   ├── spy_network_reports/
+│   │   ├── jiraiya_field_intel.docx
+│   │   ├── jiraiya_manuscript_draft.docx
+│   │   ├── jiraiya_royalty_statement.xlsx
+│   │   └── anbu_surveillance_summary.docx
+│   └── encrypted/
+│       ├── root_black_ops_log.docx
+│       └── classified_eyes_only.docx
+│
+├── Equipment & Inventory/
+│   ├── weapons_inventory.xlsx
+│   ├── ninja_tool_requisition.docx
+│   ├── scroll_library_index.xlsx
+│   ├── summoning_contract.docx
+│   └── equipment_maintenance_log.xlsx
+│
+├── Communications/
+│   ├── sent/
+│   │   ├── mission_request_letters/
+│   │   └── inter_village_correspondence/
+│   ├── received/
+│   │   ├── hokage_directives/
+│   │   ├── team_memos/
+│   │   └── village_announcements/
+│   └── templates/
+│       ├── formal_request_template.docx
+│       ├── mission_debrief_template.docx
+│       └── inter_village_memo_template.docx
+│
+└── Onboarding/
+    ├── welcome_to_konoha.docx
+    ├── will_of_fire_introduction.docx
+    ├── academy_new_student_guide.docx
+    ├── konoha_village_map.docx
+    ├── clan_directory.docx
+    ├── ichiraku_ramen_staff_discount.docx
+    └── faq_new_recruits.docx
+```
+---
+```
+Documents/
+│
+├── Mission Reports/
+│   ├── active/
+│   │   ├── current_mission_brief.docx
+│   │   ├── wind_country_patrol_log.docx
+│   │   └── desert_scouting_report.docx
+│   ├── completed/
+│   │   ├── mission_log.xlsx
+│   │   ├── konoha_invasion_debrief.docx
+│   │   └── gaara_rescue_operation.docx
+│   ├── classified/
+│   │   ├── shukaku_extraction_incident.docx
+│   │   ├── fourth_kazekage_assassination.docx
+│   │   ├── orochimaru_alliance_postmortem.docx
+│   │   └── akatsuki_ttp_profile.docx
+│   └── archive/
+│       ├── shinobi_war_sand_casualties.docx
+│       └── konoha_alliance_history.docx
+│
+├── Jutsu Scrolls/
+│   ├── known_jutsu/
+│   │   ├── sand_technique_reference.docx
+│   │   ├── wind_release_techniques.docx
+│   │   └── puppet_technique_manual.docx
+│   ├── training/
+│   │   ├── desert_survival_training.docx
+│   │   ├── sand_manipulation_exercises.docx
+│   │   └── puppet_maintenance_log.xlsx
+│   └── forbidden/
+│       ├── shukaku_summoning_warning.docx
+│       └── third_kazekage_iron_sand_archive.docx
+│
+├── Team Rosters/
+│   ├── sand_siblings_unit.docx
+│   ├── puppet_brigade_roster.xlsx
+│   ├── active_jonin_list.xlsx
+│   └── kazekage_guard_detail.docx
+│
+├── Village Laws & Policies/
+│   ├── constitution/
+│   │   ├── sand_village_founding_charter.docx
+│   │   └── desert_law_codex.docx
+│   ├── rank_regulations/
+│   │   ├── sand_genin_handbook.docx
+│   │   ├── chunin_promotion_criteria.docx
+│   │   └── kazekage_authority_decree.docx
+│   ├── resource_management/
+│   │   ├── wind_country_budget_allocation.docx
+│   │   ├── weapon_smuggling_policy.docx
+│   │   ├── daimyo_funding_agreement.docx
+│   │   └── network_infrastructure_status.docx
+│   └── disciplinary/
+│       ├── jinchuriki_use_of_force_policy.docx
+│       └── alliance_breach_protocol.docx
+│
+├── Personal Records/
+│   ├── identity/
+│   │   ├── sand_shinobi_registration.docx
+│   │   └── sand_headband_issuance.docx
+│   ├── performance/
+│   │   ├── mission_performance_reviews.xlsx
+│   │   └── kazekage_commendations.docx
+│   └── medical/
+│       ├── desert_heat_exposure_log.docx
+│       ├── sand_armour_physical_assessment.docx
+│       └── jinchuriki_health_record.docx
+│
+├── Kazekage Office/
+│   ├── first_kazekage_records.docx
+│   ├── second_kazekage_iron_sand_legacy.docx
+│   ├── third_kazekage_disappearance_file.docx
+│   ├── fourth_kazekage_assassination_report.docx
+│   ├── fifth_kazekage_gaara_era_reforms.docx
+│   └── five_kage_summit_sand_position.docx
+│
+├── Puppet Workshop/
+│   ├── puppet_inventory.xlsx
+│   ├── sasori_puppet_collection_notice.docx
+│   ├── kankuro_puppet_maintenance.docx
+│   └── puppet_technique_classification.docx
+│
+├── Equipment & Inventory/
+│   ├── desert_weapons_inventory.xlsx
+│   ├── fan_weapon_registry.docx
+│   ├── puppet_parts_supply_log.xlsx
+│   └── wind_country_supply_chain.docx
+│
+└── Onboarding/
+    ├── welcome_to_suna.docx
+    ├── desert_survival_briefing.docx
+    ├── sand_village_map.docx
+    ├── water_ration_policy.docx
+    └── faq_new_recruits.docx
+```
+---
+```
+Documents/
+│
+├── Mission Reports/
+│   ├── active/
+│   │   ├── current_mission_brief.docx
+│   │   ├── water_country_patrol_log.docx
+│   │   └── mist_surveillance_report.docx
+│   ├── completed/
+│   │   ├── mission_log.xlsx
+│   │   ├── graduation_duel_records.xlsx
+│   │   └── hunter_nin_capture_reports.xlsx
+│   ├── classified/
+│   │   ├── yagura_controlled_period_file.docx
+│   │   ├── tobi_manipulation_investigation.docx
+│   │   └── bloody_mist_era_review.docx
+│   └── archive/
+│       ├── seven_swordsmen_battle_logs.docx
+│       └── war_of_the_bloody_mist.docx
+│
+├── Jutsu Scrolls/
+│   ├── known_jutsu/
+│   │   ├── water_release_techniques.docx
+│   │   ├── mist_concealment_jutsu.docx
+│   │   └── silent_killing_manual.docx
+│   ├── training/
+│   │   ├── water_walking_advanced.docx
+│   │   ├── mist_navigation_training.docx
+│   │   └── sword_combat_drills.docx
+│   └── forbidden/
+│       ├── graduation_duel_ban_notice.docx
+│       └── bloodline_limit_research_archive.docx
+│
+├── Team Rosters/
+│   ├── seven_swordsmen_roster.xlsx
+│   ├── hunter_nin_division.xlsx
+│   ├── mizukage_guard_detail.docx
+│   └── active_jonin_list.xlsx
+│
+├── Village Laws & Policies/
+│   ├── constitution/
+│   │   ├── mist_village_charter.docx
+│   │   └── water_country_law_codex.docx
+│   ├── rank_regulations/
+│   │   ├── graduation_examination_policy.docx
+│   │   ├── hunter_nin_mandate.docx
+│   │   └── mizukage_authority_decree.docx
+│   ├── swords_registry/
+│   │   ├── seven_swords_chain_of_custody.xlsx
+│   │   ├── samehada_restricted_access.docx
+│   │   ├── kubikiribōchō_maintenance.docx
+│   │   └── sword_inheritance_policy.docx
+│   └── bloodline_policy/
+│       ├── kekkei_genkai_registration.docx
+│       ├── ice_release_disclosure.docx
+│       └── post_bloody_mist_bloodline_protection.docx
+│
+├── Personal Records/
+│   ├── identity/
+│   │   ├── mist_shinobi_registration.docx
+│   │   └── mist_headband_issuance.docx
+│   ├── performance/
+│   │   ├── graduation_duel_outcome.docx
+│   │   └── swordsman_certification.docx
+│   └── medical/
+│       ├── moisture_exposure_health_log.docx
+│       └── chakra_exhaustion_record.docx
+│
+├── Mizukage Office/
+│   ├── first_mizukage_records.docx
+│   ├── second_mizukage_rivalry_log.docx
+│   ├── third_mizukage_records.docx
+│   ├── fourth_mizukage_yagura_investigation.docx
+│   ├── fifth_mizukage_mei_terumi_reforms.docx
+│   └── bloody_mist_reform_policy.docx
+│
+├── Seven Swordsmen Archive/
+│   ├── zabuza_momochi_file.docx
+│   ├── kisame_hoshigaki_file.docx
+│   ├── mangetsu_hozuki_file.docx
+│   ├── suigetsu_hozuki_file.docx
+│   ├── chojuro_active_record.docx
+│   └── sword_history_timeline.xlsx
+│
+├── Hunter-Nin Division/
+│   ├── retrieval_mission_log.xlsx
+│   ├── missing_nin_pursuit_orders.docx
+│   ├── body_disposal_protocol.docx
+│   └── hunter_nin_code_of_conduct.docx
+│
+└── Onboarding/
+    ├── welcome_to_kiri.docx
+    ├── mist_navigation_guide.docx
+    ├── silent_killing_etiquette.docx
+    ├── kiri_village_map.docx
+    └── faq_new_recruits.docx
+```
+---
+```
+Documents/
+│
+├── Mission Reports/
+│   ├── active/
+│   │   ├── current_mission_brief.docx
+│   │   ├── lightning_country_patrol.docx
+│   │   └── mountain_surveillance_log.docx
+│   ├── completed/
+│   │   ├── mission_log.xlsx
+│   │   ├── hyuga_incident_debrief.docx
+│   │   └── jinchuriki_escort_reports.xlsx
+│   ├── classified/
+│   │   ├── killer_b_extraction_attempt.docx
+│   │   ├── yugito_capture_incident.docx
+│   │   └── gold_silver_brothers_file.docx
+│   └── archive/
+│       ├── raikage_war_campaign_logs.docx
+│       └── third_raikage_last_stand_report.docx
+│
+├── Jutsu Scrolls/
+│   ├── known_jutsu/
+│   │   ├── lightning_release_techniques.docx
+│   │   ├── storm_release_reference.docx
+│   │   └── cloud_kenjutsu_manual.docx
+│   ├── training/
+│   │   ├── lightning_armour_training.docx
+│   │   ├── speed_enhancement_drills.docx
+│   │   └── tailed_beast_chakra_control.docx
+│   └── forbidden/
+│       ├── gold_silver_brothers_techniques.docx
+│       └── three_coloured_pills_policy.docx
+│
+├── Team Rosters/
+│   ├── cloud_jonin_list.xlsx
+│   ├── samui_team_roster.docx
+│   ├── raikage_bodyguard_unit.docx
+│   ├── intelligence_division.xlsx
+│   └── jinchuriki_guard_detail.docx
+│
+├── Village Laws & Policies/
+│   ├── constitution/
+│   │   ├── cloud_village_charter.docx
+│   │   └── lightning_country_law_codex.docx
+│   ├── rank_regulations/
+│   │   ├── cloud_genin_handbook.docx
+│   │   ├── chunin_promotion_policy.docx
+│   │   └── raikage_authority_decree.docx
+│   ├── jinchuriki_policy/
+│   │   ├── killer_b_protocols.docx
+│   │   ├── yugito_nii_containment_history.docx
+│   │   └── tailed_beast_control_training.docx
+│   └── diplomatic/
+│       ├── hyuga_incident_treaty.docx
+│       ├── konoha_relations_file.docx
+│       └── five_nation_alliance_agreement.docx
+│
+├── Personal Records/
+│   ├── identity/
+│   │   ├── cloud_shinobi_registration.docx
+│   │   └── cloud_headband_issuance.docx
+│   ├── performance/
+│   │   ├── speed_assessment_results.xlsx
+│   │   └── raikage_commendations.docx
+│   └── medical/
+│       ├── lightning_exposure_health_log.docx
+│       └── lightning_armour_stress_test.docx
+│
+├── Raikage Office/
+│   ├── first_raikage_records.docx
+│   ├── second_raikage_records.docx
+│   ├── third_raikage_legacy_file.docx
+│   ├── fourth_raikage_reform_decrees.docx
+│   └── five_kage_summit_cloud_position.docx
+│
+├── Jinchuriki Program/
+│   ├── eight_tails_host_history.xlsx
+│   ├── two_tails_host_history.xlsx
+│   ├── killer_b_training_log.docx
+│   ├── tailed_beast_control_assessment.xlsx
+│   └── bijuu_extraction_threat_assessment.docx
+│
+├── Intelligence Division/
+│   ├── foreign_village_assessments.xlsx
+│   ├── hyuga_byakugan_research.docx
+│   ├── sensor_nin_reports.docx
+│   └── encrypted_comms_log.docx
+│
+└── Onboarding/
+    ├── welcome_to_kumo.docx
+    ├── mountain_altitude_training_guide.docx
+    ├── cloud_village_map.docx
+    ├── lightning_safety_briefing.docx
+    └── faq_new_recruits.docx
+```
+---
+```
+Documents/
+│
+├── Mission Reports/
+│   ├── active/
+│   │   ├── current_mission_brief.docx
+│   │   ├── earth_country_patrol_log.docx
+│   │   └── border_surveillance_report.docx
+│   ├── completed/
+│   │   ├── mission_log.xlsx
+│   │   ├── third_shinobi_war_debriefs.docx
+│   │   └── deidara_defection_report.docx
+│   ├── classified/
+│   │   ├── han_jinchuriki_extraction.docx
+│   │   ├── roshi_jinchuriki_extraction.docx
+│   │   └── explosion_corps_black_ops.docx
+│   └── archive/
+│       ├── iwa_konoha_war_summary.docx
+│       └── yellow_flash_encounter_logs.docx
+│
+├── Jutsu Scrolls/
+│   ├── known_jutsu/
+│   │   ├── earth_release_techniques.docx
+│   │   ├── dust_release_reference.docx
+│   │   ├── lava_release_techniques.docx
+│   │   └── explosion_release_manual.docx
+│   ├── training/
+│   │   ├── earth_manipulation_drills.docx
+│   │   ├── flight_jutsu_log.docx
+│   │   └── particle_technique_apprentice_notes.docx
+│   └── forbidden/
+│       ├── explosion_corps_classified_tech.docx
+│       └── dust_release_civilian_ban.docx
+│
+├── Team Rosters/
+│   ├── rock_jonin_active_list.xlsx
+│   ├── explosion_corps_roster.xlsx
+│   ├── tsuchikage_guard_detail.docx
+│   └── kurotsuchi_unit_roster.docx
+│
+├── Village Laws & Policies/
+│   ├── constitution/
+│   │   ├── iwa_village_charter.docx
+│   │   └── earth_country_law_codex.docx
+│   ├── rank_regulations/
+│   │   ├── rock_genin_handbook.docx
+│   │   └── tsuchikage_authority_decree.docx
+│   ├── grudge_policy/
+│   │   ├── konoha_non_aggression_terms.docx
+│   │   ├── yellow_flash_historical_record.docx
+│   │   └── minato_namikaze_threat_assessment.docx
+│   └── disciplinary/
+│       ├── deidara_defection_ruling.docx
+│       └── missing_nin_bounty_list.xlsx
+│
+├── Personal Records/
+│   ├── identity/
+│   │   ├── rock_shinobi_registration.docx
+│   │   └── iwa_headband_issuance.docx
+│   └── medical/
+│       ├── dust_exposure_health_log.docx
+│       └── explosion_corps_injury_record.docx
+│
+├── Tsuchikage Office/
+│   ├── first_tsuchikage_records.docx
+│   ├── second_tsuchikage_mu_dossier.docx
+│   ├── third_tsuchikage_onoki_era.docx
+│   ├── fourth_tsuchikage_succession.docx
+│   └── five_kage_summit_iwa_position.docx
+│
+├── Explosion Corps/
+│   ├── explosion_release_operators.xlsx
+│   ├── demolition_mission_log.xlsx
+│   ├── deidara_commendation_then_betrayal.docx
+│   └── explosive_clay_incident_reports.docx
+│
+└── Onboarding/
+    ├── welcome_to_iwa.docx
+    ├── mountain_terrain_briefing.docx
+    ├── iwa_village_map.docx
+    ├── explosion_safety_policy.docx
+    └── faq_new_recruits.docx
+```
+---
+```
+Documents/
+│
+├── Mission Reports/
+│   ├── active/
+│   │   ├── rain_country_patrol_log.docx
+│   │   └── akatsuki_liaison_brief.docx
+│   ├── completed/
+│   │   ├── mission_log.xlsx
+│   │   └── hanzo_overthrow_after_action.docx
+│   └── classified/
+│       ├── nagato_true_identity_file.docx
+│       ├── pain_six_paths_deployment_log.docx
+│       └── konan_paper_bomb_network.docx
+│
+├── Jutsu Scrolls/
+│   ├── known_jutsu/
+│   │   ├── rain_tiger_at_will.docx
+│   │   ├── paper_ninjutsu_reference.docx
+│   │   └── rinnegan_six_paths_powers.docx
+│   └── training/
+│       ├── rain_sensing_technique.docx
+│       └── senjutsu_restricted_notes.docx
+│
+├── Team Rosters/
+│   ├── akatsuki_founding_members.docx
+│   ├── amegakure_guard_roster.xlsx
+│   └── pain_six_paths_manifest.docx
+│
+├── Village Laws & Policies/
+│   ├── pain_law_decrees.docx
+│   ├── closed_border_policy.docx
+│   ├── anti_espionage_directive.docx
+│   └── god_of_rain_edicts.docx
+│
+├── Akatsuki Founding Records/
+│   ├── original_akatsuki_manifesto.docx
+│   ├── yahiko_founding_vision.docx
+│   ├── nagato_succession.docx
+│   └── peace_through_pain_philosophy.docx
+│
+├── Surveillance Network/
+│   ├── rain_sensing_grid_map.docx
+│   ├── intruder_log.xlsx
+│   └── zetsu_spy_reports.docx
+│
+└── Onboarding/
+    ├── welcome_to_ame.docx
+    ├── closed_village_access_policy.docx
+    ├── rain_country_map.docx
+    └── faq_new_recruits.docx
+```
+---
+```
+Documents/
+│
+├── Mission Reports/
+│   ├── active/
+│   │   ├── sound_spy_operation_log.docx
+│   │   └── konoha_infiltration_brief.docx
+│   ├── completed/
+│   │   ├── chunin_exam_operation_debrief.docx
+│   │   └── sasuke_retrieval_mission.docx
+│   └── classified/
+│       ├── orochimaru_body_transfer_schedule.docx
+│       ├── curse_mark_experiment_log.docx
+│       └── edo_tensei_subject_list.docx
+│
+├── Jutsu Scrolls/
+│   ├── known_jutsu/
+│   │   ├── sound_four_techniques.docx
+│   │   ├── curse_mark_activation_manual.docx
+│   │   └── snake_summon_reference.docx
+│   └── forbidden/
+│       ├── living_corpse_reincarnation.docx
+│       ├── body_modification_experiments.docx
+│       └── senjutsu_snake_sage_notes.docx
+│
+├── Team Rosters/
+│   ├── sound_five_roster.docx
+│   ├── orochimaru_personal_guard.xlsx
+│   └── experiment_subjects_log.xlsx
+│
+├── Village Laws & Policies/
+│   ├── orochimaru_supreme_authority.docx
+│   ├── experiment_consent_waiver.docx
+│   ├── curse_mark_assignment_policy.docx
+│   └── loyalty_oath_template.docx
+│
+├── Research & Experiments/
+│   ├── curse_mark_research_vol1.docx
+│   ├── curse_mark_research_vol2.docx
+│   ├── kekkei_genkai_collection_log.xlsx
+│   ├── dna_modification_notes.docx
+│   ├── immortality_research_archive.docx
+│   ├── edo_tensei_improvement_notes.docx
+│   └── unlisted_node_notes.docx
+│
+├── Personal Records/
+│   ├── identity/
+│   │   └── sound_operative_registration.docx
+│   └── medical/
+│       ├── curse_mark_health_monitoring.xlsx
+│       └── body_modification_consent.docx
+│
+└── Onboarding/
+    ├── welcome_to_oto.docx
+    ├── loyalty_is_everything.docx
+    ├── curse_mark_consent_form.docx
+    └── sound_village_compound_map.docx
+```
+---
+```
+Documents/
+│
+├── Mission Reports/
+│   ├── active/
+│   │   ├── waterfall_patrol_log.docx
+│   │   └── fuu_escort_mission_brief.docx
+│   ├── completed/
+│   │   └── mission_log.xlsx
+│   └── classified/
+│       ├── hero_water_containment.docx
+│       └── seven_tails_host_security.docx
+│
+├── Jutsu Scrolls/
+│   ├── known_jutsu/
+│   │   ├── water_release_techniques.docx
+│   │   └── hero_water_effects_manual.docx
+│   └── forbidden/
+│       ├── hero_water_restricted_access.docx
+│       └── seven_tails_control_manual.docx
+│
+├── Team Rosters/
+│   ├── active_shinobi_list.xlsx
+│   └── fuu_guard_detail.docx
+│
+├── Village Laws & Policies/
+│   ├── hero_water_use_policy.docx
+│   ├── jinchuriki_protection_act.docx
+│   ├── waterfall_country_charter.docx
+│   └── outsider_access_restriction.docx
+│
+├── Jinchuriki Program/
+│   ├── fuu_seven_tails_log.docx
+│   ├── chomei_bijuu_profile.docx
+│   └── extraction_threat_assessment.docx
+│
+├── Personal Records/
+│   ├── shinobi_registration.docx
+│   └── medical/
+│       └── water_country_health_log.docx
+│
+└── Onboarding/
+    ├── welcome_to_taki.docx
+    ├── waterfall_navigation_guide.docx
+    ├── hero_water_safety_briefing.docx
+    └── faq_new_recruits.docx
+```
+---
+```
+Documents/
+│
+├── Mission Reports/
+│   ├── active/
+│   │   └── grass_country_patrol_log.docx
+│   └── completed/
+│       ├── chunin_exam_participant_log.xlsx
+│       └── orochimaru_infiltration_report.docx
+│
+├── Jutsu Scrolls/
+│   ├── known_jutsu/
+│   │   ├── grass_techniques_reference.docx
+│   │   └── kimimaro_bone_technique_archive.docx
+│   └── training/
+│       └── survival_in_hostile_terrain.docx
+│
+├── Team Rosters/
+│   ├── active_shinobi_list.xlsx
+│   └── chunin_exam_team_assignments.docx
+│
+├── Village Laws & Policies/
+│   ├── grass_village_charter.docx
+│   ├── chunin_exam_participation_policy.docx
+│   └── neutral_nation_treaty.docx
+│
+├── Personal Records/
+│   ├── shinobi_registration.docx
+│   └── medical/
+│       └── grass_country_health_log.docx
+│
+└── Onboarding/
+    ├── welcome_to_kusa.docx
+    ├── grass_country_map.docx
+    └── faq_new_recruits.docx
+```
+---
+```
+Documents/
+│
+├── Mission Reports/
+│   ├── active/
+│   │   ├── land_of_iron_patrol_log.docx
+│   │   └── five_kage_summit_security_brief.docx
+│   └── completed/
+│       ├── summit_escort_debrief.docx
+│       └── neutral_zone_incident_log.docx
+│
+├── Combat Scrolls/
+│   ├── known_techniques/
+│   │   ├── samurai_sabre_techniques.docx
+│   │   ├── iaido_reference_manual.docx
+│   │   └── chakra_infused_blade_guide.docx
+│   └── training/
+│       ├── sword_maintenance_log.xlsx
+│       ├── formation_drills.docx
+│       └── mounted_combat_training.docx
+│
+├── Corps Rosters/
+│   ├── mifune_command_staff.docx
+│   ├── samurai_active_duty.xlsx
+│   └── five_kage_summit_guard_assignment.xlsx
+│
+├── Laws & Honour Code/
+│   ├── bushido_code.docx
+│   ├── land_of_iron_neutrality_act.docx
+│   ├── no_ninja_jurisdiction_policy.docx
+│   ├── chakra_use_ban_for_samurai.docx
+│   └── sword_inheritance_law.docx
+│
+├── Personal Records/
+│   ├── samurai_registration.docx
+│   └── sword_certification.docx
+│
+└── Onboarding/
+    ├── welcome_to_land_of_iron.docx
+    ├── neutrality_oath.docx
+    ├── samurai_code_of_conduct.docx
+    └── fortress_map.docx
+```
+---
+```
+Documents/
+│
+├── Operation Logs/
+│   ├── active/
+│   │   ├── current_extraction_target.docx
+│   │   ├── tailed_beast_capture_order.docx
+│   │   └── ring_bearer_assignments.docx
+│   ├── completed/
+│   │   ├── extraction_log.xlsx
+│   │   ├── shukaku_extraction_report.docx
+│   │   ├── yugito_capture_report.docx
+│   │   └── roshi_capture_report.docx
+│   └── classified/
+│       ├── madara_true_plan.docx
+│       ├── infinite_tsukuyomi_timeline.docx
+│       └── ten_tails_revival_steps.docx
+│
+├── Technique Files/
+│   ├── sealing_jutsu/
+│   │   ├── gedō_statue_seal_procedure.docx
+│   │   ├── four_corner_sealing_barrier.docx
+│   │   └── three_days_sealing_process.docx
+│   └── member_techniques/
+│       ├── pain_six_paths_manual.docx
+│       ├── deidara_explosive_clay_guide.docx
+│       ├── sasori_puppet_arts.docx
+│       ├── itachi_sharingan_techniques.docx
+│       └── kakuzu_earth_grudge_fear.docx
+│
+├── Member Roster/
+│   ├── active_members.xlsx
+│   ├── ring_assignments.docx
+│   ├── partnership_pairings.docx
+│   └── deceased_members_log.xlsx
+│
+├── Policies & Orders/
+│   ├── pain_supreme_authority.docx
+│   ├── tobi_shadow_leadership.docx
+│   ├── no_personal_vendettas_policy.docx
+│   ├── bounty_collection_procedure.docx
+│   ├── hide_cloud_policy.docx
+│   ├── mission_payment_structure.xlsx
+│   └── communications_security_protocol.docx
+│
+├── Intelligence Files/
+│   ├── village_weaknesses_assessment.xlsx
+│   ├── jinchuriki_host_profiles.xlsx
+│   ├── kage_threat_assessments.docx
+│   ├── naruto_gaara_active_surveillance.xlsx
+│   └── spy_network_contacts.docx
+│
+├── Financial Records/
+│   ├── kakuzu_bounty_earnings.xlsx
+│   ├── mission_payment_ledger.xlsx
+│   └── operational_expenses.xlsx
+│
+└── Onboarding/
+    ├── welcome_to_akatsuki.docx
+    ├── ring_ceremony_instructions.docx
+    ├── cloak_and_ring_issuance.docx
+    ├── partner_assignment_letter.docx
+    ├── rules_of_the_organisation.docx
+    └── what_not_to_do_around_tobi.docx
+```
+---
+Not a village document share — this is one character's own messy user profile
+(`konoha-ws1`, `C:\Users\naruto.uzumaki`), not the shared village drive above.
+Deliberately small and disorganised rather than a folder tree: duplicate downloads,
+a cleartext credentials file, and loose notepad-style reminders, the kind of
+everyday-user artifacts a DFIR range should have somewhere.
+```
+C:\Users\naruto.uzumaki\
+│
+├── Desktop/
+│   ├── passwords_DONT_DELETE.txt
+│   ├── personal_info.txt
+│   └── reminders.txt
+│
+└── Downloads/
+    ├── rasengan_training_guide.docx
+    ├── rasengan_training_guide (1).docx
+    ├── rasengan_training_guide (2).docx
+    ├── shadow_clone_notes.pdf
+    └── shadow_clone_notes (1).pdf
+```
+---
+*Total: 12 villages/organisations (+1 personal workstation) | ~455 files | ~90 folders*

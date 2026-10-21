@@ -1,0 +1,3 @@
+---
+- name: "Generate native images for the installed .NET runtimes"
+  community.windows.win_dotnet_ngen:

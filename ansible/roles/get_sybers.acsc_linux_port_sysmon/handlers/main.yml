@@ -1,0 +1,5 @@
+---
+- name: Restart journald to load the drop-in
+  ansible.builtin.systemd_service:
+    name: systemd-journald
+    state: restarted

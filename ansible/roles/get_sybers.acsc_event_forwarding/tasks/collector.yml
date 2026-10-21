@@ -1,0 +1,5 @@
+---
+- name: "collector | Configure the Windows Event Collector service"
+  ansible.windows.win_command: wecutil qc /q
+  register: __acsc_wef_qc
+  changed_when: "'already configured' not in (__acsc_wef_qc.stdout | default(''))"

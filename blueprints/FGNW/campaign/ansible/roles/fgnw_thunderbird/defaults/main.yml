@@ -1,0 +1,27 @@
+---
+# Account vars have NO defaults — a wrong default would silently point every host at the same
+# server. Callers must set the five identity + routing vars (user, display, domain, IMAP
+# server/port, SMTP server/port). The policies.json template fails loudly if any is missing.
+#
+# Everything below is a lab-safe installer / path / protocol default that holds across villages.
+
+# --- Windows install (chocolatey through Nexus `chocolatey-proxy`) ---
+fgnw_thunderbird_choco_package: thunderbird
+fgnw_thunderbird_choco_version: ""   # empty => latest from Nexus mirror
+fgnw_thunderbird_ignore_checksums: true
+
+# --- Where Thunderbird reads policies.json on each OS ---
+fgnw_thunderbird_win_distribution_dir: 'C:\Program Files\Mozilla Thunderbird\distribution'
+fgnw_thunderbird_mac_distribution_dir: /Applications/Thunderbird.app/Contents/Resources/distribution
+
+# --- Protocol defaults ---
+# Plaintext IMAP 143 + SMTP 25 is the range-wide default. It matches the Sand Postfix/Dovecot
+# stack (fgnw_mac_mail_server) which runs no TLS, and it matches an Exchange server with
+# IMAP enabled by FGNW-thunderbird.yml's `LoginType: PlainTextLogin` + SMTP receive-connector
+# default of :25. The whole range is sealed off the internet by Phase 2 containment; only
+# VLAN-local SMTP/IMAP traffic reaches these ports. Flip these together with the server-side
+# config when a real TLS story lands.
+fgnw_thunderbird_imap_port: 143
+fgnw_thunderbird_smtp_port: 25
+fgnw_thunderbird_socket_type: plain
+fgnw_thunderbird_authentication: password-cleartext

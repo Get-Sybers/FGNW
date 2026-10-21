@@ -1,0 +1,19 @@
+---
+- name: "admin | Assert the liveness path ran (admin needs its evidence)"
+  ansible.builtin.assert:
+    that: not ludus_auth_skip_liveness | bool
+    fail_msg: >-
+      ludus_auth_require_admin=true needs the /whoami round-trip, but
+      ludus_auth_skip_liveness=true suppressed it. Admin status cannot be
+      derived from key shape — drop one of the two flags.
+    quiet: true
+- name: "admin | Assert the identity is a Ludus admin"
+  ansible.builtin.assert:
+    that: ludus_auth_is_admin | bool
+    fail_msg: >-
+      '{{ ludus_auth_user }}' authenticated (HTTP {{ ludus_auth_status }}) but
+      is NOT a Ludus admin, and this play's API calls require one. Authenticate
+      as the RA admin with get_sybers.cluster playbooks/ludus-ra-auth.yml and
+      export LUDUS_API_KEY from it (the get_sybers.cluster collection, Get-Sybers/proxmaxxing).
+    success_msg: "userID={{ ludus_auth_user }} is a Ludus admin."
+    quiet: true

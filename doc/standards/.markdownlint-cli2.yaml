@@ -1,0 +1,10 @@
+---
+# The house standards are carried verbatim from their source. The style rules
+# of the root configuration apply to this repository's own prose, not to them.
+config:
+  default: false
+  MD003: false
+  MD004: false
+  MD024: false
+  MD034: false
+  MD040: false

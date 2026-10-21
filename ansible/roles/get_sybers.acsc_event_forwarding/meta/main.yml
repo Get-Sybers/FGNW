@@ -1,0 +1,23 @@
+---
+galaxy_info:
+  role_name: acsc_event_forwarding
+  namespace: get_sybers
+  author: Get-Sybers
+  description: >-
+    ACSC Windows Event Forwarding — installs the Australian Cyber Security
+    Centre's 28 WEF subscriptions on a collector, points them at their source
+    computers by SDDL, and enables WMI namespace auditing where required. The
+    Ansible port of ACSC's add_subscriptions.ps1 and
+    set_subscriptions_sources.ps1.
+  license: AGPL-3.0-only
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Windows
+      versions: [all]
+  galaxy_tags:
+    - acsc
+    - wef
+    - logging
+    - windows
+    - dfir
+dependencies: []

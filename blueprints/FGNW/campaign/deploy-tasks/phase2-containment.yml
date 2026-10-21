@@ -1,0 +1,11 @@
+---
+- name: "deploy-tasks | phase2-containment | Start testing mode (ludus testing start, Nexus allow-listed)"
+  ansible.builtin.include_role:
+    name: get_sybers.range.ludus_testing
+  vars:
+    ludus_testing_allow_ips: [192.0.2.2]
+  when: range_testing | default(true) | bool
+- name: "deploy-tasks | phase2-containment | Skipped (range_testing=false — dev/debug posture)"
+  ansible.builtin.debug:
+    msg: range_testing is false — deploying UNCONTAINED (not the normal end state).
+  when: not (range_testing | default(true) | bool)

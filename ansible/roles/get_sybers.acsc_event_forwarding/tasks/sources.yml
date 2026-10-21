@@ -1,0 +1,9 @@
+---
+- name: "sources | Point subscriptions at their source computers (SDDL)"
+  ansible.windows.win_command: >-
+    wecutil ss "{{ item }}" /adc:"{{ acsc_wef_source_sddl }}"
+  loop: "{{ __acsc_wef_wanted }}"
+  loop_control:
+    label: "{{ item }}"
+  register: __acsc_wef_sourced
+  changed_when: __acsc_wef_sourced.rc == 0

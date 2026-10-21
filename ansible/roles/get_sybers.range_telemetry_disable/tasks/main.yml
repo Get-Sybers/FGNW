@@ -1,0 +1,9 @@
+---
+- name: Apply telemetry-disabling registry values + disable telemetry scheduled tasks
+  ansible.builtin.include_tasks: configure.yml
+- name: Confirm telemetry is disabled
+  ansible.builtin.include_tasks:
+    file: verify.yml
+    apply:
+      tags: [verify]
+  tags: [verify]

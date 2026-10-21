@@ -1,0 +1,35 @@
+---
+# Pre-containment half of fgnw_mac_ghosts_client. Runs in Phase 1c, while egress is still
+# open, to fetch the GHOSTS Universal client tarball from github.com and extract it into
+# place with the ApiRootUrl already pointed at the ghost9 CT.
+- name: "prestage | Ensure ghosts install, config, and log dirs exist"
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ fgnw_mac_ghosts_client_install_dir }}"
+    - "{{ fgnw_mac_ghosts_client_config_dir }}"
+    - "{{ fgnw_mac_ghosts_client_log_dir }}"
+  become: true
+
+- name: "prestage | Fetch the GHOSTS Universal client tarball"
+  ansible.builtin.get_url:
+    url: "{{ fgnw_mac_ghosts_client_tarball_url }}"
+    dest: "/tmp/ghosts-client.tar.gz"
+    mode: "0644"
+  become: true
+
+- name: "prestage | Extract the GHOSTS client"
+  ansible.builtin.unarchive:
+    src: "/tmp/ghosts-client.tar.gz"
+    dest: "{{ fgnw_mac_ghosts_client_install_dir }}"
+    remote_src: true
+  become: true
+
+- name: "prestage | Point the client at the ghost9 API"
+  ansible.builtin.replace:
+    path: "{{ fgnw_mac_ghosts_client_install_dir }}/config/application.json"
+    regexp: '"ApiRootUrl":\s*"[^"]*"'
+    replace: '"ApiRootUrl": "{{ fgnw_mac_ghosts_client_api_url }}"'
+  become: true

@@ -1,0 +1,65 @@
+---
+argument_specs:
+  main:
+    short_description: Deploy a range via the Ludus CLI and wait for a terminal state
+    description:
+      - Reads current rangeState, skips an untargeted deploy that is already SUCCESS, otherwise runs bounded fire+poll attempts (attempt.yml) — re-checking
+        state before each fire so it attaches to an in-flight deploy rather than racing it, retrying transient ERROR, and treating FAILED or a poll-budget
+        timeout as fatal — then asserts the range reached SUCCESS.
+    options:
+      ludus_range_deploy_tags:
+        type: list
+        elements: str
+        description:
+          - Optional `-t` deploy tags (e.g. ['nexus'], ['user-defined-roles']). Any non-empty value also disables the already-SUCCESS idempotent skip. Default
+            (empty = full deploy) in defaults/main.yml.
+      ludus_range_deploy_limit:
+        type: str
+        default: ""
+        description:
+          - Optional `--limit` target (e.g. RA-<vm-name>). Non-empty disables the already-SUCCESS skip.
+      ludus_range_deploy_only_roles:
+        type: str
+        default: ""
+        description:
+          - Optional `--only-roles <role>` (paired with -t user-defined-roles). Non-empty disables the already-SUCCESS skip.
+      ludus_range_deploy_force:
+        type: bool
+        default: false
+        description:
+          - When true, re-apply even if the range is already SUCCESS (else that case is an idempotent no-op).
+      ludus_range_deploy_max_attempts:
+        type: int
+        default: 3
+        description:
+          - Maximum fire+poll attempts. Bounded so a genuinely broken deploy still exits. The preflight asserts this is >= 1.
+      ludus_range_deploy_error_retry:
+        type: bool
+        default: true
+        description:
+          - When true, a terminal ERROR (commonly a VM unreachable when its roles ran) is retried by re-firing the idempotent deploy, up to max_attempts.
+      ludus_range_deploy_poll_retries:
+        type: int
+        default: 270
+        description:
+          - Poll iterations waiting for a terminal state (with ludus_range_deploy_poll_delay, the total budget). Default 270 x 20s = 90 min.
+      ludus_range_deploy_poll_delay:
+        type: int
+        default: 20
+        description:
+          - Seconds between state polls.
+      ludus_range_deploy_capture_errors:
+        type: bool
+        default: true
+        description:
+          - When true, persist each errored attempt's `ludus range errors` to a per-attempt file before the next fire rolls the server logs over (#320).
+            Best-effort; never fails the deploy.
+      ludus_range_deploy_error_capture_dir:
+        type: str
+        description:
+          - Directory the errored-attempt diagnostics are written to. Templated default ($HOME/.ludus-deploy-errors) in defaults/main.yml.
+      ludus_range_deploy_bin:
+        type: str
+        default: /usr/local/bin/ludus
+        description:
+          - Path to the ludus CLI binary invoked for range deploy, range list and range errors.

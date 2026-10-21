@@ -1,0 +1,198 @@
+---
+- name: Validate that ludus_tool_cache_categories is provided and non-empty
+  ansible.builtin.fail:
+    msg: >
+      ludus_tool_cache_categories must be set to a non-empty list before including this role.
+      Load your tools YAML file with include_vars in the calling playbook and pass the
+      list via: ludus_tool_cache_categories: "{{ your_data.tool_categories }}"
+  when: ludus_tool_cache_categories | length == 0
+- name: Route apt through the Nexus Debian proxy (contained range)
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/nexus-debian.list
+    mode: "0644"
+    content: |
+      deb http://192.0.2.2:8081/repository/debian-proxy {{ ansible_distribution_release }} main non-free-firmware
+      deb http://192.0.2.2:8081/repository/debian-proxy {{ ansible_distribution_release }}-updates main non-free-firmware
+      deb http://192.0.2.2:8081/repository/debian-security-proxy {{ ansible_distribution_release }}-security main non-free-firmware
+- name: "Disable the internet apt sources that can't resolve under containment"
+  ansible.builtin.command:
+    cmd: mv /etc/apt/sources.list /etc/apt/sources.list.disabled
+    removes: /etc/apt/sources.list
+- name: Install nginx from distro package repository (via the Nexus Debian proxy)
+  ansible.builtin.apt:
+    name: nginx
+    state: present
+    update_cache: true
+- name: Create tool download directory
+  ansible.builtin.file:
+    path: "{{ ludus_tool_cache_web_root }}/{{ ludus_tool_cache_tools_subdir }}"
+    state: directory
+    mode: "0755"
+    owner: www-data
+    group: www-data
+- name: Fetch tool binaries where a download URL is provided
+  ansible.builtin.get_url:
+    url: "{{ item.url }}"
+    dest: "{{ ludus_tool_cache_web_root }}/{{ ludus_tool_cache_tools_subdir }}/{{ item.filename }}"
+    mode: "0644"
+    owner: www-data
+    group: www-data
+    timeout: 30
+  loop: "{{ ludus_tool_cache_categories | map(attribute='tools') | flatten }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when:
+    - item.url | default('') | length > 0
+    - not (item.manual_install | default(false))
+    - not (item.local_file | default(false))
+  failed_when: false # an unreachable download leaves that one tool out of the cache; the page still builds
+- name: Collect controller-side local file items
+  ansible.builtin.set_fact:
+    __tool_cache_local_file_items: >-
+      {{
+        ludus_tool_cache_categories
+        | map(attribute='tools')
+        | flatten
+        | selectattr('local_file', 'defined')
+        | selectattr('local_file', 'equalto', true)
+        | list
+      }}
+- name: Publish controller-side local files
+  when: __tool_cache_local_file_items | length > 0
+  block:
+    - name: Validate controller-side local file metadata
+      ansible.builtin.assert:
+        that:
+          - item.local_source is defined
+          - item.local_source is string
+          - item.local_source | trim | length > 0
+        fail_msg: "local_source must be a non-empty string for tool: {{ item.name }}"
+        quiet: true
+      loop: "{{ __tool_cache_local_file_items }}"
+      loop_control:
+        label: "{{ item.name }}"
+    - name: Check controller-side local file paths
+      ansible.builtin.stat:
+        path: "{{ item.local_source }}"
+      delegate_to: localhost
+      become: false
+      loop: "{{ __tool_cache_local_file_items }}"
+      loop_control:
+        label: "{{ item.name }}"
+      register: __tool_cache_local_file_stats
+    - name: Initialize missing controller-side local file list
+      ansible.builtin.set_fact:
+        __tool_cache_missing_local_file_items: []
+    - name: Collect missing controller-side local files
+      ansible.builtin.set_fact:
+        __tool_cache_missing_local_file_items: >-
+          {{
+            (__tool_cache_missing_local_file_items | default([]))
+            + [item.item]
+          }}
+      loop: "{{ __tool_cache_local_file_stats.results }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+      when: not item.stat.exists
+    - name: Fail when controller-side local files are missing
+      ansible.builtin.fail:
+        msg: >-
+          local_source path not found for:
+          {{
+            __tool_cache_missing_local_file_items
+            | map(attribute='name')
+            | zip(__tool_cache_missing_local_file_items | map(attribute='local_source'))
+            | map('join', ' -> ')
+            | join(', ')
+          }}
+      when: __tool_cache_missing_local_file_items | length > 0
+    - name: Copy controller-side local files
+      ansible.builtin.copy:
+        src: "{{ item.local_source }}"
+        dest: "{{ ludus_tool_cache_web_root }}/{{ ludus_tool_cache_tools_subdir }}/{{ item.filename }}"
+        mode: "0644"
+        owner: www-data
+        group: www-data
+      loop: "{{ __tool_cache_local_file_items }}"
+      loop_control:
+        label: "{{ item.name }}"
+- name: Deploy tool-list index page
+  ansible.builtin.copy:
+    dest: "{{ ludus_tool_cache_web_root }}/index.html"
+    mode: "0644"
+    owner: www-data
+    group: www-data
+    content: |
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <title>{{ ludus_tool_cache_title | e }}</title>
+        <style>
+          body { font-family: monospace; background: #f4f4f4;
+          h1 { border-bottom: 2px solid
+          h2 { color: #333;
+          p.desc { color: #333;
+          table { border-collapse: collapse; width: 100%; margin-bottom: 1rem; }
+          th { background: #f4f4f4;
+          td { padding: .4rem .5rem; border-bottom: 1px solid
+          a { color: #0366d6;
+          .no-url { color: #333;
+        </style>
+      </head>
+      <body>
+        <h1>{{ ludus_tool_cache_title | e }}</h1>
+        <p>{{ ludus_tool_cache_subtitle | e }}</p>
+      {% for cat in ludus_tool_cache_categories %}
+        <h2>{{ cat.name | e }}</h2>
+        <p class="desc">{{ cat.description | e }}</p>
+        <table>
+          <tr><th>Tool</th><th>Description</th><th>Download</th></tr>
+      {% for tool in cat.tools %}
+      {% set has_download_url = tool.url | default('') | length > 0 %}
+      {% set has_local_file = tool.local_file | default(false) %}
+          <tr>
+            <td><strong>{{ tool.name | e }}</strong></td>
+            <td>{{ tool.description | e }}</td>
+            <td>{% if not (tool.manual_install | default(false)) and (has_download_url or has_local_file) %}
+                <a href="/{{ ludus_tool_cache_tools_subdir }}/{{ tool.filename | e }}">{{ tool.filename | e }}</a>
+                {% else %}<span class="no-url">manual install — see tool documentation</span>{% endif %}</td>
+          </tr>
+      {% endfor %}
+        </table>
+      {% endfor %}
+      </body>
+      </html>
+- name: Deploy nginx catch-all virtual host
+  ansible.builtin.copy:
+    dest: /etc/nginx/sites-available/tool-cache
+    mode: "0644"
+    content: |
+      server {
+          listen 80 default_server;
+          server_name _;
+          root {{ ludus_tool_cache_web_root }};
+          index index.html;
+          location / {
+              try_files $uri $uri/ =404;
+          }
+      }
+- name: Enable tool-cache site
+  ansible.builtin.file:
+    src: /etc/nginx/sites-available/tool-cache
+    dest: /etc/nginx/sites-enabled/tool-cache
+    state: link
+- name: Disable nginx default site
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+- name: Validate nginx configuration
+  ansible.builtin.command: nginx -t
+  register: __nginx_validation
+  changed_when: false
+  failed_when: __nginx_validation.rc != 0
+- name: Enable and restart nginx
+  ansible.builtin.service:
+    name: nginx
+    state: restarted
+    enabled: true

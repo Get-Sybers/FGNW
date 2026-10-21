@@ -1,0 +1,48 @@
+---
+schema_version: 1
+role: get_sybers.range_telemetry_disable
+baseline: EXLOUD Windows-Telemetry-Disabler (telemetry-win.ps1)
+status: promoted
+variable_prefix: range_telemetry_
+derived_from:
+  - name: EXLOUD/Windows-Telemetry-Disabler
+    url: https://github.com/EXLOUD/Windows-Telemetry-Disabler
+    commit: 44ef2f4fc4f64d9829c31626aa5ce59c871c080c
+    commit_is: branch-head
+    branch: main
+    licence: MIT
+    licence_holder: EXLOUD
+    relationship: ported
+    reason: >-
+      Operator asked to fold a Windows telemetry disabler into the range without running the
+      project's bundled superUser.exe (a TrustedInstaller privilege-escalation binary) on every
+      VM. So the DECLARATIVE operations from telemetry-win.ps1 -- its $reg / $services / $tasks
+      arrays -- were extracted and reimplemented idempotently with win_regedit / win_reg_stat /
+      Disable-ScheduledTask. No upstream bytes are shipped; only the registry paths, service names
+      and scheduled-task names are reused (facts, not copyrightable expression).
+    ported:
+      - local: defaults/main.yml (range_telemetry_registry)
+        from: $reg array (telemetry-win.ps1 lines ~200-669)
+        note: >-
+          CURATED for Server 2022. Kept: DataCollection/AllowTelemetry, AppCompat/Appraiser,
+          DiagTrack internals + service Start=4, CEIP/SQM, telemetry AutoLoggers (Start=0),
+          scripted/scheduled diagnostics, Windows Error Reporting, Delivery Optimization, device
+          metadata. DROPPED as consumer-only / N-A on Server 2022: Cortana & web search, Copilot/
+          WindowsAI, News&Interests/widgets, input-personalization/handwriting/speech/TabletTip
+          prediction, UseFluency locale table, Wi-Fi Sense, SettingSync, geolocation (lfsvc),
+          StorageSense, MobSync.
+      - local: defaults/main.yml (range_telemetry_scheduled_tasks)
+        from: $tasks array (telemetry-win.ps1 lines ~851-1000)
+        note: >-
+          The uncommented telemetry/CEIP/diagnostics tasks (Application Experience, Customer
+          Experience Improvement Program, Device Information, Diagnosis, DiskDiagnostic, Feedback\
+          Siuf, Flighting, NetTrace, PI\Sqm-Tasks, Power Efficiency, User Profile HiveUpload,
+          Windows Error Reporting). Dropped: International language-sync, CloudExperienceHost,
+          Speech model download (consumer).
+      - local: tasks/configure.yml
+        from: Set-RegistryValue / Disable-ScheduledTaskSafely functions + their loops
+        note: >-
+          Reimplemented as a win_regedit loop + one idempotent Disable-ScheduledTask pass. The
+          bundled superUser.exe elevation, launcher.bat, UI/menus and logging plumbing are NOT
+          ported -- Ansible already runs elevated over WinRM.
+verify: |

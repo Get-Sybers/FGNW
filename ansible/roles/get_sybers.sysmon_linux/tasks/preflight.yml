@@ -1,0 +1,40 @@
+---
+- name: "preflight | Resolve which Microsoft packages.microsoft.com repo path/codename this host uses"
+  ansible.builtin.set_fact:
+    __sysmon_linux_repo_os: "{{ 'ubuntu' if ansible_facts['distribution'] == 'Ubuntu' else 'debian' }}"
+    __sysmon_linux_repo_version: >-
+      {{
+        ansible_facts['distribution_version'] if ansible_facts['distribution'] == 'Ubuntu'
+        else sysmon_linux_kali_debian_version if ansible_facts['distribution'] == 'Kali'
+        else ansible_facts['distribution_major_version']
+      }}
+- name: "preflight | Resolve the apt codename + Nexus repo name for the resolved os/version"
+  ansible.builtin.set_fact:
+    __sysmon_linux_repo_codename: >-
+      {{
+        {'debian': {'12': 'bookworm', '13': 'trixie'}, 'ubuntu': {'24.04': 'noble', '22.04': 'jammy'}}
+        [__sysmon_linux_repo_os][__sysmon_linux_repo_version]
+      }}
+    __sysmon_linux_nexus_repo_name: "{{ 'msft-ubuntu-prod-proxy' if __sysmon_linux_repo_os == 'ubuntu' else 'msft-debian-prod-proxy' }}"
+- name: "preflight | Detect the Ludus Nexus cache"
+  ansible.builtin.wait_for:
+    host: "{{ nexus_host | default('192.0.2.2') }}"
+    port: "{{ nexus_port | default('8081') }}"
+    timeout: 5
+    state: started
+  register: __sysmon_linux_nexus_probe
+  ignore_errors: true
+- name: "preflight | Check whether the Microsoft package repo is already registered"
+  ansible.builtin.stat:
+    path: /etc/apt/sources.list.d/microsoft-prod.list
+  register: __sysmon_linux_msft_repo
+- name: "preflight | Require Nexus for the Microsoft repo — no internet fallback (policy)"
+  ansible.builtin.assert:
+    that: (__sysmon_linux_nexus_probe is succeeded) or __sysmon_linux_msft_repo.stat.exists
+    fail_msg: >-
+      Nexus ({{ nexus_host | default('192.0.2.2') }}:{{ nexus_port | default('8081') }}) is
+      unreachable and the Microsoft apt repo is not registered. Internet fallback is disabled
+      by policy — range VMs must not reach packages.microsoft.com directly. Bring Nexus up
+      (msft-{debian,ubuntu}-prod-proxy in ansible/nexus-setup.yml) and re-run; if contained,
+      allow it first with: ludus testing allow -i 192.0.2.2.
+    success_msg: "Nexus reachable (or repo already registered) — Microsoft packages come from the Nexus apt-proxy only."

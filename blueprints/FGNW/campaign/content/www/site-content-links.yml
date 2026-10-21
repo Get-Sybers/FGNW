@@ -1,0 +1,64 @@
+---
+site_content_links:
+  www.jutsuencyclopedia.net:
+    full_index: true
+  www.kekkei-genkai.org:
+    characters: [Sasuke Uchiha, Itachi Uchiha, Madara Uchiha, Hashirama Senju, Kakashi Hatake]
+  www.sealmaster.net:
+    characters: [Minato Namikaze]
+    general_techniques: [Sealing Jutsu]
+  www.sage-mode-tutorials.com:
+    characters: [Naruto Uzumaki, Orochimaru, Kabuto]
+  www.genjutsu-breakers-forum.com:
+    characters: [Itachi Uchiha, Sasuke Uchiha, Madara Uchiha]
+    general_techniques: ["Genjutsu: Sharingan"]
+  www.chakramedical-journal.com:
+    characters: [Kabuto, Tsunade]
+  www.chakranature-quiz.com:
+    general_techniques:
+      - "Dust Release: Detachment of the Primitive World"
+      - "Lava Release: Rubber Ball"
+      - "Boil Release: Skilled Mist"
+      - "Storm Release: Laser Circus"
+  www.summoning-contracts.com:
+    characters: [Naruto Uzumaki, Tsunade, Orochimaru]
+    general_techniques: [Summoning Jutsu (Kuchiyose)]
+  www.uchiha-clan-archive.leaf:
+    characters: [Sasuke Uchiha, Itachi Uchiha, Madara Uchiha, Obito Uchiha]
+  www.hyuga-main-branch.leaf:
+    characters: [Hinata Hyuuga, Neji Hyuuga]
+  www.nara-shadow-tactics.com:
+    characters: [Nara Shikamaru, Shikaku Nara]
+  www.konoha-hospital.med:
+    characters: [Tsunade]
+  www.konoha-academy.edu:
+    characters: [Iruka Umino]
+  www.yellowflash-historical.com:
+    characters: [Minato Namikaze]
+  www.dustrelease-research.com:
+    characters: [Ōnoki]
+    general_techniques: ["Dust Release: Detachment of the Primitive World"]
+  www.iwa-konoha-war-archive.com:
+    characters: [Ōnoki]
+  www.rinnegan-studies.com:
+    characters: [Pain / Nagato, Tobi, Obito Uchiha, Madara Uchiha]
+  www.akatsuki-manifesto.dark:
+    characters: [Pain / Nagato]
+  www.gedo-statue-maintenance.akatsuki:
+    characters: [Pain / Nagato, Kisame Hoshigaki, Hidan, Kakuzu, Deidara, Sasori, Itachi Uchiha]
+  www.stormrelease-research.com:
+    general_techniques: ["Storm Release: Laser Circus"]
+  www.sevenswordsmen-legacy.com:
+    characters: [Zabuza Momochi, Kisame Hoshigaki]
+  www.toad-mountain-tourism.com:
+    characters: [Naruto Uzumaki, Jiraiya]
+  www.slug-shikkotsu-forest.com:
+    characters: [Tsunade]
+  www.snakecave-ryuchi.com:
+    characters: [Orochimaru, Anko Mitarashi]
+  www.tobi-is-a-good-boy.com:
+    characters: [Tobi, Obito Uchiha]
+  www.art-is-explosion.com:
+    characters: [Deidara]
+  www.puppeteer-sasori.com:
+    characters: [Sasori]

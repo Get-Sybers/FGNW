@@ -1,0 +1,21 @@
+---
+- name: "deploy-tasks | run-playbook | Run the AD playbook (timeout 30m, up to 3 attempts): {{ __phase3_pb }}"
+  ansible.builtin.command:
+    argv:
+      - timeout
+      - 30m
+      - ansible-playbook
+      - -i
+      - "{{ ad_dir }}/data/{{ __v.ad_data }}"
+      - -i
+      - "{{ __tmp_prov_inv }}"
+      - -e
+      - data_path={{ __tmp_ad_data_dir }}
+      - "{{ __phase3_pb }}"
+  args:
+    chdir: "{{ ansible_dir }}"
+  register: __phase3_pb_result
+  changed_when: true
+  until: __phase3_pb_result.rc == 0
+  retries: 3
+  delay: 0

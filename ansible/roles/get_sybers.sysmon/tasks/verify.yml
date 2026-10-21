@@ -1,0 +1,16 @@
+---
+- name: "verify | Ensure the Sysmon64 service is running"
+  ansible.windows.win_service:
+    name: Sysmon64
+    state: started
+    start_mode: auto
+- name: "verify | Clean up Sysmon.zip after a successful installation"
+  ansible.windows.win_file:
+    path: C:\Sysmon\Sysmon.zip
+    state: absent
+  when: (sysmon_install_result.rc | default(0)) == 0
+- name: "verify | Read the Sysmon64 service state after cleanup"
+  ansible.windows.win_service_info:
+    name: Sysmon64
+  register: sysmon_final_check
+  failed_when: false

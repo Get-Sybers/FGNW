@@ -1,0 +1,16 @@
+---
+privileged_user_task_username: gaara
+privileged_user_task_domain: sunagakure.wind.ninja
+privileged_user_task_persistent_process_name: PersistentDomainAdminProcess
+privileged_user_task_persistent_process_description: >-
+  Keeps a privileged domain account's token resident in memory for the
+  Pass-the-Hash / token-impersonation workshop (restarts at boot).
+privileged_user_task_persistent_process_duration: 14400
+privileged_user_task_run_level: highest
+privileged_user_task_logon_type: password
+privileged_user_task_restart_on_failure: true
+privileged_user_task_restart_count: 3
+privileged_user_task_stop_if_going_on_batteries: false
+privileged_user_task_start_when_available: true
+privileged_user_task_execution_time_limit: PT0S
+privileged_user_task_trigger_execution_time_limit: PT0S

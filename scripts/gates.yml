@@ -1,0 +1,28 @@
+---
+boundary:
+  scan_trees:
+    - ansible/roles
+    - templates
+one_action:
+  applicable: false
+  reason: >-
+    the rule-8-gated campaign surfaces ship from FGNW.
+closure:
+  external_namespaces:
+    - get_sybers.infra
+    - get_sybers.cluster
+    - get_sybers.range
+    # The GHOSTS server CT (phase 1b) is created and configured through the
+    # get_sybers.lxc roles, installed from the git pin in requirements.yml.
+    - get_sybers.lxc
+patches:
+  applicable: false
+  reason: >-
+    cluster_ludus_patches ships from the cluster collection (get_sybers.cluster,
+    Get-Sybers/proxmaxxing), not this repo.
+module_availability:
+  applicable: false
+  reason: >-
+    no blueprint requirements or stock-pin metadata ship from this repo (the
+    only plays are packer provision snippets inside template dirs) — there is
+    nothing for the pinned-module sweep to check.

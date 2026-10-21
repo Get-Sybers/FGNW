@@ -1,0 +1,8 @@
+---
+- name: "verify | Display setup status"
+  ansible.builtin.debug:
+    msg:
+      - Defender server setup complete! ({{ 'settings applied this run' if defender_config is changed else 'already in desired state' }})
+      - "Configuration files: {{ range_defender_setup_dir }}\\"
+      - "Next: Onboard to Defender portal at https://security.microsoft.com"
+  when: defender_config.rc is defined and defender_config.rc == 0

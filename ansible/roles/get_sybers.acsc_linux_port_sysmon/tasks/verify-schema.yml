@@ -1,0 +1,10 @@
+---
+- name: "verify-schema | VERIFY the schema version we shipped is what is loaded"
+  ansible.builtin.assert:
+    that: acsc_sysmon_schema_version in __acsc_sysmon_running.stdout
+    fail_msg: >-
+      Sysmon is running but is not reporting schema
+      {{ acsc_sysmon_schema_version }}. Its loaded config is not the one this
+      role deployed — check that the installed sysmonforlinux build matches
+      acsc_sysmon_schema_version.
+    quiet: true

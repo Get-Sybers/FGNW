@@ -1,0 +1,16 @@
+OTOGAKURE — CURSED SEAL BEARER HEALTH MONITORING
+Medic Wing (Zone B) | Rolling monitoring register
+Columns: Bearer | Seal Type | Level Achieved | Last Activation | Degradation Grade | Chakra Stability | Status | Notes
+
+Bearer      | Seal   | Level | Last Activation | Degradation | Stability | Status    | Notes
+S-0121      | Heaven | L1    | 3 days ago      | Low         | Stable    | Duty      | Cleared for field
+S-0134      | Earth  | L2    | 1 day ago       | Moderate    | Watch     | Duty      | Restrict L2 use, monitor weekly
+S-0140      | Heaven | L1    | 11 days ago     | Low         | Stable    | Duty      | Nominal
+S-0155      | Earth  | L1    | 2 days ago      | Low         | Stable    | Training  | Advancing toward L2
+S-0162      | Heaven | L2    | 6 hours ago     | High        | Unstable  | Held      | Overuse; seal necrosis onset
+S-0170      | Heaven | L1    | 20 days ago     | Low         | Stable    | Duty      | Nominal
+S-0181      | Earth  | L1    | 4 days ago      | Moderate    | Watch     | Observation| Aggression spikes post-activation
+
+Standing Note: Any bearer graded High degradation or Unstable is pulled from duty and
+reported to the Head Medic. Prolonged Level 2 use accelerates bodily breakdown — enforce
+withdrawal discipline.

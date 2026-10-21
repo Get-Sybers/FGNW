@@ -1,0 +1,4 @@
+# One regex per line. Links matching any line are skipped by lychee.
+# Keep this short and explain every entry; an ignored link is a link nobody checks.
+# Example: a vendor portal that blocks bots
+# ^https://portal\.example-vendor\.com/

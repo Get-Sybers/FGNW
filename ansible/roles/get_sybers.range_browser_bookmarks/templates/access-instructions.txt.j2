@@ -1,0 +1,22 @@
+{{ bookmark_title }} Access
+{{ '=' * (bookmark_title | length + 7) }}
+URL: {{ bookmark_url }}
+{% if bookmark_username | default('') | length > 0 %}
+Username: {{ bookmark_username }}
+{% endif %}
+{% if bookmark_password | default('') | length > 0 %}
+Password: {{ bookmark_password }}
+{% endif %}
+Note: You may need to accept self-signed certificate warnings in your browser.
+To import bookmarks:
+Firefox:
+1. Open Firefox
+2. Press Ctrl+Shift+B to open Library
+3. Click "Import and Backup" > "Import Bookmarks from HTML..."
+4. Select the bookmark file from C:\Users\Public\Desktop\Bookmarks\
+Chrome:
+1. Open Chrome
+2. Press Ctrl+Shift+O to open Bookmark Manager
+3. Click the three dots menu > "Import bookmarks"
+4. Select the Chrome bookmark file from C:\Users\Public\Desktop\Bookmarks\
+Or use the desktop shortcut "{{ bookmark_title }}" to open directly.

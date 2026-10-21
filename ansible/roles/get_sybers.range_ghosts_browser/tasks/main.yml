@@ -1,0 +1,11 @@
+---
+- name: Install Chrome and matching chromedriver
+  ansible.builtin.include_tasks: install.yml
+- name: Disable Chrome auto-update and fix bundled chromedriver
+  ansible.builtin.include_tasks: configure.yml
+- name: Confirm Chrome and chromedriver are present
+  ansible.builtin.include_tasks:
+    file: verify.yml
+    apply:
+      tags: [verify]
+  tags: [verify]

@@ -1,0 +1,15 @@
+---
+range_exchange_seed_admin_password: password
+range_exchange_seed_force: false
+range_exchange_seed_state_dir: C:\ProgramData\FGNW
+range_exchange_seed_sentinel: C:\ProgramData\FGNW\seed-mail.done
+range_exchange_seed_org_map:
+  konoha-mail: { domain: konohagakure.fire.ninja }
+  suna-mail: { domain: sunagakure.wind.ninja }
+  oto-mail: { domain: otogakure.ninja }
+  dark-mail: { domain: akatsuki.dark }
+range_exchange_seed_forest_root_map:
+  konoha-mail: fire.ninja
+  suna-mail: wind.ninja
+  oto-mail: otogakure.ninja
+  dark-mail: akatsuki.dark

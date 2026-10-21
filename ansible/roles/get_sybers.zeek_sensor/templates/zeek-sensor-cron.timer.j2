@@ -1,0 +1,10 @@
+{{ ansible_managed | comment }}
+[Unit]
+Description=Run zeekctl cron on a schedule (rotation, expiry, crash recovery)
+[Timer]
+OnCalendar={{ zeek_sensor_cron_interval }}
+Persistent=true
+AccuracySec=30s
+Unit=zeek-sensor-cron.service
+[Install]
+WantedBy=timers.target

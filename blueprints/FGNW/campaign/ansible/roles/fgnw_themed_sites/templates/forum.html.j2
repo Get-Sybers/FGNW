@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ page.url }} — Forums</title>
+<style>
+ body{margin:0;font-family:Verdana,Arial,sans-serif;background: #f4f4f4;
+ header{background:{{ village_accent | default('#3b5323', true) }};color: #fff;
+ header h1{margin:0;font-size:1.3rem}
+ .wrap{max-width:880px;margin:18px auto;padding:0 16px}
+ .bar{background:{{ village_accent | default('#4d6b2f', true) }};color: #fff;
+ .thread{background: #fff;
+ .thread:nth-child(even){background: #fff;
+ .thread .t{font-weight:bold;color:{{ village_accent | default('#3b5323', true) }}}
+ .thread .m{color: #666;
+ .stats{color: #666;
+ .links a{color:{{ village_accent | default('#3b5323', true) }};text-decoration:none;margin-right:12px;font-size:.82rem}
+ footer{color: #666;
+</style></head>
+<body>
+<header><h1>{{ page.url }}</h1><div style="font-size:.8rem">{{ page.village }} community boards &middot; {{ page.category }}</div></header>
+<div class="wrap">
+ <div class="bar">▸ General Discussion — {{ page.description }}</div>
+ <div class="thread"><div><div class="t">Welcome to {{ page.url }}</div><div class="m">by admin</div></div><div class="stats">312 replies<br>last: today</div></div>
+ <div class="thread"><div><div class="t">{{ page.description }} — megathread</div><div class="m">by moderator</div></div><div class="stats">88 replies<br>last: 2h ago</div></div>
+ <div class="thread"><div><div class="t">Tips for new academy students</div><div class="m">by iruka_fan</div></div><div class="stats">45 replies<br>last: 5h ago</div></div>
+ <div class="thread"><div><div class="t">Best chakra control exercises?</div><div class="m">by leaf_medic</div></div><div class="stats">203 replies<br>last: 1d ago</div></div>
+ <div class="thread"><div><div class="t">[Locked] No village-secret leaks — read rules</div><div class="m">by admin</div></div><div class="stats">—<br>pinned</div></div>
+ <div class="bar" style="margin-top:16px">▸ Affiliated {{ page.village }} sites</div>
+ <div class="thread"><div class="links">
+{% for r in related[:14] %}<a href="http://{{ r }}/">{{ r }}</a>{% endfor %}{% if related|length == 0 %}<em>No affiliated boards.</em>{% endif %}
+ </div></div>
+</div>
+<footer>{{ page.url }} &middot; Fourth Great Ninja War (fictional community).</footer>
+</body></html>

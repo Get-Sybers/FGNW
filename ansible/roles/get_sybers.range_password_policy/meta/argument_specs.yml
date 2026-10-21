@@ -1,0 +1,34 @@
+---
+argument_specs:
+  main:
+    short_description: Loosen a DC's Default Domain Policy to admit the lab's short contract passwords
+    description:
+      - Converges the Default Domain Policy (LockoutThreshold, MinPasswordLength, LockoutDuration, LockoutObservationWindow, ComplexityEnabled) to the lab's
+        loosened values via Set-ADDefaultDomainPasswordPolicy, check-then-set so a re-run is a no-op.
+      - Runs on a DC ahead of get_sybers.range_ad_mgmt, at the Ludus user-defined-roles stage (S2).
+    options:
+      try_before_lock:
+        type: str
+        default: "0"
+        description:
+          - LockoutThreshold — failed attempts before lockout. "0" means never lock out.
+      pass_length:
+        type: str
+        default: "5"
+        description:
+          - MinPasswordLength — minimum password length admitted by the domain.
+      lock_duration:
+        type: str
+        default: 00:00:00
+        description:
+          - LockoutDuration, as an hh:mm:ss timespan string.
+      lock_observation:
+        type: str
+        default: 00:00:00
+        description:
+          - LockoutObservationWindow, as an hh:mm:ss timespan string.
+      complexity:
+        type: bool
+        default: false
+        description:
+          - ComplexityEnabled — false disables the Windows password-complexity requirement.

@@ -1,0 +1,133 @@
+---
+- name: Verify GHOSTS emulation telemetry (machine registration + freshness)
+  hosts: localhost
+  gather_facts: false
+  vars:
+    fgnw_ghosts_stale_minutes: 15
+    __any_infra_host: "{{ (groups['linux_infra'] | default([])) | first }}"
+    range_second_octet: "{{ hostvars[__any_infra_host].ansible_host.split('.')[1] }}"
+    ghosts_api_root: http://10.{{ range_second_octet }}.99.51:5000/api
+  tasks:
+    - name: Query the GHOSTS API for all registered machines
+      ansible.builtin.uri:
+        url: "{{ ghosts_api_root }}/machines"
+        method: GET
+        return_content: true
+        status_code: 200
+      register: fgnw_ghosts_machines_raw
+    - name: Fail clearly if the GHOSTS API didn't return a JSON list
+      ansible.builtin.assert:
+        that:
+          - fgnw_ghosts_machines_raw.json is defined
+          - fgnw_ghosts_machines_raw.json is iterable
+        fail_msg: GET {{ ghosts_api_root }}/machines did not return a JSON list -- is the GHOSTS server up? (see FGNW-verify-connectivity.yml / docs/DEPLOY.md
+          Phase 4)
+    - name: Evaluate each ghosts_clients host against the GHOSTS API's machine list
+      ansible.builtin.set_fact:
+        fgnw_ghosts_report: "{{ fgnw_ghosts_report | default([]) + [__entry] }}"
+      loop: "{{ groups['ghosts_clients'] | default([]) }}"
+      vars:
+        __pattern: (?i)^{{ item }}($|\.)
+        __match_list: "{{ fgnw_ghosts_machines_raw.json | selectattr('name', 'defined') | selectattr('name', 'search', __pattern) | list }}"
+        __match: "{{ __match_list[0] if (__match_list | length > 0) else {} }}"
+        __last_reported: "{{ __match.lastReportedUtc | default('') }}"
+        __last_reported_norm: "{{ __last_reported.split('.')[0] | regex_replace('Z$', '') if __last_reported | length > 0 else '' }}"
+        __age_minutes: >-
+          {{
+            ((now(utc=true) - (__last_reported_norm | to_datetime('%Y-%m-%dT%H:%M:%S'))).total_seconds() / 60) | round(1)
+            if __last_reported_norm | length > 0 else -1
+          }}
+        __entry:
+          host: "{{ item }}"
+          registered: "{{ __match != {} }}"
+          status: "{{ __match.status | default('n/a') }}"
+          last_reported_utc: "{{ __last_reported if __last_reported | length > 0 else 'n/a' }}"
+          age_minutes: "{{ __age_minutes }}"
+          ok: >-
+            {{
+              (__match != {})
+              and (__age_minutes | float >= 0)
+              and (__age_minutes | float <= fgnw_ghosts_stale_minutes)
+            }}
+    - name: Print per-host PASS/FAIL summary
+      ansible.builtin.debug:
+        msg: >-
+          [{{ 'PASS' if item.ok else 'FAIL' }}] {{ item.host }}:
+          registered={{ item.registered }}, status={{ item.status }},
+          lastReportedUtc={{ item.last_reported_utc }},
+          age={{ item.age_minutes }}min (stale threshold={{ fgnw_ghosts_stale_minutes }}min)
+      loop: "{{ fgnw_ghosts_report }}"
+      loop_control:
+        label: "{{ item.host }}"
+    - name: Overall result
+      ansible.builtin.debug:
+        msg: >-
+          {{ fgnw_ghosts_report | selectattr('ok') | list | length }}/{{ fgnw_ghosts_report | length }}
+          ghosts_clients hosts are registered and reporting fresh telemetry (< {{ fgnw_ghosts_stale_minutes }} min old).
+          {{ 'All good.' if (fgnw_ghosts_report | rejectattr('ok') | list | length == 0) else 'See FAIL lines above for which hosts need attention.' }}
+    - name: "GATE: fail if any ghosts_clients host is unregistered or reporting stale telemetry"
+      ansible.builtin.assert:
+        that:
+          - fgnw_ghosts_report | rejectattr('ok') | list | length == 0
+        fail_msg: >-
+          GHOSTS emulation verification FAILED for:
+          {{ fgnw_ghosts_report | rejectattr('ok') | map(attribute='host') | list }}.
+          See the per-host PASS/FAIL summary above for registered/status/staleness detail.
+        success_msg: All ghosts_clients hosts are registered and reporting fresh telemetry.
+    - name: Load persona baseline data (for SAM-account lookup during NPC verification)
+      ansible.builtin.include_vars:
+        file: "{{ playbook_dir }}/../content/ghosts/persona-timelines.yml"
+        name: fgnw_ghosts_pt
+    - name: Query GHOSTS 9 NPC API for all registered NPC records
+      ansible.builtin.uri:
+        url: "{{ ghosts_api_root }}/npcs"
+        method: GET
+        return_content: true
+        status_code: 200
+      register: fgnw_ghosts_npcs_raw
+      failed_when: false
+    - name: Build per-host NPC registration report
+      ansible.builtin.set_fact:
+        fgnw_npc_report: "{{ fgnw_npc_report | default([]) + [__entry] }}"
+      loop: "{{ groups['ghosts_clients'] | default([]) }}"
+      vars:
+        __persona: "{{ fgnw_ghosts_pt.ghosts_personas[item] | default({}) }}"
+        __sam: "{{ __persona.sam | default('') }}"
+        __domain: "{{ __persona.ad_domain | default('') }}"
+        __email: "{{ __sam ~ '@' ~ __domain }}"
+        __npc_list: >-
+          {{ (fgnw_ghosts_npcs_raw.json | default([]))
+             | selectattr('npcProfile', 'defined')
+             | selectattr('npcProfile.email', 'defined')
+             | selectattr('npcProfile.email', 'equalto', __email)
+             | list }}
+        __npc: "{{ __npc_list[0] if __npc_list | length > 0 else {} }}"
+        __entry:
+          host: "{{ item }}"
+          sam: "{{ __sam }}"
+          npc_found: "{{ __npc != {} }}"
+          npc_id: "{{ __npc.id | default('n/a') }}"
+          has_beliefs: "{{ (__npc.beliefs | default([]) | length > 0) }}"
+          has_knowledge: "{{ (__npc.knowledge | default([]) | length > 0) }}"
+          has_connections: "{{ (__npc.connections | default([]) | length > 0) }}"
+    - name: Print per-host GHOSTS 9 NPC PASS/WARN summary
+      ansible.builtin.debug:
+        msg: >-
+          [{{ 'PASS' if item.npc_found else 'WARN' }}] {{ item.host }} ({{ item.sam }}):
+          npc_registered={{ item.npc_found }}, id={{ item.npc_id }},
+          beliefs={{ item.has_beliefs }},
+          knowledge={{ item.has_knowledge }},
+          connections={{ item.has_connections }}
+      loop: "{{ fgnw_npc_report | default([]) }}"
+      loop_control:
+        label: "{{ item.host }}"
+    - name: GHOSTS 9 NPC overall summary
+      ansible.builtin.debug:
+        msg: >-
+          {{ fgnw_npc_report | default([]) | selectattr('npc_found') | list | length }}/{{ fgnw_npc_report | default([]) | length }}
+          ghosts_clients hosts have GHOSTS 9 NPC records.
+          {{
+            'All NPC cognitive profiles seeded.'
+            if (fgnw_npc_report | default([]) | rejectattr('npc_found') | list | length == 0)
+            else 'Run FGNW-ghosts-npc-setup.yml (Phase 4) to seed missing NPC profiles — see WARN lines above.'
+          }}

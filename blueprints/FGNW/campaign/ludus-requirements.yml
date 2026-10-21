@@ -1,0 +1,281 @@
+---
+source_sync:
+  procedure:
+    - ludus source sync <sourceID> --force
+    - ludus source add <sourceID> --all --force
+  note: >-
+    `ludus source add` installs blueprints/FGNW/requirements.yml, including the
+    get_sybers.lxc git pin and community.proxmox 2.1.0 the ghost9 CT needs (see
+    `ghost9:` below). The CT is reached over community.proxmox.proxmox_pct_remote;
+    nothing in this blueprint depends on the locally patched community.general
+    proxmox_pct_remote plugin. scripts/check-patches.py statically replays the
+    cluster_ludus_patches manifest (our edits to stock Ludus FILES) against a
+    vendored upstream copy and never inspects the live host.
+templates:
+  required:
+    - ninjasploitable-x64-server-template
+    - win2022-server-x64-appxfix-template
+    - win10-22h2-x64-enterprise-appxfix-template
+    - win2022-exchange2019-x64-template
+    - debian-12-x64-server-template
+    - kali-x64-desktop-template
+    # Hidden Sand Village (Sunagakure) converted to macOS: suna-ws1 (workstation) and
+    # suna-mail (Postfix/Dovecot mail). wind-dc1/suna-dc1 remain Windows (no macOS AD DS).
+    - macos-sequoia-15-template
+nexus:
+  required: true
+  bring_up:
+    - ludus range deploy -t nexus
+    - ansible-playbook /opt/ludus/users/range-admin/.ansible/collections/ansible_collections/get_sybers/infra/playbooks/nexus-seed-all.yml
+    - ansible-playbook .../get_sybers/infra/playbooks/nexus-cache-nmap.yml
+    - ansible-playbook .../get_sybers/infra/playbooks/nexus-cache-vcredist.yml
+    - ansible-playbook .../get_sybers/infra/playbooks/nexus-cache-npcap.yml
+    - ansible-playbook .../get_sybers/infra/playbooks/nexus-cache-powershell7.yml
+    - ansible-playbook .../get_sybers/infra/playbooks/nexus-cache-adcs-modules.yml
+  repos_this_blueprint_depends_on:
+    - name: chocolatey-proxy
+      note: stock Ludus repo, toggled to NuGet V2 by nexus-setup.yml — Windows package installs (nmap, etc.) route through it via windows.chocolatey_packages
+    - name: powershell-proxy
+      note: PowerShell Gallery mirror — PackageManagement/PowerShellGet/DSC modules for the AD build (common role)
+    - name: sysinternals-proxy
+      note: raw proxy of download.sysinternals.com — Sysmon.zip for the sysmon role
+    - name: msft-debian-prod-proxy
+      note: apt proxy of packages.microsoft.com/debian/12/prod (bookworm) — get_sybers.sysmon_linux role, Microsoft-hosted packages only (see
+        <source root>/ansible/roles/get_sybers.sysmon_linux/README.md for what this does NOT cover)
+    - name: msft-ubuntu-prod-proxy
+      note: >-
+        apt proxy of packages.microsoft.com/ubuntu/24.04/prod (noble) — same role, on an Ubuntu
+        guest. No VM in this blueprint is Ubuntu (the GHOSTS server is the Debian 13 ghost9 CT,
+        created from a published template; it installs nothing at deploy), so this proxy is
+        only exercised if an Ubuntu guest is added.
+    - name: debian-proxy
+      note: >-
+        apt proxy of deb.debian.org/debian — the Debian range VMs (ludus_tool_cache on the
+        attacker VM, FGNW-ninjasploitable-join.yml, get_sybers.range_nexus_apt) install through it
+    - name: debian-security-proxy
+      note: apt proxy of deb.debian.org/debian-security — the security suite for the same Debian VMs
+    - name: kali-proxy
+      note: apt proxy of http.kali.org/kali (kali-rolling) — range Kali VMs install through Nexus via get_sybers.range_nexus_apt (
+        NOT on deb.debian.org, so debian-proxy can't serve them
+    - name: raw-hosted
+      note: >-
+        HOSTED (not a proxy) — holds the artifacts this blueprint fetches by absolute URL.
+        NOT created or populated by nexus-setup.yml; each has its own nexus-cache-*.yml play,
+        all chained (in dependency order) by nexus-seed-all.yml, which phase0-nexus.yml runs.
+        The nmap fetch is checksum-pinned and fail-closed, so a missing artifact aborts the
+        play rather than degrading silently.
+      artifacts:
+        - path: tools/nmap-{{ range_recon_tooling_nmap_version }}-win32.zip
+          populated_by: "get_sybers.infra: playbooks/nexus-cache-nmap.yml"
+          consumed_by: range_recon_tooling (range_recon_tooling_nmap_zip_url), content/www/attacker-tools.yml
+        - path: tools/npcap-1.50.exe
+          populated_by: "get_sybers.infra: playbooks/nexus-cache-npcap.yml"
+          consumed_by: range_recon_tooling via the Akatsuki tool-cache; falls back to the copy bundled in the nmap zip
+        - path: tools/VC_redist.x86.exe
+          populated_by: "get_sybers.infra: playbooks/nexus-cache-vcredist.yml"
+          consumed_by: range_recon_tooling — nmap.exe will not start without the VC++ runtime
+  known_gap: No Nexus proxy exists for the Ubuntu base-OS apt repos (archive.ubuntu.com) — Kali now has kali-proxy (
+    Exchange-2019 prerequisite installers (.NET 4.8, VC++ redist, IIS URL Rewrite, UCMA). Anything needing those hits raw internet during Phase 1/3 (normal
+    networking), i.e. before Phase 5 containment cuts internet access.
+ansible_galaxy:
+  manifest_file: requirements.yml
+ghost9:
+  # Phase 1b: the GHOSTS server CT (campaign/ansible/ghost9-range-ct.yml), created from
+  # the ghost9 LXC template the Get-Sybers/LXC repository publishes, through the
+  # get_sybers.lxc roles (lxc_preflight, lxc_guest, lxc_ghost9). Not a Ludus template
+  # and not a Nexus consumer: the node pulls the OCI image from the registry directly.
+  template:
+    image: ghcr.io/get-sybers/lxc/ghost9@sha256:37ff20ad1b59e9b95ae83ee9d28f2e2079da16fbf0afbce4b4a9bd69e088044c
+    tag: v0.1.1
+    template_version: "0.1.1"
+    ghosts_version: "9.3.0"
+    note: >-
+      Debian 13; GHOSTS 9.3.0 (API v9) with n8n and Grafana as native systemd services;
+      the GHCR package is public. Pinned in range-config.yml ludus_extensions.ghost9
+      (template_image, template_version); the guest marker /etc/get-sybers-lxc-template
+      carries name/version/service and lxc_ghost9 refuses any other. The clients stay at
+      GHOSTS v9.0.0 on API v9. The template's API keeps GHOSTS' LLM animation settings
+      at their upstream defaults (a property of the get_sybers.lxc template); no Ollama
+      exists in the range.
+  node_prerequisites:
+    - >-
+      Proxmox VE 9.1+ — lxc_guest pulls the image with
+      `pvesh create /nodes/<node>/storage/local/oci-registry-pull`; it lands as
+      local:vztmpl/ghost9.tar
+    - the node reaches ghcr.io (or a mirror — point template_image at it); the pull runs before containment
+    - >-
+      ansible-core >= 2.19 (get_sybers.lxc requires_ansible) with python3-proxmoxer and
+      python3-requests on the node that runs phase 1b (community.proxmox)
+    - deploy.yml runs as root on the PVE node that hosts the Ludus server (pct, /etc/pve and the OCI pull are root-only)
+    - >-
+      the scoped Proxmox API token ghost9-deploy@pve (pool GHOST9; minted by
+      get_sybers.cluster) as the four ghost9_ct_api_* extra-vars of deploy.yml
+  collections:
+    - name: get_sybers.lxc
+      pin: git+https://github.com/Get-Sybers/LXC.git@2313507225b32b1bf2f09c14b8f242f227872d21
+      note: collection 0.1.0; no release tag yet — re-pin to the tag once one exists (blueprints/FGNW/requirements.yml)
+    - name: community.proxmox
+      pin: "2.1.0"
+      note: >-
+        the PVE API module lxc_guest creates the CT with, and the proxmox_pct_remote
+        connection plugin every in-guest task uses; it replaces the locally patched
+        community.general proxmox_pct_remote plugin the previous mechanism depended on
+  ports: { api: 5000, ui: 4200, grafana: 3000, n8n: 5678 }
+  lifecycle: >-
+    Not a Ludus range object: `ludus range rm` and the `ludus testing` snapshots do not
+    cover it; remove it with ghost9-range-ct.yml -t destroy -e lxc_guest_confirm_destroy=true.
+local_task_roles:
+  required_for_this_blueprint:
+    - get_sybers.sysmon
+    - get_sybers.sysmon_linux
+    - get_sybers.acsc_event_logging
+    - get_sybers.range_ninjasploitable_server
+    - get_sybers.range_ghosts_browser
+    - get_sybers.range_recon_tooling
+ludus_deploy_tags:
+  class_p_precondition:
+    - tag: network
+      applies: true
+      note: bridges, VLANs, routing — all VMs get the network declared in the range config
+    - tag: access-control
+      applies: true
+      note: Proxmox firewall rules — undocumented upstream but runs alongside network
+    - tag: vm-deploy
+      applies: true
+      note: creates and starts the VMs from the named templates
+    - tag: assign-ip
+      applies: true
+      note: assigns the static IPs declared in the range config
+    - tag: dns-rewrites
+      applies: true
+      note: >-
+        applies the long dns_rewrites: list on attacker-vm (144+ entries mapping range
+        hostnames to internal IPs) so the attacker can resolve all range assets by name
+    - tag: sysprep
+      applies: true
+      note: >-
+        runs sysprep on every Windows VM with `windows.sysprep: true` — all Windows
+        VMs in this blueprint have it set; sysprep MUST complete before domain-join
+    - tag: dcs
+      applies: false
+      noop_reason: >-
+        Ludus's dcs tag promotes a VM with `windows.domain:` set into a Domain Controller.
+        None of the range configs set `windows.domain:` — the multi-forest AD topology
+        (Konoha, Akatsuki-C2, Sand, Hidden-Rain, Waterfall) is built by Phase 2's Shinju
+        roles from scratch, not by the Ludus-native DC promotion. The tag runs but touches
+        nothing.
+    - tag: windows
+      applies: true
+      note: >-
+        base Windows hardening / config pass — applies to all Windows VMs regardless of
+        domain membership; sets up WinRM, installs any `windows.chocolatey_packages` and
+        `windows.install_additional_tools` declared per-VM
+    - tag: additional-tools
+      applies: false
+      noop_reason: >-
+        would install extra tooling when `windows.install_additional_tools: true`; no VM
+        in the range configs sets that flag
+    - tag: custom-choco
+      applies: false
+      noop_reason: >-
+        would install extra Chocolatey packages when `windows.chocolatey_packages:` is set;
+        no VM in the range configs sets that list (nmap etc. are deployed by
+        get_sybers.range_recon_tooling in Phase 3, not here)
+    - tag: domain-join
+      applies: false
+      noop_reason: >-
+        joins Windows VMs to a domain when `windows.domain:` is set in the range config.
+        No VM in any range config sets `windows.domain:` — Shinju (Phase 2) builds the
+        multi-forest topology and joins members itself. The one Linux domain join
+        (FGNW-ninjasploitable-join.yml, Phase 3) uses a custom play because Ludus's
+        domain-join only handles Windows. The tag runs but touches nothing.
+    - tag: install-office
+      applies: false
+      noop_reason: no VM sets windows.office_version; tag runs but touches nothing
+    - tag: install-visual-studio
+      applies: false
+      noop_reason: no VM sets windows.visual_studio_version; tag runs but touches nothing
+    - tag: linux-packages
+      applies: true
+      note: >-
+        installs apt packages listed under `linux.packages:` per-VM; attacker-vm
+        declares `linux.packages: [ca-certificates]` — the only explicit usage in
+        the range config; all other Linux VMs omit the key
+  class_a_authoring:
+    - tag: user-defined-roles
+      applies: true
+      note: >-
+        plays 37–39 — every `roles:` entry in each VM's range config block runs here.
+        This is the sole authoring point: all get_sybers.* task-roles plus
+        jasonmull.ludus_ghosts_client / aleemladha.ludus_exchange are applied here,
+        per-VM, in the order they appear. (The GHOSTS server is not a VM: phase 1b
+        creates it as a get_sybers.lxc container.)
+        See local_task_roles above for the full list.
+  class_l_late:
+    - tag: custom-groups
+      applies: false
+      noop_reason: >-
+        creates Ansible groups from `ansible_groups:` per-VM entries; no VM in any
+        range config sets that key; play 51 runs but builds no groups
+  class_n_opt_in:
+    - tag: nexus
+      used_by: phase0
+      note: >-
+        Phase 0 invokes `ludus range deploy -t nexus` to bring up the server-wide Nexus
+        cache before any VM is deployed. Required — ranges run in --testing mode and cannot
+        reach the internet once Phase 5 containment is active; everything needing external
+        packages must resolve through Nexus by that point.
+    - tag: share
+      used_by: none
+      note: Ludus SMB share setup; not needed by this blueprint
+    - tag: allow-share-access
+      used_by: none
+      note: grants range users access to the Ludus share; not needed
+    - tag: user-management
+      used_by: none
+      note: creates Ludus range user accounts; not needed (admin deploy only)
+    - tag: generate-rdp
+      used_by: none
+      note: writes RDP shortcut files for Windows VMs; not needed in this pipeline
+    - tag: debug
+      used_by: none
+      note: Ludus debug dump; dev-only, never in a normal deploy
+testing_containment:
+  phase: "2"
+  entry_point: deploy.yml (deploy-tasks/phase2-containment.yml), via get_sybers.range.ludus_testing role
+  testing_tags_used:
+    - tag: start-testing
+      how: ludus testing start — Phase 2 calls get_sybers.range.ludus_testing which issues this
+      effect: >-
+        snapshots every VM that has `testing.snapshot: true` and enables the Proxmox firewall
+        rules that block all outbound internet for VMs with `testing.block_internet: true`
+  testing_tags_not_used:
+    - stop-testing
+    - allow-ip
+    - deny-ip
+    - allow-domain
+    - deny-domain
+  ordering_constraint: >-
+    Containment now runs immediately after VM build/deploy (Phase 2) and before AD/content/
+    emulation phases. Emulation still starts only inside the sealed range.
+deploy_phase_order:
+  full:
+    sequence: 0 → 1 → 1b → 1c → 2 → 3 → 4 → 4b → 4c → 4d → 4e → 5
+    phases:
+      "0": Nexus — `ludus range deploy -t nexus`; server-wide, once
+      "1": VM build/deploy — plain `ludus range deploy`; all Class-P + Class-A + Class-L tags
+      1b: >-
+        ghost9 CT — the GHOSTS 9.3.0 server, a get_sybers.lxc container created from the
+        published ghost9 template; before containment, while the node's OCI pull still has egress
+      1c: macOS dev base — Homebrew + mac-dev-playbook on the Sand macOS hosts (pre-containment)
+      "2": Containment — `ludus testing start`; snapshot + seal; no egress carve-outs
+      "3": AD build — Shinju multi-forest (Konoha, Akatsuki-C2, Sand, Hidden-Rain, Waterfall)
+      "4": Content seeding — tools, malware samples, recon tooling
+      4b: Exchange 2019 install + OWA configuration
+      4c: Threat artefacts — implants, persistence, lateral-movement evidence
+      4d: macOS service stack — Sand Postfix/Dovecot, mac browser defaults, decoys, GHOSTS Universal client
+      4e: Thunderbird mail-client — IMAP enable on each Exchange + Thunderbird on every workstation (Win + Mac)
+      "5": Emulation + verify — GHOSTS NPC activity plus post-deploy assertions
+  post_build_only:
+    sequence: 2 → 3 → 4 → 4b → 4c → 4d → 4e → 5
+    note: run `ansible-playbook deploy.yml -e range_from_phase=2` when the VMs are already deployed

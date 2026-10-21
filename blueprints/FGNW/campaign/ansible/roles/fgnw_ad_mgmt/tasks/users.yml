@@ -1,0 +1,41 @@
+---
+- name: "users | Fail fast on user records that cannot be created"
+  ansible.builtin.assert:
+    that:
+      - ((ad_users | default({})) | dict2items | rejectattr('value.firstname', 'defined') | list | length) == 0
+      - ((ad_users | default({})) | dict2items | rejectattr('value.password', 'defined') | list | length) == 0
+      - ((ad_users | default({})) | dict2items | rejectattr('value.groups', 'defined') | list | length) == 0
+      - ((ad_users | default({})) | dict2items | selectattr('value.path', 'defined') | rejectattr('value.path', 'search', '^(OU|CN)=.*DC=') | list | length) ==
+        0
+    fail_msg: >-
+      Invalid user records in config.json for domain '{{ domain | default('?') }}' — fix these
+      before deploying (a bad record aborts the whole create loop and silently drops every user
+      after it).
+      Missing firstname: {{ (ad_users | default({})) | dict2items | rejectattr('value.firstname', 'defined') | map(attribute='key') | list }};
+      missing password: {{ (ad_users | default({})) | dict2items | rejectattr('value.password', 'defined') | map(attribute='key') | list }};
+      missing groups: {{ (ad_users | default({})) | dict2items | rejectattr('value.groups', 'defined') | map(attribute='key') | list }};
+      malformed path DN: {{ (ad_users | default({})) | dict2items | selectattr('value.path', 'defined')
+      | rejectattr('value.path', 'search', '^(OU|CN)=.*DC=') | map(attribute='key')
+      | list }}.
+    success_msg: All {{ (ad_users | default({})) | length }} user record(s) for '{{ domain | default('?') }}' are structurally valid.
+    quiet: true
+- name: "users | Create users from the contract"
+  microsoft.ad.user:
+    name: "{{ item.key }}"
+    sam_account_name: "{{ item.key }}"
+    firstname: "{{ item.value.firstname }}"
+    surname: "{{ item.value.surname | default(item.value.firstname, true) }}"
+    password: "{{ item.value.password }}"
+    update_password: on_create
+    password_never_expires: true
+    enabled: "{{ item.value.enabled | default(true) }}"
+    path: "{{ item.value.path | default('CN=Users,' ~ (domain.split('.') | map('regex_replace', '^', 'DC=') | join(','))) }}"
+    city: "{{ item.value.city | default(omit) }}"
+    description: "{{ item.value.description | default(omit) }}"
+    groups:
+      add: "{{ item.value.groups }}"
+    state: present
+  loop: "{{ (ad_users | default({})) | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+  no_log: true

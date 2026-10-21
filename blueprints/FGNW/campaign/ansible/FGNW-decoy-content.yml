@@ -1,0 +1,41 @@
+---
+- name: Plant Hidden Leaf Village decoy documents
+  hosts: konoha-dc1
+  tasks:
+    - name: "Decoy-content: plant the village decoy documents: Hidden Leaf Village"
+      ansible.builtin.include_role:
+        name: fgnw_decoy_files
+      vars:
+        fgnw_decoy_files_village: Hidden Leaf Village (Konohagakure)
+        fgnw_decoy_files_root: C:\Shares\Documents
+# Hidden Sand Village decoy documents have moved to FGNW-mac-services.yml (Phase 4d) —
+# suna-ws1 is now a macOS host. The role is the same `fgnw_decoy_files` the villages below
+# use — it dispatches on `ansible_os_family` and the macOS branch (`tasks/macos.yml`)
+# plants the same per-village corpus under /Users/Shared/Documents.
+- name: Plant Hidden Sound Village decoy documents
+  hosts: oto-dc1
+  tasks:
+    - name: "Decoy-content: plant the village decoy documents: Hidden Sound Village"
+      ansible.builtin.include_role:
+        name: fgnw_decoy_files
+      vars:
+        fgnw_decoy_files_village: Hidden Sound Village (Otogakure)
+        fgnw_decoy_files_root: C:\Shares\Documents
+- name: Plant Akatsuki decoy documents
+  hosts: akatsuki-dc1
+  tasks:
+    - name: "Decoy-content: plant the village decoy documents: Akatsuki"
+      ansible.builtin.include_role:
+        name: fgnw_decoy_files
+      vars:
+        fgnw_decoy_files_village: Akatsuki (Criminal Organisation)
+        fgnw_decoy_files_root: C:\Shares\Documents
+- name: Plant Naruto's personal workstation clutter (messy desktop/downloads, not a village share)
+  hosts: konoha-ws1
+  tasks:
+    - name: "Decoy-content: plant the village decoy documents: Naruto's workstation"
+      ansible.builtin.include_role:
+        name: fgnw_decoy_files
+      vars:
+        fgnw_decoy_files_village: Naruto Uzumaki (Personal Workstation)
+        fgnw_decoy_files_root: C:\Users\naruto.uzumaki

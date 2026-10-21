@@ -1,0 +1,5 @@
+---
+velociraptor_version: v0.77.1
+velociraptor_version_patch: 0.77.1
+velociraptor_checksum: sha256:6636020f3ce03ea4eff5d5b96d635c400e51d2636c823a8f0bd458ddc7c4d28a
+velociraptor_install_path: /opt/velociraptor

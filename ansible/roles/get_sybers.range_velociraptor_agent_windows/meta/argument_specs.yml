@@ -1,0 +1,48 @@
+---
+argument_specs:
+  main:
+    short_description: Install and run the Velociraptor client agent on a range Windows host
+    description:
+      - Preflights inputs, derives the server hostname, adds a DNS A record for the server when run on a domain controller, downloads the checksum-pinned
+        windows-amd64.exe, fetches the per-deploy client config (with a delegated slurp fallback), installs and starts the Velociraptor Windows service, opens
+        the client's outbound firewall rule, then verifies. Runs at the user-defined-roles deploy stage (S2).
+    options: &range_velociraptor_agent_windows_options
+      velociraptor_host:
+        type: str
+        required: true
+        description:
+          - The Velociraptor server to enroll against. Genuinely no default -- supplied by the caller/range config. Referenced unconditionally, so marked
+            required here; preflight.yml additionally asserts it is a valid hostname (starts with a letter) or a valid IPv4 address.
+      range_id:
+        type: str
+        description:
+          - Ludus-injected range identifier. Consumed ONLY when velociraptor_host is an IP address, to derive the server hostname "<range_id>-velociraptor";
+            unused when velociraptor_host is itself a hostname. No default and NOT marked required because the reference is conditional; effectively required in
+            the IP branch, where the real guard is preflight.yml. `ludus range deploy` supplies it automatically.
+      velociraptor_version:
+        type: str
+        default: v0.77.1
+        description:
+          - Pinned Velociraptor release tag. Override together with velociraptor_checksum or the checksum-guarded download fails loudly.
+      velociraptor_version_patch:
+        type: str
+        default: 0.77.1
+        description:
+          - Version string embedded in the release asset filename; may differ from the tag (e.g. v0.73.2 vs 0.73.2-rc1).
+      velociraptor_checksum:
+        type: str
+        default: sha256:c91cf8a32731c4c45c148393bc7d2af688c392194a9fffc4535e8b583260d55e
+        description:
+          - sha256 of the windows-amd64.exe binary for the pinned version; win_get_url refuses a mismatch. Re-pin whenever the version changes.
+      velociraptor_install_path:
+        type: str
+        default: /opt/velociraptor
+        description:
+          - Install path on the Velociraptor SERVER, used only by the delegated fallback that slurps the client config when the API download fails. Must match
+            the server role's velociraptor_install_path.
+  preflight:
+    short_description: Assert role inputs and the derived server hostname before any change
+    options: *range_velociraptor_agent_windows_options
+  verify:
+    short_description: Assert the Velociraptor service is installed, running, and set to auto-start
+    options: *range_velociraptor_agent_windows_options

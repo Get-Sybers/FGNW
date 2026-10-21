@@ -1,0 +1,19 @@
+---
+dnsforwarder_mail_owa_vlan_octet:
+  konohagakure.fire.ninja: 10
+  sunagakure.wind.ninja: 20
+  otogakure.ninja: 30
+  akatsuki.dark: 87
+dnsforwarder_domains:
+  - name: sunagakure.wind.ninja
+    dc_host: dc04
+  - name: fire.ninja
+    dc_host: dc01
+  - name: konohagakure.fire.ninja
+    dc_host: dc02
+  - name: wind.ninja
+    dc_host: dc03
+  - name: otogakure.ninja
+    dc_host: dc05
+  - name: akatsuki.dark
+    dc_host: dc06

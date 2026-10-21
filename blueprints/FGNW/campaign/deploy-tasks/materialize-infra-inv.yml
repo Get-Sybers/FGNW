@@ -1,0 +1,56 @@
+---
+- name: "deploy-tasks | materialize-infra-inv | Read range number + userID"
+  ansible.builtin.command:
+    argv: [/usr/local/bin/ludus, range, list, --json]
+  environment:
+    LUDUS_API_KEY: "{{ __ludus_api_key }}"
+  register: __mm_list
+  changed_when: false
+  no_log: true
+- name: "deploy-tasks | materialize-infra-inv | Parse range number + userID"
+  ansible.builtin.set_fact:
+    __range_number: "{{ (__mm_list.stdout | from_json).rangeNumber }}"
+    __range_userid: "{{ (__mm_list.stdout | from_json).rangeID }}"
+- name: "deploy-tasks | materialize-infra-inv | Fetch the live range inventory (per-VM passwords)"
+  ansible.builtin.command:
+    argv: [/usr/local/bin/ludus, range, inventory]
+  environment:
+    LUDUS_API_KEY: "{{ __ludus_api_key }}"
+  register: __mm_inv
+  changed_when: false
+  no_log: true
+- name: "deploy-tasks | materialize-infra-inv | Extract the Debian SSH password (attacker host)"
+  ansible.builtin.set_fact:
+    __debian_pass: >-
+      {{ (__mm_inv.stdout | from_yaml).all.children[__range_userid].hosts[__range_userid ~ '-attacker'].ansible_ssh_pass }}
+  no_log: true
+- name: "deploy-tasks | materialize-infra-inv | Render the provider inventory (RANGENUMBER)"
+  ansible.builtin.copy:
+    content: >-
+      {{ (lookup('file', ad_dir ~ '/providers/ludus/' ~ __v.ad_prov)) | replace('RANGENUMBER', __range_number | string) }}
+    dest: "{{ __tmp_prov_inv }}"
+    mode: "0644"
+- name: "deploy-tasks | materialize-infra-inv | Read the static infra inventory template"
+  ansible.builtin.slurp:
+    src: "{{ ad_dir }}/providers/ludus/{{ __v.infra }}"
+  register: __infra_tpl
+- name: "deploy-tasks | materialize-infra-inv | Render RANGENUMBER -> range 2nd octet"
+  ansible.builtin.set_fact:
+    __infra_rendered: "{{ (__infra_tpl.content | b64decode) | replace('RANGENUMBER', __range_number | string) }}"
+- name: "deploy-tasks | materialize-infra-inv | Uncomment modern-infra (xl only)"
+  ansible.builtin.set_fact:
+    __infra_rendered: "{{ __infra_rendered | replace('; modern-infra ansible_host', 'modern-infra ansible_host') }}"
+  when: __v.modern_infra | bool
+- name: "deploy-tasks | materialize-infra-inv | Write the infra inventory (owner-only, BEFORE the password)"
+  ansible.builtin.copy:
+    content: "{{ __infra_rendered }}"
+    dest: "{{ __tmp_infra_inv }}"
+    mode: "0600"
+- name: "deploy-tasks | materialize-infra-inv | Inject the Debian password as a [linux_infra:vars] group var"
+  ansible.builtin.lineinfile:
+    path: "{{ __tmp_infra_inv }}"
+    insertafter: ^\[linux_infra:vars\]
+    line: ansible_ssh_pass={{ __debian_pass }}
+    firstmatch: true
+    mode: "0600"
+  no_log: true

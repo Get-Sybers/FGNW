@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ page.url }} — {{ page.category }}</title>
+<style>
+ body{margin:0;font-family:Georgia,'Times New Roman',serif;background: #f4f4f4;
+ header{border-bottom:3px double {{ village_accent | default('#8a1c1c', true) }};padding:16px 28px;background: #2c3e50;
+ header h1{margin:0;color:{{ village_accent | default('#8a1c1c', true) }};font-size:1.6rem;letter-spacing:.5px}
+ .tag{font-family:Arial,sans-serif;font-size:.72rem;color:{{ village_accent | default('#8a1c1c', true) }};text-transform:uppercase;letter-spacing:1px}
+ .wrap{max-width:860px;margin:22px auto;padding:0 20px}
+ .lead{font-size:1.15rem;line-height:1.55;border-left:4px solid {{ village_accent | default('#8a1c1c', true) }};padding-left:16px;margin-bottom:24px}
+ .story{border-bottom:1px solid
+ .story h3{margin:0 0 4px;font-size:1.1rem}
+ .story .by{font-family:Arial,sans-serif;font-size:.75rem;color: #333;
+ .more a{font-family:Arial,sans-serif;color:{{ village_accent | default('#8a1c1c', true) }};text-decoration:none;font-size:.85rem;display:inline-block;margin:4px 12px 4px 0}
+ footer{font-family:Arial,sans-serif;color: #666;
+</style></head>
+<body>
+<header><div class="tag">{{ page.village }} &middot; {{ page.category }} desk</div>
+ <h1>{{ page.url }}</h1></header>
+<div class="wrap">
+ <p class="lead">{{ page.description }}.</p>
+ <div class="story"><h3>Front page</h3><div class="by">Filed by the {{ page.village }} bureau</div>
+  <p>{{ page.description }}. Reports continue to come in from across the five nations. Officials urge shinobi to verify all bulletins against the official registry before acting.</p></div>
+ <div class="story"><h3>Border watch</h3><div class="by">Sensory division</div>
+  <p>Elevated activity noted along several borders this cycle. No confirmed incursions. Jonin are advised to review standing patrol assignments.</p></div>
+ <div class="story"><h3>Mission board digest</h3><div class="by">Assignments desk</div>
+  <p>New D through B rank postings available. S-rank listings remain restricted to authorized personnel.</p></div>
+ <div class="more"><strong style="font-family:Arial,sans-serif;font-size:.8rem">More from {{ page.village }}:</strong><br>
+{% for r in related[:14] %}  <a href="http://{{ r }}/">{{ r }}</a>
+{% endfor %}{% if related|length == 0 %}<em>No related outlets.</em>{% endif %}</div>
+</div>
+<footer>{{ page.url }} &middot; Fourth Great Ninja War (fictional). Not real news.</footer>
+</body></html>

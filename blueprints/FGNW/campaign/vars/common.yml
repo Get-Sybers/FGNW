@@ -1,0 +1,19 @@
+---
+__phase_order: ["0", "1", 1b, 1c, "2", "3", "4", 4b, 4c, 4d, 4e, "5"]
+__tmp_dir: "{{ ansible_env.HOME }}/.FGNW-deploy"
+__tmp_prov_inv: "{{ __tmp_dir }}/prov-inv.yml"
+__tmp_infra_inv: "{{ __tmp_dir }}/infra-inv.yml"
+__tmp_ad_data_dir: "{{ __tmp_dir }}/ad-data"
+__tmp_ad_config: "{{ __tmp_ad_data_dir }}/config.json"
+__tmp_ghost9_vars: "{{ __tmp_dir }}/ghost9-ct-vars.yml"
+# Per-deploy generated GHOSTS server secrets (phase 1b, lookup('password')): used
+# only when deploy.yml is not handed ghost9_db_password / ghost9_n8n_owner_password.
+__tmp_ghost9_db_password: "{{ __tmp_dir }}/ghost9-db-password"
+__tmp_ghost9_n8n_password: "{{ __tmp_dir }}/ghost9-n8n-owner-password"
+__cleanup_paths:
+  - "{{ __tmp_infra_inv }}"
+  - "{{ __tmp_prov_inv }}"
+  - "{{ __tmp_ad_config }}"
+  - "{{ __tmp_ghost9_vars }}"
+  - "{{ __tmp_ghost9_db_password }}"
+  - "{{ __tmp_ghost9_n8n_password }}"

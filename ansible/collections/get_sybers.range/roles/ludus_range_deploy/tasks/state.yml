@@ -1,0 +1,23 @@
+---
+- name: "state | Ludus range list --json"
+  ansible.builtin.command:
+    argv: ["{{ ludus_range_deploy_bin }}", range, list, --json]
+  environment:
+    LUDUS_API_KEY: "{{ __ludus_api_key }}"
+  register: __ludus_list
+  changed_when: false
+  failed_when: false
+  no_log: true
+- name: "state | Parse (guarded — empty/failed reads yield an empty object)"
+  ansible.builtin.set_fact:
+    __ludus_list_json: >-
+      {{ (__ludus_list.stdout | from_json)
+         if ((__ludus_list.rc | default(1)) == 0
+             and (__ludus_list.stdout | default('') | trim | length) > 0
+             and (__ludus_list.stdout | default('') | trim).startswith('{'))
+         else {} }}
+- name: "state | Expose the fields"
+  ansible.builtin.set_fact:
+    __ludus_state: "{{ __ludus_list_json.rangeState | default('UNKNOWN') }}"
+    __ludus_vmcount: "{{ __ludus_list_json.VMs | default([]) | length }}"
+    __ludus_testing: "{{ __ludus_list_json.testingEnabled | default(false) }}"

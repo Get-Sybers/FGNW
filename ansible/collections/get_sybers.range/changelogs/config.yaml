@@ -1,0 +1,29 @@
+---
+title: get_sybers.range
+changes_file: changelog.yaml
+changes_format: combined
+notesdir: fragments
+keep_fragments: false
+mention_ancestor: true
+changelog_nice_yaml: true
+changelog_sort: alphanumerical
+add_plugin_period: true
+use_fqcn: true
+ignore_other_fragment_extensions: true
+sanitize_changelog: true
+new_plugins_after_name: removed
+prelude_section_name: release_summary
+prelude_section_title: Release Summary
+trivial_section_name: trivial
+vcs: auto
+output:
+  - file: CHANGELOG.md
+    format: md
+    global_toc: false
+sections:
+  - [added, Added]
+  - [changed, Changed]
+  - [deprecated, Deprecated]
+  - [removed, Removed]
+  - [fixed, Fixed]
+  - [security, Security]

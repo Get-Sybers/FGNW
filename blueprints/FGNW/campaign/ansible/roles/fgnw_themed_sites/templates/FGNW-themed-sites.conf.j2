@@ -1,0 +1,9 @@
+server {
+    listen 80;
+    server_name{% for p in site_pages %} {{ p.url }}{% endfor %};
+    root {{ fgnw_themed_sites_root }}/$host;
+    index index.html;
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}

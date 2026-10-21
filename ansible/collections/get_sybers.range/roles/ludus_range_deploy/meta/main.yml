@@ -1,0 +1,18 @@
+---
+galaxy_info:
+  author: Get-Sybers
+  namespace: get_sybers
+  description: >-
+    Range lifecycle (S4): deploy the calling user's range via the Ludus CLI and
+    wait for a terminal state. Splits fire from wait, polls observed rangeState
+    (never the deploy command's exit code), guards against firing a rival deploy
+    while one is in flight, retries a bounded number of transient ERRORs, and skips
+    an already-SUCCESS full deploy. Drives the Ludus API only; touches no guest.
+  role_name: ludus_range_deploy
+  license: AGPL-3.0-only
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Debian
+      versions:
+        - all
+dependencies: []

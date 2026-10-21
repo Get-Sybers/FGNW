@@ -1,0 +1,20 @@
+---
+manifest_version: 1
+name: Get-Sybers FGNW
+description: >-
+  The Get-Sybers FGNW Ludus source. It ships the Fourth Great Ninja War
+  blueprint — a multi-domain Active Directory lateral-movement lab (Hidden
+  Leaf / Hidden Sand / Hidden Sound domains plus the isolated Akatsuki forest,
+  decoy village content, GHOSTS user emulation) — the get_sybers.range and
+  get_sybers.templates collections, the range task-roles (Defender setup,
+  Exchange and OWA, browser bookmarks, recon tooling, the Ninjasploitable
+  target, Velociraptor), the cross-tier task-roles (ludus_auth_check, Sysmon
+  for Windows and Linux, ACSC event logging and forwarding, the auditd and
+  Sysmon Linux ports, Zeek) and the Packer template library: the Windows
+  AppX-fix images, Exchange 2019, FLARE VM, Metasploitable 2/3, OpenCore macOS
+  and Ninjasploitable. Register it with `ludus source add`, then apply the
+  blueprint and build the templates it names.
+authors:
+  - Get-Sybers <99623331+Get-Sybers@users.noreply.github.com>
+homepage: https://github.com/Get-Sybers/FGNW
+license: MIT

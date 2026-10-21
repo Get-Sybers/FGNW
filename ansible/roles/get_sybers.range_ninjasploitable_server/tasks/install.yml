@@ -1,0 +1,41 @@
+---
+- name: "install | Update apt cache"
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+- name: "install | Install Apache2 web server"
+  ansible.builtin.apt:
+    name:
+      - apache2
+      - apache2-utils
+    state: present
+- name: "install | Install PHP and modules"
+  ansible.builtin.apt:
+    name:
+      - php
+      - php-mysql
+      - php-gd
+      - php-curl
+      - libapache2-mod-php
+    state: present
+- name: "install | Install MySQL server"
+  ansible.builtin.apt:
+    name:
+      - mariadb-server
+      - mariadb-client
+      - python3-pymysql
+    state: present
+- name: "install | Install required vulnerable services"
+  ansible.builtin.apt:
+    name:
+      - vsftpd
+      - openssh-server
+      - samba
+      - postgresql
+    state: present
+- name: "install | Install telnetd (best-effort — may be absent from this Debian release)"
+  ansible.builtin.apt:
+    name: telnetd
+    state: present
+  register: __msf_telnetd
+  failed_when: false

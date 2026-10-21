@@ -1,0 +1,41 @@
+---
+- name: "verify | Query the Velociraptor Windows service"
+  ansible.windows.win_service:
+    name: Velociraptor
+  register: velociraptor_verify_service
+  failed_when: false
+- name: "verify | Assert service installed, running, and set to auto-start"
+  ansible.builtin.assert:
+    that:
+      - velociraptor_verify_service.exists | default(false)
+      - velociraptor_verify_service.state | default('') == 'running'
+      - velociraptor_verify_service.start_mode | default('') == 'auto'
+    fail_msg: >-
+      Velociraptor service is not healthy on {{ inventory_hostname }}
+      (exists={{ velociraptor_verify_service.exists | default('n/a') }},
+      state={{ velociraptor_verify_service.state | default('n/a') }},
+      start_mode={{ velociraptor_verify_service.start_mode | default('n/a') }}).
+      Fix: re-run this role; on the host, inspect `Get-Service Velociraptor`
+      and the service install log via
+      `& "C:\Program Files\Velociraptor\velociraptor.exe" --config
+      "C:\Program Files\Velociraptor\client.config.yaml" service install`.
+- name: "verify | Client config is present on disk"
+  ansible.windows.win_stat:
+    path: C:\Program Files\Velociraptor\client.config.yaml
+  register: velociraptor_verify_config
+- name: "verify | Assert client config present"
+  ansible.builtin.assert:
+    that:
+      - velociraptor_verify_config.stat.exists
+    fail_msg: >-
+      C:\Program Files\Velociraptor\client.config.yaml is missing — the agent
+      cannot enroll without it. Fix: re-run this role (the config download is
+      guarded by an exists-check, so an absent file is re-fetched
+      automatically).
+- name: "verify | Summary (standards §9: one line that answers 'did it work?')"
+  ansible.builtin.debug:
+    msg: >-
+      Velociraptor agent verified on {{ inventory_hostname }}: service
+      'Velociraptor' running (start_mode=auto), client config present at
+      C:\Program Files\Velociraptor\client.config.yaml, enrolling against
+      {{ velociraptor_host }}.

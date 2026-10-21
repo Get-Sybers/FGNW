@@ -1,0 +1,147 @@
+---
+- name: Bake Exchange 2019 prerequisites and media into the template
+  hosts: all
+  gather_facts: false
+  vars:
+    ex_dir: 'C:\ludus'
+    ex_stage: 'C:\ludus\exchange-prereqs'
+    ex_marker: 'C:\ludus\exchange_prereqs_complete.txt'
+    ex_iso_name: 'ExchangeServer2019-x64-cu15.iso'
+    ex_iso_url: 'https://download.microsoft.com/download/7/0/a/70a4d908-eacb-426e-ad9f-e7768e27f873/ExchangeServer2019-x64-cu15.iso'
+    ex_iso_sha256: '07c3fc1627dde4b88cb8d25eab5f16923cc12dac014e5965b633fac8fca629ae'
+    # a download URL has no break point
+    # yamllint disable-line rule:line-length
+    ex_dotnet_url: 'https://download.visualstudio.microsoft.com/download/pr/2d6bb6b2-226a-4baa-bdec-798822606ff1/8494001c276a4b96804cde7829c04d7f/ndp48-x86-x64-allos-enu.exe'
+    ex_vcredist_url: 'https://download.microsoft.com/download/2/E/6/2E61CFA4-993B-4DD4-91DA-3737CD5CD6E3/vcredist_x64.exe'
+    ex_rewrite_url: 'https://download.microsoft.com/download/1/2/8/128E2E22-C1B9-44A4-BE2A-5859ED1D4592/rewrite_amd64_en-US.msi'
+    ex_ucma_url: 'https://download.microsoft.com/download/2/C/4/2C47A5C1-A1F3-4843-B9FE-84C0032C61EC/UcmaRuntimeSetup.exe'
+  tasks:
+    - name: "Bake: ensure the ludus + staging dirs exist"
+      ansible.windows.win_file:
+        path: "{{ item }}"
+        state: directory
+      loop:
+        - "{{ ex_dir }}"
+        - "{{ ex_stage }}"
+    - name: "Bake: is the prereq marker already present? (idempotency gate)"
+      ansible.windows.win_stat:
+        path: "{{ ex_marker }}"
+      register: ex_marker_stat
+    - name: "Bake: Exchange prerequisites + media (skipped once the marker exists)"
+      when: not ex_marker_stat.stat.exists
+      block:
+        - name: "Bake: install the Exchange 2019 Windows features"
+          ansible.windows.win_feature:
+            name:
+              - Server-Media-Foundation
+              - NET-Framework-45-Features
+              - RPC-over-HTTP-proxy
+              - RSAT-Clustering
+              - RSAT-Clustering-CmdInterface
+              - RSAT-Clustering-Mgmt
+              - RSAT-Clustering-PowerShell
+              - WAS-Process-Model
+              - Web-Asp-Net45
+              - Web-Basic-Auth
+              - Web-Client-Auth
+              - Web-Digest-Auth
+              - Web-Dir-Browsing
+              - Web-Dyn-Compression
+              - Web-Http-Errors
+              - Web-Http-Logging
+              - Web-Http-Redirect
+              - Web-Http-Tracing
+              - Web-ISAPI-Ext
+              - Web-ISAPI-Filter
+              - Web-Lgcy-Mgmt-Console
+              - Web-Metabase
+              - Web-Mgmt-Console
+              - Web-Mgmt-Service
+              - Web-Net-Ext45
+              - Web-Request-Monitor
+              - Web-Server
+              - Web-Stat-Compression
+              - Web-Static-Content
+              - Web-Windows-Auth
+              - Web-WMI
+              - Windows-Identity-Foundation
+              - RSAT-ADDS
+              - ADLDS
+            state: present
+            include_management_tools: true
+        - name: "Bake: enable the IIS6 management-compatibility optional features"
+          ansible.windows.win_optional_feature:
+            name:
+              - IIS-IIS6ManagementCompatibility
+              - IIS-Metabase
+            state: present
+        - name: "Bake: download the Exchange prerequisite installers"
+          ansible.windows.win_get_url:
+            url: "{{ item.url }}"
+            dest: "{{ ex_stage }}\\{{ item.name }}"
+            force: false
+          loop:
+            - { name: 'ndp48-x86-x64-allos-enu.exe', url: '{{ ex_dotnet_url }}' }
+            - { name: 'vcredist_x64.exe', url: '{{ ex_vcredist_url }}' }
+            - { name: 'rewrite_amd64_en-US.msi', url: '{{ ex_rewrite_url }}' }
+            - { name: 'UcmaRuntimeSetup.exe', url: '{{ ex_ucma_url }}' }
+          loop_control:
+            label: "{{ item.name }}"
+        - name: "Bake: install .NET Framework 4.8"
+          ansible.windows.win_package:
+            path: "{{ ex_stage }}\\ndp48-x86-x64-allos-enu.exe"
+            arguments: /q /norestart
+            state: present
+          register: ex_dotnet
+        - name: "Bake: reboot if .NET 4.8 requested one (rc=3010)"
+          ansible.windows.win_reboot:
+            reboot_timeout: 600
+          when: ex_dotnet.rc | default(0) == 3010
+        - name: "Bake: install Visual C++ 2013 Redistributable (x64)"
+          ansible.windows.win_package:
+            path: "{{ ex_stage }}\\vcredist_x64.exe"
+            arguments: /q /norestart
+            product_id: '{ca67548a-5ebe-413a-b50c-4b9ceb6d66c6}'
+            state: present
+          register: ex_vcredist
+        - name: "Bake: reboot after VC++ 2013 if it changed anything"
+          ansible.windows.win_reboot:
+            reboot_timeout: 600
+          when: ex_vcredist.reboot_required | default(false)
+        - name: "Bake: install the IIS URL Rewrite module (required for Exchange 2019 CU11+)"
+          ansible.windows.win_package:
+            path: "{{ ex_stage }}\\rewrite_amd64_en-US.msi"
+            arguments: /quiet /norestart
+            state: present
+        - name: "Bake: install the Unified Communications Managed API 4.0 Runtime"
+          ansible.windows.win_package:
+            path: "{{ ex_stage }}\\UcmaRuntimeSetup.exe"
+            arguments: /quiet /norestart
+            product_id: UCMA4
+            state: present
+          register: ex_ucma
+        - name: "Bake: reboot if the UCMA runtime requested one"
+          ansible.windows.win_reboot:
+            reboot_timeout: 600
+          when: ex_ucma.reboot_required | default(false)
+        - name: "Bake: download the Exchange 2019 CU15 media (~6 GB, build phase only)"
+          ansible.windows.win_get_url:
+            url: "{{ ex_iso_url }}"
+            dest: "{{ ex_dir }}\\{{ ex_iso_name }}"
+            checksum: "{{ ex_iso_sha256 }}"
+            checksum_algorithm: sha256
+            force: false
+            timeout: 3600
+        - name: "Bake: write the prereq-complete marker (deploy role then skips prereqs)"
+          ansible.windows.win_copy:
+            dest: "{{ ex_marker }}"
+            content: |
+              Exchange 2019 CU15 prerequisites + media baked into this template at build time (
+              Windows features, .NET 4.8, VC++ 2013, URL Rewrite, UCMA 4.0 installed;
+              media staged at {{ ex_dir }}\{{ ex_iso_name }}.
+              The deploy-time aleemladha.ludus_exchange role skips prereqs on this marker and
+              runs only the AD-bound steps (/PrepareSchema, /PrepareAD, /Mode:Install, mailboxes).
+    - name: "Bake: report (already baked)"
+      ansible.builtin.debug:
+        msg: "Exchange prerequisites + media already baked (marker present) — nothing to do."
+      when: ex_marker_stat.stat.exists

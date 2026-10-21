@@ -1,0 +1,280 @@
+---
+- name: Seed GHOSTS 9 NPC cognitive profiles for FGNW flagship personas
+  hosts: localhost
+  gather_facts: false
+  vars:
+    __any_infra_host: "{{ (groups['linux_infra'] | default([])) | first }}"
+    range_second_octet: "{{ hostvars[__any_infra_host].ansible_host.split('.')[1] }}"
+    ghosts_api_root: http://10.{{ range_second_octet }}.99.51:5000/api
+    __flagship_sams:
+      - naruto.uzumaki
+      - shikamaru.nara
+      - kakashi.hatake
+      - tsunade
+      - might.guy
+      - orochimaru
+      - pain
+      - zetsu
+      - gaara
+    __rel_quality:
+      manager: 0.85
+      direct_report: 0.80
+      "team: The Sannin": 0.75
+      "team: Konoha Jonin": 0.65
+      "team: Kage Assembly": 0.70
+      department_fallback: 0.45
+  tasks:
+    - name: Load persona baseline data (generated)
+      ansible.builtin.include_vars:
+        file: "{{ playbook_dir }}/../content/ghosts/persona-timelines.yml"
+        name: fgnw_ghosts
+    - name: Load flagship persona overrides (hand-authored — includes GHOSTS 9 belief/knowledge fields)
+      ansible.builtin.include_vars:
+        file: "{{ playbook_dir }}/../content/ghosts/persona-overrides.yml"
+        name: fgnw_ghosts_ov
+    - name: Load social graph data (generated from AD relationship data)
+      ansible.builtin.include_vars:
+        file: "{{ playbook_dir }}/../content/ghosts/email-relationships.yml"
+        name: fgnw_social
+    - name: Query GHOSTS API for all existing NPC records
+      ansible.builtin.uri:
+        url: "{{ ghosts_api_root }}/npcs"
+        method: GET
+        return_content: true
+        status_code: 200
+      register: __ghosts_npcs_existing
+      failed_when: >-
+        __ghosts_npcs_existing.status != 200
+        or __ghosts_npcs_existing.json is not iterable
+    - name: Build lookup of already-registered NPC emails
+      ansible.builtin.set_fact:
+        __existing_npc_emails: >-
+          {{ __ghosts_npcs_existing.json
+             | selectattr('npcProfile', 'defined')
+             | selectattr('npcProfile.email', 'defined')
+             | map(attribute='npcProfile.email')
+             | list }}
+    - name: Create GHOSTS 9 NPC record — {{ item }}
+      ansible.builtin.uri:
+        url: "{{ ghosts_api_root }}/npcs"
+        method: POST
+        body_format: json
+        body:
+          id: "{{ __persona.sam | to_uuid }}"
+          name:
+            first: "{{ __persona.character.split(' ')[0] }}"
+            last: "{{ __persona.character.split(' ')[1:] | join(' ') }}"
+          email: "{{ __persona.sam }}@{{ __persona.ad_domain }}"
+          workstation:
+            name: "{{ item }}"
+            domain: "{{ __persona.ad_domain }}"
+            username: "{{ __persona.sam }}"
+        status_code: 200
+        return_content: true
+      loop: "{{ groups['ghosts_clients'] | default([]) }}"
+      vars:
+        __persona: "{{ fgnw_ghosts.ghosts_personas[item] }}"
+      when: (__persona.sam ~ '@' ~ __persona.ad_domain) not in __existing_npc_emails
+    - name: Re-query GHOSTS API to collect all NPC records (after any creation)
+      ansible.builtin.uri:
+        url: "{{ ghosts_api_root }}/npcs"
+        method: GET
+        return_content: true
+        status_code: 200
+      register: __ghosts_npcs_all
+    - name: Index NPC by SAM account — {{ item.npcProfile.email.split('@')[0] }}
+      ansible.builtin.set_fact:
+        __npc_id_by_sam: "{{ __npc_id_by_sam | default({}) | combine({__sam: item.id}) }}"
+      loop: >-
+        {{ __ghosts_npcs_all.json
+           | selectattr('npcProfile', 'defined')
+           | selectattr('npcProfile.email', 'defined')
+           | list }}
+      vars:
+        __sam: "{{ item.npcProfile.email.split('@')[0] }}"
+    - name: Index hostname by SAM account — {{ item }}
+      ansible.builtin.set_fact:
+        __hostname_by_sam: >-
+          {{ __hostname_by_sam | default({}) | combine(
+               {fgnw_ghosts.ghosts_personas[item].sam: item}
+             ) }}
+      loop: "{{ groups['ghosts_clients'] | default([]) }}"
+    - name: Check existing beliefs for each flagship NPC
+      ansible.builtin.uri:
+        url: "{{ ghosts_api_root }}/npcs/{{ __npc_id_by_sam[__sam] }}/beliefs"
+        method: GET
+        return_content: true
+        status_code: 200
+      loop: "{{ groups['ghosts_clients'] | default([]) }}"
+      vars:
+        __sam: "{{ fgnw_ghosts.ghosts_personas[item].sam }}"
+      when: __sam in __npc_id_by_sam
+      register: __existing_beliefs_results
+    - name: Build per-SAM existing belief names
+      ansible.builtin.set_fact:
+        __existing_belief_names_by_sam: >-
+          {{ __existing_belief_names_by_sam | default({}) | combine(
+               {__sam: (item.json | default([]) | map(attribute='name') | list)}
+             ) }}
+      loop: "{{ __existing_beliefs_results.results | selectattr('json', 'defined') | list }}"
+      vars:
+        __sam: "{{ fgnw_ghosts.ghosts_personas[item.item].sam }}"
+    - name: Build flat list of all persona beliefs for API seeding
+      ansible.builtin.set_fact:
+        __all_belief_tasks: >-
+          {{ __all_belief_tasks | default([]) +
+             ((fgnw_ghosts_ov.ghosts_overrides[item].beliefs | default([]))
+              | map('combine', {
+                  'host': item,
+                  'sam': fgnw_ghosts.ghosts_personas[item].sam
+                })
+              | list) }}
+      loop: "{{ groups['ghosts_clients'] | default([]) }}"
+    - name: "Seed a belief for the host: {{ item.name ~ ' on ' ~ item.host }}"
+      ansible.builtin.uri:
+        url: "{{ ghosts_api_root }}/npcs/{{ __npc_id_by_sam[item.sam] }}/beliefs"
+        method: POST
+        body_format: json
+        body:
+          toNpcId: "{{ __npc_id_by_sam[item.sam] }}"
+          fromNpcId: "{{ __npc_id_by_sam[item.sam] }}"
+          name: "{{ item.name }}"
+          step: 1
+          likelihood: "{{ item.likelihood }}"
+          posterior: "{{ item.likelihood }}"
+        status_code: 200
+      loop: "{{ __all_belief_tasks | default([]) }}"
+      when: >-
+        item.sam in __npc_id_by_sam
+        and item.name not in (__existing_belief_names_by_sam[item.sam] | default([]))
+    - name: Check existing knowledge records for each flagship NPC
+      ansible.builtin.uri:
+        url: "{{ ghosts_api_root }}/npcs/{{ __npc_id_by_sam[__sam] }}/knowledge"
+        method: GET
+        return_content: true
+        status_code: 200
+      loop: "{{ groups['ghosts_clients'] | default([]) }}"
+      vars:
+        __sam: "{{ fgnw_ghosts.ghosts_personas[item].sam }}"
+      when: __sam in __npc_id_by_sam
+      register: __existing_knowledge_results
+    - name: Build per-SAM existing knowledge topics
+      ansible.builtin.set_fact:
+        __existing_knowledge_topics_by_sam: >-
+          {{ __existing_knowledge_topics_by_sam | default({}) | combine(
+               {__sam: (item.json | default([]) | map(attribute='topic') | list)}
+             ) }}
+      loop: "{{ __existing_knowledge_results.results | selectattr('json', 'defined') | list }}"
+      vars:
+        __sam: "{{ fgnw_ghosts.ghosts_personas[item.item].sam }}"
+    - name: Build flat list of all persona knowledge topics for API seeding
+      ansible.builtin.set_fact:
+        __all_knowledge_tasks: >-
+          {{ __all_knowledge_tasks | default([]) +
+             ((fgnw_ghosts_ov.ghosts_overrides[item].knowledge_topics | default([]))
+              | map('combine', {
+                  'host': item,
+                  'sam': fgnw_ghosts.ghosts_personas[item].sam
+                })
+              | list) }}
+      loop: "{{ groups['ghosts_clients'] | default([]) }}"
+    - name: "Seed a knowledge topic for the host: {{ item.topic ~ ' on ' ~ item.host }}"
+      ansible.builtin.uri:
+        url: "{{ ghosts_api_root }}/npcs/{{ __npc_id_by_sam[item.sam] }}/knowledge"
+        method: POST
+        body_format: json
+        body:
+          toNpcId: "{{ __npc_id_by_sam[item.sam] }}"
+          fromNpcId: "{{ __npc_id_by_sam[item.sam] }}"
+          topic: "{{ item.topic }}"
+          step: 1
+          value: "{{ item.value }}"
+        status_code: 200
+      loop: "{{ __all_knowledge_tasks | default([]) }}"
+      when: >-
+        item.sam in __npc_id_by_sam
+        and item.topic not in (__existing_knowledge_topics_by_sam[item.sam] | default([]))
+    - name: Check existing social connections for each flagship NPC
+      ansible.builtin.uri:
+        url: "{{ ghosts_api_root }}/npcs/{{ __npc_id_by_sam[__sam] }}/connections"
+        method: GET
+        return_content: true
+        status_code: 200
+      loop: "{{ groups['ghosts_clients'] | default([]) }}"
+      vars:
+        __sam: "{{ fgnw_ghosts.ghosts_personas[item].sam }}"
+      when: __sam in __npc_id_by_sam
+      register: __existing_connections_results
+    - name: Build per-SAM existing connection target IDs
+      ansible.builtin.set_fact:
+        __existing_connection_ids_by_sam: >-
+          {{ __existing_connection_ids_by_sam | default({}) | combine(
+               {__sam: (item.json | default([]) | map(attribute='connectedNpcId') | list)}
+             ) }}
+      loop: "{{ __existing_connections_results.results | selectattr('json', 'defined') | list }}"
+      vars:
+        __sam: "{{ fgnw_ghosts.ghosts_personas[item.item].sam }}"
+    - name: Build flat list of inter-flagship social connections (Pass A)
+      ansible.builtin.set_fact:
+        __all_core_connection_tasks: >-
+          {{ __all_core_connection_tasks | default([]) +
+             ((fgnw_social.email_relationships[__sam] | default([]))
+              | selectattr('to', 'in', __flagship_sams)
+              | map('combine', {'host': item, 'from_sam': __sam})
+              | list) }}
+      loop: "{{ groups['ghosts_clients'] | default([]) }}"
+      vars:
+        __sam: "{{ fgnw_ghosts.ghosts_personas[item].sam }}"
+    - name: "Seed an inter-flagship connection (Pass A): {{ item.from_sam ~ ' → ' ~ item.to }}"
+      ansible.builtin.uri:
+        url: "{{ ghosts_api_root }}/npcs/{{ __npc_id_by_sam[item.from_sam] }}/connections"
+        method: POST
+        body_format: json
+        body:
+          connectedNpcId: "{{ __npc_id_by_sam[item.to] }}"
+          name: "{{ fgnw_ghosts.ghosts_personas[__hostname_by_sam[item.to]].character }}"
+          distance: "{{ item.relationship }}"
+          relationshipStatus: "{{ __rel_quality[item.relationship] | default(0.55) }}"
+        status_code: 200
+      loop: "{{ __all_core_connection_tasks | default([]) }}"
+      when: >-
+        item.from_sam in __npc_id_by_sam
+        and item.to in __npc_id_by_sam
+        and __npc_id_by_sam[item.to] not in (__existing_connection_ids_by_sam[item.from_sam] | default([]))
+    - name: Build flat list of named-character social connections (Pass B)
+      ansible.builtin.set_fact:
+        __all_named_connection_tasks: >-
+          {{ __all_named_connection_tasks | default([]) +
+             ((fgnw_social.email_relationships[__sam] | default([]))
+              | rejectattr('to', 'in', __flagship_sams)
+              | map('combine', {'host': item, 'from_sam': __sam})
+              | list) }}
+      loop: "{{ groups['ghosts_clients'] | default([]) }}"
+      vars:
+        __sam: "{{ fgnw_ghosts.ghosts_personas[item].sam }}"
+    - name: "Seed a named-character connection (Pass B): {{ item.from_sam ~ ' → ' ~ item.to }}"
+      ansible.builtin.uri:
+        url: "{{ ghosts_api_root }}/npcs/{{ __npc_id_by_sam[item.from_sam] }}/connections"
+        method: POST
+        body_format: json
+        body:
+          connectedNpcId: "{{ item.to | to_uuid }}"
+          name: "{{ item.to }}"
+          distance: "{{ item.relationship }}"
+          relationshipStatus: "{{ __rel_quality[item.relationship] | default(0.55) }}"
+        status_code: 200
+      loop: "{{ __all_named_connection_tasks | default([]) }}"
+      when: >-
+        item.from_sam in __npc_id_by_sam
+        and (item.to | to_uuid) not in (__existing_connection_ids_by_sam[item.from_sam] | default([]))
+    - name: Report NPC seeding summary
+      ansible.builtin.debug:
+        msg: >-
+          GHOSTS 9 NPC seeding complete.
+          NPCs: {{ __npc_id_by_sam | default({}) | length }} flagship records present.
+          Beliefs tracked for:
+          {{ (__existing_belief_names_by_sam | default({})).keys() | list | sort | join(', ') }}.
+          Knowledge tracked for:
+          {{ (__existing_knowledge_topics_by_sam | default({})).keys() | list | sort | join(', ') }}.
+          Social connections tracked for:
+          {{ (__existing_connection_ids_by_sam | default({})).keys() | list | sort | join(', ') }}.

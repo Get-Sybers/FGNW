@@ -1,0 +1,4 @@
+---
+ad_wait_ready_require_dc: false
+ad_wait_ready_retries: 60
+ad_wait_ready_delay: 10

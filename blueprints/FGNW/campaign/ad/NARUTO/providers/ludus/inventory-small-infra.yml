@@ -1,0 +1,75 @@
+; SMALL "trust-pair" variant — POST-DEPLOY / INFRA inventory.
+; ansible_host MUST be an IPv4 (RANGENUMBER -> range 2nd octet).
+;
+; These hosts are NOT part of the Windows Shinju AD chain — they are targeted by
+; the post-deploy FGNW-*.yml playbooks (attacker web, ghosts activity, ninjasploitable
+; content) and by the Linux domain-join step. Kept separate from the AD-build inventory
+; (inventory-small.yml) so the Shinju `hosts: all` plays never SSH-probe them.
+; ------------------------------------------------
+; Linux infrastructure (SSH). ninjasploitable is ALSO domain-joined to fire.ninja by
+; the Linux realm-join step (FGNW-ninjasploitable-join.yml) — a member of the forest
+; root (Leaf serves Fire), giving a vulnerable-box pivot into the whole Fire forest.
+; ------------------------------------------------
+[linux_infra]
+attacker ansible_host=10.RANGENUMBER.99.50
+ninjasploitable ansible_host=10.RANGENUMBER.90.10
+; ghost9 (the ghost9 CT) and kali (Kali) are VLAN-99 auxiliary
+; infra with different default creds than the Debian boxes above (per-host overrides
+; of the [linux_infra:vars] defaults) -- added so FGNW-verify-connectivity.yml /
+; sysmon_linux-style checks can SSH to every Linux host in the range, not just the two
+; Debian ones. localuser/password and kali/kali are the Ludus template defaults for
+; these two templates (unlike Debian, which randomizes ansible_ssh_pass per deploy) --
+; if a template ever changes this, get the real creds from `ludus range inventory`
+; and override with -e ansible_ssh_pass=...
+; COMMENTED OUT (issue
+; via community.proxmox.proxmox_pct_remote and configured by get_sybers.lxc.lxc_ghost9
+; (ghost9-range-ct.yml, phase 1b) -- it is NOT an SSH host.
+; Leaving this line active makes every [linux_infra] play hang on an SSH host that
+; no longer exists. The CT keeps the same 10.RANGENUMBER.99.51 API/UI endpoints.
+; ghosts ansible_host=10.RANGENUMBER.99.51 ansible_user=localuser ansible_ssh_pass=password
+kali ansible_host=10.RANGENUMBER.99.99 ansible_user=kali ansible_ssh_pass=kali ansible_become_pass=kali
+[linux_infra:vars]
+ansible_connection=ssh
+; Ludus Debian VMs log in as the 'debian' user with a per-range generated password
+; (NOT localuser/password). Get the real password from `ludus range inventory`
+; (ansible_ssh_pass) and set it as ansible_ssh_pass under [linux_infra:vars] here, or
+; run these playbooks against the Ludus-generated inventory. Avoid `-e ansible_ssh_pass=...`
+; on the command line — extra-vars land in argv and are visible in `ps`. Kali uses the 'kali' user.
+ansible_user=debian
+ansible_port=22
+; ------------------------------------------------
+; GHOSTS-client workstations (real hostnames — persona-timelines.yml is keyed by them).
+; Same boxes as srv03/srv08 in the AD inventory, addressed by real name here.
+; ------------------------------------------------
+[ghosts_clients]
+konoha-ws1 ansible_host=10.RANGENUMBER.10.21
+oto-ws1 ansible_host=10.RANGENUMBER.30.11
+; DCs by REAL hostname — targeted by post-deploy playbooks (FGNW-decoy-content.yml,
+; etc.). Same boxes as dc01/dc02/dc05 in the AD-build inventory.
+[village_dcs]
+fire-dc1 ansible_host=10.RANGENUMBER.10.15
+konoha-dc1 ansible_host=10.RANGENUMBER.10.10
+oto-dc1 ansible_host=10.RANGENUMBER.30.10
+; OWA/mail server by real hostname — targeted by FGNW-exchange.yml / FGNW-exchange-seed-mail.yml
+[owa]
+konoha-mail ansible_host=10.RANGENUMBER.10.20
+; Exchange 2019 mail server (real hostname) — the target for FGNW-exchange.yml and
+; FGNW-exchange-seed-mail.yml, whose plays are `hosts: exchange_servers`. Same box as
+; [owa] above / srv-konoha in the AD-build inventory; declared as its own group so the
+; Exchange plays' selector matches on the SMALL range too (mirrors inventory-infra.yml,
+; which likewise has a dedicated [exchange_servers] group). Without this group Phase 3b's
+; `hosts: exchange_servers` plays silently match zero hosts and Exchange never installs.
+[exchange_servers]
+konoha-mail ansible_host=10.RANGENUMBER.10.20
+[windows_realname:children]
+ghosts_clients
+village_dcs
+owa
+exchange_servers
+[windows_realname:vars]
+ansible_connection=winrm
+ansible_user=localuser
+ansible_password=password
+ansible_port=5986
+ansible_winrm_scheme=https
+ansible_winrm_server_cert_validation=ignore
