@@ -1,0 +1,5 @@
+---
+# Play variables of FGNW-ninjasploitable-join.yml, loaded with vars_files.
+ad_domain: fire.ninja
+ad_admin: Administrator
+ansible_become_password: "{{ ansible_ssh_pass | default(omit) }}"

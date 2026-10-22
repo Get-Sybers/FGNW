@@ -1,0 +1,4 @@
+---
+# Play variables of FGNW-mac-ad-bind.yml, loaded with vars_files.
+__lab_admin_user: domainadmin
+__lab_admin_password: password

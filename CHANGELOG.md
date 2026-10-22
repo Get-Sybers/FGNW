@@ -75,6 +75,18 @@ has no release tag yet.
   running Ansible, read natively with `setup` (the `user` subset) and declared
   explicitly rather than inherited from the process.
 
+### Changed — plays carry data files, gather facts on purpose, escalate narrowly
+
+- A play's variables live in a data file next to it (`vars/<play>.yml`, loaded
+  with `vars_files` ahead of any other data file the play names), never inline
+  on the play.
+- A play that uses no facts, directly or through the roles it applies, sets
+  `gather_facts: false`.
+- `become: true` sits on the task, block or role entry that needs root, never
+  on the whole play; the controller-side writes of the fact-harvest plays no
+  longer run under escalation.
+- The two `pipe` lookups that shelled out for the time read Jinja's `now()`.
+
 ### Changed — shared Ansible is imported from the repository that owns it
 
 - The play that creates and runs the range's GHOSTS container is

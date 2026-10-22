@@ -1,6 +1,7 @@
 ---
 - name: Enable TGT delegation for parent-child abuse on the suna domain controller - this can fail, while the trust is still building so we retry a few times
   hosts: suna-dc1
+  gather_facts: false
   tasks:
     - name: Enable TGT delegation
       ansible.windows.win_command: netdom.exe trust sunagakure.wind.ninja /domain:wind.ninja /EnableTGTDelegation:Yes
@@ -11,6 +12,7 @@
 - name: Enable TGT delegation for parent-child abuse on the Land of Wind domain controller - this can fail, while the trust is still building so we retry a few
     times
   hosts: wind-dc1
+  gather_facts: false
   tasks:
     - name: Enable TGT delegation
       ansible.windows.win_command: netdom.exe trust wind.ninja /domain:sunagakure.wind.ninja /EnableTGTDelegation:Yes
@@ -20,6 +22,7 @@
       delay: 30
 - name: Enable TGT delegation for parent-child abuse on the konoha domain controller - this can fail, while the trust is still building so we retry a few times
   hosts: konoha-dc1
+  gather_facts: false
   tasks:
     - name: Enable TGT delegation
       ansible.windows.win_command: netdom.exe trust konohagakure.fire.ninja /domain:fire.ninja /EnableTGTDelegation:Yes
@@ -29,6 +32,7 @@
       delay: 30
 - name: Enable TGT delegation for parent-child abuse on the fire domain controller - this can fail, while the trust is still building so we retry a few times
   hosts: fire-dc1
+  gather_facts: false
   tasks:
     - name: Enable TGT delegation
       ansible.windows.win_command: netdom.exe trust fire.ninja /domain:konohagakure.fire.ninja /EnableTGTDelegation:Yes
@@ -38,6 +42,7 @@
       delay: 30
 - name: Enable TGT delegation for external trust on the fire domain controller - this can fail, while the trust is still building so we retry a few times
   hosts: fire-dc1
+  gather_facts: false
   tasks:
     - name: Enable TGT delegation
       ansible.windows.win_command: netdom.exe trust fire.ninja /domain:otogakure.ninja /EnableTGTDelegation:Yes
@@ -47,6 +52,7 @@
       delay: 30
 - name: Enable TGT delegation for external trust on the oto domain controller - this can fail, while the trust is still building so we retry a few times
   hosts: oto-dc1
+  gather_facts: false
   tasks:
     - name: Enable TGT delegation
       ansible.windows.win_command: netdom.exe trust otogakure.ninja /domain:fire.ninja /EnableTGTDelegation:Yes
@@ -56,6 +62,7 @@
       delay: 30
 - name: Reboot all DCs to apply deleg settings
   hosts: dc
+  gather_facts: false
   tasks:
     - name: Reboot
       ansible.windows.win_reboot:

@@ -1,0 +1,31 @@
+---
+# Play variables of ninjasploitable-bake.yml, loaded with vars_files.
+ms_marker: /var/lib/ludus/ninjasploitable_prereqs_baked
+ms_content_marker: /var/lib/ludus/ninjasploitable_content_baked
+ms_service_packages:
+  - apache2
+  - apache2-utils
+  - php
+  - php-mysql
+  - php-gd
+  - php-curl
+  - libapache2-mod-php
+  - mariadb-server
+  - mariadb-client
+  - python3-pymysql
+  - vsftpd
+  - openssh-server
+  - samba
+  - postgresql
+ms_adjoin_packages:
+  - realmd
+  - sssd
+  - sssd-tools
+  - adcli
+  - samba-common-bin
+  - krb5-user
+  - packagekit
+  - libnss-sss
+  - libpam-sss
+  - oddjob
+  - oddjob-mkhomedir

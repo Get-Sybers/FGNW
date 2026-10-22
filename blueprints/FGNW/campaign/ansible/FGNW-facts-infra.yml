@@ -7,12 +7,8 @@
   hosts: localhost
   gather_facts: false
   connection: local
-  vars:
-    facts_out: latest
-    __bp_root: "{{ playbook_dir | dirname | dirname }}"
-    __src_root: "{{ playbook_dir | dirname | dirname | dirname | dirname }}"
-    __dir: "{{ playbook_dir }}/../facts-local/{{ facts_out }}/infra"
-    __range_config: "{{ __bp_root }}/range-config.yml"
+  vars_files:
+    - vars/FGNW-facts-infra-play1.yml
   tasks:
     - name: "Read the controller user's identity (the owner of the files written here)"
       ansible.builtin.setup:
@@ -125,9 +121,8 @@
 - name: Harvest Windows logging/monitoring baseline
   hosts: windows_realname
   gather_facts: false
-  vars:
-    facts_out: latest
-    __dir: "{{ playbook_dir }}/../facts-local/{{ facts_out }}/infra"
+  vars_files:
+    - vars/FGNW-facts-infra-play2.yml
   tasks:
     - name: "Read the controller user's identity (the owner of the files written here)"
       ansible.builtin.setup:
@@ -226,9 +221,8 @@
 - name: Harvest Exchange structure (best-effort)
   hosts: exchange_servers
   gather_facts: false
-  vars:
-    facts_out: latest
-    __dir: "{{ playbook_dir }}/../facts-local/{{ facts_out }}/infra"
+  vars_files:
+    - vars/FGNW-facts-infra-play3.yml
   tasks:
     - name: "Read the controller user's identity (the owner of the files written here)"
       ansible.builtin.setup:
@@ -306,9 +300,8 @@
 - name: Harvest GHOSTS emulation scaffolding
   hosts: ghosts_clients
   gather_facts: false
-  vars:
-    facts_out: latest
-    __dir: "{{ playbook_dir }}/../facts-local/{{ facts_out }}/infra"
+  vars_files:
+    - vars/FGNW-facts-infra-play4.yml
   tasks:
     - name: "Read the controller user's identity (the owner of the files written here)"
       ansible.builtin.setup:
@@ -352,10 +345,8 @@
 - name: Harvest Linux infra facts
   hosts: linux_infra
   gather_facts: true
-  become: true
-  vars:
-    facts_out: latest
-    __dir: "{{ playbook_dir }}/../facts-local/{{ facts_out }}/infra"
+  vars_files:
+    - vars/FGNW-facts-infra-play5.yml
   tasks:
     - name: "Read the controller user's identity (the owner of the files written here)"
       ansible.builtin.setup:
@@ -382,6 +373,7 @@
         manager: auto
       failed_when: false
     - name: Sysmon-linux + realm join structure, local settings, firewall, web/DB config
+      become: true
       ansible.builtin.shell: |
         set +e -o pipefail
         case "{{ item }}" in

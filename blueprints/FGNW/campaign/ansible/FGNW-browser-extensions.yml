@@ -1,6 +1,7 @@
 ---
 - name: Force-install browser extensions on GHOSTS workstations
   hosts: ghosts_clients
+  gather_facts: false
   tasks:
     - name: "Browser-extensions: force-install the browser extensions"
       ansible.builtin.include_role:

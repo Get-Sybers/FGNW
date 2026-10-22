@@ -1,0 +1,7 @@
+---
+# Play variables of FGNW-attacker-web.yml, loaded with vars_files.
+ludus_tool_cache_title: 🔴 Akatsuki Tool Cache
+ludus_tool_cache_subtitle: >
+  Pre-staged offensive tools for Fourth Great Ninja War range operations.
+  All binaries are served from /tools/ for direct download.
+ludus_tool_cache_categories: "{{ tool_categories }}"

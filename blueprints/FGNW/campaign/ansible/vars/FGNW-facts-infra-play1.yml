@@ -1,0 +1,7 @@
+---
+# Play variables of FGNW-facts-infra.yml (play 1), loaded with vars_files.
+facts_out: latest
+__bp_root: "{{ playbook_dir | dirname | dirname }}"
+__src_root: "{{ playbook_dir | dirname | dirname | dirname | dirname }}"
+__dir: "{{ playbook_dir }}/../facts-local/{{ facts_out }}/infra"
+__range_config: "{{ __bp_root }}/range-config.yml"

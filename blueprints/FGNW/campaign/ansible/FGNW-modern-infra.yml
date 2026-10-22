@@ -1,13 +1,15 @@
 ---
 - name: Install Docker on modern-infra
   hosts: modern-infra
-  become: true
   roles:
-    - geerlingguy.docker
+    - role: geerlingguy.docker
+      become: true
 - name: Bring up the modern-infra container stack + seed it
   hosts: modern-infra
-  become: true
+  gather_facts: false
   tasks:
     - name: "Modern-infra: bring up and seed the container stack"
       ansible.builtin.include_role:
         name: fgnw_modern_infra
+        apply:
+          become: true

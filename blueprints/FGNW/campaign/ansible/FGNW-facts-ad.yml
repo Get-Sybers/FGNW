@@ -6,9 +6,8 @@
 - name: Harvest AD / identity facts from every domain controller
   hosts: dc
   gather_facts: false
-  vars:
-    facts_out: latest
-    __ad_dir: "{{ playbook_dir }}/../facts-local/{{ facts_out }}/ad"
+  vars_files:
+    - vars/FGNW-facts-ad.yml
   tasks:
     - name: "Read the controller user's identity (the owner of the files written here)"
       ansible.builtin.setup:

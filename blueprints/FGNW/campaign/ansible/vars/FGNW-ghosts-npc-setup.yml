@@ -1,0 +1,22 @@
+---
+# Play variables of FGNW-ghosts-npc-setup.yml, loaded with vars_files.
+__any_infra_host: "{{ (groups['linux_infra'] | default([])) | first }}"
+range_second_octet: "{{ hostvars[__any_infra_host].ansible_host.split('.')[1] }}"
+ghosts_api_root: http://10.{{ range_second_octet }}.99.51:5000/api
+__flagship_sams:
+  - naruto.uzumaki
+  - shikamaru.nara
+  - kakashi.hatake
+  - tsunade
+  - might.guy
+  - orochimaru
+  - pain
+  - zetsu
+  - gaara
+__rel_quality:
+  manager: 0.85
+  direct_report: 0.80
+  "team: The Sannin": 0.75
+  "team: Konoha Jonin": 0.65
+  "team: Kage Assembly": 0.70
+  department_fallback: 0.45

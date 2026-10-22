@@ -1,0 +1,4 @@
+---
+# Play variables of FGNW-facts-infra.yml (play 2), loaded with vars_files.
+facts_out: latest
+__dir: "{{ playbook_dir }}/../facts-local/{{ facts_out }}/infra"

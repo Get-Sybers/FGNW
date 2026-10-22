@@ -1,12 +1,9 @@
 ---
 - name: Join ninjasploitable to fire.ninja
   hosts: "{{ target | default('ninjasploitable') }}"
-  become: true
   gather_facts: true
-  vars:
-    ad_domain: fire.ninja
-    ad_admin: Administrator
-    ansible_become_password: "{{ ansible_ssh_pass | default(omit) }}"
+  vars_files:
+    - vars/FGNW-ninjasploitable-join.yml
   tasks:
     - name: Load the AD config (for the fire.ninja domain-admin password)
       ansible.builtin.include_vars:
@@ -19,6 +16,7 @@
         fire_admin_password: "{{ ad_config.lab.domains[ad_domain].domain_password }}"
       no_log: true
     - name: Point DNS at the fire.ninja DC so the domain resolves
+      become: true
       ansible.builtin.copy:
         dest: /etc/resolv.conf
         content: |
@@ -28,12 +26,14 @@
         group: root
         mode: "0644"
     - name: Preseed the Kerberos default realm (avoid interactive krb5-config prompt)
+      become: true
       ansible.builtin.debconf:
         name: krb5-config
         question: krb5-config/default_realm
         vtype: string
         value: "{{ ad_domain | upper }}"
     - name: "Ninjasploitable: route apt through the Nexus Debian proxy (contained range)"
+      become: true
       ansible.builtin.copy:
         dest: /etc/apt/sources.list.d/nexus-debian.list
         owner: root
@@ -44,10 +44,12 @@
           deb http://192.0.2.2:8081/repository/debian-proxy {{ ansible_facts['distribution_release'] }}-updates main non-free-firmware
           deb http://192.0.2.2:8081/repository/debian-security-proxy {{ ansible_facts['distribution_release'] }}-security main non-free-firmware
     - name: "Ninjasploitable: disable the internet apt sources that can't resolve under containment"
+      become: true
       ansible.builtin.command:
         cmd: mv /etc/apt/sources.list /etc/apt/sources.list.disabled
         removes: /etc/apt/sources.list
     - name: Install realmd/sssd AD-join packages
+      become: true
       ansible.builtin.apt:
         name:
           - realmd
@@ -66,6 +68,7 @@
       environment:
         DEBIAN_FRONTEND: noninteractive
     - name: Check current realm membership
+      become: true
       ansible.builtin.command: realm list
       register: realm_list
       changed_when: false
@@ -80,9 +83,11 @@
       when: ad_domain not in (realm_list.stdout | default(''))
       no_log: true
     - name: Enable home-dir creation on first login
+      become: true
       ansible.builtin.command: pam-auth-update --enable mkhomedir
       changed_when: false
     - name: Verify membership
+      become: true
       ansible.builtin.command: realm list
       register: realm_after
       changed_when: false

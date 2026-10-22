@@ -1,0 +1,4 @@
+---
+# Play variables of FGNW-recon-tooling.yml, loaded with vars_files.
+__toolcache_host: "{{ hostvars['attacker'].ansible_host | default('') }}"
+range_recon_tooling_nmap_zip_url: http://{{ __toolcache_host }}/tools/nmap-7.92-win32.zip

@@ -1,0 +1,25 @@
+---
+# Play variables of FGNW-exchange.yml (play 2), loaded with vars_files.
+fgnw_exchange_iso_url: https://download.microsoft.com/download/7/0/a/70a4d908-eacb-426e-ad9f-e7768e27f873/ExchangeServer2019-x64-cu15.iso
+# suna-mail absent: macOS mail host (Sand conversion); see note at the top of this file.
+fgnw_exchange_map:
+  konoha-mail: { org: Konoha, domain: konohagakure.fire.ninja }
+  oto-mail: { org: Oto, domain: otogakure.ninja }
+  dark-mail: { org: Akatsuki, domain: akatsuki.dark }
+__me: "{{ fgnw_exchange_map[inventory_hostname] }}"
+fgnw_exchange_forest_root_map:
+  konoha-mail: fire.ninja
+  oto-mail: otogakure.ninja
+  dark-mail: akatsuki.dark
+__forest_root: "{{ fgnw_exchange_forest_root_map[inventory_hostname] }}"
+ludus_os_version: "2022"
+ludus_exchange_iso_url: "{{ fgnw_exchange_iso_url }}"
+exchange_dotnet_install_path: http://192.0.2.2:8081/repository/raw-hosted/tools/exchange/ndp48-x86-x64-allos-enu.exe
+vcredist2013_install_path: http://192.0.2.2:8081/repository/raw-hosted/tools/exchange/vcredist2013_x64.exe
+rewrite_module_path: http://192.0.2.2:8081/repository/raw-hosted/tools/exchange/rewrite_amd64_en-US.msi
+ucma_runtime_path: http://192.0.2.2:8081/repository/raw-hosted/tools/exchange/UcmaRuntimeSetup.exe
+ludus_exchange_domain: "{{ __me.org }}"
+ludus_exchange_domain_username: "{{ __forest_root }}\\Administrator"
+ludus_exchange_domain_password: password
+ludus_exchange_dc: ""
+ludus_exchange_host: "{{ inventory_hostname }}"

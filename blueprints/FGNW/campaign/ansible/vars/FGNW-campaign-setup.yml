@@ -1,0 +1,9 @@
+---
+# Play variables of FGNW-campaign-setup.yml, loaded with vars_files.
+leaf_domain: konohagakure.fire.ninja
+leaf_admin: konohagakure.fire.ninja\Administrator
+leaf_admin_password: password
+svc_name: svc-missionboard
+svc_password: Ichiraku2003
+svc_spn: HTTP/missionboard.konohagakure.fire.ninja
+asrep_user: konohamaru.sarutobi

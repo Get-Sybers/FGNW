@@ -23,6 +23,7 @@
 
 - name: Hidden Sand Village — GHOSTS Universal client (workstation only)
   hosts: macos_dev
+  gather_facts: false
   tasks:
     - name: "Mac-ghosts: start the GHOSTS Universal client (service only; prestage ran in Phase 1c)"
       ansible.builtin.include_role:

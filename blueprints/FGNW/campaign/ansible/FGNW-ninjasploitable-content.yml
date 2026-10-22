@@ -1,17 +1,16 @@
 ---
 - name: Ensure Land of Fire mission-report intake exists on ninjasploitable
   hosts: ninjasploitable
-  become: true
-  vars:
-    ninjasploitable_content_baked_marker: /var/lib/ludus/ninjasploitable_content_baked
-    report_web_root: /var/www/html/reports
-    report_upload_dir: /var/www/html/uploads
+  gather_facts: false
+  vars_files:
+    - vars/FGNW-ninjasploitable-content.yml
   tasks:
     - name: Check whether ninjasploitable web content is already baked
       ansible.builtin.stat:
         path: "{{ ninjasploitable_content_baked_marker }}"
       register: ninjasploitable_content_baked
     - name: Deploy Fire intake fallback content only on pre-bake clones
+      become: true
       when: not ninjasploitable_content_baked.stat.exists
       block:
         - name: Ensure the report intake web dir exists

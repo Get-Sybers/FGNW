@@ -1,6 +1,7 @@
 ---
 - name: Create entrypoint service account
   hosts: suna-dc1
+  gather_facts: false
   tasks:
     - name: Add new service account to the domain administrator group
       microsoft.ad.user:
@@ -32,6 +33,7 @@
         success_msg: svc_entrypoint exists and is a member of Domain Admins.
 - name: Install Wireshark on Windows hosts
   hosts: domain
+  gather_facts: false
   roles:
     - wireshark
 # The original lat.yml scheduled this Windows-only privileged-cred task on suna-ws1
@@ -44,16 +46,14 @@
 # scenario's intended SPN target string and does not require the host to be Windows.
 - name: Schedule task for privileged user hash on workstation (retargeted to Konoha)
   hosts: konoha-ws1
+  gather_facts: false
   vars_files:
+    - vars/lat-play3.yml
     - "{{ data_path }}/config.json"
-  vars:
-    data_path: ../ad/NARUTO/data
-    privileged_user_task_domain: konohagakure.fire.ninja
-    privileged_user_task_username: naruto.uzumaki
-    privileged_user_task_password: "{{ lab.domains[privileged_user_task_domain].users[privileged_user_task_username].password }}"
   roles:
     - privileged_user_task
 - name: Enable PowerShell Script Block Logging on Windows hosts
   hosts: domain
+  gather_facts: false
   roles:
     - powershell_logging

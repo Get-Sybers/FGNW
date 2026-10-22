@@ -2,14 +2,8 @@
 - name: "Preflight: assert the inventory matched the hosts this verify expects (guards against a vacuous pass)"
   hosts: localhost
   gather_facts: false
-  vars:
-    fgnw_variant: small
-    __expected_by_variant:
-      small: { windows_realname: 6, linux_infra: 3 }
-      regular: { windows_realname: 19, linux_infra: 3 }
-      full: { windows_realname: 19, linux_infra: 3 }
-      xl: { windows_realname: 19, linux_infra: 3 }
-    expected_hosts: "{{ __expected_by_variant[fgnw_variant] | default({}) }}"
+  vars_files:
+    - vars/FGNW-verify-connectivity-play1.yml
   pre_tasks:
     - name: "Preflight: assert fgnw_variant is known (it selects the matched-host floor)"
       tags: always
@@ -62,8 +56,8 @@
 - name: HTTP reachability + OWA checks from a representative Leaf workstation
   hosts: konoha-ws1
   gather_facts: false
-  vars:
-    range_second_octet: "{{ ansible_host.split('.')[1] }}"
+  vars_files:
+    - vars/FGNW-verify-connectivity-play2.yml
   tasks:
     - name: Check HTTP reachability to shared range infrastructure
       ansible.windows.win_uri:

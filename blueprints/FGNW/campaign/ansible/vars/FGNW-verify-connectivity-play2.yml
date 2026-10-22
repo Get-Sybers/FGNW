@@ -1,0 +1,3 @@
+---
+# Play variables of FGNW-verify-connectivity.yml (play 2), loaded with vars_files.
+range_second_octet: "{{ ansible_host.split('.')[1] }}"

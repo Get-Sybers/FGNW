@@ -1,0 +1,4 @@
+---
+# Play variables of FGNW-facts-ad.yml, loaded with vars_files.
+facts_out: latest
+__ad_dir: "{{ playbook_dir }}/../facts-local/{{ facts_out }}/ad"

@@ -11,25 +11,8 @@
   hosts: localhost
   connection: local
   gather_facts: false
-  vars:
-    ghost9_ct_range_number: ""
-    ghost9_ct_vlan: 99
-    ghost9_ct_last_octet: 51
-    ghost9_ct_hostname_suffix: ghost9
-    ghost9_ct_api_port: 5000
-    ghost9_ct_ui_port: 4200
-    ghost9_ct_api_version: 9
-    # The GHOSTS version the get_sybers.lxc ghost9 template carries.
-    ghost9_ct_ghosts_version: "9.3.0"
-    # The paths FGNW-verify-emulation.yml, FGNW-ghosts-npc-setup.yml and
-    # FGNW-ghosts-activity.yml drive.
-    ghost9_ct_required_api_paths:
-      - /api/machines
-      - /api/npcs
-      - /api/timelines
-      - /api/machinegroups
-    ghost9_ct_ip: "10.{{ ghost9_ct_range_number }}.{{ ghost9_ct_vlan }}.{{ ghost9_ct_last_octet }}"
-    ghost9_ct_api_base: "http://{{ ghost9_ct_ip }}:{{ ghost9_ct_api_port }}"
+  vars_files:
+    - vars/ghost9-verify.yml
   tasks:
     - name: "Verify: The range number is set and numeric"
       ansible.builtin.assert:

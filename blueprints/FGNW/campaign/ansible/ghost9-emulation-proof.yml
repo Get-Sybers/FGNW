@@ -2,18 +2,8 @@
 - name: "Ghost9: prove the server can ingest and execute the FGNW emulation"
   hosts: localhost
   gather_facts: false
-  vars:
-    ghost9_proof_api_root: ""
-    ghost9_proof_api_version: 9
-    ghost9_proof_range_octet: 1
-    ghost9_proof_stale_minutes: 15
-    ghost9_proof_client_version: 9.0.0
-    __g9p_now: "{{ lookup('pipe', 'date -u +%Y-%m-%dT%H:%M:%S') }}"
-    __g9p_owa_octets:
-      konohagakure.fire.ninja: 10
-      sunagakure.wind.ninja: 20
-      otogakure.ninja: 30
-      akatsuki.dark: 87
+  vars_files:
+    - vars/ghost9-emulation-proof.yml
   tasks:
     - name: "G9-proof: an API root was supplied"
       ansible.builtin.assert:

@@ -1,16 +1,12 @@
 ---
 - name: Deploy Akatsuki tool-cache web server
   hosts: attacker
-  become: true
   vars_files:
+    - vars/FGNW-attacker-web.yml
     - ../content/www/attacker-tools.yml
-  vars:
-    ludus_tool_cache_title: 🔴 Akatsuki Tool Cache
-    ludus_tool_cache_subtitle: >
-      Pre-staged offensive tools for Fourth Great Ninja War range operations.
-      All binaries are served from /tools/ for direct download.
-    ludus_tool_cache_categories: "{{ tool_categories }}"
   tasks:
     - name: "Attacker-web: publish the Akatsuki tool cache"
       ansible.builtin.include_role:
         name: ludus_tool_cache
+        apply:
+          become: true

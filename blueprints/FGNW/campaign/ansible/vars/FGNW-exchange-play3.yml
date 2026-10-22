@@ -1,0 +1,8 @@
+---
+# Play variables of FGNW-exchange.yml (play 3), loaded with vars_files.
+# suna-mail absent: macOS mail host (Sand conversion); see note at the top of this file.
+fgnw_exchange_forest_root_map:
+  konoha-mail: fire.ninja
+  oto-mail: otogakure.ninja
+  dark-mail: akatsuki.dark
+__me: "{{ fgnw_exchange_forest_root_map[inventory_hostname] }}"

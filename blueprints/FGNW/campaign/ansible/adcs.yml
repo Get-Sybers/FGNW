@@ -3,14 +3,8 @@
   hosts: adcs
   gather_facts: false
   vars_files:
+    - vars/adcs.yml
     - "{{ data_path }}/config.json"
-  vars:
-    data_path: ../ad/NARUTO/data
-    adcs_forest_root_domain: wind.ninja
-    adcs_domain_username: "{{ adcs_forest_root_domain }}\\Administrator"
-    adcs_domain_password: "{{ lab.domains[adcs_forest_root_domain].adcs_domain_password }}"
-    ca_common_name: Sunagakure Root CA
-    adcs_ca_web_enrollment: true
   tasks:
     - name: Install Enterprise Root CA role/services
       ansible.builtin.include_role:

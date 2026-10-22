@@ -2,11 +2,8 @@
 - name: Verify GHOSTS emulation telemetry (machine registration + freshness)
   hosts: localhost
   gather_facts: false
-  vars:
-    fgnw_ghosts_stale_minutes: 15
-    __any_infra_host: "{{ (groups['linux_infra'] | default([])) | first }}"
-    range_second_octet: "{{ hostvars[__any_infra_host].ansible_host.split('.')[1] }}"
-    ghosts_api_root: http://10.{{ range_second_octet }}.99.51:5000/api
+  vars_files:
+    - vars/FGNW-verify-emulation.yml
   tasks:
     - name: Query the GHOSTS API for all registered machines
       ansible.builtin.uri:

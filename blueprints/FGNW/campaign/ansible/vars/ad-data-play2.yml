@@ -1,0 +1,6 @@
+---
+# Play variables of ad-data.yml (play 2), loaded with vars_files.
+data_path: ../ad/{{ domain_name }}/data
+hosts_dict: "{{ lab.hosts }}"
+member_domain: "{{ lab.hosts[dict_key].domain }}"
+domain_password: "{{ lab.domains[member_domain].domain_password }}"
