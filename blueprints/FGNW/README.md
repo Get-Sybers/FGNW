@@ -112,8 +112,8 @@ services) through the `get_sybers.lxc` roles — `lxc_preflight`, `lxc_ghost9`
 `container`, `lxc_guest` `baseline`, `lxc_ghost9` `server` — and the clients keep
 `ApiRootUrl http://10.<N>.99.51:5000/api`; the UI is on `:4200`, Grafana on `:3000`,
 n8n on `:5678`. `requirements.yml` pins `get_sybers.lxc` as a git source (no release tag
-yet) and `community.proxmox` 2.1.0; phase 1b runs as root on the PVE node that hosts
-the Ludus server and needs a scoped Proxmox API token (`ghost9_ct_api_*` extra-vars).
+yet) and its `community.proxmox` dependency; phase 1b runs as root on the PVE node that
+hosts the Ludus server and needs a scoped Proxmox API token (`ghost9_ct_api_*` extra-vars).
 The CT is not a Ludus range object: `ludus range rm` does not remove it —
 `ansible-playbook get_sybers.lxc.deploy_ghost9_range -e @<extra-vars file> -t destroy -e lxc_guest_confirm_destroy=true` does. See phase
 `1b` in `campaign/docs/DEPLOY.md`.

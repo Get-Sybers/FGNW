@@ -18,6 +18,21 @@ has no release tag yet.
 
 ## [Unreleased]
 
+### Fixed — the phase 1b contract to `get_sybers.lxc.deploy_ghost9_range`
+
+- `get_sybers.lxc` is pinned at the commit whose `deploy_ghost9_range` play is the
+  variable-free wrapper of the `lxc_ghost9_range` role (the inputs phase 1b writes),
+  in `requirements.yml` and `blueprints/FGNW/requirements.yml`; the campaign's
+  `ludus-requirements.yml` no longer carries its own (stale) copy of that pin or of
+  the `community.proxmox` one — it names the file that holds them.
+- Phase 1b defines every input the range play's `module_defaults` read:
+  `pve_validate_certs` (from the new `deploy.yml` input `ghost9_ct_api_validate_certs`,
+  default `false`) and an empty `pve_api_password` (token auth is the only credential
+  phase 1b supports). `ghost9_ct_storage`, `ghost9_db_password`,
+  `ghost9_n8n_owner_password` and `ghost9_n8n_owner_email` are declared inputs of
+  `deploy.yml` with their defaults, no longer `default()` filters at the call site, and
+  the four `ghost9_ct_api_*` inputs are listed there (commented out: no safe default).
+
 ### Changed — shared Ansible is imported from the repository that owns it
 
 - The play that creates and runs the range's GHOSTS container is

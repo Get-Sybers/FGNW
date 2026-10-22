@@ -65,12 +65,12 @@
 - name: "deploy-tasks | phase1b-ghost9 | Resolve the GHOSTS server secrets (supplied to deploy.yml, else generated per deploy)"
   ansible.builtin.set_fact:
     __g9_db_password: >-
-      {{ ghost9_db_password if (ghost9_db_password | default('') | length > 0)
+      {{ ghost9_db_password if (ghost9_db_password | length > 0)
          else lookup('ansible.builtin.password', __tmp_ghost9_db_password ~ ' chars=ascii_letters,digits length=32') }}
     __g9_n8n_owner_password: >-
-      {{ ghost9_n8n_owner_password if (ghost9_n8n_owner_password | default('') | length > 0)
+      {{ ghost9_n8n_owner_password if (ghost9_n8n_owner_password | length > 0)
          else lookup('ansible.builtin.password', __tmp_ghost9_n8n_password ~ ' chars=ascii_letters,digits length=32') }}
-    __g9_n8n_owner_email: "{{ ghost9_n8n_owner_email | default('admin@ghosts.local') }}"
+    __g9_n8n_owner_email: "{{ ghost9_n8n_owner_email }}"
   no_log: true
 - name: "deploy-tasks | phase1b-ghost9 | Materialize the deploy_ghost9_range extra-vars file (0600, shredded by cleanup)"
   ansible.builtin.copy:
@@ -88,13 +88,17 @@
       lxc_ghost9_range_cores: "{{ __g9_ext.cores }}"
       lxc_ghost9_range_memory_mb: "{{ __g9_ext.memory_mb }}"
       lxc_ghost9_range_rootfs_gb: "{{ __g9_ext.rootfs_gb }}"
-      lxc_ghost9_range_storage: "{{ ghost9_ct_storage | default('local-zfs') }}"
+      lxc_ghost9_range_storage: "{{ ghost9_ct_storage }}"
       lxc_ghost9_range_template_image: "{{ __g9_ext.template_image }}"
       lxc_ghost9_range_template_version: "{{ __g9_ext.template_version | string }}"
       pve_api_host: "{{ ghost9_ct_api_host }}"
       pve_api_user: "{{ ghost9_ct_api_user }}"
       pve_api_token_id: "{{ ghost9_ct_api_token_id }}"
       pve_api_token_secret: "{{ ghost9_ct_api_token_secret }}"
+      # Token auth only (the guard above requires it); the play's module_defaults
+      # read the password and TLS keys as well, so both are defined here.
+      pve_api_password: ""
+      pve_validate_certs: "{{ ghost9_ct_api_validate_certs }}"
       lxc_ghost9_db_password: "{{ __g9_db_password }}"
       lxc_ghost9_n8n_owner_email: "{{ __g9_n8n_owner_email }}"
       lxc_ghost9_n8n_owner_password: "{{ __g9_n8n_owner_password }}"
