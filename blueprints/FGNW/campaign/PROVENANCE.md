@@ -22,13 +22,14 @@ the whole Fourth Great Ninja War world) are the authors' own.
 
 ## B. Third-party
 
-Bundled roles that retain their own upstream licenses:
+Third-party roles that retain their own upstream licenses (installed from their GitHub
+repositories by `blueprints/FGNW/requirements.yml` unless marked bundled):
 
 | Role | Origin / license |
 | --- | --- |
-| `aleemladha.ludus_exchange` | vendored; carries its own `meta/upstream.yml` |
-| `geerlingguy.docker` | MIT; ships its own `LICENSE` |
-| `wireshark` | MIT (`meta/main.yml`) |
+| `aleemladha.ludus_exchange` | <https://github.com/aleemladha/ludus_exchange>, commit `319bb51d`; GPL-3.0 |
+| `geerlingguy.docker` | <https://github.com/geerlingguy/ansible-role-docker>, 7.5.5; MIT |
+| `wireshark` | bundled; MIT (`meta/main.yml`) |
 
 ---
 

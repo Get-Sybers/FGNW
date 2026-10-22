@@ -8,6 +8,16 @@ roles:
   # its FINALIZE phase, so that role would be redundant here.
   - name: geerlingguy.dotfiles
     version: 1.3.2
+  # Third-party roles the campaign plays apply, installed from their GitHub repositories
+  # (a pinned commit or tag); this source carries no copy of them.
+  - name: aleemladha.ludus_exchange
+    src: https://github.com/aleemladha/ludus_exchange.git
+    scm: git
+    version: 319bb51d9f774e0150468af17ceb7de80576879d
+  - name: geerlingguy.docker
+    src: https://github.com/geerlingguy/ansible-role-docker.git
+    scm: git
+    version: 7.5.5
 collections:
   - name: ansible.windows
     version: 2.7.0
@@ -26,13 +36,12 @@ collections:
   # macOS workstation + mail provisioning (homebrew/mas/dock roles consumed by FGNW-mac-dev.yml)
   - name: geerlingguy.mac
     version: 1.2.0
-  # Phase 1b (campaign/ansible/ghost9-range-ct.yml) creates the GHOSTS server CT from the
-  # published ghost9 LXC template through the get_sybers.lxc roles (lxc_preflight,
-  # lxc_guest, lxc_ghost9). get_sybers.lxc 0.1.0 has no collection release tag yet, so it
+  # Phase 1b runs this collection's deploy_ghost9_range play by its collection-qualified
+  # name to create the GHOSTS server CT from the published ghost9 LXC template. get_sybers.lxc 0.1.0 has no collection release tag yet, so it
   # is pinned as a git source at a commit; re-pin to the release tag once one exists.
   - name: https://github.com/Get-Sybers/LXC.git
     type: git
-    version: 2313507225b32b1bf2f09c14b8f242f227872d21
+    version: 586a99197b06727e12f651b34956f56b6aab3d91
   # get_sybers.lxc's dependency (>=2.1.0,<3.0.0): the PVE API module lxc_guest creates
   # the CT with, and the proxmox_pct_remote connection plugin that reaches into it.
   - name: community.proxmox

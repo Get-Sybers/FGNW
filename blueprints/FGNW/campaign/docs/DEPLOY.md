@@ -249,9 +249,9 @@ The config has **no `network:` block** — normal networking. Blocking is applie
 `api_port`, `ui_port`, `cores`, `memory_mb`, `rootfs_gb`, `template_image`,
 `template_version`), writes it with the range number, the PVE token and the server
 secrets into an owner-only extra-vars file (`~/.FGNW-deploy/ghost9-ct-vars.yml`, 0600,
-shredded by the cleanup step) and runs `campaign/ansible/ghost9-range-ct.yml` with it.
-That play composes the `get_sybers.lxc` collection (a git pin in
-`blueprints/FGNW/requirements.yml`): FGNW's own read-only range preflight (the VNet
+shredded by the cleanup step) and runs the `get_sybers.lxc` collection's `deploy_ghost9_range`
+play with it by its collection-qualified name (`ansible-playbook get_sybers.lxc.deploy_ghost9_range -e @<file>`;
+the collection is a git pin in `blueprints/FGNW/requirements.yml`). That play runs its read-only range preflight (the VNet
 `r<N>` declared in `/etc/pve/sdn/vnets.cfg` and present on the node, its MTU readable, no
 `*-ghosts` VM on the cluster), `lxc_preflight` (root, PVE node, `pct`), then `lxc_ghost9`
 `container` — `lxc_guest` pulls the published ghost9 template
@@ -304,9 +304,9 @@ range's SDN VNet, which `ludus range deploy` builds) and **before** Phase 2 (the
 needs the node's egress, and the CT is not a Ludus range object — containment neither
 snapshots nor blocks it, and Phase 5 emulation needs it live). `ludus range rm` and the
 `ludus testing` snapshots do **not** cover this CT; it is removed with
-`ansible-playbook ghost9-range-ct.yml -e @<extra-vars file> -t destroy -e lxc_guest_confirm_destroy=true`
+`ansible-playbook get_sybers.lxc.deploy_ghost9_range -e @<extra-vars file> -t destroy -e lxc_guest_confirm_destroy=true`
 (the same range number and token vars — write a fresh 0600 file; the deploy's copy was
-shredded). See the LIFECYCLE WARNING in `ansible/ghost9-range-ct.yml`.
+shredded). The play's header in the `get_sybers.lxc` collection (`playbooks/deploy_ghost9_range.yml`) states the lifecycle.
 The AD forests/domains/trusts/users are a **separate manual step**. It uses two merged
 inventories keyed by `dict_key`; substitute `RANGENUMBER` with this range's second
 octet (the `N` in the `10.N.0.0/16` network shown by `ludus range list`).
@@ -407,8 +407,8 @@ ansible-playbook -i /tmp/infra-inv.yml FGNW-owa-cert.yml
 
 Both playbooks need `ANSIBLE_ROLES_PATH=/opt/ludus/users/range-admin/.ansible/roles`
 exported first when run directly via `ansible-playbook` (not through `ludus range deploy`,
-which sets this automatically) — otherwise the vendored `aleemladha.ludus_exchange` role
-won't resolve.
+which sets this automatically) — otherwise the `aleemladha.ludus_exchange` role, which `blueprints/FGNW/requirements.yml`
+installs from its GitHub repository, won't resolve.
 
 - **Cached ISO — avoid the ~6 GB download.** The `aleemladha.ludus_exchange` role caches the
   Exchange 2019 CU15 ISO (~6.0 GB) at

@@ -20,14 +20,7 @@ exclude_paths:
   - changelogs/
   - tests/output/
   - extensions/molecule/*/files/
-  # Third-party roles vendored verbatim with their provenance recorded in
-  # meta/upstream.yml (aleemladha.ludus_exchange, twice: the source-root copy
-  # Ludus installs and the campaign's own copy) or in PROVENANCE.md
-  # (geerlingguy.docker, wireshark). They are linted upstream and are not
-  # reformatted here, so the house rules do not apply to their task files.
-  - ansible/roles/aleemladha.ludus_exchange/
-  - blueprints/FGNW/campaign/ansible/roles/aleemladha.ludus_exchange/
-  - blueprints/FGNW/campaign/ansible/roles/geerlingguy.docker/
+  # A third-party role bundled verbatim (PROVENANCE.md); linted upstream, not here.
   - blueprints/FGNW/campaign/ansible/roles/wireshark/
   # INI inventories that the AD-build chain (and its docs) address by these
   # .yml names; they are not YAML and cannot be parsed as such.
@@ -47,9 +40,14 @@ kinds:
 # requirements (blueprints/FGNW/requirements.yml `roles:`) or at template
 # build time; they are not part of this tree, so the plays that apply them are
 # linted against a mock.
+# aleemladha.ludus_exchange and geerlingguy.docker are installed from GitHub by
+# blueprints/FGNW/requirements.yml; the campaign plays apply them. (Keep this list
+# free of comment lines: scripts/conform reads it to build the syntax-check stubs.)
 mock_roles:
   - badsectorlabs.ludus_flarevm
   - geerlingguy.dotfiles
+  - aleemladha.ludus_exchange
+  - geerlingguy.docker
 # §18: lowercase letters, digits, underscores; starts with a letter.
 # §28: internal / registered values may carry the double-underscore prefix.
 var_naming_pattern: "^(__)?[a-z][a-z0-9_]*$"

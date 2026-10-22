@@ -103,7 +103,8 @@ Thunderbird can connect over VLAN-local IMAP+SMTP without TLS. Per-persona
 identity is read from `content/ghosts/persona-timelines.yml`.
 
 **The GHOSTS server is a `get_sybers.lxc` container** (as of blueprint 0.5.0, Phase
-`1b`): `campaign/ansible/ghost9-range-ct.yml` creates CT `9000+N` (`r<N>-ghost9`) on the
+`1b`): the `get_sybers.lxc` collection's `deploy_ghost9_range` play, which phase 1b runs by
+its collection-qualified name (`ansible-playbook get_sybers.lxc.deploy_ghost9_range`), creates CT `9000+N` (`r<N>-ghost9`) on the
 range VNet at `10.<N>.99.51` from the published ghost9 template
 (`ghcr.io/get-sybers/lxc/ghost9`, digest-pinned in `range-config.yml`
 `ludus_extensions.ghost9`: Debian 13, GHOSTS 9.3.0 / API v9, n8n and Grafana as native
@@ -114,7 +115,7 @@ n8n on `:5678`. `requirements.yml` pins `get_sybers.lxc` as a git source (no rel
 yet) and `community.proxmox` 2.1.0; phase 1b runs as root on the PVE node that hosts
 the Ludus server and needs a scoped Proxmox API token (`ghost9_ct_api_*` extra-vars).
 The CT is not a Ludus range object: `ludus range rm` does not remove it —
-`ghost9-range-ct.yml -t destroy -e lxc_guest_confirm_destroy=true` does. See phase
+`ansible-playbook get_sybers.lxc.deploy_ghost9_range -e @<extra-vars file> -t destroy -e lxc_guest_confirm_destroy=true` does. See phase
 `1b` in `campaign/docs/DEPLOY.md`.
 
 Then run the deploy. **Do not call `ludus range deploy` yourself** — `deploy.yml`

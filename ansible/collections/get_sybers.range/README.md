@@ -54,7 +54,7 @@ House standard: `doc/standards/02-Ansible-Standards.md`. Mirrors the
 The ninja-war blueprint composes these + its own content plays. The range's GHOSTS server
 CT is not this collection's either: phase 1b of the FGNW blueprint creates it from the
 published `get_sybers.lxc` ghost9 template through that collection's `lxc_preflight` /
-`lxc_guest` / `lxc_ghost9` roles (`blueprints/FGNW/campaign/ansible/ghost9-range-ct.yml`).
+`lxc_guest` / `lxc_ghost9` roles (that collection's `deploy_ghost9_range` play, run by phase 1b).
 `tests/local-gate.sh` runs the read-only test plays (auth, health, verify) syntax-checked + twice
 (second run `changed=0`). The mutating roles (config/deploy/testing/teardown) are exercised by a live
 range deploy, not the hermetic gate — running them in CI would deploy a real range.

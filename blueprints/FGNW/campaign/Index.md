@@ -41,11 +41,11 @@ blueprints/FGNW/
     │           └── ludus/     inventory.yml, inventory-small.yml, *-infra.yml variants
     │                          (RANGENUMBER placeholder — substitute the range second octet)
     │
-    ├── ansible/               Post-deploy playbooks and their vendored roles
+    ├── ansible/               Post-deploy playbooks and the campaign's own roles
     │   ├── FGNW-*.yml         22 FGNW-prefixed playbooks — run in Phases 4–5 (see below)
     │   ├── ad-data.yml        AD content (OUs/groups/users) via fgnw_ad_mgmt, Phase 3
     │   ├── ansible.cfg        Ansible config for this blueprint
-    │   └── roles/             Vendored and local Ansible roles (fgnw_*, geerlingguy.docker, etc.)
+    │   └── roles/             The campaign's own roles (fgnw_*, adcs, …); third-party roles come from GitHub via the blueprint's requirements.yml
     │
     ├── content/               Range universe data — source files and generated artefacts
     │   ├── README.md          Complete data-source inventory (what every file is, how to regenerate)
@@ -128,8 +128,8 @@ All 22 `FGNW-*.yml` playbooks live in `ansible/`. They run against the infra inv
 | `FGNW-ghosts-activity.yml` | 5 | Renders and deploys GHOSTS persona timelines to all GHOSTS workstations |
 | `FGNW-verify-connectivity.yml` | 5 | Read-only: checks HTTP targets (attacker tool-cache, ninjasploitable intake, per-forest OWA); fails the play if any check misses |
 | `FGNW-verify-emulation.yml` | 5 | Read-only: queries GHOSTS API per persona; fails if any host is unregistered or stale |
-| `ghost9-range-ct.yml` | 1b | Creates the GHOSTS server CT from the `get_sybers.lxc` ghost9 template (`lxc_preflight` → `lxc_ghost9` `container` → `lxc_guest` `baseline` → `lxc_ghost9` `server`); `-t destroy` removes it |
-| `ghost9-verify.yml` | 1b | Read-only: GHOSTS API v9 + `/api/machines` + UI `:4200` on the range VLAN, and the guest markers through `pct` on the CT's node |
+| `get_sybers.lxc.deploy_ghost9_range` (imported) | 1b | The `get_sybers.lxc` collection's play, run by its collection-qualified name: the GHOSTS server CT from the ghost9 template (`lxc_preflight` → `lxc_ghost9` `container` → `lxc_guest` `baseline` → `lxc_ghost9` `server`); `-t destroy` removes it |
+| `ghost9-verify.yml` | 1b | Read-only: GHOSTS API v9 + `/api/machines` + UI `:4200` on the range VLAN |
 | `ghost9-emulation-proof.yml` | — | Writes machine/timeline/activity records through the real client API routes to prove a server executes the FGNW emulation (point it at a server under test, never a live range) |
 
 AD promotion, child domains, member joins and the fire↔oto forest trust are built by

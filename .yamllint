@@ -15,11 +15,8 @@ ignore: |
   changelogs/changelog.yaml
   changelogs/.plugin-cache.yaml
   tests/output/
-  # Third-party roles vendored verbatim (provenance in meta/upstream.yml or
-  # PROVENANCE.md); their YAML style is upstream's, not reformatted here.
-  ansible/roles/aleemladha.ludus_exchange/
-  blueprints/FGNW/campaign/ansible/roles/aleemladha.ludus_exchange/
-  blueprints/FGNW/campaign/ansible/roles/geerlingguy.docker/
+  # A third-party role bundled verbatim (PROVENANCE.md); its YAML style is
+  # upstream's, not reformatted here.
   blueprints/FGNW/campaign/ansible/roles/wireshark/
   # INI inventories the AD-build chain addresses by these .yml names; not YAML.
   blueprints/FGNW/campaign/ad/NARUTO/providers/ludus/inventory.yml

@@ -32,7 +32,7 @@ ninjasploitable ansible_host=10.RANGENUMBER.90.10
 ; and override with -e ansible_ssh_pass=...
 ; COMMENTED OUT (issue
 ; via community.proxmox.proxmox_pct_remote and configured by get_sybers.lxc.lxc_ghost9
-; (ghost9-range-ct.yml, phase 1b) -- it is NOT an SSH host.
+; (get_sybers.lxc.deploy_ghost9_range, phase 1b) -- it is NOT an SSH host.
 ; Leaving this line active makes every [linux_infra] play hang on an SSH host that
 ; no longer exists. The CT keeps the same 10.RANGENUMBER.99.51 API/UI endpoints.
 ; ghosts ansible_host=10.RANGENUMBER.99.51 ansible_user=localuser ansible_ssh_pass=password

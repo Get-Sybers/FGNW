@@ -80,7 +80,7 @@ nexus:
 ansible_galaxy:
   manifest_file: requirements.yml
 ghost9:
-  # Phase 1b: the GHOSTS server CT (campaign/ansible/ghost9-range-ct.yml), created from
+  # Phase 1b: the GHOSTS server CT (the get_sybers.lxc collection's deploy_ghost9_range play), created from
   # the ghost9 LXC template the Get-Sybers/LXC repository publishes, through the
   # get_sybers.lxc roles (lxc_preflight, lxc_guest, lxc_ghost9). Not a Ludus template
   # and not a Nexus consumer: the node pulls the OCI image from the registry directly.
@@ -123,7 +123,7 @@ ghost9:
   ports: { api: 5000, ui: 4200, grafana: 3000, n8n: 5678 }
   lifecycle: >-
     Not a Ludus range object: `ludus range rm` and the `ludus testing` snapshots do not
-    cover it; remove it with ghost9-range-ct.yml -t destroy -e lxc_guest_confirm_destroy=true.
+    cover it; remove it with get_sybers.lxc.deploy_ghost9_range -e @<vars file> -t destroy -e lxc_guest_confirm_destroy=true.
 local_task_roles:
   required_for_this_blueprint:
     - get_sybers.sysmon

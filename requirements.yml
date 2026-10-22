@@ -21,15 +21,14 @@ collections:
   # lint and syntax check of those plays resolve the roles.
   - name: geerlingguy.mac
     version: "1.2.0"
-  # The FGNW blueprint's phase 1b play (blueprints/FGNW/campaign/ansible/ghost9-range-ct.yml)
-  # composes get_sybers.lxc's lxc_preflight / lxc_guest / lxc_ghost9 roles, and its
-  # module_defaults name the community.proxmox action group — ansible-lint and the
-  # syntax check need both installed. get_sybers.lxc 0.1.0 has no collection release
+  # Phase 1b of the FGNW blueprint runs get_sybers.lxc's deploy_ghost9_range play by its
+  # collection-qualified name; the collection and its community.proxmox dependency are
+  # installed for the lint and syntax checks. get_sybers.lxc 0.1.0 has no collection release
   # tag yet, so it is pinned as a git source at a commit (scripts/check-pins.py accepts a
   # `type: git` entry pinned to a 40-hex commit as an exact pin); re-pin to the release
   # tag once one exists.
   - name: https://github.com/Get-Sybers/LXC.git
     type: git
-    version: 2313507225b32b1bf2f09c14b8f242f227872d21
+    version: 586a99197b06727e12f651b34956f56b6aab3d91
   - name: community.proxmox
     version: "2.1.0"

@@ -3,7 +3,7 @@ generated content that feeds it is regenerated.
 User emulation runs from the **ghost9 CT** — GHOSTS 9.3.0 (API v9) as a `get_sybers.lxc`
 container created pre-containment in Phase 1b from the published ghost9 template
 (`ghcr.io/get-sybers/lxc/ghost9`, with n8n and Grafana as native services) by
-`ansible/ghost9-range-ct.yml`; API `http://10.<range>.99.51:5000/api`, UI `:4200`. It
+the `get_sybers.lxc` collection's `deploy_ghost9_range` play; API `http://10.<range>.99.51:5000/api`, UI `:4200`. It
 drives one **flagship workstation per domain population** — capped at 5 per domain — each
 mapped to a named character persona.
 Per-host behaviour comes from a GHOSTS timeline rendered by
