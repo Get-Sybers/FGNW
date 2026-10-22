@@ -33,6 +33,17 @@ has no release tag yet.
   `deploy.yml` with their defaults, no longer `default()` filters at the call site, and
   the four `ghost9_ct_api_*` inputs are listed there (commented out: no safe default).
 
+### Changed — dictionary and fact reads follow the standard
+
+- Loop items, declared loop variables and Jinja loop variables are read with
+  bracket notation (`item['key']`, never `item.key`): dot access breaks on
+  hyphenated keys and collides with the dict methods.
+- Facts are read through `ansible_facts[...]` everywhere
+  (`ansible_facts['os_family']`, `ansible_facts['distribution_release']`,
+  `ansible_facts['env']['HOME']`), never through the legacy injected `ansible_*`
+  names, which `inject_facts_as_vars = false` removes and which outrank play and
+  inventory variables when present.
+
 ### Changed — shared Ansible is imported from the repository that owns it
 
 - The play that creates and runs the range's GHOSTS container is
@@ -181,7 +192,7 @@ now gets Mozilla Thunderbird installed and preconfigured by one unified role, dr
 by a new deploy phase `4e`. Blueprint version bumped to **0.4.0** accordingly.
 
 - `blueprints/FGNW/campaign/ansible/roles/FGNW_thunderbird/` — new unified role.
-  Dispatches on `ansible_os_family`: `windows.yml` installs via
+  Dispatches on `ansible_facts['os_family']`: `windows.yml` installs via
   `chocolatey.chocolatey.win_chocolatey` through the range's Nexus `chocolatey-proxy`
   repo and drops `C:\Program Files\Mozilla Thunderbird\distribution\policies.json`;
   `macos.yml` drops `/Applications/Thunderbird.app/Contents/Resources/distribution/
@@ -259,7 +270,7 @@ standalone repository.
 ### Changed — browser-defaults + decoy-files Win/Mac role pairs merged to OS-dispatching single roles
 
 Follow-up to the macOS conversion (#16): the two role pairs that had a Windows + a macOS
-variant are now a single role each, dispatching on `ansible_os_family` to a `tasks/windows.yml`
+variant are now a single role each, dispatching on `ansible_facts['os_family']` to a `tasks/windows.yml`
 or `tasks/macos.yml`. Prevents the kind of divergence #17's scheme fix caught (one role on
 `http://`, the other on `https://`) by making there be only one place to change for shared
 semantics. Caller contract matches the Windows pattern (single `FGNW_village` var; the decoy
@@ -267,7 +278,7 @@ role additionally wants `FGNW_decoy_root`).
 
 - `blueprints/FGNW/campaign/ansible/roles/FGNW_browser_defaults/tasks/main.yml` — loads
   the shared village corpus, computes `FGNW_homepage` + `FGNW_bookmark_list` once, then
-  `include_tasks: windows.yml` or `include_tasks: macos.yml` based on `ansible_os_family`;
+  `include_tasks: windows.yml` or `include_tasks: macos.yml` based on `ansible_facts['os_family']`;
   fails loudly on anything else.
 - `blueprints/FGNW/campaign/ansible/roles/FGNW_browser_defaults/tasks/windows.yml`
   (Edge/IE HKU/HKLM + Netscape bookmarks HTML) and `tasks/macos.yml` (Firefox app-bundle

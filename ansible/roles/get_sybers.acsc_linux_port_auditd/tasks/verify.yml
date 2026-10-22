@@ -13,8 +13,8 @@
   ansible.builtin.service_facts:
 - name: "verify | Auditd unit is active"
   ansible.builtin.assert:
-    that: ansible_facts.services['auditd.service'].state | default('') == 'running'
-    fail_msg: "auditd is not running: {{ ansible_facts.services['auditd.service'] | default('unit not found') }}"
+    that: ansible_facts['services']['auditd.service'].state | default('') == 'running'
+    fail_msg: "auditd is not running: {{ ansible_facts['services']['auditd.service'] | default('unit not found') }}"
     quiet: true
 - name: "verify | Read kernel audit state"
   ansible.builtin.command: auditctl -s

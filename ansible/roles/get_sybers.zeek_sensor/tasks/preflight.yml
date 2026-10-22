@@ -49,18 +49,18 @@
       - "virtual"
 - name: "preflight | Debian family only"
   ansible.builtin.assert:
-    that: ansible_facts.os_family == 'Debian'
+    that: ansible_facts['os_family'] == 'Debian'
     fail_msg: >-
       This role targets the Debian family only (PVE nodes are Debian; the Ludus
       range router is Debian 11). Detected os_family
-      '{{ ansible_facts.os_family | default("unknown") }}'. The upstream role
+      '{{ ansible_facts["os_family"] | default("unknown") }}'. The upstream role
       this was adapted from also covers RedHat/SUSE; that half was dropped
       rather than carried untested — see README.md § What was dropped.
     quiet: true
 - name: "preflight | Refuse unprivileged LXC (no host interfaces, no CAP_NET_RAW)"
   ansible.builtin.assert:
     that: >-
-      not (ansible_facts.virtualization_type | default('') == 'lxc'
+      not (ansible_facts['virtualization_type'] | default('') == 'lxc'
            and not zeek_sensor_allow_lxc | default(false))
     fail_msg: >-
       This host looks like an LXC container. A container cannot see the PVE
@@ -107,16 +107,16 @@
   failed_when: __zeek_iface_state.rc != 0
 - name: "preflight | Each capture interface is administratively UP"
   ansible.builtin.assert:
-    that: "'UP' in (item.stdout | regex_search('<[^>]*>') | default('', true))"
+    that: "'UP' in (item['stdout'] | regex_search('<[^>]*>') | default('', true))"
     fail_msg: >-
-      Capture interface '{{ item.item }}' exists but is administratively DOWN:
-      {{ item.stdout | trim }}
+      Capture interface '{{ item['item'] }}' exists but is administratively DOWN:
+      {{ item['stdout'] | trim }}
       A DOWN interface delivers no frames, so Zeek would run and see nothing.
-      Bring it up (ifup {{ item.item }}) before deploying the sensor.
+      Bring it up (ifup {{ item['item'] }}) before deploying the sensor.
     quiet: true
   loop: "{{ __zeek_iface_state.results }}"
   loop_control:
-    label: "{{ item.item }}"
+    label: "{{ item['item'] }}"
 - name: "preflight | Free space on the log filesystem"
   ansible.builtin.command: "df -B1M --output=avail /var"
   register: __zeek_df

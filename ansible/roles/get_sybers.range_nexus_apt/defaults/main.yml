@@ -2,9 +2,9 @@
 range_nexus_apt_base: http://192.0.2.2:8081/repository
 range_nexus_apt_sources:
   Debian:
-    - deb {{ range_nexus_apt_base }}/debian-proxy {{ ansible_distribution_release }} main non-free-firmware
-    - deb {{ range_nexus_apt_base }}/debian-proxy {{ ansible_distribution_release }}-updates main non-free-firmware
-    - deb {{ range_nexus_apt_base }}/debian-security-proxy {{ ansible_distribution_release }}-security main non-free-firmware
+    - deb {{ range_nexus_apt_base }}/debian-proxy {{ ansible_facts['distribution_release'] }} main non-free-firmware
+    - deb {{ range_nexus_apt_base }}/debian-proxy {{ ansible_facts['distribution_release'] }}-updates main non-free-firmware
+    - deb {{ range_nexus_apt_base }}/debian-security-proxy {{ ansible_facts['distribution_release'] }}-security main non-free-firmware
   Kali:
     - deb {{ range_nexus_apt_base }}/kali-proxy kali-rolling main contrib non-free non-free-firmware
 range_nexus_apt_tolerate_clock_skew: true

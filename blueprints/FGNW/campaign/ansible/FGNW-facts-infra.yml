@@ -186,12 +186,12 @@
       loop_control: { label: "{{ inventory_hostname }}:{{ item }}" }
     - name: Write Windows baseline JSON
       ansible.builtin.copy:
-        content: "{{ (item.stdout | default('')) | trim }}\n"
-        dest: "{{ __dir }}/{{ inventory_hostname }}.{{ item.item }}.json"
+        content: "{{ (item['stdout'] | default('')) | trim }}\n"
+        dest: "{{ __dir }}/{{ inventory_hostname }}.{{ item['item'] }}.json"
         mode: "0600"
       delegate_to: localhost
       loop: "{{ __win.results | default([]) }}"
-      loop_control: { label: "{{ inventory_hostname }}.{{ item.item }}.json" }
+      loop_control: { label: "{{ inventory_hostname }}.{{ item['item'] }}.json" }
       changed_when: false
 - name: Harvest Exchange structure (best-effort)
   hosts: exchange_servers
@@ -257,12 +257,12 @@
       loop_control: { label: "{{ inventory_hostname }}:{{ item }}" }
     - name: Write Exchange JSON
       ansible.builtin.copy:
-        content: "{{ (item.stdout | default('')) | trim }}\n"
-        dest: "{{ __dir }}/{{ inventory_hostname }}.exchange-{{ item.item }}.json"
+        content: "{{ (item['stdout'] | default('')) | trim }}\n"
+        dest: "{{ __dir }}/{{ inventory_hostname }}.exchange-{{ item['item'] }}.json"
         mode: "0600"
       delegate_to: localhost
       loop: "{{ __ex.results | default([]) }}"
-      loop_control: { label: "{{ inventory_hostname }}.exchange-{{ item.item }}.json" }
+      loop_control: { label: "{{ inventory_hostname }}.exchange-{{ item['item'] }}.json" }
       changed_when: false
 - name: Harvest GHOSTS emulation scaffolding
   hosts: ghosts_clients
@@ -294,12 +294,12 @@
       loop_control: { label: "{{ inventory_hostname }}:{{ item }}" }
     - name: Write GHOSTS JSON
       ansible.builtin.copy:
-        content: "{{ (item.stdout | default('')) | trim }}\n"
-        dest: "{{ __dir }}/{{ inventory_hostname }}.ghosts-{{ item.item }}.json"
+        content: "{{ (item['stdout'] | default('')) | trim }}\n"
+        dest: "{{ __dir }}/{{ inventory_hostname }}.ghosts-{{ item['item'] }}.json"
         mode: "0600"
       delegate_to: localhost
       loop: "{{ __gh.results | default([]) }}"
-      loop_control: { label: "{{ inventory_hostname }}.ghosts-{{ item.item }}.json" }
+      loop_control: { label: "{{ inventory_hostname }}.ghosts-{{ item['item'] }}.json" }
       changed_when: false
 - name: Harvest Linux infra facts
   hosts: linux_infra
@@ -383,9 +383,10 @@
         content: |
           {{ {
              'host': inventory_hostname,
-             'distribution': ansible_distribution ~ ' ' ~ ansible_distribution_version,
-             'services_running': (ansible_facts.services | default({}) | dict2items | selectattr('value.state','equalto','running') | map(attribute='key') | list),
-             'packages_present': (ansible_facts.packages | default({}) | list),
+             'distribution': ansible_facts['distribution'] ~ ' ' ~ ansible_facts['distribution_version'],
+             'services_running': (ansible_facts["services"] | default({}) | dict2items
+                                  | selectattr('value.state','equalto','running') | map(attribute='key') | list),
+             'packages_present': (ansible_facts["packages"] | default({}) | list),
              'probes': dict(__lx.results | default([]) | map(attribute='item') | zip(__lx.results | default([]) | map(attribute='stdout')))
           } | to_nice_json }}
         dest: "{{ __dir }}/{{ inventory_hostname }}.linux.json"

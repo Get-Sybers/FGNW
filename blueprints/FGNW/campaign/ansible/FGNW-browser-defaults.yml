@@ -9,7 +9,7 @@
         fgnw_browser_defaults_village: Hidden Leaf Village
 # Hidden Sand Village browser defaults have moved to FGNW-mac-services.yml (Phase 4d) —
 # suna-ws1 is now a macOS host. The role is the same `fgnw_browser_defaults` the villages
-# below use — it dispatches on `ansible_os_family` and the macOS branch (`tasks/macos.yml`)
+# below use — it dispatches on `ansible_facts['os_family']` and the macOS branch (`tasks/macos.yml`)
 # writes Firefox app-bundle policies.json + Chrome managed-preferences plist against the
 # same village bookmark corpus (content/www/village-bookmarks.yml).
 - name: Hidden Sound Village browser defaults

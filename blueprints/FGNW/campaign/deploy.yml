@@ -69,17 +69,17 @@
     - name: "Preflight: assert the derived layout resolves (source-checkout layout)"
       ansible.builtin.assert:
         that:
-          - item.stat.exists
-          - item.stat.isdir
+          - item['stat']['exists']
+          - item['stat']['isdir']
         fail_msg: >-
-          Derived path '{{ item.item }}' does not exist. deploy.yml derives its layout
+          Derived path '{{ item['item'] }}' does not exist. deploy.yml derives its layout
           from playbook_dir ('{{ playbook_dir }}') and must run from a `ludus source add`
           checkout (…/sources/<id>/blueprints/FGNW/campaign) or an
           equivalent repo clone. Re-add the source, then run deploy.yml from its campaign/ dir.
         quiet: true
       loop: "{{ __layout_stat.results }}"
       loop_control:
-        label: "{{ item.item }}"
+        label: "{{ item['item'] }}"
     - name: "Preflight: assert the variant is known"
       ansible.builtin.assert:
         that: __variant_norm in __variant_map

@@ -2,16 +2,16 @@
 # OS-dispatching browser-defaults role: sets the village homepage + bookmark bar for the
 # browser(s) each persona uses. Loads the shared village corpus once, computes the two facts
 # the OS-specific task files consume (fgnw_browser_defaults_homepage, fgnw_browser_defaults_bookmark_list), then branches on
-# ansible_os_family. Keeping both OSes in one role prevents the kind of divergence #17 just
+# ansible_facts['os_family']. Keeping both OSes in one role prevents the kind of divergence #17 just
 # fixed (one path on http://, the other on https://, two places to remember).
 #
 # Caller contract (same shape for both OSes):
 #   fgnw_browser_defaults_village (required) — key into content/www/village-bookmarks.yml
 #
 # OS mechanisms this dispatches to:
-#   Windows (ansible_os_family == Windows) -> tasks/windows.yml
+#   Windows (ansible_facts['os_family'] == Windows) -> tasks/windows.yml
 #     HKU/HKLM Edge+IE policy registry writes + Netscape-format bookmarks HTML
-#   macOS   (ansible_os_family == Darwin)  -> tasks/macos.yml
+#   macOS   (ansible_facts['os_family'] == Darwin)  -> tasks/macos.yml
 #     Firefox app-bundle policies.json + Chrome CFPreferences managed plist
 - name: Load village bookmark data (shared corpus)
   ansible.builtin.include_vars:
@@ -33,16 +33,16 @@
 
 - name: Apply Windows browser defaults (Edge/IE policies + bookmarks HTML)
   ansible.builtin.include_tasks: windows.yml
-  when: ansible_os_family == 'Windows'
+  when: ansible_facts['os_family'] == 'Windows'
 
 - name: Apply macOS browser defaults (Firefox app-bundle policies + Chrome managed plist)
   ansible.builtin.include_tasks: macos.yml
-  when: ansible_os_family == 'Darwin'
+  when: ansible_facts['os_family'] == 'Darwin'
 
 - name: Fail loudly on an unsupported OS family (nothing matched)
   ansible.builtin.fail:
     msg: >-
-      fgnw_browser_defaults has no implementation for ansible_os_family=
-      '{{ ansible_os_family | default('(unset — did gather_facts run?)') }}'.
+      fgnw_browser_defaults has no implementation for ansible_facts['os_family']=
+      '{{ ansible_facts['os_family'] | default('(unset — did gather_facts run?)') }}'.
       Only Windows and Darwin are supported.
-  when: ansible_os_family not in ['Windows', 'Darwin']
+  when: ansible_facts['os_family'] not in ['Windows', 'Darwin']

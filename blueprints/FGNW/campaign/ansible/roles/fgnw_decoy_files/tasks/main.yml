@@ -1,7 +1,7 @@
 ---
 # OS-dispatching decoy-files role: plants the per-village decoy document corpus. Loads the
 # shared village-folders.yml once, computes the file list fact (fgnw_decoy_files_list) and the authored
-# content directory the OS-specific task files consume, then branches on ansible_os_family.
+# content directory the OS-specific task files consume, then branches on ansible_facts['os_family'].
 # Keeping both OSes in one role is the same anti-divergence pattern as fgnw_browser_defaults.
 #
 # Caller contract (same shape for both OSes):
@@ -12,8 +12,8 @@
 #                                   macOS:   /Users/Shared/Documents
 #
 # OS mechanisms this dispatches to:
-#   Windows (ansible_os_family == Windows) -> tasks/windows.yml (win_file + win_copy)
-#   macOS   (ansible_os_family == Darwin)  -> tasks/macos.yml   (file + copy, become: true)
+#   Windows (ansible_facts['os_family'] == Windows) -> tasks/windows.yml (win_file + win_copy)
+#   macOS   (ansible_facts['os_family'] == Darwin)  -> tasks/macos.yml   (file + copy, become: true)
 - name: Load village document list (shared corpus)
   ansible.builtin.include_vars:
     file: "{{ playbook_dir }}/../content/filesystem/village-folders.yml"
@@ -30,16 +30,16 @@
 
 - name: Plant decoys on Windows (win_file + win_copy)
   ansible.builtin.include_tasks: windows.yml
-  when: ansible_os_family == 'Windows'
+  when: ansible_facts['os_family'] == 'Windows'
 
 - name: Plant decoys on macOS (file + copy, become)
   ansible.builtin.include_tasks: macos.yml
-  when: ansible_os_family == 'Darwin'
+  when: ansible_facts['os_family'] == 'Darwin'
 
 - name: Fail loudly on an unsupported OS family (nothing matched)
   ansible.builtin.fail:
     msg: >-
-      fgnw_decoy_files has no implementation for ansible_os_family=
-      '{{ ansible_os_family | default('(unset — did gather_facts run?)') }}'.
+      fgnw_decoy_files has no implementation for ansible_facts['os_family']=
+      '{{ ansible_facts['os_family'] | default('(unset — did gather_facts run?)') }}'.
       Only Windows and Darwin are supported.
-  when: ansible_os_family not in ['Windows', 'Darwin']
+  when: ansible_facts['os_family'] not in ['Windows', 'Darwin']

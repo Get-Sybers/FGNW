@@ -109,10 +109,10 @@
       ansible.builtin.set_fact:
         __g9p_id_by_host: >-
           {{ __g9p_id_by_host | default({})
-             | combine({item.item: (item.json | default(item.content | default(''), true) | trim)}) }}
+             | combine({item['item']: (item['json'] | default(item['content'] | default(''), true) | trim)}) }}
       loop: "{{ __g9p_clientid.results }}"
       loop_control:
-        label: "{{ item.item }}"
+        label: "{{ item['item'] }}"
     - name: "G9-proof: every persona got a machine id back"
       ansible.builtin.assert:
         that:
@@ -198,16 +198,16 @@
           - __handlers | length > 0
           - __handlers | length == (__g9p_timelines[item.item].TimeLineHandlers | length)
         fail_msg: >-
-          /api/clientupdates returned an update for {{ item.item }} with
+          /api/clientupdates returned an update for {{ item['item'] }} with
           {{ __handlers | length }} handlers; the timeline ingested for it had
           {{ __g9p_timelines[item.item].TimeLineHandlers | length }}. The server
           is holding something other than the FGNW emulation it was handed.
         quiet: true
       loop: "{{ __g9p_dispatched.results }}"
       loop_control:
-        label: "{{ item.item }}"
+        label: "{{ item['item'] }}"
       vars:
-        __handlers: "{{ (item.json['update'] | default({}))['timeLineHandlers'] | default([]) }}"
+        __handlers: "{{ (item['json']['update'] | default({}))['timeLineHandlers'] | default([]) }}"
     - name: "G9-proof: each persona reports an executed timeline event"
       ansible.builtin.uri:
         url: "{{ ghost9_proof_api_root }}/clientresults"

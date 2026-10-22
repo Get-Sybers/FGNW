@@ -77,8 +77,8 @@
             state: present
         - name: "Bake: download the Exchange prerequisite installers"
           ansible.windows.win_get_url:
-            url: "{{ item.url }}"
-            dest: "{{ ex_stage }}\\{{ item.name }}"
+            url: "{{ item['url'] }}"
+            dest: "{{ ex_stage }}\\{{ item['name'] }}"
             force: false
           loop:
             - { name: 'ndp48-x86-x64-allos-enu.exe', url: '{{ ex_dotnet_url }}' }
@@ -86,7 +86,7 @@
             - { name: 'rewrite_amd64_en-US.msi', url: '{{ ex_rewrite_url }}' }
             - { name: 'UcmaRuntimeSetup.exe', url: '{{ ex_ucma_url }}' }
           loop_control:
-            label: "{{ item.name }}"
+            label: "{{ item['name'] }}"
         - name: "Bake: install .NET Framework 4.8"
           ansible.windows.win_package:
             path: "{{ ex_stage }}\\ndp48-x86-x64-allos-enu.exe"

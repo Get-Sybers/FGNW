@@ -3,6 +3,6 @@
   ansible.builtin.fail:
     msg: >-
       virtualization_type is
-      '{{ ansible_facts.virtualization_type | default("unknown") }}' and
+      '{{ ansible_facts["virtualization_type"] | default("unknown") }}' and
       acsc_sysmon_container_policy=fail was set explicitly. Unset it (default
       'ignore') to install here.

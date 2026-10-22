@@ -2,8 +2,8 @@
 - name: "configure | Disable Chrome auto-update so it stays matched to the installed chromedriver"
   ansible.windows.win_regedit:
     path: HKLM:\SOFTWARE\Policies\Google\Update
-    name: "{{ item.name }}"
-    data: "{{ item.data }}"
+    name: "{{ item['name'] }}"
+    data: "{{ item['data'] }}"
     type: dword
   loop:
     - { name: UpdateDefault, data: 0 }

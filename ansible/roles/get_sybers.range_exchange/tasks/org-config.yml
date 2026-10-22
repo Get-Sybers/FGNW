@@ -19,11 +19,11 @@
 - name: "org-config | Range_exchange(org) | create a send connector to each OTHER forest's SMTP domain"
   ansible.windows.win_shell: |
     Add-PSSnapin Microsoft.Exchange.Management.PowerShell.SnapIn
-    $name = "to-{{ item.value.domain }}"
+    $name = "to-{{ item['value']['domain'] }}"
     if (-not (Get-SendConnector -Identity $name -ErrorAction SilentlyContinue)) {
       New-SendConnector -Name $name -Custom `
-        -AddressSpaces "SMTP:{{ item.value.domain }};1" `
-        -SmartHosts "{{ item.value.ip }}" `
+        -AddressSpaces "SMTP:{{ item['value']['domain'] }};1" `
+        -SmartHosts "{{ item['value']['ip'] }}" `
         -SourceTransportServers $env:COMPUTERNAME
       Write-Output "SEND_CONNECTOR_CREATED"
     } else {
@@ -31,7 +31,7 @@
     }
   loop: "{{ range_exchange_orgs | dict2items | rejectattr('key', 'equalto', __rex_self) | list }}"
   loop_control:
-    label: "{{ __rex_self }} -> {{ item.value.domain }}"
+    label: "{{ __rex_self }} -> {{ item['value']['domain'] }}"
   register: __rex_sendconnector
   changed_when: "'SEND_CONNECTOR_CREATED' in (__rex_sendconnector.stdout | default(''))"
   no_log: true

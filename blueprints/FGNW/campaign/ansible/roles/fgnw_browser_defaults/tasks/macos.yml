@@ -35,7 +35,7 @@
           "ManagedBookmarks": [
             {"toplevel_name": "{{ fgnw_browser_defaults_village }}"}
             {% for b in fgnw_browser_defaults_bookmark_list -%}
-            , {"name": {{ b.title | to_json }}, "url": {{ ('http://' ~ b.url) | to_json }}}
+            , {"name": {{ b['title'] | to_json }}, "url": {{ ('http://' ~ b['url']) | to_json }}}
             {% endfor %}
           ]
         }

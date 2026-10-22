@@ -8,9 +8,9 @@
     quiet: true
 - name: "preflight | Platform is one this ruleset was adapted for"
   ansible.builtin.assert:
-    that: ansible_facts.os_family == 'Debian'
+    that: ansible_facts['os_family'] == 'Debian'
     fail_msg: >-
-      os_family is '{{ ansible_facts.os_family | default("unknown") }}'. This
+      os_family is '{{ ansible_facts['os_family'] | default("unknown") }}'. This
       role renders a Debian/Ubuntu-adapted ruleset: the SELinux-only upstream
       filters are dropped, /etc/audisp/ is replaced by /etc/audit/plugins.d/,
       and the merged-/usr duplicate watches are pruned. On an EL host the

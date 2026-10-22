@@ -7,12 +7,12 @@
   ansible.windows.win_regedit:
     path: HKLM:\SOFTWARE\Policies\Microsoft\Edge\ExtensionInstallForcelist
     name: "{{ idx + 1 }}"
-    data: "{{ item.id }};{{ fgnw_browser_extensions_update_url }}"
+    data: "{{ item['id'] }};{{ fgnw_browser_extensions_update_url }}"
     type: string
   loop: "{{ fgnw_browser_extensions_benign }}"
   loop_control:
     index_var: idx
-    label: "{{ item.name }}"
+    label: "{{ item['name'] }}"
 - name: Force-install the risky extension (self-hosted)
   ansible.windows.win_regedit:
     path: HKLM:\SOFTWARE\Policies\Microsoft\Edge\ExtensionInstallForcelist

@@ -1,11 +1,11 @@
 ---
 - name: "preflight | This is a Windows host"
   ansible.builtin.assert:
-    that: ansible_facts.os_family | default('') == 'Windows'
+    that: ansible_facts['os_family'] | default('') == 'Windows'
     fail_msg: >-
       This role configures Windows Event Collector subscriptions and only runs
       on Windows. Host reports os_family
-      '{{ ansible_facts.os_family | default("unknown") }}'. If ansible_facts is
+      '{{ ansible_facts["os_family"] | default("unknown") }}'. If ansible_facts is
       empty here, the calling play set gather_facts: false — this role needs
       facts.
     quiet: true

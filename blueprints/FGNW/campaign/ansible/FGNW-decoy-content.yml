@@ -10,7 +10,7 @@
         fgnw_decoy_files_root: C:\Shares\Documents
 # Hidden Sand Village decoy documents have moved to FGNW-mac-services.yml (Phase 4d) —
 # suna-ws1 is now a macOS host. The role is the same `fgnw_decoy_files` the villages below
-# use — it dispatches on `ansible_os_family` and the macOS branch (`tasks/macos.yml`)
+# use — it dispatches on `ansible_facts['os_family']` and the macOS branch (`tasks/macos.yml`)
 # plants the same per-village corpus under /Users/Shared/Documents.
 - name: Plant Hidden Sound Village decoy documents
   hosts: oto-dc1

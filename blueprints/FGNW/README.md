@@ -95,7 +95,7 @@ and `4d` in `campaign/docs/DEPLOY.md`.
 **Thunderbird is the mail client everywhere** (as of blueprint 0.4.0, Phase
 `4e`): every workstation — Konoha / Oto / Akatsuki Windows plus Sand macOS —
 gets Mozilla Thunderbird installed and preconfigured against its village mail
-server by the unified `fgnw_thunderbird` role (`ansible_os_family` dispatch,
+server by the unified `fgnw_thunderbird` role (`ansible_facts['os_family']` dispatch,
 Chocolatey install on Windows + policies.json alongside the Phase-1c-staged
 Homebrew cask on macOS). Phase 4e also enables `MSExchangeIMAP4` on each
 Konoha / Oto / Akatsuki Exchange server with `LoginType: PlainTextLogin` so

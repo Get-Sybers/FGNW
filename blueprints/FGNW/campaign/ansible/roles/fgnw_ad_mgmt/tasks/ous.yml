@@ -1,8 +1,8 @@
 ---
 - name: "ous | Create organisational units from the contract"
   microsoft.ad.ou:
-    name: "{{ item.key }}"
-    path: "{{ item.value.path }}"
+    name: "{{ item['key'] }}"
+    path: "{{ item['value']['path'] }}"
   loop: "{{ (ad_ou | default({})) | dict2items }}"
   loop_control:
-    label: "{{ item.key }}"
+    label: "{{ item['key'] }}"

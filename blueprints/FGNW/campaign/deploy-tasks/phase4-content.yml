@@ -1,7 +1,7 @@
 ---
 - name: "deploy-tasks | phase4-content | Clear stale SSH host keys for the Linux hosts"
   ansible.builtin.command:
-    argv: [ssh-keygen, -f, "{{ ansible_env.HOME }}/.ssh/known_hosts", -R, "{{ item }}"]
+    argv: [ssh-keygen, -f, "{{ ansible_facts['env']['HOME'] }}/.ssh/known_hosts", -R, "{{ item }}"]
   loop:
     - 10.{{ __range_number }}.99.50
     - 10.{{ __range_number }}.90.10

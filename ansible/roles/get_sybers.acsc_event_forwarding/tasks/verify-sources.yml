@@ -2,14 +2,14 @@
 - name: "verify-sources | VERIFY — source computers were applied"
   ansible.builtin.assert:
     that: >-
-      (item.stdout | regex_search('(?i)AllowedSourceDomainComputers:\s*\S'))
+      (item['stdout'] | regex_search('(?i)AllowedSourceDomainComputers:\s*\S'))
       is not none
     fail_msg: >-
-      Subscription '{{ item.item }}' reports no AllowedSourceDomainComputers, so
+      Subscription '{{ item['item'] }}' reports no AllowedSourceDomainComputers, so
       it has no source computers and will collect nothing. acsc_wef_set_sources
       was {{ acsc_wef_set_sources }} and the SDDL applied was
       '{{ acsc_wef_source_sddl }}'.
     quiet: true
   loop: "{{ __acsc_wef_state.results }}"
   loop_control:
-    label: "{{ item.item }}"
+    label: "{{ item['item'] }}"

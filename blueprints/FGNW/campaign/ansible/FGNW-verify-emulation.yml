@@ -52,13 +52,13 @@
     - name: Print per-host PASS/FAIL summary
       ansible.builtin.debug:
         msg: >-
-          [{{ 'PASS' if item.ok else 'FAIL' }}] {{ item.host }}:
-          registered={{ item.registered }}, status={{ item.status }},
-          lastReportedUtc={{ item.last_reported_utc }},
-          age={{ item.age_minutes }}min (stale threshold={{ fgnw_ghosts_stale_minutes }}min)
+          [{{ 'PASS' if item['ok'] else 'FAIL' }}] {{ item['host'] }}:
+          registered={{ item['registered'] }}, status={{ item['status'] }},
+          lastReportedUtc={{ item['last_reported_utc'] }},
+          age={{ item['age_minutes'] }}min (stale threshold={{ fgnw_ghosts_stale_minutes }}min)
       loop: "{{ fgnw_ghosts_report }}"
       loop_control:
-        label: "{{ item.host }}"
+        label: "{{ item['host'] }}"
     - name: Overall result
       ansible.builtin.debug:
         msg: >-
@@ -113,14 +113,14 @@
     - name: Print per-host GHOSTS 9 NPC PASS/WARN summary
       ansible.builtin.debug:
         msg: >-
-          [{{ 'PASS' if item.npc_found else 'WARN' }}] {{ item.host }} ({{ item.sam }}):
-          npc_registered={{ item.npc_found }}, id={{ item.npc_id }},
-          beliefs={{ item.has_beliefs }},
-          knowledge={{ item.has_knowledge }},
-          connections={{ item.has_connections }}
+          [{{ 'PASS' if item['npc_found'] else 'WARN' }}] {{ item['host'] }} ({{ item['sam'] }}):
+          npc_registered={{ item['npc_found'] }}, id={{ item['npc_id'] }},
+          beliefs={{ item['has_beliefs'] }},
+          knowledge={{ item['has_knowledge'] }},
+          connections={{ item['has_connections'] }}
       loop: "{{ fgnw_npc_report | default([]) }}"
       loop_control:
-        label: "{{ item.host }}"
+        label: "{{ item['host'] }}"
     - name: GHOSTS 9 NPC overall summary
       ansible.builtin.debug:
         msg: >-
