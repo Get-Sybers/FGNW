@@ -1,6 +1,6 @@
 ---
 # Phase 1b — the GHOSTS server CT, created from the get_sybers.lxc ghost9 template
-# by campaign/ansible/ghost9-range-ct.yml. Runs after phase 1 (the CT attaches to
+# by that collection's deploy_ghost9_range play, run by its collection-qualified name. Runs after phase 1 (the CT attaches to
 # the range's SDN VNet, which `ludus range deploy` builds) and before phase 2 (the
 # CT is not a Ludus range object; containment neither snapshots nor seals it, and
 # the OCI image pull needs the node's egress). deploy.yml runs as root on the PVE
@@ -20,7 +20,7 @@
       inline on argv: `ansible-playbook deploy.yml -e @<0600 file>` where the file
       defines ghost9_ct_api_user, ghost9_ct_api_token_id, ghost9_ct_api_token_secret
       and ghost9_ct_api_host (the ghost9-deploy@pve token minted by the cluster
-      collection; same contract as ghost9-range-ct.yml). To deploy without the
+      collection; mapped to the pve_api_* inputs of get_sybers.lxc.deploy_ghost9_range). To deploy without the
       GHOSTS server, resume around this phase explicitly instead of omitting the token.
     quiet: true
 - name: "deploy-tasks | phase1b-ghost9 | Read the range config (blueprint master)"
@@ -72,34 +72,36 @@
          else lookup('ansible.builtin.password', __tmp_ghost9_n8n_password ~ ' chars=ascii_letters,digits length=32') }}
     __g9_n8n_owner_email: "{{ ghost9_n8n_owner_email | default('admin@ghosts.local') }}"
   no_log: true
-- name: "deploy-tasks | phase1b-ghost9 | Materialize the ghost9_ct extra-vars file (0600, shredded by cleanup)"
+- name: "deploy-tasks | phase1b-ghost9 | Materialize the deploy_ghost9_range extra-vars file (0600, shredded by cleanup)"
   ansible.builtin.copy:
     content: "{{ __g9_vars | to_nice_yaml }}"
     dest: "{{ __tmp_ghost9_vars }}"
     mode: "0600"
   vars:
     __g9_vars:
-      ghost9_ct_range_number: "{{ __range_number }}"
-      ghost9_ct_vlan: "{{ __g9_ext.vlan }}"
-      ghost9_ct_last_octet: "{{ __g9_ext.ip_last_octet }}"
-      ghost9_ct_hostname_suffix: "{{ __g9_ext.hostname_suffix }}"
-      ghost9_ct_cores: "{{ __g9_ext.cores }}"
-      ghost9_ct_memory_mb: "{{ __g9_ext.memory_mb }}"
-      ghost9_ct_rootfs_gb: "{{ __g9_ext.rootfs_gb }}"
-      ghost9_ct_storage: "{{ ghost9_ct_storage | default('local-zfs') }}"
-      ghost9_ct_template_image: "{{ __g9_ext.template_image }}"
-      ghost9_ct_template_version: "{{ __g9_ext.template_version | string }}"
-      ghost9_ct_api_user: "{{ ghost9_ct_api_user }}"
-      ghost9_ct_api_token_id: "{{ ghost9_ct_api_token_id }}"
-      ghost9_ct_api_token_secret: "{{ ghost9_ct_api_token_secret }}"
-      ghost9_ct_api_host: "{{ ghost9_ct_api_host }}"
-      ghost9_db_password: "{{ __g9_db_password }}"
-      ghost9_n8n_owner_email: "{{ __g9_n8n_owner_email }}"
-      ghost9_n8n_owner_password: "{{ __g9_n8n_owner_password }}"
+      # The inputs of get_sybers.lxc.deploy_ghost9_range: the range placement, the
+      # scoped PVE token as the collection's pve_api_* set, the lxc_ghost9 secrets.
+      lxc_ghost9_range_number: "{{ __range_number }}"
+      lxc_ghost9_range_vlan: "{{ __g9_ext.vlan }}"
+      lxc_ghost9_range_last_octet: "{{ __g9_ext.ip_last_octet }}"
+      lxc_ghost9_range_hostname_suffix: "{{ __g9_ext.hostname_suffix }}"
+      lxc_ghost9_range_cores: "{{ __g9_ext.cores }}"
+      lxc_ghost9_range_memory_mb: "{{ __g9_ext.memory_mb }}"
+      lxc_ghost9_range_rootfs_gb: "{{ __g9_ext.rootfs_gb }}"
+      lxc_ghost9_range_storage: "{{ ghost9_ct_storage | default('local-zfs') }}"
+      lxc_ghost9_range_template_image: "{{ __g9_ext.template_image }}"
+      lxc_ghost9_range_template_version: "{{ __g9_ext.template_version | string }}"
+      pve_api_host: "{{ ghost9_ct_api_host }}"
+      pve_api_user: "{{ ghost9_ct_api_user }}"
+      pve_api_token_id: "{{ ghost9_ct_api_token_id }}"
+      pve_api_token_secret: "{{ ghost9_ct_api_token_secret }}"
+      lxc_ghost9_db_password: "{{ __g9_db_password }}"
+      lxc_ghost9_n8n_owner_email: "{{ __g9_n8n_owner_email }}"
+      lxc_ghost9_n8n_owner_password: "{{ __g9_n8n_owner_password }}"
   no_log: true
-- name: "deploy-tasks | phase1b-ghost9 | Ghost9-range-ct.yml (create the CT from the ghost9 template, baseline, configure, verify)"
+- name: "deploy-tasks | phase1b-ghost9 | Run get_sybers.lxc.deploy_ghost9_range (create the CT from the ghost9 template, baseline, configure, verify)"
   ansible.builtin.command:
-    argv: [ansible-playbook, ghost9-range-ct.yml, -e, "@{{ __tmp_ghost9_vars }}"]
+    argv: [ansible-playbook, get_sybers.lxc.deploy_ghost9_range, -e, "@{{ __tmp_ghost9_vars }}"]
   args:
     chdir: "{{ ansible_dir }}"
   changed_when: true
@@ -112,4 +114,4 @@
       operator UI :{{ __g9_ext.ui_port }}, Grafana :3000, n8n :5678 (owner {{ __g9_n8n_owner_email }};
       a generated owner password lives only in the extra-vars file cleanup shreds).
       NOT a Ludus range object — `ludus range rm` will not remove it
-      (ghost9-range-ct.yml -t destroy -e lxc_guest_confirm_destroy=true).
+      (get_sybers.lxc.deploy_ghost9_range -e @<vars file> -t destroy -e lxc_guest_confirm_destroy=true).

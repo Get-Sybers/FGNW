@@ -6,8 +6,9 @@ the forest's AD groups, and builds the cross-forest send-connector mesh. It runs
 `-mail` VM at the Ludus `user-defined-roles` stage (S2), **last** in the role order — AD, DNS
 and the native child-domain join must already be up. Host identity is derived from
 `inventory_hostname`, so no `role_vars` are required.
-The actual Exchange install is delegated to the **vendored third-party role
-`aleemladha.ludus_exchange`**, `include_role`'d from `install.yml`. It is deliberately **not** a
+The actual Exchange install is delegated to the **third-party role
+`aleemladha.ludus_exchange`** (installed from its GitHub repository by the blueprint's
+`requirements.yml`), `include_role`'d from `install.yml`. It is deliberately **not** a
 `meta/main.yml` dependency: a meta dependency would run it *before* this role's forest-root
 join, which would break Setup. It is instead invoked at the right point in the sequence and
 only needs to be installed alongside this role. The baked ISO/prereqs marker in the

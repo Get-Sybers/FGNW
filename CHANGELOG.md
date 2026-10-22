@@ -18,6 +18,21 @@ has no release tag yet.
 
 ## [Unreleased]
 
+### Changed — shared Ansible is imported from the repository that owns it
+
+- The play that creates and runs the range's GHOSTS container is
+  `deploy_ghost9_range` in the `get_sybers.lxc` collection (Get-Sybers/LXC);
+  phase 1b runs it by its collection-qualified name
+  (`ansible-playbook get_sybers.lxc.deploy_ghost9_range -e @<vars file>`) with
+  `lxc_ghost9_range_*`, `pve_api_*` and `lxc_ghost9_*` secret inputs, and
+  `campaign/ansible/ghost9-range-ct.yml` is gone; `ghost9-verify.yml` probes the
+  API and UI on the range VLAN only.
+- The third-party roles `aleemladha.ludus_exchange` (commit `319bb51d`) and
+  `geerlingguy.docker` (7.5.5) are installed from their GitHub repositories by
+  `blueprints/FGNW/requirements.yml`; the copies under `ansible/roles/` and
+  `campaign/ansible/roles/` are gone, and the lint configuration mocks them for
+  the syntax check instead of carving them out.
+
 ### Changed — public-release conformance of this repository
 
 - One manifest: `source.yml` describes the Get-Sybers FGNW source — the FGNW

@@ -38,7 +38,9 @@ containment later removes internet and silently breaks live-only fixes). Then re
 - **Contained and a package step needs Nexus/internet:** `ludus testing start` blocks 192.0.2.2
   too. Surgically `ludus testing allow -i 192.0.2.2` → do the work → `ludus testing deny -i
   192.0.2.2`. Do NOT `ludus testing stop` (reverts snapshots).
-- **Role can't find `aleemladha.ludus_exchange`:** export
+- **Role can't find `aleemladha.ludus_exchange` or `geerlingguy.docker`:** both are installed from
+  GitHub by `blueprints/FGNW/requirements.yml` (`ansible-galaxy role install -r
+  blueprints/FGNW/requirements.yml -p /opt/ludus/users/range-admin/.ansible/roles`); export
   `ANSIBLE_ROLES_PATH=/opt/ludus/users/range-admin/.ansible/roles` before a direct
   `ansible-playbook` run.
 - **⚠️ Exchange ISO must be staged.** The `aleemladha.ludus_exchange` role uses an Exchange 2019

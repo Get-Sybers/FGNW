@@ -57,9 +57,13 @@ README ([`blueprints/FGNW/README.md`](blueprints/FGNW/README.md)) explains the
 placeholders, the macOS hosts and the Thunderbird mail clients; the deploy
 guide ([`blueprints/FGNW/campaign/docs/DEPLOY.md`](blueprints/FGNW/campaign/docs/DEPLOY.md))
 is the full procedure with its phase tokens and variants. The GHOSTS server
-container the range's user emulation reports to comes from the ghost9 template
-of the `get_sybers.lxc` collection ([get-sybers/lxc](https://github.com/Get-Sybers/LXC)),
-which `requirements.yml` pins and Phase 1b of the deploy guide creates.
+container the range's user emulation reports to is created by the `get_sybers.lxc`
+collection's `deploy_ghost9_range` play from its ghost9 template
+([get-sybers/lxc](https://github.com/Get-Sybers/LXC)): `requirements.yml` pins the
+collection and Phase 1b runs the play by its collection-qualified name. The
+third-party roles the campaign applies are installed from their GitHub repositories
+by `blueprints/FGNW/requirements.yml`; this repository carries no copy of Ansible
+another repository owns.
 
 ## Linting locally
 
@@ -94,5 +98,5 @@ under `ansible/roles/` and the Packer templates are released under the MIT
 License ([`LICENSE`](LICENSE); the campaign carries its own copy). The two
 collections, `get_sybers.range` and `get_sybers.templates`, are released under
 the GNU Affero General Public License v3.0 only (`AGPL-3.0-only`, the
-`LICENSE` beside each `galaxy.yml`). The vendored third-party roles keep the
-licence their `meta/main.yml` and `meta/upstream.yml` name.
+`LICENSE` beside each `galaxy.yml`). The third-party roles the blueprint installs from GitHub, and the bundled
+`wireshark` role, keep the licence their own metadata names.
