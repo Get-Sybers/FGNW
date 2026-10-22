@@ -34,7 +34,7 @@ ludus:
       - aleemladha.ludus_exchange
 ```
 
-```
+```text
 
 ludus range config get > config.yml
 ludus range config set -f config.yml
