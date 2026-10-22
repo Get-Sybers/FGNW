@@ -1,6 +1,7 @@
 ---
 - name: "verify-retention | Verify — read zeekctl's effective configuration back"
-  ansible.builtin.command: "{{ zeek_sensor_bin }} config"
+  ansible.builtin.command:
+    argv: ["{{ zeek_sensor_bin }}", config]
   register: __zeek_cfg_verify
   changed_when: false
 - name: "verify-retention | Verify — the retention values zeekctl resolved are ours"
@@ -19,7 +20,8 @@
 # service_facts reports .service units only; the state of a timer unit is readable
 # through systemctl alone, so the probe stays a read-only command.
 - name: "verify-retention | Verify — the prune timer is active" # noqa: command-instead-of-module
-  ansible.builtin.command: systemctl is-active zeek-sensor-prune.timer
+  ansible.builtin.command:
+    argv: [systemctl, is-active, zeek-sensor-prune.timer]
   register: __zeek_prune_active
   changed_when: false
   failed_when: __zeek_prune_active.stdout | trim != 'active'

@@ -18,7 +18,7 @@
       deb http://192.0.2.2:8081/repository/debian-security-proxy {{ ansible_facts['distribution_release'] }}-security main non-free-firmware
 - name: "Disable the internet apt sources that can't resolve under containment"
   ansible.builtin.command:
-    cmd: mv /etc/apt/sources.list /etc/apt/sources.list.disabled
+    argv: [mv, /etc/apt/sources.list, /etc/apt/sources.list.disabled]
     removes: /etc/apt/sources.list
 - name: Install nginx from distro package repository (via the Nexus Debian proxy)
   ansible.builtin.apt:
@@ -191,7 +191,8 @@
     path: /etc/nginx/sites-enabled/default
     state: absent
 - name: Validate nginx configuration
-  ansible.builtin.command: nginx -t
+  ansible.builtin.command:
+    argv: [nginx, -t]
   register: __nginx_validation
   changed_when: false
   failed_when: __nginx_validation.rc != 0

@@ -1,5 +1,6 @@
 ---
 - name: "configure-reapply | Re-apply the config to the running Sysmon"
-  ansible.builtin.command: "sysmon -c {{ acsc_sysmon_config_path }}"
+  ansible.builtin.command:
+    argv: [sysmon, -c, "{{ acsc_sysmon_config_path }}"]
   register: __acsc_sysmon_reconf
   changed_when: __acsc_sysmon_reconf.rc == 0

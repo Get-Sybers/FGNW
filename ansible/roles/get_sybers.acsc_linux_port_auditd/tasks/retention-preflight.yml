@@ -1,6 +1,7 @@
 ---
 - name: "retention-preflight | Preflight — free space on the audit log filesystem"
-  ansible.builtin.command: "df -P -k {{ acsc_auditd_log_dir }}"
+  ansible.builtin.command:
+    argv: [df, -P, -k, "{{ acsc_auditd_log_dir }}"]
   register: __acsc_auditd_df
   changed_when: false
   check_mode: false

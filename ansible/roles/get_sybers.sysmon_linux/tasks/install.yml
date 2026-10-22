@@ -26,11 +26,7 @@
 # the base-OS lists stay untouched on purpose, so this stays a command.
 - name: "install | Update apt scoped to just the Microsoft repo (leaves the base OS repos/cache untouched)" # noqa: command-instead-of-module
   ansible.builtin.command:
-    cmd: >-
-      apt-get update
-      -o Dir::Etc::sourcelist=sources.list.d/microsoft-prod.list
-      -o Dir::Etc::sourceparts=-
-      -o APT::Get::List-Cleanup=0
+    argv: [apt-get, update, -o, Dir::Etc::sourcelist=sources.list.d/microsoft-prod.list, -o, Dir::Etc::sourceparts=-, -o, APT::Get::List-Cleanup=0]
   changed_when: false
 - name: "install | Install sysmonforlinux"
   ansible.builtin.apt:

@@ -49,7 +49,8 @@
     enabled: true
     state: started
 - name: "retention | Run the pruner once to prove it executes"
-  ansible.builtin.command: /usr/local/sbin/zeek-sensor-prune
+  ansible.builtin.command:
+    argv: [/usr/local/sbin/zeek-sensor-prune]
   register: __zeek_prune_run
   changed_when: "'PRUNED' in __zeek_prune_run.stdout"
   failed_when: __zeek_prune_run.rc != 0

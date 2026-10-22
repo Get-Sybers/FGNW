@@ -46,7 +46,7 @@
     - name: "Ninjasploitable: disable the internet apt sources that can't resolve under containment"
       become: true
       ansible.builtin.command:
-        cmd: mv /etc/apt/sources.list /etc/apt/sources.list.disabled
+        argv: [mv, /etc/apt/sources.list, /etc/apt/sources.list.disabled]
         removes: /etc/apt/sources.list
     - name: Install realmd/sssd AD-join packages
       become: true
@@ -69,7 +69,8 @@
         DEBIAN_FRONTEND: noninteractive
     - name: Check current realm membership
       become: true
-      ansible.builtin.command: realm list
+      ansible.builtin.command:
+        argv: [realm, list]
       register: realm_list
       changed_when: false
       failed_when: false
@@ -84,11 +85,13 @@
       no_log: true
     - name: Enable home-dir creation on first login
       become: true
-      ansible.builtin.command: pam-auth-update --enable mkhomedir
+      ansible.builtin.command:
+        argv: [pam-auth-update, --enable, mkhomedir]
       changed_when: false
     - name: Verify membership
       become: true
-      ansible.builtin.command: realm list
+      ansible.builtin.command:
+        argv: [realm, list]
       register: realm_after
       changed_when: false
     - name: Report join result

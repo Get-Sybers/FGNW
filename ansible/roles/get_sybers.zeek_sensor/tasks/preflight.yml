@@ -99,7 +99,8 @@
       {% endif %}
     quiet: true
 - name: "preflight | Each capture interface exists"
-  ansible.builtin.command: "ip -o link show {{ item }}"
+  ansible.builtin.command:
+    argv: [ip, -o, link, show, "{{ item }}"]
   loop: "{{ zeek_sensor_effective_interfaces }}"
   register: __zeek_iface_state
   changed_when: false
@@ -118,7 +119,8 @@
   loop_control:
     label: "{{ item['item'] }}"
 - name: "preflight | Free space on the log filesystem"
-  ansible.builtin.command: "df -B1M --output=avail /var"
+  ansible.builtin.command:
+    argv: [df, -B1M, --output=avail, /var]
   register: __zeek_df
   changed_when: false
   check_mode: false

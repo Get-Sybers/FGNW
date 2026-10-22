@@ -1,6 +1,7 @@
 ---
 - name: "capture-offloads-assert | Capture-gate — read back each interface's feature state"
-  ansible.builtin.command: "ethtool -k {{ item }}"
+  ansible.builtin.command:
+    argv: [ethtool, -k, "{{ item }}"]
   loop: "{{ zeek_sensor_effective_interfaces }}"
   register: __zeek_features
   changed_when: false

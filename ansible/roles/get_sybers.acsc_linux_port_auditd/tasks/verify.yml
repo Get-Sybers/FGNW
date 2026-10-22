@@ -17,12 +17,14 @@
     fail_msg: "auditd is not running: {{ ansible_facts['services']['auditd.service'] | default('unit not found') }}"
     quiet: true
 - name: "verify | Read kernel audit state"
-  ansible.builtin.command: auditctl -s
+  ansible.builtin.command:
+    argv: [auditctl, -s]
   register: __acsc_auditd_v_status
   changed_when: false
   check_mode: false
 - name: "verify | Read the loaded rule list"
-  ansible.builtin.command: auditctl -l
+  ansible.builtin.command:
+    argv: [auditctl, -l]
   register: __acsc_auditd_v_rules
   changed_when: false
   check_mode: false

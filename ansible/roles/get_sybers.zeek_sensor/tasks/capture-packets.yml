@@ -1,11 +1,20 @@
 ---
 - name: "capture-packets | Capture-gate — bounded promiscuous probe on each interface"
-  ansible.builtin.command: >-
-    timeout -s INT {{ zeek_sensor_capture_probe_seconds }}
-    tcpdump -n -i {{ item }}
-    -c {{ zeek_sensor_capture_probe_min_packets }}
-    -w /dev/null
-    {{ zeek_sensor_capture_probe_filter }}
+  ansible.builtin.command:
+    argv:
+      - timeout
+      - -s
+      - INT
+      - "{{ zeek_sensor_capture_probe_seconds }}"
+      - tcpdump
+      - -n
+      - -i
+      - "{{ item }}"
+      - -c
+      - "{{ zeek_sensor_capture_probe_min_packets }}"
+      - -w
+      - /dev/null
+      - "{{ zeek_sensor_capture_probe_filter }}"
   loop: "{{ zeek_sensor_effective_interfaces }}"
   register: __zeek_probe
   changed_when: false

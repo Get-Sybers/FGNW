@@ -87,6 +87,13 @@ has no release tag yet.
   longer run under escalation.
 - The two `pipe` lookups that shelled out for the time read Jinja's `now()`.
 
+### Changed — argv-form commands
+
+- Every `ansible.builtin.command` is argv-form (one list element per argument),
+  including the ones whose program path is templated. The `shell` tasks stay:
+  each uses a pipeline, a subshell or an exit-status idiom; the Windows
+  `win_command` / `win_shell` tasks are PowerShell and stay as written.
+
 ### Changed — shared Ansible is imported from the repository that owns it
 
 - The play that creates and runs the range's GHOSTS container is

@@ -68,7 +68,8 @@
             if zeek_sensor_capture_filter | length > 0 else []) }}
   register: __zeek_ctlcfg
 - name: "Validate the policy before deploying it"
-  ansible.builtin.command: "{{ zeek_sensor_bin }} check"
+  ansible.builtin.command:
+    argv: ["{{ zeek_sensor_bin }}", check]
   become: "{{ zeek_sensor_user != 'root' }}"
   become_user: "{{ zeek_sensor_user }}"
   environment:

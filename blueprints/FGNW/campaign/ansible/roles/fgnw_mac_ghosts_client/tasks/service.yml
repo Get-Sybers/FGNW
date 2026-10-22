@@ -36,7 +36,7 @@
 
 - name: "service | Bootstrap the ghosts launchd service"
   ansible.builtin.command:
-    cmd: "launchctl bootstrap system /Library/LaunchDaemons/{{ fgnw_mac_ghosts_client_daemon_label }}.plist"
+    argv: [launchctl, bootstrap, system, "/Library/LaunchDaemons/{{ fgnw_mac_ghosts_client_daemon_label }}.plist"]
   register: __fgnw_mac_ghosts_client_bootstrap
   changed_when: __fgnw_mac_ghosts_client_bootstrap.rc == 0
   failed_when: >-

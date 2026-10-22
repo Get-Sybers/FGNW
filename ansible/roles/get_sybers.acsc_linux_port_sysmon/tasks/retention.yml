@@ -26,7 +26,8 @@
 - name: "retention | Apply the journald restart before reading the effective config back"
   ansible.builtin.meta: flush_handlers
 - name: "retention | Read back journald's effective config"
-  ansible.builtin.command: systemd-analyze cat-config systemd/journald.conf
+  ansible.builtin.command:
+    argv: [systemd-analyze, cat-config, systemd/journald.conf]
   register: __acsc_journald_effective
   changed_when: false
 - name: "retention | Assert our values are the effective ones"

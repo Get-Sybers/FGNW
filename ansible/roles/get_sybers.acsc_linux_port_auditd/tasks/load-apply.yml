@@ -1,6 +1,7 @@
 ---
 - name: "load-apply | Load the ruleset (augenrules)"
-  ansible.builtin.command: augenrules --load
+  ansible.builtin.command:
+    argv: [augenrules, --load]
   register: __acsc_auditd_load
   changed_when: true
 - name: "load-apply | Assert the load reported no errors"

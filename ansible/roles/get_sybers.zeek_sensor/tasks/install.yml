@@ -23,7 +23,8 @@
       splits differently and installs under /opt/zeek).
     quiet: true
 - name: "install | Read zeekctl's effective configuration"
-  ansible.builtin.command: "{{ __zeek_which.stdout | trim }} config"
+  ansible.builtin.command:
+    argv: ["{{ __zeek_which.stdout | trim }}", config]
   register: __zeek_cfg_raw
   changed_when: false
   check_mode: false

@@ -34,7 +34,8 @@
       - "!all"
       - "virtual"
 - name: "preflight | Ask systemd whether this is a container"
-  ansible.builtin.command: systemd-detect-virt --container
+  ansible.builtin.command:
+    argv: [systemd-detect-virt, --container]
   register: __acsc_auditd_container
   changed_when: false
   failed_when: false

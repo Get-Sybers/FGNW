@@ -57,7 +57,8 @@
     state: link
   notify: Reload nginx themed sites
 - name: Validate nginx config
-  ansible.builtin.command: nginx -t
+  ansible.builtin.command:
+    argv: [nginx, -t]
   register: __nginx_test
   changed_when: false
   failed_when: __nginx_test.rc != 0

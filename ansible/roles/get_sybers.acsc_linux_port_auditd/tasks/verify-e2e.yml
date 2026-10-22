@@ -1,6 +1,7 @@
 ---
 - name: "verify-e2e | Verify (e2e) — is the auditctl execution retrievable?"
-  ansible.builtin.command: "ausearch --input-logs -k audit_tools -ts today"
+  ansible.builtin.command:
+    argv: [ausearch, --input-logs, -k, audit_tools, -ts, today]
   register: __acsc_auditd_v_search
   changed_when: false
   failed_when: false

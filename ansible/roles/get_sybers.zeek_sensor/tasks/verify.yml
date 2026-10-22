@@ -3,7 +3,8 @@
   ansible.builtin.wait_for:
     timeout: "{{ zeek_sensor_verify_settle_seconds }}"
 - name: "verify | Ask zeekctl for node status"
-  ansible.builtin.command: "{{ zeek_sensor_bin }} status"
+  ansible.builtin.command:
+    argv: ["{{ zeek_sensor_bin }}", status]
   become: "{{ zeek_sensor_user != 'root' }}"
   become_user: "{{ zeek_sensor_user }}"
   environment:
@@ -36,7 +37,8 @@
       {{ __zeek_status.stdout | trim }}
     quiet: true
 - name: "verify | Read Zeek's own capture counters"
-  ansible.builtin.command: "{{ zeek_sensor_bin }} netstats"
+  ansible.builtin.command:
+    argv: ["{{ zeek_sensor_bin }}", netstats]
   become: "{{ zeek_sensor_user != 'root' }}"
   become_user: "{{ zeek_sensor_user }}"
   environment:
@@ -67,13 +69,14 @@
       capacity — narrow zeek_sensor_capture_filter or split the interfaces
       across more workers.
 - name: "verify | The deployed site policy carries our marker"
-  ansible.builtin.command: >-
-    grep -c "get_sybers.zeek_sensor managed policy" {{ zeek_sensor_sitedir }}/local.zeek
+  ansible.builtin.command:
+    argv: [grep, -c, "get_sybers.zeek_sensor managed policy", "{{ zeek_sensor_sitedir }}/local.zeek"]
   register: __zeek_policy_marker
   changed_when: false
   failed_when: __zeek_policy_marker.stdout | trim | int < 1
 - name: "verify | The live configuration still parses"
-  ansible.builtin.command: "{{ zeek_sensor_bin }} check"
+  ansible.builtin.command:
+    argv: ["{{ zeek_sensor_bin }}", check]
   become: "{{ zeek_sensor_user != 'root' }}"
   become_user: "{{ zeek_sensor_user }}"
   environment:
@@ -87,7 +90,8 @@
 # service_facts reports .service units only; the state of a timer unit is readable
 # through systemctl alone, so the probe stays a read-only command.
 - name: "verify | The zeekctl cron timer is active" # noqa: command-instead-of-module
-  ansible.builtin.command: systemctl is-active zeek-sensor-cron.timer
+  ansible.builtin.command:
+    argv: [systemctl, is-active, zeek-sensor-cron.timer]
   register: __zeek_cron_active
   changed_when: false
   failed_when: __zeek_cron_active.stdout | trim != 'active'

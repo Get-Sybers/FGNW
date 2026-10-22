@@ -49,10 +49,14 @@
   register: client_config_slurp
 - name: Generate Velociraptor Installation File
   ansible.builtin.command:
-    cmd: >-
-      {{ velociraptor_install_path }}/velociraptor debian server
-      --config {{ velociraptor_install_path }}/server.config.yaml
-      --output {{ velociraptor_install_path }}/velociraptor_server.deb
+    argv:
+      - "{{ velociraptor_install_path }}/velociraptor"
+      - debian
+      - server
+      - --config
+      - "{{ velociraptor_install_path }}/server.config.yaml"
+      - --output
+      - "{{ velociraptor_install_path }}/velociraptor_server.deb"
   args:
     creates: "{{ velociraptor_install_path }}/velociraptor_server.deb"
   register: server_installation_binary

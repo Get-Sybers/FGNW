@@ -15,19 +15,22 @@
     mode: "0644"
   register: sysmon_linux_config_copy
 - name: "configure | Check whether the sysmon process is currently running"
-  ansible.builtin.command: pgrep -x sysmon
+  ansible.builtin.command:
+    argv: [pgrep, -x, sysmon]
   register: __sysmon_linux_proc
   changed_when: false
   failed_when: false
 - name: "configure | Stop the existing Sysmon service before reapplying config (only when something actually changed)"
-  ansible.builtin.command: /usr/bin/sysmon -u force
+  ansible.builtin.command:
+    argv: [/usr/bin/sysmon, -u, force]
   when:
     - __sysmon_linux_proc.rc == 0
     - sysmon_linux_install.changed or sysmon_linux_config_copy.changed
   changed_when: true
   failed_when: false
 - name: "configure | Install/apply the Sysmon config (registers + starts the sysmon systemd service)"
-  ansible.builtin.command: "/usr/bin/sysmon -i /etc/sysmon/config.xml"
+  ansible.builtin.command:
+    argv: [/usr/bin/sysmon, -i, /etc/sysmon/config.xml]
   when: >-
     __sysmon_linux_proc.rc != 0 or sysmon_linux_install.changed or sysmon_linux_config_copy.changed
   changed_when: true
