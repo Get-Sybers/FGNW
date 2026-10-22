@@ -1,0 +1,28 @@
+---
+dependencies: []
+galaxy_info:
+  role_name: privileged_user_task
+  namespace: get_sybers
+  author: Get-Sybers
+  description: >-
+    Plant a boot-triggered Windows scheduled task that runs as a privileged domain
+    account, keeping that account's token resident in memory for the
+    Pass-the-Hash / token-impersonation workshop. The role asserts the identity and
+    credential were supplied, registers the task (restarting at boot and on failure),
+    and starts it immediately so the token is available without a reboot. The password
+    has no default by design; the calling play supplies it from the AD data model.
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Windows
+      versions:
+        - all
+  galaxy_tags:
+    - fgnw
+    - scheduledtask
+    - credentials
+    - windows
+collections:
+  - ansible.builtin
+  - ansible.windows
+  - community.windows

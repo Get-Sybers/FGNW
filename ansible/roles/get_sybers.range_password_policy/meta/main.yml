@@ -7,7 +7,7 @@ galaxy_info:
     of the campaign password_policy role for the Ludus user-defined-roles stage. FGNW
   role_name: range_password_policy
   license: AGPL-3.0-only
-  min_ansible_version: "2.12"
+  min_ansible_version: "2.15"
   platforms:
     - name: Windows
       versions:

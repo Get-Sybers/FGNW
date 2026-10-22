@@ -1,0 +1,40 @@
+---
+argument_specs:
+  main:
+    short_description: Realize a domain's OUs, groups, users and memberships from the AD-build contract
+    description:
+      - Runs on a domain controller and creates, with the microsoft.ad modules, the organisational units,
+        the universal, global and domainlocal groups, the users with their group memberships and the
+        declared members of each group for one domain, then adds the built-in Administrator to Domain Admins.
+      - The inputs carry the AD-build contract's own names, without a role prefix; ad-data.yml supplies
+        them from the domain's lab.domains entry of config.json. ad_ou, ad_groups and ad_users fall back
+        to empty collections; domain has no default.
+    options:
+      ad_ou:
+        type: dict
+        default: {}
+        description:
+          - Organisational units keyed by name; each value carries C(path), the DN the OU is created under.
+      ad_groups:
+        type: dict
+        default: {}
+        description:
+          - Groups by scope. The keys C(universal), C(global) and C(domainlocal) each hold a dict keyed by
+            group name whose value carries C(path) (the container DN), optionally C(managed_by) and
+            optionally C(members), the list the memberships stage adds. A missing scope is skipped.
+      ad_users:
+        type: dict
+        default: {}
+        no_log: true
+        description:
+          - Users keyed by sAMAccountName. Each value needs C(firstname), C(password) and C(groups) (the
+            group names the user is added to); a C(path) that is set has to be a DN, which the role checks
+            up front. Optional C(surname) (defaults to the first name), C(enabled) (default true), C(city)
+            and C(description).
+          - A user without C(path) is created under CN=Users of the domain.
+      domain:
+        type: str
+        required: true
+        description:
+          - DNS name of the domain this DC serves, for example C(konohagakure.fire.ninja). It builds the
+            CN=Users default container for users without a path and labels the validation messages.

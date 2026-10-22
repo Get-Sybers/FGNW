@@ -8,7 +8,7 @@ galaxy_info:
     GHOSTS workstation so the native BrowserChrome timeline handler can drive a real,
     non-headless browser in the persona's interactive session. UNTESTED (2026-07-19).
   license: GPL-3.0-only
-  min_ansible_version: "2.12"
+  min_ansible_version: "2.15"
   platforms:
     - name: Windows
       versions:

@@ -14,3 +14,20 @@ fgnw_themed_sites_village_colors:
   Hidden Grass Village: "#5c8a3a"
   Land of Iron: "#6c7a89"
   Akatsuki: "#4a0e0e"
+
+# --- Page data (supplied by the caller play via vars_files; not prefixed with the
+# role name, so they are listed here commented out -- defining a non-role-prefixed
+# default is rejected by the production lint profile). This file stays the one list
+# of the role's inputs; the contract and the defaults live in meta/argument_specs.yml.
+#
+# site_pages has no safe default: an empty list renders nothing and leaves the nginx
+# vhost with an empty server_name. The caller must set it (content/www/site-archetypes.yml).
+# site_pages: []
+#
+# Optional enrichment, all effectively empty when the caller omits them. The tasks read
+# site_content_links with `| default({})`; the wiki/fansite templates touch
+# character_profiles and general_techniques only on pages whose content-links entry names
+# them. The play supplies all three from content/www/.
+# site_content_links: {}
+# character_profiles: {}
+# general_techniques: []

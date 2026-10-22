@@ -1,0 +1,17 @@
+---
+argument_specs:
+  main:
+    short_description: Bring up and seed the modern-infra Docker Compose stack (xl variant)
+    description:
+      - Deploys the Compose file and seed scripts from content/modern-infra/ under the content root, runs
+        `docker compose up -d`, waits for LocalStack (HTTP health) and OpenEMR (TCP 8443) and runs the two seed
+        scripts. A changed Compose file notifies the Recreate modern-infra stack handler.
+      - Needs Docker Engine with the compose plugin on the host (the caller play applies geerlingguy.docker
+        first) and root, which the caller play provides with a play-level become.
+    options:
+      fgnw_modern_infra_root:
+        type: str
+        default: /opt/modern-infra
+        description:
+          - Directory on the host that holds docker-compose.yml, localstack-seed.sh, patient-seed.csv and
+            openemr-seed-patients.py; also the working directory of every docker compose and seed command.

@@ -1,0 +1,9 @@
+---
+# The inputs carry the AD-build contract's own names (ad-data.yml supplies all four from the
+# domain's lab.domains entry of config.json), so they have no fgnw_ad_mgmt_ prefix and the lint
+# gate's role-prefix rule rejects them here uncommented. They stay listed as the role's inputs:
+# ad_ou, ad_groups and ad_users fall back to {} inside the tasks; domain has no default.
+# ad_ou: {}
+# ad_groups: {}
+# ad_users: {}
+# domain: konohagakure.fire.ninja

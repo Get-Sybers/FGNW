@@ -1,0 +1,73 @@
+---
+argument_specs:
+  main:
+    short_description: Render + serve the FGNW themed per-domain web content
+    description:
+      - Installs nginx, creates one document root per site URL, renders each site's
+        index.html from its archetype template, and deploys a single name-based nginx
+        vhost that serves every domain from its own root.
+      - The caller supplies the page data (site list, cross-links, character profiles,
+        technique lists) through vars loaded in the play; only the site list is
+        required, the rest default to empty.
+    options:
+      site_pages:
+        type: list
+        elements: dict
+        required: true
+        description:
+          - The list of sites to build. Each entry is a dict with the keys the
+            templates read -- url, village, category, archetype and description.
+          - Not prefixed with the role name; the play loads it from
+            content/www/site-archetypes.yml.
+      site_content_links:
+        type: dict
+        default: {}
+        description:
+          - Optional per-URL enrichment, keyed by the site url. An entry may carry
+            characters, general_techniques or full_index, which the wiki, fansite and
+            other templates use to render technique and character blocks.
+          - Not prefixed with the role name; the play loads it from
+            content/www/site-content-links.yml. Read with a default of {}.
+      character_profiles:
+        type: dict
+        description:
+          - Character jutsu/quote data, keyed by character name, consumed by the wiki
+            and fansite templates when a site's content-links entry names characters.
+          - Not prefixed with the role name; the play loads it from
+            content/www/character-profiles.yml.
+      general_techniques:
+        type: list
+        elements: str
+        description:
+          - Technique names rendered by the wiki template's full-index pages.
+          - Not prefixed with the role name; the play loads it from
+            content/www/character-profiles.yml.
+      fgnw_themed_sites_root:
+        type: str
+        default: /var/www/sites
+        description: Web root under which a per-URL document-root directory is created for each site.
+      fgnw_themed_sites_nginx_conf:
+        type: str
+        default: /etc/nginx/sites-available/FGNW-themed-sites.conf
+        description: Path of the nginx vhost file this role writes.
+      fgnw_themed_sites_nginx_link:
+        type: str
+        default: /etc/nginx/sites-enabled/FGNW-themed-sites.conf
+        description: Path of the sites-enabled symlink that activates the vhost.
+      fgnw_themed_sites_village_colors:
+        type: dict
+        default:
+          Hidden Leaf Village: "#2f6b3a"
+          Hidden Sand Village: "#b8860b"
+          Hidden Mist Village: "#2b7a78"
+          Hidden Cloud Village: "#2f6fa8"
+          Hidden Rock Village: "#6b5b45"
+          Hidden Rain Village: "#34495e"
+          Hidden Sound Village: "#6a2ca0"
+          Hidden Waterfall Village: "#1a9e9e"
+          Hidden Grass Village: "#5c8a3a"
+          Land of Iron: "#6c7a89"
+          Akatsuki: "#4a0e0e"
+        description:
+          - Accent colour per village, used to tint each rendered page. A village with
+            no entry falls back to the per-archetype colour baked into the template.

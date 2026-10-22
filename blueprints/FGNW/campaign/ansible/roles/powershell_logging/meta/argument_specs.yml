@@ -1,0 +1,35 @@
+---
+argument_specs:
+  main:
+    short_description: Enable PowerShell script block, module and transcription logging
+    description:
+      - Writes the Group Policy registry values that turn on PowerShell script block
+        logging, module logging and over-the-shoulder transcription.
+      - Each of the three streams is independently gated by its enable toggle; the
+        module scope, transcript directory and invocation-header toggle tune the
+        streams that are on.
+    options:
+      powershell_logging_script_block_enabled:
+        type: bool
+        default: true
+        description: Enable script block logging (EnableScriptBlockLogging).
+      powershell_logging_module_enabled:
+        type: bool
+        default: true
+        description: Enable module logging (EnableModuleLogging) and write the module-name scope.
+      powershell_logging_module_names:
+        type: str
+        default: "*"
+        description: Module-name filter module logging covers; "*" logs every module.
+      powershell_logging_transcription_enabled:
+        type: bool
+        default: true
+        description: Enable transcription and write its output directory and invocation-header value.
+      powershell_logging_transcription_output_directory:
+        type: str
+        default: C:\Windows\Temp\PowerShellTranscripts
+        description: Directory PowerShell transcripts are written to.
+      powershell_logging_invocation_header_enabled:
+        type: bool
+        default: true
+        description: Stamp an invocation header into each transcript (EnableInvocationHeader).

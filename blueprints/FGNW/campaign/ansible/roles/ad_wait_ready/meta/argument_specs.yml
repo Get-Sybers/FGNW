@@ -1,0 +1,24 @@
+---
+argument_specs:
+  main:
+    short_description: Wait until a domain controller's directory is serving again
+    description:
+      - Polls the target with files/wait-ad-ready.ps1 until the NTDS, DNS and Netlogon services run and
+        Get-ADDomain answers. With ad_wait_ready_require_dc the host also has to resolve as a domain
+        controller, run the kdc service and advertise the SYSVOL and NETLOGON shares.
+      - Read-only. Every input has a default; the role fails only when the last retry still fails.
+    options:
+      ad_wait_ready_require_dc:
+        type: bool
+        default: false
+        description:
+          - Also require the host's own DC identity (Get-ADDomainController), the kdc service and the
+            SYSVOL and NETLOGON shares before the gate opens.
+      ad_wait_ready_retries:
+        type: int
+        default: 60
+        description: Retries of the readiness probe before the task fails for the host.
+      ad_wait_ready_delay:
+        type: int
+        default: 10
+        description: Seconds to wait between two attempts of the probe.

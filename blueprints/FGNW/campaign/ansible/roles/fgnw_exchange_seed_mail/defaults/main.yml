@@ -1,0 +1,21 @@
+---
+# Every input of this role is forest-specific or secret, so none has a safe default: the play
+# (ansible/FGNW-exchange-seed-mail.yml) derives the three identity values from the host's forest
+# map and supplies the password. The entries stay here, commented out, so this file remains the
+# one list of the role's inputs. The variables keep their historical `fgnw_seed_mail_` prefix.
+
+# Recipient (mail) domain of this forest; also the key into ad/NARUTO/data/config.json
+# `lab.domains`, which is the ground truth for which corpus users get a mailbox here.
+# fgnw_seed_mail_domain: konohagakure.fire.ninja
+
+# Forest root the send runs as: `<fgnw_seed_mail_admin_domain>\Administrator` (runas).
+# fgnw_seed_mail_admin_domain: fire.ninja
+
+# Password of that Administrator account. Secret: the play supplies it, never this file.
+# fgnw_seed_mail_admin_password: ""
+
+# End-of-seed marker: the directory and the marker file written LAST, after every message was
+# delivered. The tasks test these two with `is defined`, so they carry no default here on purpose
+# (a default would change that test); the play sets both.
+# fgnw_seed_mail_state_dir: C:\ProgramData\FGNW
+# fgnw_seed_mail_sentinel: C:\ProgramData\FGNW\seed-mail.done

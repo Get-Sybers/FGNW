@@ -1,0 +1,44 @@
+---
+argument_specs:
+  main:
+    short_description: Seed a forest's real Exchange mailboxes with the FGNW quote corpus as genuine SMTP mail
+    description:
+      - Filters content/OWA/user-inboxes.yml to recipients that are real users of this host's domain in
+        ad/NARUTO/data/config.json, sends each message with Send-MailMessage against the forest's own Exchange
+        (localhost) as the forest-root Administrator, and writes the end-of-seed marker last.
+      - The inputs keep their historical fgnw_seed_mail_ prefix. None has a safe default, because every one is
+        forest-specific or secret; the caller play derives them from the host's forest map.
+      - fgnw_seed_mail_state_dir and fgnw_seed_mail_sentinel are asserted `is defined` by the first task, so they
+        are deliberately left without a default and without `required` here too.
+    options:
+      fgnw_seed_mail_domain:
+        type: str
+        required: true
+        description:
+          - Recipient (mail) domain of this forest, e.g. `konohagakure.fire.ninja`. Key into config.json
+            lab.domains, whose users are the only addresses the corpus is delivered to, and the right-hand side
+            of every recipient address.
+      fgnw_seed_mail_admin_domain:
+        type: str
+        required: true
+        description:
+          - Forest root (e.g. `fire.ninja`) whose Administrator account the send runs as, through the runas
+            become method (`<fgnw_seed_mail_admin_domain>\Administrator`).
+      fgnw_seed_mail_admin_password:
+        type: str
+        required: true
+        no_log: true
+        description:
+          - Password of that Administrator account (the lab-wide range credential). Supplied by the play, never
+            read from defaults.
+      fgnw_seed_mail_state_dir:
+        type: str
+        description:
+          - Directory on the Exchange server that holds the end-of-seed marker, e.g. `C:\ProgramData\FGNW`. The
+            first task asserts it is defined and non-empty, so a caller must set it.
+      fgnw_seed_mail_sentinel:
+        type: str
+        description:
+          - Full path of the end-of-seed marker written after the last message was delivered, e.g.
+            `C:\ProgramData\FGNW\seed-mail.done`. The caller play probes it to skip a seeded forest. The first
+            task asserts it is defined and non-empty.

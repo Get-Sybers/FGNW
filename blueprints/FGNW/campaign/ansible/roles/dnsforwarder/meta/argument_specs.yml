@@ -1,0 +1,42 @@
+---
+argument_specs:
+  main:
+    short_description: Publish cross-village DNS forwarders and the forest's mail record on a DC
+    description:
+      - On a domain controller, creates a conditional forwarder zone for every other range domain whose
+        DC is in the current inventory, forwarding to that DC's ansible_host.
+      - Registers mail.<own domain> as an A record for the forest's mail server, composed as
+        10.<range>.<octet>.20 from the DC's own ansible_host and dnsforwarder_mail_owa_vlan_octet, when
+        that server answers on TCP 5986.
+      - Both inputs default to the regular range's layout; dnsforwarder.yml passes nothing.
+    options:
+      dnsforwarder_domains:
+        type: list
+        elements: dict
+        default:
+          - name: sunagakure.wind.ninja
+            dc_host: dc04
+          - name: fire.ninja
+            dc_host: dc01
+          - name: konohagakure.fire.ninja
+            dc_host: dc02
+          - name: wind.ninja
+            dc_host: dc03
+          - name: otogakure.ninja
+            dc_host: dc05
+          - name: akatsuki.dark
+            dc_host: dc06
+        description:
+          - Every AD domain of the range with the inventory hostname of its domain controller.
+          - Each element carries C(name), the DNS domain, and C(dc_host), the inventory name of its DC;
+            an entry whose C(dc_host) is not in the current inventory is skipped, as is the DC's own domain.
+      dnsforwarder_mail_owa_vlan_octet:
+        type: dict
+        default:
+          konohagakure.fire.ninja: 10
+          sunagakure.wind.ninja: 20
+          otogakure.ninja: 30
+          akatsuki.dark: 87
+        description:
+          - Map of a DNS domain to the third octet of the VLAN its mail server (host .20) lives in.
+          - A domain absent from the map gets no mail record.

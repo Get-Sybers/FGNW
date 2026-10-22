@@ -44,6 +44,29 @@ has no release tag yet.
   names, which `inject_facts_as_vars = false` removes and which outrank play and
   inventory variables when present.
 
+### Added — every campaign role ships its contract
+
+- Each role under `campaign/ansible/roles/` ships `meta/main.yml` (galaxy info
+  plus an explicit `dependencies:` list), `meta/argument_specs.yml` (every input
+  typed and described), `defaults/main.yml` (one entry per input; an input with
+  no safe default is present but commented out) and `README.md` (inputs,
+  capabilities, outcome, privilege, idempotence, failure behaviour and a caller
+  example), like every other role in this source. An input the tasks read
+  through a call-site `default()` is declared with that default; nothing is
+  renamed and no task changes. A spec never carries a templated default that
+  depends on the host (ansible-core renders spec defaults when it validates the
+  role, before any task runs).
+- `scripts/conform` checks those must-haves in every role tree the source ships
+  (`ansible/roles/`, the in-tree collections' roles and the campaign roles; a
+  third-party role bundled verbatim is exempt through the `.ansible-lint`
+  exclude list) and reports molecule coverage over the same trees.
+
+### Changed — one ansible-core floor, one namespace
+
+- Every role declares `min_ansible_version: "2.15"`, the floor the in-tree
+  collections' `meta/runtime.yml` already set, and every role's galaxy
+  namespace is `get_sybers`.
+
 ### Changed — shared Ansible is imported from the repository that owns it
 
 - The play that creates and runs the range's GHOSTS container is

@@ -1,0 +1,31 @@
+---
+dependencies: []
+galaxy_info:
+  role_name: fgnw_browser_defaults
+  namespace: get_sybers
+  author: Get-Sybers
+  description: >-
+    Village browser defaults for an FGNW range workstation: the village homepage and
+    bookmark bar for the browsers each persona uses. Unified Win+Mac role dispatching on
+    ansible_facts['os_family']: Edge/IE policy registry values plus a Netscape-format
+    bookmarks file on Windows, a Firefox app-bundle policies.json plus a Chrome managed
+    plist on macOS, all rendered from the shared village corpus
+    content/www/village-bookmarks.yml for the village the caller names. Original work of
+    Get-Sybers.
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Windows
+      versions:
+        - all
+    - name: MacOSX
+      versions:
+        - all
+  galaxy_tags:
+    - fgnw
+    - browser
+    - windows
+    - macos
+collections:
+  - ansible.builtin
+  - ansible.windows

@@ -1,0 +1,18 @@
+---
+argument_specs:
+  main:
+    short_description: Set the village homepage and bookmarks for a workstation's browsers
+    description:
+      - Loads content/www/village-bookmarks.yml (relative to the playbook directory), picks the village's
+        homepage and bookmark list and applies them to the browsers of the host's OS family. Edge and IE
+        policies plus a bookmarks HTML file on Windows, a Firefox policies.json plus a Chrome managed
+        plist on macOS.
+      - The village name is the one input and has no default; a name without a corpus entry fails the role
+        before anything is written.
+    options:
+      fgnw_browser_defaults_village:
+        type: str
+        required: true
+        description:
+          - Village key into village_bookmarks and village_homepage of content/www/village-bookmarks.yml,
+            for example C(Hidden Leaf Village).

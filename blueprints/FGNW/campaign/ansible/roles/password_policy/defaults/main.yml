@@ -1,0 +1,17 @@
+---
+# Deliberately weak lab values for the Default Domain Policy. These make lab
+# accounts easy to work with (short passwords, no lockout, no complexity); they
+# are NOT production-safe. The calling play (ad-data.yml) overrides them.
+# The task also pins reversible encryption off and max password age to
+# never-expire; those are hard-coded, not inputs.
+
+# Failed sign-ins before lockout; "0" disables account lockout entirely.
+password_policy_try_before_lock: "0"
+# Minimum password length.
+password_policy_pass_length: "5"
+# Lockout duration (TimeSpan string).
+password_policy_lock_duration: "00:00:00"
+# Lockout observation window (TimeSpan string).
+password_policy_lock_observation: "00:00:00"
+# Enforce password complexity.
+password_policy_complexity: false

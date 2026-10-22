@@ -1,0 +1,25 @@
+---
+argument_specs:
+  main:
+    short_description: Move existing domain computer objects to their target OU
+    description:
+      - Iterates the lab host inventory, probes which in-scope member computers (not a
+        DC, in member_domain, not LAPS-managed) already exist in Active Directory, and
+        relocates each existing object to the OU given by its inventory entry's path.
+      - Runs against a domain controller over WinRM. Both inputs are site data with no
+        safe default, so the calling play must supply them.
+    options:
+      hosts_dict:
+        type: dict
+        required: true
+        description:
+          - The lab host inventory, keyed by host key. Each value is a dict with
+            hostname, type, domain, optionally path (the target OU DN) and use_laps.
+          - Not prefixed with the role name; the play passes lab.hosts.
+      member_domain:
+        type: str
+        required: true
+        description:
+          - The domain whose member computer objects are in scope; an inventory entry
+            is processed only when its domain equals this value.
+          - Not prefixed with the role name; the play passes lab.hosts[dict_key].domain.

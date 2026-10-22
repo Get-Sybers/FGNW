@@ -1,0 +1,5 @@
+---
+# The one input has no safe default: a default village would point every workstation at the same
+# portal. The play supplies it, and the role fails when the name has no entry in
+# content/www/village-bookmarks.yml.
+# fgnw_browser_defaults_village: Hidden Leaf Village

@@ -1,0 +1,57 @@
+---
+argument_specs:
+  main:
+    short_description: Install the GHOSTS Universal client on macOS and run it as a launchd daemon
+    description:
+      - The prestage half downloads and extracts the GHOSTS Universal client tarball and points its ApiRootUrl at
+        the ghost9 API; the service half writes /Library/LaunchDaemons/<label>.plist and bootstraps it; `all`
+        runs both.
+      - Every input has a lab-safe default; the callers pass only the phase.
+    options:
+      fgnw_mac_ghosts_client_version:
+        type: str
+        default: v9.0.0
+        description:
+          - GHOSTS release tag the tarball URL is built from.
+      fgnw_mac_ghosts_client_tarball_url:
+        type: str
+        default: >-
+          {{ 'https://github.com/cmu-sei/GHOSTS/releases/download/' ~ fgnw_mac_ghosts_client_version
+             ~ '/ghosts-client-universal-osx-x64-' ~ fgnw_mac_ghosts_client_version ~ '.tar.gz' }}
+        description:
+          - URL of the osx-x64 Universal client release tarball; derived from the version unless overridden.
+      fgnw_mac_ghosts_client_install_dir:
+        type: str
+        default: /usr/local/ghosts
+        description:
+          - Directory the tarball is extracted into; the daemon runs <install_dir>/ghosts from there.
+      fgnw_mac_ghosts_client_config_dir:
+        type: str
+        default: /etc/ghosts
+        description:
+          - Configuration directory created alongside the install.
+      fgnw_mac_ghosts_client_log_dir:
+        type: str
+        default: /var/log/ghosts
+        description:
+          - Directory the daemon's stdout.log and stderr.log are written to.
+      fgnw_mac_ghosts_client_daemon_label:
+        type: str
+        default: com.cmu.sei.ghosts
+        description:
+          - launchd label; also the basename of the plist under /Library/LaunchDaemons.
+      fgnw_mac_ghosts_client_api_url:
+        type: str
+        description:
+          - ApiRootUrl written into config/application.json. The default (defaults/main.yml, not repeated here
+            because a templated spec default is rendered at validation time) derives the range's second octet from
+            ansible_host (an IPv4 address in the materialised infra inventory) so the client reports to the same
+            ghost9 CT as every other GHOSTS client. The default is rendered when this spec is validated, so
+            ansible_host must be a dotted IPv4 address whenever the role is included without this input set.
+      fgnw_mac_ghosts_client_phase:
+        type: str
+        default: all
+        choices: [prestage, service, all]
+        description:
+          - Which half runs. The prestage half needs internet egress (GitHub); the service half needs a completed
+            prestage on the same host.

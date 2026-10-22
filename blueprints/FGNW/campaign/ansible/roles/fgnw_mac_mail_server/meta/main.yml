@@ -1,0 +1,29 @@
+---
+dependencies: []
+galaxy_info:
+  role_name: fgnw_mac_mail_server
+  namespace: get_sybers
+  author: Get-Sybers
+  description: >-
+    Stand up the Hidden Sand Village mail server on macOS: Postfix (built into macOS) for SMTP
+    on 25 and Homebrew Dovecot for IMAP on 143 plus LMTP delivery, plaintext inside the sealed
+    range. Writes /etc/postfix/main.cf and <brew prefix>/etc/dovecot/dovecot.conf, creates a
+    local nologin account with a Maildir for every corpus user of the Sand domain (the same
+    content/OWA/user-inboxes.yml and ad/NARUTO/data/config.json intersection
+    fgnw_exchange_seed_mail uses), then enables and starts both daemons. Dovecot itself is
+    installed earlier, pre-containment, by FGNW-mac-dev.yml; this role only configures and
+    starts it.
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: MacOSX
+      versions:
+        - all
+  galaxy_tags:
+    - fgnw
+    - mail
+    - postfix
+    - dovecot
+    - macos
+collections:
+  - ansible.builtin

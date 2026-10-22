@@ -5,5 +5,5 @@ galaxy_info:
   description: Setup Microsoft Defender for Endpoint server infrastructure
   role_name: range_defender_setup
   license: AGPL-3.0-only
-  min_ansible_version: "2.14"
+  min_ansible_version: "2.15"
 dependencies: []
