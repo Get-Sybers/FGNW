@@ -14,7 +14,7 @@
     name: "{{ item['name'] }}"
     type: forwarder
     dns_servers:
-      - "{{ hostvars[item.dc_host]['ansible_host'] }}"
+      - "{{ hostvars[item['dc_host']]['ansible_host'] }}"
   loop: "{{ __deployed_domains }}"
   when: item['name'] != ansible_facts['domain']
 - name: Resolve this forest's -owa VLAN octet (blank when it runs no mail server)

@@ -32,7 +32,7 @@
   ansible.builtin.set_fact:
     __zeek_to_install: >-
       {{ __zeek_to_install | default([]) + ([item] if item['version'] not in
-         (ansible_facts['packages'][item.name] | default([]) | map(attribute='version') | list)
+         (ansible_facts['packages'][item['name']] | default([]) | map(attribute='version') | list)
          else []) }}
   loop: "{{ zeek_sensor_artefacts }}"
   loop_control:

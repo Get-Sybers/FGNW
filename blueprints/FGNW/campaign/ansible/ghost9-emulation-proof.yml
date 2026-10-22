@@ -186,11 +186,11 @@
       ansible.builtin.assert:
         that:
           - __handlers | length > 0
-          - __handlers | length == (__g9p_timelines[item.item].TimeLineHandlers | length)
+          - __handlers | length == (__g9p_timelines[item['item']].TimeLineHandlers | length)
         fail_msg: >-
           /api/clientupdates returned an update for {{ item['item'] }} with
           {{ __handlers | length }} handlers; the timeline ingested for it had
-          {{ __g9p_timelines[item.item].TimeLineHandlers | length }}. The server
+          {{ __g9p_timelines[item['item']].TimeLineHandlers | length }}. The server
           is holding something other than the FGNW emulation it was handed.
         quiet: true
       loop: "{{ __g9p_dispatched.results }}"

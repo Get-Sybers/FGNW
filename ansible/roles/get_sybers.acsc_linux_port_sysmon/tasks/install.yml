@@ -30,7 +30,7 @@
   ansible.builtin.set_fact:
     __acsc_sysmon_to_install: >-
       {{ __acsc_sysmon_to_install | default([]) + ([item] if item['version'] not in
-         (ansible_facts['packages'][item.name] | default([]) | map(attribute='version') | list)
+         (ansible_facts['packages'][item['name']] | default([]) | map(attribute='version') | list)
          else []) }}
   loop: "{{ acsc_sysmon_artefacts }}"
   loop_control: { label: "{{ item['deb'] }}" }

@@ -173,7 +173,7 @@
         fgnw_verify_gate_http_fails: >-
           {{
             fgnw_verify_gate_http_fails | default([])
-            + ([item.item.name] if (item['status_code'] | default(0)) != 200 else [])
+            + ([item['item']['name']] if (item['status_code'] | default(0)) != 200 else [])
           }}
       loop: "{{ hostvars['konoha-ws1'].fgnw_verify_http_results | default([]) }}"
       loop_control:

@@ -90,7 +90,7 @@
         __tool_cache_missing_local_file_items: >-
           {{
             (__tool_cache_missing_local_file_items | default([]))
-            + [item.item]
+            + [item['item']]
           }}
       loop: "{{ __tool_cache_local_file_stats.results }}"
       loop_control:

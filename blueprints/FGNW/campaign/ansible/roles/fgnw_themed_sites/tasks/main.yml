@@ -13,7 +13,7 @@
     mode: "0755"
 - name: Build per-village link index
   ansible.builtin.set_fact:
-    __village_index: "{{ __village_index | default({}) | combine({item['village']: (__village_index[item.village] | default([])) + [item.url]}) }}"
+    __village_index: "{{ __village_index | default({}) | combine({item['village']: (__village_index[item['village']] | default([])) + [item['url']]}) }}"
   loop: "{{ site_pages }}"
   loop_control:
     label: "{{ item['url'] }}"
@@ -36,9 +36,9 @@
     mode: "0644"
   vars:
     page: "{{ item }}"
-    related: "{{ (__village_index[item.village] | default([])) | reject('equalto', item['url']) | list }}"
-    link: "{{ (site_content_links | default({}))[item.url] | default({}) }}"
-    village_accent: "{{ (fgnw_themed_sites_village_colors | default({}))[item.village] | default('', true) }}"
+    related: "{{ (__village_index[item['village']] | default([])) | reject('equalto', item['url']) | list }}"
+    link: "{{ (site_content_links | default({}))[item['url']] | default({}) }}"
+    village_accent: "{{ (fgnw_themed_sites_village_colors | default({}))[item['village']] | default('', true) }}"
   loop: "{{ site_pages }}"
   loop_control:
     label: "{{ item['url'] }} ({{ item['archetype'] }})"
