@@ -32,7 +32,7 @@ ludus:
       role: primary-dc
     roles:
       - aleemladha.ludus_exchange
-```text
+```
 
 ```
 
@@ -40,7 +40,7 @@ ludus range config get > config.yml
 ludus range config set -f config.yml
 ludus range deploy
 
-```text
+```
 
 GPLv3
 This role was created in 2024 by [Aleem ladha](https://twitter.com/LadhaAleem).

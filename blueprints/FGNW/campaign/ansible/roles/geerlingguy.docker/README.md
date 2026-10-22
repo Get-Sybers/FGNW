@@ -10,7 +10,7 @@ docker_packages:
     - "docker-{{ docker_edition }}-cli"
     - "docker-{{ docker_edition }}-rootless-extras"
 docker_packages_state: present
-```text
+```
 
 The `docker_edition` should be either `ce` (Community Edition) or `ee` (Enterprise Edition).
 You can also specify a specific version of Docker to install using the distribution-specific format:
@@ -42,7 +42,7 @@ docker_service_manage: true
 docker_service_state: started
 docker_service_enabled: true
 docker_restart_handler_state: restarted
-```text
+```
 
 Variables to control the state of the `docker` service, and whether it should start on boot. If you're installing Docker inside a Docker container without systemd or sysvinit, you should set `docker_service_manage` to `false`.
 
@@ -60,7 +60,7 @@ docker_compose_version: "v2.32.1"
 docker_compose_arch: "{{ ansible_facts.architecture }}"
 docker_compose_url: "https://github.com/docker/compose/releases/download/{{ docker_compose_version }}/docker-compose-linux-{{ docker_compose_arch }}"
 docker_compose_path: /usr/local/bin/docker-compose
-```text
+```
 
 Docker Compose installation options.
 
@@ -72,7 +72,7 @@ Controls whether this role will add the official Docker repository. Set to `fals
 
 ```yaml
 docker_repo_url: https://download.docker.com/linux
-```text
+```
 
 The main Docker repo URL, common between Debian and RHEL systems.
 
@@ -91,7 +91,7 @@ docker_yum_repo_url: "{{ docker_repo_url }}/{{ 'fedora' if ansible_facts.distrib
 docker_yum_repo_enable_nightly: '0'
 docker_yum_repo_enable_test: '0'
 docker_yum_gpg_key: "{{ docker_repo_url }}/{{ 'fedora' if ansible_facts.distribution == 'Fedora' else 'rhel' if ansible_facts.distribution == 'RedHat' else 'centos' }}/gpg"
-```text
+```
 
 (Used only for RedHat/CentOS.) You can enable the Nightly or Test repo by setting the respective vars to `1`.
 You can change `docker_yum_gpg_key` to a different url if you are behind a firewall or provide a trustworthy mirror.
@@ -110,7 +110,7 @@ docker_daemon_options:
   storage-driver: "overlay2"
   log-opts:
     max-size: "100m"
-```text
+```
 
 Custom `dockerd` options can be configured through this dictionary representing the json file `/etc/docker/daemon.json`.
 Many users of this role wish to also use Ansible to then _build_ Docker images and manage Docker containers on the server where Docker is installed. In this case, you can easily add in the `docker` Python library using the `geerlingguy.pip` role:
@@ -131,7 +131,7 @@ None.
 - hosts: all
   roles:
     - geerlingguy.docker
-```text
+```
 
 MIT / BSD
 
