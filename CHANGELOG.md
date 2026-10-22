@@ -67,6 +67,14 @@ has no release tag yet.
   collections' `meta/runtime.yml` already set, and every role's galaxy
   namespace is `get_sybers`.
 
+### Changed — every file the automation writes declares its identity
+
+- Every `copy`, `template` and `file` task sets `owner`, `group` and `mode`.
+  System files on Linux targets are `root:root`, on macOS `root:wheel`; files
+  written on the controller or on the Ludus host carry the identity of the user
+  running Ansible, read natively with `setup` (the `user` subset) and declared
+  explicitly rather than inherited from the process.
+
 ### Changed — shared Ansible is imported from the repository that owns it
 
 - The play that creates and runs the range's GHOSTS container is

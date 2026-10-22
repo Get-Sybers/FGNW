@@ -42,12 +42,16 @@
   ansible.builtin.file:
     path: "{{ __tmp_ad_data_dir }}"
     state: directory
+    owner: "{{ ansible_facts['user_id'] }}"
+    group: "{{ ansible_facts['user_gid'] }}"
     mode: "0700"
 - name: "deploy-tasks | phase3-ad | Render this variant's AD data model into the run's temp dir"
   ansible.builtin.copy:
     src: "{{ ad_dir }}/data/{{ __v.ad_config }}"
     dest: "{{ __tmp_ad_config }}"
     remote_src: true
+    owner: "{{ ansible_facts['user_id'] }}"
+    group: "{{ ansible_facts['user_gid'] }}"
     mode: "0600"
 - name: "deploy-tasks | phase3-ad | Run each Shinju playbook (timeout 30m, retry per playbook)"
   ansible.builtin.include_tasks: run-playbook.yml

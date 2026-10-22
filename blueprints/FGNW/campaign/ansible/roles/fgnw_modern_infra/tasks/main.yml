@@ -10,17 +10,23 @@
   ansible.builtin.copy:
     src: "{{ playbook_dir }}/../content/modern-infra/docker-compose.yml"
     dest: "{{ fgnw_modern_infra_root }}/docker-compose.yml"
+    owner: root
+    group: root
     mode: "0644"
   notify: Recreate modern-infra stack
 - name: Deploy LocalStack seed script
   ansible.builtin.copy:
     src: "{{ playbook_dir }}/../content/modern-infra/localstack-seed.sh"
     dest: "{{ fgnw_modern_infra_root }}/localstack-seed.sh"
+    owner: root
+    group: root
     mode: "0755"
 - name: Deploy OpenEMR patient seed data + script
   ansible.builtin.copy:
     src: "{{ playbook_dir }}/../content/modern-infra/{{ item }}"
     dest: "{{ fgnw_modern_infra_root }}/{{ item }}"
+    owner: root
+    group: root
     mode: "0644"
   loop:
     - patient-seed.csv

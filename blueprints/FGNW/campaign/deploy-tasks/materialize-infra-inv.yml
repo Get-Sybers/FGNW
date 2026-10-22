@@ -29,6 +29,8 @@
     content: >-
       {{ (lookup('file', ad_dir ~ '/providers/ludus/' ~ __v.ad_prov)) | replace('RANGENUMBER', __range_number | string) }}
     dest: "{{ __tmp_prov_inv }}"
+    owner: "{{ ansible_facts['user_id'] }}"
+    group: "{{ ansible_facts['user_gid'] }}"
     mode: "0644"
 - name: "deploy-tasks | materialize-infra-inv | Read the static infra inventory template"
   ansible.builtin.slurp:
@@ -45,6 +47,8 @@
   ansible.builtin.copy:
     content: "{{ __infra_rendered }}"
     dest: "{{ __tmp_infra_inv }}"
+    owner: "{{ ansible_facts['user_id'] }}"
+    group: "{{ ansible_facts['user_gid'] }}"
     mode: "0600"
 - name: "deploy-tasks | materialize-infra-inv | Inject the Debian password as a [linux_infra:vars] group var"
   ansible.builtin.lineinfile:

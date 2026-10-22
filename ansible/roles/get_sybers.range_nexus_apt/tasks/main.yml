@@ -12,6 +12,8 @@
 - name: Tolerate range clock skew (Nexus serves upstream-dated Release files)
   ansible.builtin.copy:
     dest: /etc/apt/apt.conf.d/99-nexus-clockskew
+    owner: root
+    group: root
     mode: "0644"
     content: |
       Acquire::Max-FutureTime "{{ range_nexus_apt_max_future_seconds }}";
@@ -20,6 +22,8 @@
 - name: "Route apt through the Nexus proxies for {{ ansible_facts['distribution'] }}"
   ansible.builtin.copy:
     dest: /etc/apt/sources.list.d/nexus-{{ ansible_facts['distribution'] | lower }}.list
+    owner: root
+    group: root
     mode: "0644"
     content: "{{ range_nexus_apt_sources[ansible_facts['distribution']] | join('\n') + '\n' }}"
 - name: "Disable the stock public sources.list (can't resolve under containment)"

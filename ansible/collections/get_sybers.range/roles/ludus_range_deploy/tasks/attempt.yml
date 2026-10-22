@@ -90,6 +90,8 @@
       ansible.builtin.file:
         path: "{{ ludus_range_deploy_error_capture_dir }}"
         state: directory
+        owner: "{{ __lrd_user['ansible_facts']['ansible_user_id'] }}"
+        group: "{{ __lrd_user['ansible_facts']['ansible_user_gid'] }}"
         mode: "0700"
       failed_when: false
       changed_when: false
@@ -105,6 +107,8 @@
     - name: "attempt | Persist the errored-attempt diagnostics, attempt {{ __attempt }}"
       ansible.builtin.copy:
         dest: "{{ ludus_range_deploy_error_capture_dir }}/attempt-{{ __attempt }}-errors.txt"
+        owner: "{{ __lrd_user['ansible_facts']['ansible_user_id'] }}"
+        group: "{{ __lrd_user['ansible_facts']['ansible_user_gid'] }}"
         mode: "0600"
         content: |
           {{ __ludus_errors.stdout | default('(no output / capture failed)') }}

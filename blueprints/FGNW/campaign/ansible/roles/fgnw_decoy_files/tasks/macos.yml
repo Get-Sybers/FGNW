@@ -7,6 +7,8 @@
   ansible.builtin.file:
     path: "{{ fgnw_decoy_files_root }}"
     state: directory
+    owner: root
+    group: wheel
     mode: "0755"
   become: true
 
@@ -14,6 +16,8 @@
   ansible.builtin.file:
     path: "{{ fgnw_decoy_files_root }}/{{ item | dirname }}"
     state: directory
+    owner: root
+    group: wheel
     mode: "0755"
   loop: "{{ fgnw_decoy_files_list }}"
   loop_control:
@@ -24,6 +28,8 @@
   ansible.builtin.copy:
     dest: "{{ fgnw_decoy_files_root }}/{{ item }}"
     content: "{{ lookup('ansible.builtin.file', authored_dir + '/' + item, errors='ignore') | default(placeholder, true) }}"
+    owner: root
+    group: wheel
     mode: "0644"
     force: false
   vars:

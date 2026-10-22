@@ -67,6 +67,8 @@
 - name: Install the Postfix main.cf
   ansible.builtin.copy:
     dest: /etc/postfix/main.cf
+    owner: root
+    group: wheel
     mode: "0644"
     content: |
       myhostname = {{ fgnw_mac_mail_server_hostname }}
@@ -95,6 +97,8 @@
 - name: Install the Dovecot config at the resolved prefix
   ansible.builtin.copy:
     dest: "{{ fgnw_mac_mail_server_dovecot_conf }}"
+    owner: root
+    group: wheel
     mode: "0644"
     content: |
       protocols = imap lmtp

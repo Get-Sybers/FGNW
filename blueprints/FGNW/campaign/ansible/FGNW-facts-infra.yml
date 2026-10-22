@@ -14,8 +14,20 @@
     __dir: "{{ playbook_dir }}/../facts-local/{{ facts_out }}/infra"
     __range_config: "{{ __bp_root }}/range-config.yml"
   tasks:
+    - name: "Read the controller user's identity (the owner of the files written here)"
+      ansible.builtin.setup:
+        gather_subset: ["!all", "!min", "user"]
+      delegate_to: localhost
+      delegate_facts: true
+      run_once: true
+      register: __ctl_user
     - name: Ensure infra facts dir exists
-      ansible.builtin.file: { path: "{{ __dir }}", state: directory, mode: "0700" }
+      ansible.builtin.file:
+        path: "{{ __dir }}"
+        state: directory
+        owner: "{{ __ctl_user['ansible_facts']['ansible_user_id'] }}"
+        group: "{{ __ctl_user['ansible_facts']['ansible_user_gid'] }}"
+        mode: "0700"
       changed_when: false
     - name: Read the range config (VM -> template mapping)
       ansible.builtin.slurp:
@@ -89,6 +101,8 @@
              'note': 'Interpret every gap against the phases that had actually RUN. A missing service/artifact from a phase that never ran is NOT a defect. See harvest_taken_at ---phases-seen--- and ---deploy-cmd--- for flags such as --skip-nexus / --skip-exchange.'
           } | to_nice_json }}
         dest: "{{ __dir }}/_pipeline-position.json"
+        owner: "{{ __ctl_user['ansible_facts']['ansible_user_id'] }}"
+        group: "{{ __ctl_user['ansible_facts']['ansible_user_gid'] }}"
         mode: "0600"
       changed_when: false
     - name: Write template provenance (per-VM lineage + available templates)
@@ -104,6 +118,8 @@
              'note': 'A rebuilt range MUST use these same base templates; template-baked config vs deploy-applied config is distinguished by comparing a fresh template clone against these harvested facts.'
           } | to_nice_json }}
         dest: "{{ __dir }}/_template-provenance.json"
+        owner: "{{ __ctl_user['ansible_facts']['ansible_user_id'] }}"
+        group: "{{ __ctl_user['ansible_facts']['ansible_user_gid'] }}"
         mode: "0600"
       changed_when: false
 - name: Harvest Windows logging/monitoring baseline
@@ -113,8 +129,20 @@
     facts_out: latest
     __dir: "{{ playbook_dir }}/../facts-local/{{ facts_out }}/infra"
   tasks:
+    - name: "Read the controller user's identity (the owner of the files written here)"
+      ansible.builtin.setup:
+        gather_subset: ["!all", "!min", "user"]
+      delegate_to: localhost
+      delegate_facts: true
+      run_once: true
+      register: __ctl_user
     - name: Ensure infra facts dir exists (controller-side)
-      ansible.builtin.file: { path: "{{ __dir }}", state: directory, mode: "0700" }
+      ansible.builtin.file:
+        path: "{{ __dir }}"
+        state: directory
+        owner: "{{ __ctl_user['ansible_facts']['ansible_user_id'] }}"
+        group: "{{ __ctl_user['ansible_facts']['ansible_user_gid'] }}"
+        mode: "0700"
       delegate_to: localhost
       run_once: true
       changed_when: false
@@ -188,6 +216,8 @@
       ansible.builtin.copy:
         content: "{{ (item['stdout'] | default('')) | trim }}\n"
         dest: "{{ __dir }}/{{ inventory_hostname }}.{{ item['item'] }}.json"
+        owner: "{{ __ctl_user['ansible_facts']['ansible_user_id'] }}"
+        group: "{{ __ctl_user['ansible_facts']['ansible_user_gid'] }}"
         mode: "0600"
       delegate_to: localhost
       loop: "{{ __win.results | default([]) }}"
@@ -200,6 +230,13 @@
     facts_out: latest
     __dir: "{{ playbook_dir }}/../facts-local/{{ facts_out }}/infra"
   tasks:
+    - name: "Read the controller user's identity (the owner of the files written here)"
+      ansible.builtin.setup:
+        gather_subset: ["!all", "!min", "user"]
+      delegate_to: localhost
+      delegate_facts: true
+      run_once: true
+      register: __ctl_user
     - name: "Exchange: accepted domains / mailboxes / DGs / connectors / cert (structure only)"
       ansible.windows.win_shell: |
         $ErrorActionPreference='Stop'
@@ -259,6 +296,8 @@
       ansible.builtin.copy:
         content: "{{ (item['stdout'] | default('')) | trim }}\n"
         dest: "{{ __dir }}/{{ inventory_hostname }}.exchange-{{ item['item'] }}.json"
+        owner: "{{ __ctl_user['ansible_facts']['ansible_user_id'] }}"
+        group: "{{ __ctl_user['ansible_facts']['ansible_user_gid'] }}"
         mode: "0600"
       delegate_to: localhost
       loop: "{{ __ex.results | default([]) }}"
@@ -271,6 +310,13 @@
     facts_out: latest
     __dir: "{{ playbook_dir }}/../facts-local/{{ facts_out }}/infra"
   tasks:
+    - name: "Read the controller user's identity (the owner of the files written here)"
+      ansible.builtin.setup:
+        gather_subset: ["!all", "!min", "user"]
+      delegate_to: localhost
+      delegate_facts: true
+      run_once: true
+      register: __ctl_user
     - name: "GHOSTS: application.json, timeline.json, autologon (NO password), task, browsers"
       ansible.windows.win_shell: |
         $ErrorActionPreference='Stop'
@@ -296,6 +342,8 @@
       ansible.builtin.copy:
         content: "{{ (item['stdout'] | default('')) | trim }}\n"
         dest: "{{ __dir }}/{{ inventory_hostname }}.ghosts-{{ item['item'] }}.json"
+        owner: "{{ __ctl_user['ansible_facts']['ansible_user_id'] }}"
+        group: "{{ __ctl_user['ansible_facts']['ansible_user_gid'] }}"
         mode: "0600"
       delegate_to: localhost
       loop: "{{ __gh.results | default([]) }}"
@@ -309,8 +357,20 @@
     facts_out: latest
     __dir: "{{ playbook_dir }}/../facts-local/{{ facts_out }}/infra"
   tasks:
+    - name: "Read the controller user's identity (the owner of the files written here)"
+      ansible.builtin.setup:
+        gather_subset: ["!all", "!min", "user"]
+      delegate_to: localhost
+      delegate_facts: true
+      run_once: true
+      register: __ctl_user
     - name: Ensure infra facts dir exists (controller-side)
-      ansible.builtin.file: { path: "{{ __dir }}", state: directory, mode: "0700" }
+      ansible.builtin.file:
+        path: "{{ __dir }}"
+        state: directory
+        owner: "{{ __ctl_user['ansible_facts']['ansible_user_id'] }}"
+        group: "{{ __ctl_user['ansible_facts']['ansible_user_gid'] }}"
+        mode: "0700"
       delegate_to: localhost
       run_once: true
       changed_when: false
@@ -390,6 +450,8 @@
              'probes': dict(__lx.results | default([]) | map(attribute='item') | zip(__lx.results | default([]) | map(attribute='stdout')))
           } | to_nice_json }}
         dest: "{{ __dir }}/{{ inventory_hostname }}.linux.json"
+        owner: "{{ __ctl_user['ansible_facts']['ansible_user_id'] }}"
+        group: "{{ __ctl_user['ansible_facts']['ansible_user_gid'] }}"
         mode: "0600"
       delegate_to: localhost
       changed_when: false

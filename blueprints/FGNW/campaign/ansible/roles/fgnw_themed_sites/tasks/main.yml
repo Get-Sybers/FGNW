@@ -46,6 +46,8 @@
   ansible.builtin.template:
     src: FGNW-themed-sites.conf.j2
     dest: "{{ fgnw_themed_sites_nginx_conf }}"
+    owner: root
+    group: root
     mode: "0644"
   notify: Reload nginx themed sites
 - name: Enable the themed-sites vhost

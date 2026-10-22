@@ -9,6 +9,8 @@
 - name: Route apt through the Nexus Debian proxy (contained range)
   ansible.builtin.copy:
     dest: /etc/apt/sources.list.d/nexus-debian.list
+    owner: root
+    group: root
     mode: "0644"
     content: |
       deb http://192.0.2.2:8081/repository/debian-proxy {{ ansible_facts['distribution_release'] }} main non-free-firmware
@@ -166,6 +168,8 @@
 - name: Deploy nginx catch-all virtual host
   ansible.builtin.copy:
     dest: /etc/nginx/sites-available/tool-cache
+    owner: root
+    group: root
     mode: "0644"
     content: |
       server {

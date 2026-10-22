@@ -24,6 +24,8 @@
         content: |
           nameserver {{ fire_dc_ip }}
           search {{ ad_domain }}
+        owner: root
+        group: root
         mode: "0644"
     - name: Preseed the Kerberos default realm (avoid interactive krb5-config prompt)
       ansible.builtin.debconf:
@@ -34,6 +36,8 @@
     - name: "Ninjasploitable: route apt through the Nexus Debian proxy (contained range)"
       ansible.builtin.copy:
         dest: /etc/apt/sources.list.d/nexus-debian.list
+        owner: root
+        group: root
         mode: "0644"
         content: |
           deb http://192.0.2.2:8081/repository/debian-proxy {{ ansible_facts['distribution_release'] }} main non-free-firmware

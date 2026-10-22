@@ -341,10 +341,14 @@
           ansible.builtin.file:
             path: /var/lib/ludus
             state: directory
+            owner: root
+            group: root
             mode: "0755"
         - name: "Bake: write the prereq marker"
           ansible.builtin.copy:
             dest: "{{ ms_marker }}"
+            owner: root
+            group: root
             mode: "0644"
             content: |
               Ninjasploitable vulnerable-service + AD-join packages baked into this template
@@ -352,6 +356,8 @@
         - name: "Bake: write the content marker LAST"
           ansible.builtin.copy:
             dest: "{{ ms_content_marker }}"
+            owner: root
+            group: root
             mode: "0644"
             content: |
               Ninjasploitable vulnerable web content + Fire report intake baked at build time

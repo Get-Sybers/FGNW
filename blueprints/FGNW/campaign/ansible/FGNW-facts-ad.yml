@@ -10,10 +10,19 @@
     facts_out: latest
     __ad_dir: "{{ playbook_dir }}/../facts-local/{{ facts_out }}/ad"
   tasks:
+    - name: "Read the controller user's identity (the owner of the files written here)"
+      ansible.builtin.setup:
+        gather_subset: ["!all", "!min", "user"]
+      delegate_to: localhost
+      delegate_facts: true
+      run_once: true
+      register: __ctl_user
     - name: Ensure the AD facts output dir exists (controller-side)
       ansible.builtin.file:
         path: "{{ __ad_dir }}"
         state: directory
+        owner: "{{ __ctl_user['ansible_facts']['ansible_user_id'] }}"
+        group: "{{ __ctl_user['ansible_facts']['ansible_user_gid'] }}"
         mode: "0700"
       delegate_to: localhost
       run_once: true
@@ -143,6 +152,8 @@
       ansible.builtin.copy:
         content: "{{ (item['stdout'] | default('')) | trim }}\n"
         dest: "{{ __ad_dir }}/{{ inventory_hostname }}.{{ item['item']['key'] }}.json"
+        owner: "{{ __ctl_user['ansible_facts']['ansible_user_id'] }}"
+        group: "{{ __ctl_user['ansible_facts']['ansible_user_gid'] }}"
         mode: "0600"
       delegate_to: localhost
       loop: "{{ __ad_q.results | default([]) }}"
