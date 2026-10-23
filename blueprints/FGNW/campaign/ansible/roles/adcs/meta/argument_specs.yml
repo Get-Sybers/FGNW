@@ -1,0 +1,30 @@
+---
+argument_specs:
+  main:
+    short_description: Install and configure an ADCS Enterprise Root CA
+    description:
+      - Installs the ADCS features, configures the host as an Enterprise Root CA named ca_common_name
+        under the forest-root credential adcs_domain_username / adcs_domain_password, enables the
+        web-enrollment endpoint when adcs_ca_web_enrollment is true and runs gpupdate /force.
+      - The CA name and the credential have no default; the play supplies them. The credential is a
+        forest-root Enterprise Admin because an Enterprise CA writes the forest's Configuration partition.
+    options:
+      ca_common_name:
+        type: str
+        required: true
+        description: Common name of the Enterprise Root CA (the caller passes C(Sunagakure Root CA)).
+      adcs_domain_username:
+        type: str
+        required: true
+        description:
+          - Account that runs Install-AdcsCertificationAuthority, in C(DOMAIN\user) form.
+          - Has to be an Enterprise Admin of the forest root domain.
+      adcs_domain_password:
+        type: str
+        required: true
+        no_log: true
+        description: Password of adcs_domain_username. Secret; the play supplies it from its data model, never a default.
+      adcs_ca_web_enrollment:
+        type: bool
+        default: true
+        description: Enable the certificate web-enrollment endpoint (Install-AdcsWebEnrollment) once the CA is up.

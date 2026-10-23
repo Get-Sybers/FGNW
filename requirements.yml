@@ -29,6 +29,6 @@ collections:
   # tag once one exists.
   - name: https://github.com/Get-Sybers/LXC.git
     type: git
-    version: 586a99197b06727e12f651b34956f56b6aab3d91
+    version: 695d377cb37b217277c5b4bba6ba6ea2b5c2b41f
   - name: community.proxmox
     version: "2.1.0"

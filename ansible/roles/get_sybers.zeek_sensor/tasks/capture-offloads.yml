@@ -1,21 +1,22 @@
 ---
 - name: "capture-offloads | Capture-gate — turn off receive offloads on each capture interface"
-  ansible.builtin.command: "ethtool -K {{ item.0 }} {{ item.1 }} off"
+  ansible.builtin.command:
+    argv: [ethtool, -K, "{{ item[0] }}", "{{ item[1] }}", "off"]
   loop: "{{ zeek_sensor_effective_interfaces | product(zeek_sensor_disable_offloads) | list }}"
   loop_control:
-    label: "{{ item.0 }} {{ item.1 }}"
+    label: "{{ item[0] }} {{ item[1] }}"
   register: __zeek_offload
   changed_when: __zeek_offload.rc == 0
   failed_when: false
 - name: "capture-offloads | Capture-gate — report offloads that could not be changed"
   ansible.builtin.debug:
     msg: >-
-      ethtool could not change {{ item.item.1 }} on {{ item.item.0 }}
-      ({{ item.stderr | default(item.stdout) | trim | truncate(120) }}).
+      ethtool could not change {{ item['item'][1] }} on {{ item['item'][0] }}
+      ({{ item['stderr'] | default(item['stdout']) | trim | truncate(120) }}).
       Often this means the feature is already fixed-off, which is the state we
       want; the GRO/LRO assertion below is authoritative.
   loop: >-
     {{ __zeek_offload.results | default([]) | rejectattr('rc', 'undefined')
        | rejectattr('rc', 'equalto', 0) | list }}
   loop_control:
-    label: "{{ item.item.0 }} {{ item.item.1 }}"
+    label: "{{ item['item'][0] }} {{ item['item'][1] }}"

@@ -1,0 +1,13 @@
+---
+# Play variables of FGNW-exchange.yml (play 4), loaded with vars_files.
+range_second_octet: "{{ ansible_host.split('.')[1] }}"
+fgnw_orgs:
+  konoha-mail: { domain: konohagakure.fire.ninja, ip: "10.{{ ansible_host.split('.')[1] }}.10.20" }
+  oto-mail: { domain: otogakure.ninja, ip: "10.{{ ansible_host.split('.')[1] }}.30.20" }
+  dark-mail: { domain: akatsuki.dark, ip: "10.{{ ansible_host.split('.')[1] }}.87.20" }
+# suna-mail absent: macOS mail host (Sand conversion); see note at the top of this file.
+fgnw_exchange_forest_root_map:
+  konoha-mail: fire.ninja
+  oto-mail: otogakure.ninja
+  dark-mail: akatsuki.dark
+__me: "{{ fgnw_exchange_forest_root_map[inventory_hostname] }}"

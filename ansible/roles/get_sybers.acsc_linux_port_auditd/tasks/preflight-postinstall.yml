@@ -1,6 +1,7 @@
 ---
 - name: "preflight-postinstall | Preflight — auditctl version"
-  ansible.builtin.command: auditctl -v
+  ansible.builtin.command:
+    argv: [auditctl, -v]
   register: __acsc_auditd_auditctl_v
   changed_when: false
   check_mode: false

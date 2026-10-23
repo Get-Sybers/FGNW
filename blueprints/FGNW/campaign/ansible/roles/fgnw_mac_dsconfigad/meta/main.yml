@@ -1,0 +1,26 @@
+---
+dependencies: []
+galaxy_info:
+  role_name: fgnw_mac_dsconfigad
+  namespace: get_sybers
+  author: Get-Sybers
+  description: >-
+    Bind a macOS host to a Windows Active Directory domain with Apple's own dsconfigad, the
+    macOS-supported way to make a Mac an AD client. Reads `dsconfigad -show`, runs
+    `dsconfigad -add` only when the target domain is not already present (so a re-run is a
+    no-op), and asserts the bind afterwards. The bind principal is passed in by the play and
+    never carried in defaults; the role does not touch the resolver, it relies on the range's
+    VLAN DNS to reach the domain's DC.
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: MacOSX
+      versions:
+        - all
+  galaxy_tags:
+    - fgnw
+    - macos
+    - activedirectory
+    - dsconfigad
+collections:
+  - ansible.builtin

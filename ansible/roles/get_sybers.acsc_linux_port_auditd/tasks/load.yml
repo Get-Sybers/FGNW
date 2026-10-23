@@ -6,7 +6,8 @@
          | reject('match', '\s*#') | join('\n')
          | regex_findall('(?:-F key=|-k )([A-Za-z0-9_.-]+)') | unique | sort }}
 - name: "load | What is loaded in the kernel right now?"
-  ansible.builtin.command: auditctl -l
+  ansible.builtin.command:
+    argv: [auditctl, -l]
   register: __acsc_auditd_loaded_pre
   changed_when: false
   check_mode: false

@@ -45,15 +45,15 @@
 - name: "Set the zeekctl options this role owns"
   ansible.builtin.lineinfile:
     path: "{{ zeek_sensor_cfgdir }}/zeekctl.cfg"
-    regexp: '^\s*#?\s*{{ item.key }}\s*='
-    line: "{{ item.key }} = {{ item.value }}"
+    regexp: '^\s*#?\s*{{ item["key"] }}\s*='
+    line: "{{ item['key'] }} = {{ item['value'] }}"
     insertafter: EOF
     owner: root
     group: "{{ zeek_sensor_group }}"
     mode: "0640"
   loop: "{{ __zeek_ctl_options }}"
   loop_control:
-    label: "{{ item.key }}"
+    label: "{{ item['key'] }}"
   vars:
     __zeek_ctl_options: >-
       {{ [
@@ -68,7 +68,8 @@
             if zeek_sensor_capture_filter | length > 0 else []) }}
   register: __zeek_ctlcfg
 - name: "Validate the policy before deploying it"
-  ansible.builtin.command: "{{ zeek_sensor_bin }} check"
+  ansible.builtin.command:
+    argv: ["{{ zeek_sensor_bin }}", check]
   become: "{{ zeek_sensor_user != 'root' }}"
   become_user: "{{ zeek_sensor_user }}"
   environment:

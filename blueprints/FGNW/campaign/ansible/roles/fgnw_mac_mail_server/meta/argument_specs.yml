@@ -1,0 +1,43 @@
+---
+argument_specs:
+  main:
+    short_description: Configure and start Postfix + Dovecot on the Sand macOS mail server and seed its mailboxes
+    description:
+      - Resolves the Homebrew prefix, intersects content/OWA/user-inboxes.yml with the AD users of the Sand domain,
+        writes the Postfix and Dovecot configs, creates a nologin account and Maildir per user, then enables and
+        starts both daemons. A changed config notifies the Restart postfix / Restart dovecot handler.
+      - Every input has a lab-safe default; the caller (FGNW-mac-mail.yml) passes nothing.
+    options:
+      fgnw_mac_mail_server_domain:
+        type: str
+        default: sunagakure.wind.ninja
+        description:
+          - Mail domain (Postfix mydomain) and the key into config.json lab.domains that selects the users to seed.
+      fgnw_mac_mail_server_hostname:
+        type: str
+        default: "{{ inventory_hostname }}.{{ fgnw_mac_mail_server_domain }}"
+        description:
+          - Postfix myhostname and SMTP banner name.
+      fgnw_mac_mail_server_relay_networks:
+        type: str
+        default: "127.0.0.0/8, 10.0.0.0/8"
+        description:
+          - Postfix mynetworks; clients in these networks may relay without authenticating.
+      fgnw_mac_mail_server_user_corpus_file:
+        type: str
+        default: "{{ playbook_dir }}/../content/OWA/user-inboxes.yml"
+        description:
+          - Controller-side path of the per-user inbox corpus whose keys (sAMAccountNames) become local mail
+            accounts.
+      fgnw_mac_mail_server_user_shell:
+        type: str
+        default: /sbin/nologin
+        description:
+          - Login shell of the seeded mail accounts (nologin, so they are mail-only).
+      fgnw_mac_mail_server_user_password_default:
+        type: str
+        default: Changeme1!
+        no_log: true
+        description:
+          - Password set on every seeded account (SHA-512 hashed); the IMAP/SMTP AUTH credential the Thunderbird
+            client uses. Lab placeholder; override it from the play for anything but the sealed range.

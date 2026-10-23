@@ -2,8 +2,8 @@
 - name: "retention | Set the zeekctl age and rotation levers"
   ansible.builtin.lineinfile:
     path: "{{ zeek_sensor_cfgdir }}/zeekctl.cfg"
-    regexp: '^\s*#?\s*{{ item.key }}\s*='
-    line: "{{ item.key }} = {{ item.value }}"
+    regexp: '^\s*#?\s*{{ item["key"] }}\s*='
+    line: "{{ item['key'] }} = {{ item['value'] }}"
     insertafter: EOF
     owner: root
     group: "{{ zeek_sensor_group }}"
@@ -13,7 +13,7 @@
     - { key: "StatsLogExpireInterval", value: "{{ zeek_sensor_stats_log_expire_days }}" }
     - { key: "LogRotationInterval", value: "{{ zeek_sensor_log_rotation_seconds }}" }
   loop_control:
-    label: "{{ item.key }}"
+    label: "{{ item['key'] }}"
   register: __zeek_retention_cfg
 - name: "retention | Install the log-tree pruner"
   ansible.builtin.template:
@@ -49,7 +49,8 @@
     enabled: true
     state: started
 - name: "retention | Run the pruner once to prove it executes"
-  ansible.builtin.command: /usr/local/sbin/zeek-sensor-prune
+  ansible.builtin.command:
+    argv: [/usr/local/sbin/zeek-sensor-prune]
   register: __zeek_prune_run
   changed_when: "'PRUNED' in __zeek_prune_run.stdout"
   failed_when: __zeek_prune_run.rc != 0

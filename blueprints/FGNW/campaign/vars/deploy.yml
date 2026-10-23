@@ -1,0 +1,50 @@
+---
+# Play variables of deploy.yml, loaded with vars_files.
+range_variant: regular
+range_testing: true
+range_fresh: false
+range_skip_nexus: false
+range_skip_exchange: false
+range_from_phase: ""
+force_reseed: false
+# Phase 1b, the GHOSTS CT (get_sybers.lxc.deploy_ghost9_range): the CT's rootfs
+# storage on the node, whether the node's API certificate is verified (a stock
+# node serves a self-signed one), and the server secrets — an empty password is
+# generated per deploy. The scoped Proxmox API token has no safe default: the four
+# ghost9_ct_api_* inputs come from the owner-only extra-vars file (docs/DEPLOY.md)
+# and phase 1b fails fast without them.
+ghost9_ct_storage: local-zfs
+ghost9_ct_api_validate_certs: false
+ghost9_db_password: ""
+ghost9_n8n_owner_password: ""
+ghost9_n8n_owner_email: admin@ghosts.local
+# ghost9_ct_api_host: ""
+# ghost9_ct_api_user: ""
+# ghost9_ct_api_token_id: ""
+# ghost9_ct_api_token_secret: ""
+bp_dir: "{{ playbook_dir | dirname }}"
+ludus_root: /opt/ludus
+ad_dir: "{{ playbook_dir }}/ad/NARUTO"
+ansible_dir: "{{ playbook_dir }}/ansible"
+ludus_user: range-admin
+users_dir: /opt/ludus/users/{{ ludus_user }}
+__variant_norm: "{{ 'regular' if range_variant == 'full' else range_variant }}"
+__variant_map:
+  small:
+    ad_config: config-small.json
+    ad_data: inventory-small
+    ad_prov: inventory-small.yml
+    infra: inventory-small-infra.yml
+    modern_infra: false
+  regular:
+    ad_config: config.json
+    ad_data: inventory
+    ad_prov: inventory.yml
+    infra: inventory-infra.yml
+    modern_infra: false
+  xl:
+    ad_config: config.json
+    ad_data: inventory
+    ad_prov: inventory.yml
+    infra: inventory-infra.yml
+    modern_infra: true

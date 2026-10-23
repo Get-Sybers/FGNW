@@ -5,7 +5,7 @@ source_sync:
     - ludus source add <sourceID> --all --force
   note: >-
     `ludus source add` installs blueprints/FGNW/requirements.yml, including the
-    get_sybers.lxc git pin and community.proxmox 2.1.0 the ghost9 CT needs (see
+    get_sybers.lxc git pin and the community.proxmox pin the ghost9 CT needs (see
     `ghost9:` below). The CT is reached over community.proxmox.proxmox_pct_remote;
     nothing in this blueprint depends on the locally patched community.general
     proxmox_pct_remote plugin. scripts/check-patches.py statically replays the
@@ -110,12 +110,13 @@ ghost9:
     - >-
       the scoped Proxmox API token ghost9-deploy@pve (pool GHOST9; minted by
       get_sybers.cluster) as the four ghost9_ct_api_* extra-vars of deploy.yml
+  # Both pins live in blueprints/FGNW/requirements.yml and nowhere else; a copy here drifts.
   collections:
     - name: get_sybers.lxc
-      pin: git+https://github.com/Get-Sybers/LXC.git@2313507225b32b1bf2f09c14b8f242f227872d21
-      note: collection 0.1.0; no release tag yet — re-pin to the tag once one exists (blueprints/FGNW/requirements.yml)
+      pinned_in: blueprints/FGNW/requirements.yml
+      note: a git source pinned to a commit (collection 0.1.0 has no release tag yet; re-pin to the tag once one exists)
     - name: community.proxmox
-      pin: "2.1.0"
+      pinned_in: blueprints/FGNW/requirements.yml
       note: >-
         the PVE API module lxc_guest creates the CT with, and the proxmox_pct_remote
         connection plugin every in-guest task uses; it replaces the locally patched

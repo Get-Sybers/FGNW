@@ -1,2 +1,8 @@
 ---
+# Enable the certificate web-enrollment endpoint (Install-AdcsWebEnrollment) once the CA is up.
 adcs_ca_web_enrollment: true
+# The three inputs below have no safe default: the play supplies them (adcs.yml names the CA and
+# takes the forest-root credential from its data). The role fails at include time without them.
+# ca_common_name: Sunagakure Root CA
+# adcs_domain_username: wind.ninja\Administrator
+# adcs_domain_password:  # secret: supplied by the play, never set here

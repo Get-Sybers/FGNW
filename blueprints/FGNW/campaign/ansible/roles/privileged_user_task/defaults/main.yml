@@ -14,3 +14,8 @@ privileged_user_task_stop_if_going_on_batteries: false
 privileged_user_task_start_when_available: true
 privileged_user_task_execution_time_limit: PT0S
 privileged_user_task_trigger_execution_time_limit: PT0S
+
+# Secret, no default on purpose (a role must not ship a credential). The invoking
+# play (lat.yml) sources it from the AD data model (config.json). Present here,
+# commented out, so this file stays the one list of the role's inputs.
+# privileged_user_task_password: ""

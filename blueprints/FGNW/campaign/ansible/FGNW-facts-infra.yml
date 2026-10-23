@@ -7,15 +7,23 @@
   hosts: localhost
   gather_facts: false
   connection: local
-  vars:
-    facts_out: latest
-    __bp_root: "{{ playbook_dir | dirname | dirname }}"
-    __src_root: "{{ playbook_dir | dirname | dirname | dirname | dirname }}"
-    __dir: "{{ playbook_dir }}/../facts-local/{{ facts_out }}/infra"
-    __range_config: "{{ __bp_root }}/range-config.yml"
+  vars_files:
+    - vars/FGNW-facts-infra-play1.yml
   tasks:
+    - name: "Read the controller user's identity (the owner of the files written here)"
+      ansible.builtin.setup:
+        gather_subset: ["!all", "!min", "user"]
+      delegate_to: localhost
+      delegate_facts: true
+      run_once: true
+      register: __ctl_user
     - name: Ensure infra facts dir exists
-      ansible.builtin.file: { path: "{{ __dir }}", state: directory, mode: "0700" }
+      ansible.builtin.file:
+        path: "{{ __dir }}"
+        state: directory
+        owner: "{{ __ctl_user['ansible_facts']['ansible_user_id'] }}"
+        group: "{{ __ctl_user['ansible_facts']['ansible_user_gid'] }}"
+        mode: "0700"
       changed_when: false
     - name: Read the range config (VM -> template mapping)
       ansible.builtin.slurp:
@@ -89,6 +97,8 @@
              'note': 'Interpret every gap against the phases that had actually RUN. A missing service/artifact from a phase that never ran is NOT a defect. See harvest_taken_at ---phases-seen--- and ---deploy-cmd--- for flags such as --skip-nexus / --skip-exchange.'
           } | to_nice_json }}
         dest: "{{ __dir }}/_pipeline-position.json"
+        owner: "{{ __ctl_user['ansible_facts']['ansible_user_id'] }}"
+        group: "{{ __ctl_user['ansible_facts']['ansible_user_gid'] }}"
         mode: "0600"
       changed_when: false
     - name: Write template provenance (per-VM lineage + available templates)
@@ -104,17 +114,30 @@
              'note': 'A rebuilt range MUST use these same base templates; template-baked config vs deploy-applied config is distinguished by comparing a fresh template clone against these harvested facts.'
           } | to_nice_json }}
         dest: "{{ __dir }}/_template-provenance.json"
+        owner: "{{ __ctl_user['ansible_facts']['ansible_user_id'] }}"
+        group: "{{ __ctl_user['ansible_facts']['ansible_user_gid'] }}"
         mode: "0600"
       changed_when: false
 - name: Harvest Windows logging/monitoring baseline
   hosts: windows_realname
   gather_facts: false
-  vars:
-    facts_out: latest
-    __dir: "{{ playbook_dir }}/../facts-local/{{ facts_out }}/infra"
+  vars_files:
+    - vars/FGNW-facts-infra-play2.yml
   tasks:
+    - name: "Read the controller user's identity (the owner of the files written here)"
+      ansible.builtin.setup:
+        gather_subset: ["!all", "!min", "user"]
+      delegate_to: localhost
+      delegate_facts: true
+      run_once: true
+      register: __ctl_user
     - name: Ensure infra facts dir exists (controller-side)
-      ansible.builtin.file: { path: "{{ __dir }}", state: directory, mode: "0700" }
+      ansible.builtin.file:
+        path: "{{ __dir }}"
+        state: directory
+        owner: "{{ __ctl_user['ansible_facts']['ansible_user_id'] }}"
+        group: "{{ __ctl_user['ansible_facts']['ansible_user_gid'] }}"
+        mode: "0700"
       delegate_to: localhost
       run_once: true
       changed_when: false
@@ -186,20 +209,28 @@
       loop_control: { label: "{{ inventory_hostname }}:{{ item }}" }
     - name: Write Windows baseline JSON
       ansible.builtin.copy:
-        content: "{{ (item.stdout | default('')) | trim }}\n"
-        dest: "{{ __dir }}/{{ inventory_hostname }}.{{ item.item }}.json"
+        content: "{{ (item['stdout'] | default('')) | trim }}\n"
+        dest: "{{ __dir }}/{{ inventory_hostname }}.{{ item['item'] }}.json"
+        owner: "{{ __ctl_user['ansible_facts']['ansible_user_id'] }}"
+        group: "{{ __ctl_user['ansible_facts']['ansible_user_gid'] }}"
         mode: "0600"
       delegate_to: localhost
       loop: "{{ __win.results | default([]) }}"
-      loop_control: { label: "{{ inventory_hostname }}.{{ item.item }}.json" }
+      loop_control: { label: "{{ inventory_hostname }}.{{ item['item'] }}.json" }
       changed_when: false
 - name: Harvest Exchange structure (best-effort)
   hosts: exchange_servers
   gather_facts: false
-  vars:
-    facts_out: latest
-    __dir: "{{ playbook_dir }}/../facts-local/{{ facts_out }}/infra"
+  vars_files:
+    - vars/FGNW-facts-infra-play3.yml
   tasks:
+    - name: "Read the controller user's identity (the owner of the files written here)"
+      ansible.builtin.setup:
+        gather_subset: ["!all", "!min", "user"]
+      delegate_to: localhost
+      delegate_facts: true
+      run_once: true
+      register: __ctl_user
     - name: "Exchange: accepted domains / mailboxes / DGs / connectors / cert (structure only)"
       ansible.windows.win_shell: |
         $ErrorActionPreference='Stop'
@@ -257,20 +288,28 @@
       loop_control: { label: "{{ inventory_hostname }}:{{ item }}" }
     - name: Write Exchange JSON
       ansible.builtin.copy:
-        content: "{{ (item.stdout | default('')) | trim }}\n"
-        dest: "{{ __dir }}/{{ inventory_hostname }}.exchange-{{ item.item }}.json"
+        content: "{{ (item['stdout'] | default('')) | trim }}\n"
+        dest: "{{ __dir }}/{{ inventory_hostname }}.exchange-{{ item['item'] }}.json"
+        owner: "{{ __ctl_user['ansible_facts']['ansible_user_id'] }}"
+        group: "{{ __ctl_user['ansible_facts']['ansible_user_gid'] }}"
         mode: "0600"
       delegate_to: localhost
       loop: "{{ __ex.results | default([]) }}"
-      loop_control: { label: "{{ inventory_hostname }}.exchange-{{ item.item }}.json" }
+      loop_control: { label: "{{ inventory_hostname }}.exchange-{{ item['item'] }}.json" }
       changed_when: false
 - name: Harvest GHOSTS emulation scaffolding
   hosts: ghosts_clients
   gather_facts: false
-  vars:
-    facts_out: latest
-    __dir: "{{ playbook_dir }}/../facts-local/{{ facts_out }}/infra"
+  vars_files:
+    - vars/FGNW-facts-infra-play4.yml
   tasks:
+    - name: "Read the controller user's identity (the owner of the files written here)"
+      ansible.builtin.setup:
+        gather_subset: ["!all", "!min", "user"]
+      delegate_to: localhost
+      delegate_facts: true
+      run_once: true
+      register: __ctl_user
     - name: "GHOSTS: application.json, timeline.json, autologon (NO password), task, browsers"
       ansible.windows.win_shell: |
         $ErrorActionPreference='Stop'
@@ -294,23 +333,35 @@
       loop_control: { label: "{{ inventory_hostname }}:{{ item }}" }
     - name: Write GHOSTS JSON
       ansible.builtin.copy:
-        content: "{{ (item.stdout | default('')) | trim }}\n"
-        dest: "{{ __dir }}/{{ inventory_hostname }}.ghosts-{{ item.item }}.json"
+        content: "{{ (item['stdout'] | default('')) | trim }}\n"
+        dest: "{{ __dir }}/{{ inventory_hostname }}.ghosts-{{ item['item'] }}.json"
+        owner: "{{ __ctl_user['ansible_facts']['ansible_user_id'] }}"
+        group: "{{ __ctl_user['ansible_facts']['ansible_user_gid'] }}"
         mode: "0600"
       delegate_to: localhost
       loop: "{{ __gh.results | default([]) }}"
-      loop_control: { label: "{{ inventory_hostname }}.ghosts-{{ item.item }}.json" }
+      loop_control: { label: "{{ inventory_hostname }}.ghosts-{{ item['item'] }}.json" }
       changed_when: false
 - name: Harvest Linux infra facts
   hosts: linux_infra
   gather_facts: true
-  become: true
-  vars:
-    facts_out: latest
-    __dir: "{{ playbook_dir }}/../facts-local/{{ facts_out }}/infra"
+  vars_files:
+    - vars/FGNW-facts-infra-play5.yml
   tasks:
+    - name: "Read the controller user's identity (the owner of the files written here)"
+      ansible.builtin.setup:
+        gather_subset: ["!all", "!min", "user"]
+      delegate_to: localhost
+      delegate_facts: true
+      run_once: true
+      register: __ctl_user
     - name: Ensure infra facts dir exists (controller-side)
-      ansible.builtin.file: { path: "{{ __dir }}", state: directory, mode: "0700" }
+      ansible.builtin.file:
+        path: "{{ __dir }}"
+        state: directory
+        owner: "{{ __ctl_user['ansible_facts']['ansible_user_id'] }}"
+        group: "{{ __ctl_user['ansible_facts']['ansible_user_gid'] }}"
+        mode: "0700"
       delegate_to: localhost
       run_once: true
       changed_when: false
@@ -322,6 +373,7 @@
         manager: auto
       failed_when: false
     - name: Sysmon-linux + realm join structure, local settings, firewall, web/DB config
+      become: true
       ansible.builtin.shell: |
         set +e -o pipefail
         case "{{ item }}" in
@@ -383,12 +435,15 @@
         content: |
           {{ {
              'host': inventory_hostname,
-             'distribution': ansible_distribution ~ ' ' ~ ansible_distribution_version,
-             'services_running': (ansible_facts.services | default({}) | dict2items | selectattr('value.state','equalto','running') | map(attribute='key') | list),
-             'packages_present': (ansible_facts.packages | default({}) | list),
+             'distribution': ansible_facts['distribution'] ~ ' ' ~ ansible_facts['distribution_version'],
+             'services_running': (ansible_facts["services"] | default({}) | dict2items
+                                  | selectattr('value.state','equalto','running') | map(attribute='key') | list),
+             'packages_present': (ansible_facts["packages"] | default({}) | list),
              'probes': dict(__lx.results | default([]) | map(attribute='item') | zip(__lx.results | default([]) | map(attribute='stdout')))
           } | to_nice_json }}
         dest: "{{ __dir }}/{{ inventory_hostname }}.linux.json"
+        owner: "{{ __ctl_user['ansible_facts']['ansible_user_id'] }}"
+        group: "{{ __ctl_user['ansible_facts']['ansible_user_gid'] }}"
         mode: "0600"
       delegate_to: localhost
       changed_when: false

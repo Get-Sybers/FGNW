@@ -1,0 +1,27 @@
+---
+dependencies: []
+galaxy_info:
+  role_name: password_policy
+  namespace: get_sybers
+  author: Get-Sybers
+  description: >-
+    Converge a domain's Default Domain Policy to the lab's password and lockout
+    values. Run on a domain controller, the role reads the current default policy,
+    compares it against the requested lockout threshold, minimum password length,
+    lockout duration and observation window, and complexity toggle, and only writes
+    when a value has drifted. It also pins reversible encryption off and the maximum
+    password age to never-expire. Intended for deliberately weak lab policies, not
+    production hardening.
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Windows
+      versions:
+        - all
+  galaxy_tags:
+    - fgnw
+    - activedirectory
+    - passwordpolicy
+    - windows
+collections:
+  - ansible.windows

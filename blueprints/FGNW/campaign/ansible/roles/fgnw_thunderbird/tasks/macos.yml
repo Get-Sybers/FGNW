@@ -8,12 +8,16 @@
   ansible.builtin.file:
     path: "{{ fgnw_thunderbird_mac_distribution_dir }}"
     state: directory
+    owner: root
+    group: wheel
     mode: "0755"
   become: true
 
 - name: "macos | Install the Thunderbird policies.json (account preconfiguration)"
   ansible.builtin.copy:
     dest: "{{ fgnw_thunderbird_mac_distribution_dir }}/policies.json"
+    owner: root
+    group: wheel
     mode: "0644"
     content: "{{ lookup('template', 'policies.json.j2') }}"
   become: true

@@ -1,10 +1,9 @@
 ---
 - name: Seed flagship GHOSTS clients with FGNW persona activity
   hosts: ghosts_clients
-  vars:
-    ghosts_stop_wait_seconds: 5
-    range_second_octet: "{{ ansible_host.split('.')[1] }}"
-    ghosts_api_root: http://10.{{ range_second_octet }}.99.51:5000/api
+  gather_facts: false
+  vars_files:
+    - vars/FGNW-ghosts-activity.yml
   tasks:
     - name: Load persona timeline data (generated baseline)
       ansible.builtin.include_vars:
@@ -52,7 +51,7 @@
       when: ghosts_autologon_override is not defined
     - name: Resolve the timezone that active_hours are expressed in
       ansible.builtin.set_fact:
-        fgnw_ghosts_tz_offset: "{{ fgnw_ghosts_tz_offset | default(lookup('pipe', 'date +%z'), true) }}"
+        fgnw_ghosts_tz_offset: "{{ fgnw_ghosts_tz_offset | default(now(fmt='%z'), true) }}"
     - name: Convert this host's local active_hours into the UTC window GHOSTS expects
       ansible.builtin.set_fact:
         ghosts_time_on: "{{ '%02d:%02d:00' | format(__on_utc | int // 60, __on_utc | int % 60) }}"

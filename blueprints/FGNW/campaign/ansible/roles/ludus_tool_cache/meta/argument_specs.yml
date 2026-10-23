@@ -1,0 +1,39 @@
+---
+argument_specs:
+  main:
+    short_description: Serve a static tool-download index and stage tool binaries
+    description:
+      - Installs nginx, builds a tool-download index page from the supplied categories,
+        fetches each tool's binary (by URL or from a controller-side local file), and
+        publishes a catch-all vhost so the files are downloadable over HTTP.
+      - The tool catalogue is supplied by the caller; the page title, subtitle and
+        on-disk paths have lab-safe defaults.
+    options:
+      ludus_tool_cache_categories:
+        type: list
+        elements: dict
+        default: []
+        description:
+          - The tool catalogue, rendered into the index and iterated to fetch binaries.
+            Each category is a dict with name, description and a tools list; each tool
+            carries name, description, filename and optionally url, manual_install,
+            local_file and local_source.
+          - Defaults to an empty list, but the role fails fast when it is empty, so the
+            caller must load a tools YAML and pass the list (the attacker-web play
+            passes tool_categories from content/www/attacker-tools.yml).
+      ludus_tool_cache_title:
+        type: str
+        default: Tool Cache
+        description: Heading and HTML title of the generated index page.
+      ludus_tool_cache_subtitle:
+        type: str
+        default: Pre-staged tools for range operations. All binaries are served from /tools/ for direct download.
+        description: Lead paragraph shown under the title on the index page.
+      ludus_tool_cache_web_root:
+        type: str
+        default: /var/www/html
+        description: nginx document root; the index page and the tools subdirectory live here.
+      ludus_tool_cache_tools_subdir:
+        type: str
+        default: tools
+        description: Subdirectory of the web root that holds the downloadable binaries and the URL path they are served under.

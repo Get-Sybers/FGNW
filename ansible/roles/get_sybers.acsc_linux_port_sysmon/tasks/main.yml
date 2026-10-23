@@ -18,11 +18,11 @@
   ansible.builtin.include_tasks: configure.yml
 - name: "Install Sysmon with our config (first time)"
   ansible.builtin.include_tasks: configure-install.yml
-  when: "'sysmon.service' not in ansible_facts.services"
+  when: "'sysmon.service' not in ansible_facts['services']"
 - name: "Re-apply the config (changed, already installed)"
   ansible.builtin.include_tasks: configure-reapply.yml
   when:
-    - "'sysmon.service' in ansible_facts.services"
+    - "'sysmon.service' in ansible_facts['services']"
     - __acsc_sysmon_cfg.changed
 - name: "Ensure Sysmon is enabled and running"
   ansible.builtin.include_tasks: service.yml

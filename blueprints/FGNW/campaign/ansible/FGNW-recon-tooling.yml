@@ -2,9 +2,8 @@
 - name: Deploy recon tooling (nmap from the Akatsuki tool-cache, never the internet)
   hosts: akatsuki-ws2
   gather_facts: false
-  vars:
-    __toolcache_host: "{{ hostvars['attacker'].ansible_host | default('') }}"
-    range_recon_tooling_nmap_zip_url: http://{{ __toolcache_host }}/tools/nmap-7.92-win32.zip
+  vars_files:
+    - vars/FGNW-recon-tooling.yml
   pre_tasks:
     - name: Assert the tool-cache IP resolved from the infra inventory
       ansible.builtin.assert:

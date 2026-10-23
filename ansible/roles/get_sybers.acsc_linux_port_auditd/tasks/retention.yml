@@ -2,14 +2,14 @@
 - name: "retention | Write the managed auditd.conf keys"
   ansible.builtin.lineinfile:
     path: "{{ acsc_auditd_conf_path }}"
-    regexp: "^\\s*{{ item.key }}\\s*="
-    line: "{{ item.key }} = {{ item.value }}"
+    regexp: "^\\s*{{ item['key'] }}\\s*="
+    line: "{{ item['key'] }} = {{ item['value'] }}"
     state: present
     owner: root
     group: root
     mode: "0640"
   loop: "{{ __acsc_auditd_settings }}"
-  loop_control: { label: "{{ item.key }}" }
+  loop_control: { label: "{{ item['key'] }}" }
 - name: "retention | Ensure the state directory exists"
   ansible.builtin.file:
     path: "{{ acsc_auditd_state_dir }}"
@@ -40,19 +40,19 @@
   vars:
     __found: >-
       {{ (__acsc_auditd_conf_raw.content | b64decode).splitlines()
-         | select('match', '^\s*' ~ item.key ~ '\s*=')
-         | map('regex_replace', '^\s*' ~ item.key ~ '\s*=\s*(.*?)\s*$', '\1')
+         | select('match', '^\s*' ~ item['key'] ~ '\s*=')
+         | map('regex_replace', '^\s*' ~ item['key'] ~ '\s*=\s*(.*?)\s*$', '\1')
          | list }}
   ansible.builtin.assert:
     that:
       - __found | length == 1
-      - (__found | first | default('')) == (item.value | string)
+      - (__found | first | default('')) == (item['value'] | string)
     fail_msg: >-
-      {{ acsc_auditd_conf_path }} should set {{ item.key }} exactly once to
-      '{{ item.value }}', but the effective occurrences are {{ __found }}. More
+      {{ acsc_auditd_conf_path }} should set {{ item['key'] }} exactly once to
+      '{{ item["value"] }}', but the effective occurrences are {{ __found }}. More
       than one uncommented occurrence means a later line shadows ours and the
       running daemon is not using this role's value; zero means the lineinfile
       regexp did not match this distro's layout of that key.
     quiet: true
   loop: "{{ __acsc_auditd_settings }}"
-  loop_control: { label: "{{ item.key }}" }
+  loop_control: { label: "{{ item['key'] }}" }

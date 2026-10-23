@@ -25,15 +25,15 @@
 - name: "verify | VERIFY — enabled state matches what was asked for"
   ansible.builtin.assert:
     that: >-
-      ((item.stdout | regex_search('(?i)Enabled:\s*true')) is not none)
+      ((item['stdout'] | regex_search('(?i)Enabled:\s*true')) is not none)
       == (acsc_wef_enable_subscriptions | bool)
     fail_msg: >-
-      Subscription '{{ item.item }}' reports an Enabled state that does not
+      Subscription '{{ item['item'] }}' reports an Enabled state that does not
       match acsc_wef_enable_subscriptions={{ acsc_wef_enable_subscriptions }}.
     quiet: true
   loop: "{{ __acsc_wef_state.results }}"
   loop_control:
-    label: "{{ item.item }}"
+    label: "{{ item['item'] }}"
 - name: "verify | Report"
   ansible.builtin.debug:
     msg: >-

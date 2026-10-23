@@ -1,0 +1,33 @@
+---
+argument_specs:
+  main:
+    short_description: Converge the Default Domain Policy to the lab password/lockout values
+    description:
+      - Reads the domain's Default Domain Policy and sets it to the requested lockout
+        threshold, minimum password length, lockout duration, lockout observation
+        window and complexity toggle, writing only the settings that have drifted.
+      - Reversible encryption is forced off and the maximum password age to
+        never-expire by the task itself; those are not inputs. The string-typed inputs
+        match how the calling play passes the values (quoted strings into a PowerShell
+        param block that casts them).
+    options:
+      password_policy_try_before_lock:
+        type: str
+        default: "0"
+        description: Account-lockout threshold (failed attempts before lockout); "0" disables lockout.
+      password_policy_pass_length:
+        type: str
+        default: "5"
+        description: Minimum password length.
+      password_policy_lock_duration:
+        type: str
+        default: "00:00:00"
+        description: Lockout duration as a TimeSpan string.
+      password_policy_lock_observation:
+        type: str
+        default: "00:00:00"
+        description: Lockout observation window as a TimeSpan string.
+      password_policy_complexity:
+        type: bool
+        default: false
+        description: Whether password complexity is enforced.

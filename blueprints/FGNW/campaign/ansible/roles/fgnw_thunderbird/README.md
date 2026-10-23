@@ -1,7 +1,7 @@
 # fgnw_thunderbird
 
 Unified Mozilla **Thunderbird** mail-client role for the FGNW range. Dispatches
-on `ansible_os_family` so the same role handles the Windows workstations
+on `ansible_facts['os_family']` so the same role handles the Windows workstations
 (konoha-ws1..5, oto-ws1, akatsuki-ws1/2) that talk IMAP/SMTP to their village's
 Exchange server, **and** the Hidden Sand macOS workstation (suna-ws1) that talks
 to the Postfix/Dovecot stack stood up by `fgnw_mac_mail_server`.
@@ -14,8 +14,8 @@ per workstation, with persona + mail-server vars derived from
 
 | OS family | Install | Configure |
 | --- | --- | --- |
-| Windows (`ansible_os_family: Windows`) | `chocolatey.chocolatey.win_chocolatey` installs `thunderbird` from the range's Nexus `chocolatey-proxy` repo | Drops `C:\Program Files\Mozilla Thunderbird\distribution\policies.json` with Mozilla's enterprise `EmailAccountSetup` policy |
-| macOS (`ansible_os_family: Darwin`) | Expects Thunderbird to already be installed as a Homebrew cask (Phase 1c `FGNW-mac-dev.yml` -> `homebrew_casks: [thunderbird]`) — the install cannot run here because Phase 2 containment seals internet egress | Drops `/Applications/Thunderbird.app/Contents/Resources/distribution/policies.json` with the same Mozilla policy schema |
+| Windows (`ansible_facts['os_family']: Windows`) | `chocolatey.chocolatey.win_chocolatey` installs `thunderbird` from the range's Nexus `chocolatey-proxy` repo | Drops `C:\Program Files\Mozilla Thunderbird\distribution\policies.json` with Mozilla's enterprise `EmailAccountSetup` policy |
+| macOS (`ansible_facts['os_family']: Darwin`) | Expects Thunderbird to already be installed as a Homebrew cask (Phase 1c `FGNW-mac-dev.yml` -> `homebrew_casks: [thunderbird]`) — the install cannot run here because Phase 2 containment seals internet egress | Drops `/Applications/Thunderbird.app/Contents/Resources/distribution/policies.json` with the same Mozilla policy schema |
 
 Both branches share one Jinja template
 (`templates/policies.json.j2`) that renders Mozilla's `EmailAccountSetup` block

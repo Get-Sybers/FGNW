@@ -1,0 +1,5 @@
+---
+# Play variables of FGNW-ghosts-activity.yml, loaded with vars_files.
+ghosts_stop_wait_seconds: 5
+range_second_octet: "{{ ansible_host.split('.')[1] }}"
+ghosts_api_root: http://10.{{ range_second_octet }}.99.51:5000/api

@@ -28,15 +28,15 @@
     - "{{ velociraptor_install_path }}/client.config.yaml"
 - name: "verify | Assert both configs are present"
   ansible.builtin.assert:
-    that: item.stat.exists
+    that: item['stat']['exists']
     fail_msg: >-
-      {{ item.item }} is missing -- re-run the role without tags; the
+      {{ item['item'] }} is missing -- re-run the role without tags; the
       creates:-guarded generate/split tasks will regenerate whichever piece
       is absent.
     quiet: true
   loop: "{{ velociraptor_config_stat.results }}"
   loop_control:
-    label: "{{ item.item }}"
+    label: "{{ item['item'] }}"
 - name: "verify | Report"
   ansible.builtin.debug:
     msg: >-

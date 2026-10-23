@@ -1,6 +1,7 @@
 ---
 - name: "verify | Verify the running config is ours"
-  ansible.builtin.command: sysmon -s
+  ansible.builtin.command:
+    argv: [sysmon, -s]
   register: __acsc_sysmon_running
   changed_when: false
   failed_when:

@@ -1,0 +1,12 @@
+---
+# This role has no inputs with a safe default: both are site data the calling play
+# supplies (ad-data.yml passes them from the lab data model). They are listed here,
+# commented out, so this file is still the one list of the role's inputs.
+#
+# The lab host inventory, keyed by host key; each value carries hostname, type,
+# domain, path (target OU DN) and use_laps. The play passes lab.hosts.
+# hosts_dict: {}
+#
+# The domain whose member computer objects are in scope. The play passes
+# lab.hosts[dict_key].domain.
+# member_domain: ""

@@ -1,0 +1,32 @@
+---
+dependencies: []
+galaxy_info:
+  role_name: fgnw_themed_sites
+  namespace: get_sybers
+  author: Get-Sybers
+  description: >-
+    Render and serve the FGNW range's themed per-domain web content on the
+    attacker/web Linux host. Installs nginx (distro package), builds one document
+    root per site URL under a shared web root, renders each site's index.html from
+    its archetype template (news, wiki, portal, forum, shop, fansite), and deploys a
+    single name-based nginx vhost that serves every domain from its own root. All
+    page data (the site list, cross-links, character profiles and technique lists)
+    is supplied by the caller through vars; the role carries only a lab-safe
+    village-accent colour map and path defaults.
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Debian
+      versions:
+        - all
+    - name: Ubuntu
+      versions:
+        - all
+  galaxy_tags:
+    - fgnw
+    - nginx
+    - web
+    - content
+    - linux
+collections:
+  - ansible.builtin

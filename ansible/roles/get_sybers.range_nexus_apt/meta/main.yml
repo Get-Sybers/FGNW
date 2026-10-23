@@ -10,7 +10,7 @@ galaxy_info:
     skew. Distros with no Nexus base-OS proxy (Ubuntu) are skipped. FGNW
   role_name: range_nexus_apt
   license: AGPL-3.0-only
-  min_ansible_version: "2.12"
+  min_ansible_version: "2.15"
   platforms:
     - name: Debian
       versions:

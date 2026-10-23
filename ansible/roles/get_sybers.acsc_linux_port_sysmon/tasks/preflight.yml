@@ -8,9 +8,9 @@
     quiet: true
 - name: "preflight | Platform is one this role was written for"
   ansible.builtin.assert:
-    that: ansible_facts.os_family | default('') == 'Debian'
+    that: ansible_facts['os_family'] | default('') == 'Debian'
     fail_msg: >-
-      os_family is '{{ ansible_facts.os_family | default("unknown") }}'. This
+      os_family is '{{ ansible_facts['os_family'] | default("unknown") }}'. This
       role installs .deb artefacts with apt and asserts against journald; there
       is no dnf/rpm path here. If ansible_facts is empty, the calling play set
       gather_facts: false — this role needs facts.
@@ -68,11 +68,11 @@
 - name: "preflight | Is this a container eBPF cannot load in?"
   ansible.builtin.set_fact:
     __acsc_sysmon_ebpf_doubtful: >-
-      {{ ansible_facts.virtualization_type | default('') in ['lxc', 'docker', 'podman', 'container'] }}
+      {{ ansible_facts['virtualization_type'] | default('') in ['lxc', 'docker', 'podman', 'container'] }}
 - name: "preflight | Report what this run will do"
   ansible.builtin.debug:
     msg:
       - "host: {{ inventory_hostname }}, profile={{ acsc_sysmon_profile }}"
-      - "virtualization_type: {{ ansible_facts.virtualization_type | default('none') }} (container policy: {{ acsc_sysmon_container_policy }})"
+      - "virtualization_type: {{ ansible_facts['virtualization_type'] | default('none') }} (container policy: {{ acsc_sysmon_container_policy }})"
       - "artefacts: {{ acsc_sysmon_artefacts | map(attribute='deb') | list }}"
       - "config: {{ acsc_sysmon_config_path }} (schema {{ acsc_sysmon_schema_version }})"

@@ -272,11 +272,16 @@ Ludus server (`pct`, `/etc/pve` and the OCI pull are root-only); Proxmox VE 9.1+
 `oci-registry-pull` storage API); the node reaches `ghcr.io` (or a mirror — point
 `template_image` at it); ansible-core >= 2.19 with `python3-proxmoxer` and
 `python3-requests` on that node; the collections of `blueprints/FGNW/requirements.yml`
-installed by `ludus source add` (`get_sybers.lxc` from its git pin, `community.proxmox`
-2.1.0); and a scoped Proxmox API token (`ghost9-deploy@pve`, pool `GHOST9`, minted by the
-cluster collection) passed to `deploy.yml` as `-e @<0600 file>` defining the four
-`ghost9_ct_api_*` vars — never inline on argv; the phase fails with instructions if the
-token is absent.
+installed by `ludus source add` (`get_sybers.lxc` from its git pin and its
+`community.proxmox` dependency); and a scoped Proxmox API token (`ghost9-deploy@pve`,
+pool `GHOST9`, minted by the cluster collection) passed to `deploy.yml` as
+`-e @<0600 file>` defining the four `ghost9_ct_api_*` vars — never inline on argv; the
+phase fails with instructions if the token is absent. Two more inputs have defaults in
+`deploy.yml` and can go in the same file: `ghost9_ct_storage` (`local-zfs`, the CT's
+rootfs storage on the node) and `ghost9_ct_api_validate_certs` (`false`, because a stock
+node serves a self-signed API certificate; set `true` behind a trusted one). Phase 1b
+passes them to the range play as `lxc_ghost9_range_storage` and `pve_validate_certs`,
+with `pve_api_password` empty because the token is the only credential it supports.
 
 **Ports.** The template's in-guest `nftables` firewall opens the API `:5000`
 (`ApiRootUrl http://10.<N>.99.51:5000/api`, the same contract every client already

@@ -1,9 +1,10 @@
 ---
 - name: Create and enable SSH host keys regeneration service
   hosts: all
-  become: true
+  gather_facts: false
   tasks:
     - name: Create systemd service file for SSH host keys regeneration
+      become: true
       ansible.builtin.copy:
         dest: /etc/systemd/system/regenerate_ssh_host_keys.service
         content: |
@@ -21,9 +22,11 @@
         group: root
         mode: '0644'
     - name: Reload systemd daemon
+      become: true
       ansible.builtin.systemd:
         daemon_reload: true
     - name: Enable SSH host keys regeneration service
+      become: true
       ansible.builtin.systemd:
         name: regenerate_ssh_host_keys
         enabled: true

@@ -2,11 +2,11 @@
 dependencies: []
 galaxy_info:
   role_name: fgnw_thunderbird
-  namespace: fgnw
+  namespace: get_sybers
   author: Get-Sybers
   description: >-
     Install and preconfigure the Mozilla Thunderbird mail client on an FGNW range
-    workstation. Unified Win+Mac role dispatching on ansible_os_family. Installs
+    workstation. Unified Win+Mac role dispatching on ansible_facts['os_family']. Installs
     via Chocolatey (Windows) or expects a pre-staged Homebrew cask (macOS), then
     drops an enterprise policies.json that configures the account against the
     village's mail server (Exchange via IMAP/SMTP for Konoha / Sound / Akatsuki,
@@ -14,7 +14,7 @@ galaxy_info:
     vars; the role has no identity defaults that would silently point hosts at the
     wrong server.
   license: MIT
-  min_ansible_version: "2.14"
+  min_ansible_version: "2.15"
   platforms:
     - name: Windows
       versions:

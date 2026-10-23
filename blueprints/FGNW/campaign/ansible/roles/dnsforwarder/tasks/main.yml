@@ -11,15 +11,15 @@
   when: (dnsforwarder_domains | length) != (__deployed_domains | length)
 - name: Publish a conditional forwarder for each remote village
   ansible.windows.win_dns_zone:
-    name: "{{ item.name }}"
+    name: "{{ item['name'] }}"
     type: forwarder
     dns_servers:
-      - "{{ hostvars[item.dc_host]['ansible_host'] }}"
+      - "{{ hostvars[item['dc_host']]['ansible_host'] }}"
   loop: "{{ __deployed_domains }}"
-  when: item.name != ansible_domain
+  when: item['name'] != ansible_facts['domain']
 - name: Resolve this forest's -owa VLAN octet (blank when it runs no mail server)
   ansible.builtin.set_fact:
-    __dnsforwarder_owa_octet: "{{ dnsforwarder_mail_owa_vlan_octet[ansible_domain] | default('') }}"
+    __dnsforwarder_owa_octet: "{{ dnsforwarder_mail_owa_vlan_octet[ansible_facts['domain']] | default('') }}"
 - name: Compose this forest's -owa address from the range's second octet
   ansible.builtin.set_fact:
     __dnsforwarder_owa_ip: 10.{{ ansible_host.split('.')[1] }}.{{ __dnsforwarder_owa_octet }}.20
@@ -33,11 +33,11 @@
   changed_when: false
   failed_when: false
   when: __dnsforwarder_owa_octet != ''
-- name: "Register the mail A record for the domain: {{ 'mail.' ~ ansible_domain ~ ' -> ' ~ (__dnsforwarder_owa_ip | default('')) }}"
+- name: "Register the mail A record for the domain: {{ 'mail.' ~ ansible_facts['domain'] ~ ' -> ' ~ (__dnsforwarder_owa_ip | default('')) }}"
   ansible.windows.win_dns_record:
     name: mail
     type: A
-    zone: "{{ ansible_domain }}"
+    zone: "{{ ansible_facts['domain'] }}"
     value:
       - "{{ __dnsforwarder_owa_ip }}"
     state: present

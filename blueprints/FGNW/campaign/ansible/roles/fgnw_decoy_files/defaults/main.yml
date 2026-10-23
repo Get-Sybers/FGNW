@@ -1,0 +1,14 @@
+---
+# Both inputs are REQUIRED and have no default by design: a defaulted village would plant the
+# wrong corpus on a host, and a defaulted root would be wrong on one of the two platforms
+# (Windows wants a drive path, macOS a POSIX path). The entries stay here, commented out, so
+# this file remains the one list of the role's inputs; the caller play sets both, and
+# meta/argument_specs.yml rejects an include that leaves either out.
+
+# Key into content/filesystem/village-folders.yml (village_documents) and the directory name
+# under content/filesystem/documents/ that holds the authored lore-accurate files.
+# fgnw_decoy_files_village: Hidden Sand Village (Sunagakure)
+
+# Destination root in the host's own path syntax: C:\Shares\Documents on Windows (or a user
+# profile such as C:\Users\naruto.uzumaki), /Users/Shared/Documents on macOS.
+# fgnw_decoy_files_root: /Users/Shared/Documents

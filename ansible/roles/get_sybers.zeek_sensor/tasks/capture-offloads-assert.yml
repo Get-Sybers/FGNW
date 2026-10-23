@@ -1,6 +1,7 @@
 ---
 - name: "capture-offloads-assert | Capture-gate — read back each interface's feature state"
-  ansible.builtin.command: "ethtool -k {{ item }}"
+  ansible.builtin.command:
+    argv: [ethtool, -k, "{{ item }}"]
   loop: "{{ zeek_sensor_effective_interfaces }}"
   register: __zeek_features
   changed_when: false
@@ -8,26 +9,26 @@
 - name: "capture-offloads-assert | Capture-gate — assert GRO/LRO are off (Zeek would see fabricated frames otherwise)"
   ansible.builtin.assert:
     that:
-      - item.rc == 0
-      - "'generic-receive-offload:' in item.stdout"
-      - "'generic-receive-offload: on' not in item.stdout"
-      - "'large-receive-offload: on' not in item.stdout"
+      - item['rc'] == 0
+      - "'generic-receive-offload:' in item['stdout']"
+      - "'generic-receive-offload: on' not in item['stdout']"
+      - "'large-receive-offload: on' not in item['stdout']"
     fail_msg: >-
-      {% if item.rc != 0 %}
-      Could not read the feature state of {{ item.item }}: `ethtool -k` exited
-      {{ item.rc }} ({{ item.stderr | default('') | trim | truncate(160) }}).
+      {% if item['rc'] != 0 %}
+      Could not read the feature state of {{ item['item'] }}: `ethtool -k` exited
+      {{ item['rc'] }} ({{ item['stderr'] | default('') | trim | truncate(160) }}).
       This is NOT a pass — the offload check has no data, and a sensor whose
       offload state is unknown may be analysing coalesced frames that were never
       transmitted. Fix the interface, or accept the fidelity loss explicitly
       with zeek_sensor_require_offloads_off=false.
       {% else %}
-      Receive offload is still enabled on {{ item.item }}. The kernel will
+      Receive offload is still enabled on {{ item['item'] }}. The kernel will
       coalesce segments before Zeek sees them, so Zeek analyses frames that were
       never transmitted and its length/sequence analysis produces logs that look
-      right and are not. Fix with `ethtool -K {{ item.item }} gro off lro off`,
+      right and are not. Fix with `ethtool -K {{ item['item'] }} gro off lro off`,
       or accept the fidelity loss with zeek_sensor_require_offloads_off=false.
       {% endif %}
     quiet: true
   loop: "{{ __zeek_features.results | default([]) }}"
   loop_control:
-    label: "{{ item.item }}"
+    label: "{{ item['item'] }}"

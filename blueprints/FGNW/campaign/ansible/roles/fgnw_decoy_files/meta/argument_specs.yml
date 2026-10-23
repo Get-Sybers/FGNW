@@ -1,0 +1,23 @@
+---
+argument_specs:
+  main:
+    short_description: Plant the per-village decoy document corpus on an FGNW host
+    description:
+      - Loads content/filesystem/village-folders.yml, selects the file list keyed by the village and plants
+        it under the caller's root. Dispatches on ansible_facts['os_family'] (Windows win_file + win_copy,
+        Darwin file + copy under become); any other family fails loudly.
+      - Both inputs are required (no defaults, by design). The village selects the corpus and the root is a
+        platform-specific path only the caller knows.
+    options:
+      fgnw_decoy_files_village:
+        type: str
+        required: true
+        description:
+          - Key into content/filesystem/village-folders.yml (village_documents) and the name of the authored
+            content directory content/filesystem/documents/<village>/, e.g. `Hidden Leaf Village (Konohagakure)`.
+      fgnw_decoy_files_root:
+        type: str
+        required: true
+        description:
+          - Destination root on the host, in that host's own path syntax, e.g. `C:\Shares\Documents` on Windows
+            or `/Users/Shared/Documents` on macOS. Every relative path in the village list is planted beneath it.

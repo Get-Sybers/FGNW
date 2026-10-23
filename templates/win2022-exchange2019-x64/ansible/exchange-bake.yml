@@ -2,19 +2,8 @@
 - name: Bake Exchange 2019 prerequisites and media into the template
   hosts: all
   gather_facts: false
-  vars:
-    ex_dir: 'C:\ludus'
-    ex_stage: 'C:\ludus\exchange-prereqs'
-    ex_marker: 'C:\ludus\exchange_prereqs_complete.txt'
-    ex_iso_name: 'ExchangeServer2019-x64-cu15.iso'
-    ex_iso_url: 'https://download.microsoft.com/download/7/0/a/70a4d908-eacb-426e-ad9f-e7768e27f873/ExchangeServer2019-x64-cu15.iso'
-    ex_iso_sha256: '07c3fc1627dde4b88cb8d25eab5f16923cc12dac014e5965b633fac8fca629ae'
-    # a download URL has no break point
-    # yamllint disable-line rule:line-length
-    ex_dotnet_url: 'https://download.visualstudio.microsoft.com/download/pr/2d6bb6b2-226a-4baa-bdec-798822606ff1/8494001c276a4b96804cde7829c04d7f/ndp48-x86-x64-allos-enu.exe'
-    ex_vcredist_url: 'https://download.microsoft.com/download/2/E/6/2E61CFA4-993B-4DD4-91DA-3737CD5CD6E3/vcredist_x64.exe'
-    ex_rewrite_url: 'https://download.microsoft.com/download/1/2/8/128E2E22-C1B9-44A4-BE2A-5859ED1D4592/rewrite_amd64_en-US.msi'
-    ex_ucma_url: 'https://download.microsoft.com/download/2/C/4/2C47A5C1-A1F3-4843-B9FE-84C0032C61EC/UcmaRuntimeSetup.exe'
+  vars_files:
+    - vars/exchange-bake.yml
   tasks:
     - name: "Bake: ensure the ludus + staging dirs exist"
       ansible.windows.win_file:
@@ -77,8 +66,8 @@
             state: present
         - name: "Bake: download the Exchange prerequisite installers"
           ansible.windows.win_get_url:
-            url: "{{ item.url }}"
-            dest: "{{ ex_stage }}\\{{ item.name }}"
+            url: "{{ item['url'] }}"
+            dest: "{{ ex_stage }}\\{{ item['name'] }}"
             force: false
           loop:
             - { name: 'ndp48-x86-x64-allos-enu.exe', url: '{{ ex_dotnet_url }}' }
@@ -86,7 +75,7 @@
             - { name: 'rewrite_amd64_en-US.msi', url: '{{ ex_rewrite_url }}' }
             - { name: 'UcmaRuntimeSetup.exe', url: '{{ ex_ucma_url }}' }
           loop_control:
-            label: "{{ item.name }}"
+            label: "{{ item['name'] }}"
         - name: "Bake: install .NET Framework 4.8"
           ansible.windows.win_package:
             path: "{{ ex_stage }}\\ndp48-x86-x64-allos-enu.exe"

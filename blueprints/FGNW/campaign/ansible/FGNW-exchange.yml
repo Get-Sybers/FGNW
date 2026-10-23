@@ -2,21 +2,8 @@
 - name: "Real-exchange: domain-join the Exchange servers (small-range gap -- see note 4 above)"
   hosts: exchange_servers
   gather_facts: false
-  vars:
-    # suna-mail intentionally absent from these maps: it is a macOS Postfix/Dovecot host
-    # now (Hidden Sand Village conversion), is not in [exchange_servers], and never resolves
-    # against them. The Sand mail path is stood up by FGNW-mac-mail.yml in phase 4d.
-    fgnw_exchange_domainjoin_map:
-      konoha-mail: { domain: fire.ninja, dc_ip: "10.{{ ansible_host.split('.')[1] }}.10.15" }
-      oto-mail: { domain: otogakure.ninja, dc_ip: "10.{{ ansible_host.split('.')[1] }}.30.10" }
-      dark-mail: { domain: akatsuki.dark, dc_ip: "10.{{ ansible_host.split('.')[1] }}.87.10" }
-    __dj: "{{ fgnw_exchange_domainjoin_map[inventory_hostname] }}"
-    fgnw_exchange_original_child_domain_map:
-      konoha-mail: konohagakure.fire.ninja
-      oto-mail: otogakure.ninja
-      dark-mail: akatsuki.dark
-    __orig_child: "{{ fgnw_exchange_original_child_domain_map[inventory_hostname] }}"
-    __lab_admin_password: password
+  vars_files:
+    - vars/FGNW-exchange-play1.yml
   tasks:
     - name: Check this host's current domain membership (may be unjoined, or already a member of its child domain from the forest build on the full range)
       ansible.windows.win_shell: (Get-CimInstance -ClassName Win32_ComputerSystem).Domain
@@ -95,30 +82,8 @@
 - name: "Real-exchange: install REAL Exchange 2019 per forest (not the OWA simulation)"
   hosts: exchange_servers
   gather_facts: false
-  vars:
-    fgnw_exchange_iso_url: https://download.microsoft.com/download/7/0/a/70a4d908-eacb-426e-ad9f-e7768e27f873/ExchangeServer2019-x64-cu15.iso
-    # suna-mail absent: macOS mail host (Sand conversion); see note at the top of this file.
-    fgnw_exchange_map:
-      konoha-mail: { org: Konoha, domain: konohagakure.fire.ninja }
-      oto-mail: { org: Oto, domain: otogakure.ninja }
-      dark-mail: { org: Akatsuki, domain: akatsuki.dark }
-    __me: "{{ fgnw_exchange_map[inventory_hostname] }}"
-    fgnw_exchange_forest_root_map:
-      konoha-mail: fire.ninja
-      oto-mail: otogakure.ninja
-      dark-mail: akatsuki.dark
-    __forest_root: "{{ fgnw_exchange_forest_root_map[inventory_hostname] }}"
-    ludus_os_version: "2022"
-    ludus_exchange_iso_url: "{{ fgnw_exchange_iso_url }}"
-    exchange_dotnet_install_path: http://192.0.2.2:8081/repository/raw-hosted/tools/exchange/ndp48-x86-x64-allos-enu.exe
-    vcredist2013_install_path: http://192.0.2.2:8081/repository/raw-hosted/tools/exchange/vcredist2013_x64.exe
-    rewrite_module_path: http://192.0.2.2:8081/repository/raw-hosted/tools/exchange/rewrite_amd64_en-US.msi
-    ucma_runtime_path: http://192.0.2.2:8081/repository/raw-hosted/tools/exchange/UcmaRuntimeSetup.exe
-    ludus_exchange_domain: "{{ __me.org }}"
-    ludus_exchange_domain_username: "{{ __forest_root }}\\Administrator"
-    ludus_exchange_domain_password: password
-    ludus_exchange_dc: ""
-    ludus_exchange_host: "{{ inventory_hostname }}"
+  vars_files:
+    - vars/FGNW-exchange-play2.yml
   tasks:
     - name: Install Exchange + enable user mailboxes for this forest
       ansible.builtin.include_role:
@@ -144,13 +109,8 @@
 - name: "Real-exchange: mail-enable ALL AD groups as distribution groups (group mailboxes)"
   hosts: exchange_servers
   gather_facts: false
-  vars:
-    # suna-mail absent: macOS mail host (Sand conversion); see note at the top of this file.
-    fgnw_exchange_forest_root_map:
-      konoha-mail: fire.ninja
-      oto-mail: otogakure.ninja
-      dark-mail: akatsuki.dark
-    __me: "{{ fgnw_exchange_forest_root_map[inventory_hostname] }}"
+  vars_files:
+    - vars/FGNW-exchange-play3.yml
   tasks:
     - name: Enable-DistributionGroup for every mail-eligible AD group in this domain
       ansible.windows.win_shell: |
@@ -172,27 +132,17 @@
 - name: "Real-exchange: cross-forest send-connector mesh (every org -> every other org)"
   hosts: exchange_servers
   gather_facts: false
-  vars:
-    range_second_octet: "{{ ansible_host.split('.')[1] }}"
-    fgnw_orgs:
-      konoha-mail: { domain: konohagakure.fire.ninja, ip: "10.{{ ansible_host.split('.')[1] }}.10.20" }
-      oto-mail: { domain: otogakure.ninja, ip: "10.{{ ansible_host.split('.')[1] }}.30.20" }
-      dark-mail: { domain: akatsuki.dark, ip: "10.{{ ansible_host.split('.')[1] }}.87.20" }
-    # suna-mail absent: macOS mail host (Sand conversion); see note at the top of this file.
-    fgnw_exchange_forest_root_map:
-      konoha-mail: fire.ninja
-      oto-mail: otogakure.ninja
-      dark-mail: akatsuki.dark
-    __me: "{{ fgnw_exchange_forest_root_map[inventory_hostname] }}"
+  vars_files:
+    - vars/FGNW-exchange-play4.yml
   tasks:
     - name: Create a Send Connector to each OTHER forest's SMTP domain
       ansible.windows.win_shell: |
         Add-PSSnapin Microsoft.Exchange.Management.PowerShell.SnapIn
-        $name = "to-{{ item.value.domain }}"
+        $name = "to-{{ item['value']['domain'] }}"
         if (-not (Get-SendConnector -Identity $name -ErrorAction SilentlyContinue)) {
           New-SendConnector -Name $name -Custom `
-            -AddressSpaces "SMTP:{{ item.value.domain }};1" `
-            -SmartHosts "{{ item.value.ip }}" `
+            -AddressSpaces "SMTP:{{ item['value']['domain'] }};1" `
+            -SmartHosts "{{ item['value']['ip'] }}" `
             -SourceTransportServers $env:COMPUTERNAME
           Write-Output "SEND_CONNECTOR_CREATED"
         } else {
@@ -200,7 +150,7 @@
         }
       loop: "{{ fgnw_orgs | dict2items | rejectattr('key', 'equalto', inventory_hostname) | list }}"
       loop_control:
-        label: "{{ inventory_hostname }} -> {{ item.value.domain }}"
+        label: "{{ inventory_hostname }} -> {{ item['value']['domain'] }}"
       register: fgnw_exchange_sendconnector
       changed_when: "'SEND_CONNECTOR_CREATED' in (fgnw_exchange_sendconnector.stdout | default(''))"
       no_log: true

@@ -1,44 +1,16 @@
 ---
 - name: Bake ninjasploitable packages and vulnerable web content
   hosts: all
-  become: true
   gather_facts: true
-  vars:
-    ms_marker: /var/lib/ludus/ninjasploitable_prereqs_baked
-    ms_content_marker: /var/lib/ludus/ninjasploitable_content_baked
-    ms_service_packages:
-      - apache2
-      - apache2-utils
-      - php
-      - php-mysql
-      - php-gd
-      - php-curl
-      - libapache2-mod-php
-      - mariadb-server
-      - mariadb-client
-      - python3-pymysql
-      - vsftpd
-      - openssh-server
-      - samba
-      - postgresql
-    ms_adjoin_packages:
-      - realmd
-      - sssd
-      - sssd-tools
-      - adcli
-      - samba-common-bin
-      - krb5-user
-      - packagekit
-      - libnss-sss
-      - libpam-sss
-      - oddjob
-      - oddjob-mkhomedir
+  vars_files:
+    - vars/ninjasploitable-bake.yml
   tasks:
     - name: "Bake: is the content marker already present? (idempotency gate)"
       ansible.builtin.stat:
         path: "{{ ms_content_marker }}"
       register: ms_content_marker_stat
     - name: "Bake: install packages + deploy vulnerable web content"
+      become: true
       when: not ms_content_marker_stat.stat.exists
       block:
         - name: "Bake: preseed the Kerberos realm so krb5-user installs non-interactively"
@@ -341,10 +313,14 @@
           ansible.builtin.file:
             path: /var/lib/ludus
             state: directory
+            owner: root
+            group: root
             mode: "0755"
         - name: "Bake: write the prereq marker"
           ansible.builtin.copy:
             dest: "{{ ms_marker }}"
+            owner: root
+            group: root
             mode: "0644"
             content: |
               Ninjasploitable vulnerable-service + AD-join packages baked into this template
@@ -352,6 +328,8 @@
         - name: "Bake: write the content marker LAST"
           ansible.builtin.copy:
             dest: "{{ ms_content_marker }}"
+            owner: root
+            group: root
             mode: "0644"
             content: |
               Ninjasploitable vulnerable web content + Fire report intake baked at build time

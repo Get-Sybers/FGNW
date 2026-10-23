@@ -18,6 +18,82 @@ has no release tag yet.
 
 ## [Unreleased]
 
+### Fixed — the phase 1b contract to `get_sybers.lxc.deploy_ghost9_range`
+
+- `get_sybers.lxc` is pinned at the commit whose `deploy_ghost9_range` play is the
+  variable-free wrapper of the `lxc_ghost9_range` role (the inputs phase 1b writes),
+  in `requirements.yml` and `blueprints/FGNW/requirements.yml`; the campaign's
+  `ludus-requirements.yml` no longer carries its own (stale) copy of that pin or of
+  the `community.proxmox` one — it names the file that holds them.
+- Phase 1b defines every input the range play's `module_defaults` read:
+  `pve_validate_certs` (from the new `deploy.yml` input `ghost9_ct_api_validate_certs`,
+  default `false`) and an empty `pve_api_password` (token auth is the only credential
+  phase 1b supports). `ghost9_ct_storage`, `ghost9_db_password`,
+  `ghost9_n8n_owner_password` and `ghost9_n8n_owner_email` are declared inputs of
+  `deploy.yml` with their defaults, no longer `default()` filters at the call site, and
+  the four `ghost9_ct_api_*` inputs are listed there (commented out: no safe default).
+
+### Changed — dictionary and fact reads follow the standard
+
+- Loop items, declared loop variables and Jinja loop variables are read with
+  bracket notation (`item['key']`, never `item.key`): dot access breaks on
+  hyphenated keys and collides with the dict methods.
+- Facts are read through `ansible_facts[...]` everywhere
+  (`ansible_facts['os_family']`, `ansible_facts['distribution_release']`,
+  `ansible_facts['env']['HOME']`), never through the legacy injected `ansible_*`
+  names, which `inject_facts_as_vars = false` removes and which outrank play and
+  inventory variables when present.
+
+### Added — every campaign role ships its contract
+
+- Each role under `campaign/ansible/roles/` ships `meta/main.yml` (galaxy info
+  plus an explicit `dependencies:` list), `meta/argument_specs.yml` (every input
+  typed and described), `defaults/main.yml` (one entry per input; an input with
+  no safe default is present but commented out) and `README.md` (inputs,
+  capabilities, outcome, privilege, idempotence, failure behaviour and a caller
+  example), like every other role in this source. An input the tasks read
+  through a call-site `default()` is declared with that default; nothing is
+  renamed and no task changes. A spec never carries a templated default that
+  depends on the host (ansible-core renders spec defaults when it validates the
+  role, before any task runs).
+- `scripts/conform` checks those must-haves in every role tree the source ships
+  (`ansible/roles/`, the in-tree collections' roles and the campaign roles; a
+  third-party role bundled verbatim is exempt through the `.ansible-lint`
+  exclude list) and reports molecule coverage over the same trees.
+
+### Changed — one ansible-core floor, one namespace
+
+- Every role declares `min_ansible_version: "2.15"`, the floor the in-tree
+  collections' `meta/runtime.yml` already set, and every role's galaxy
+  namespace is `get_sybers`.
+
+### Changed — every file the automation writes declares its identity
+
+- Every `copy`, `template` and `file` task sets `owner`, `group` and `mode`.
+  System files on Linux targets are `root:root`, on macOS `root:wheel`; files
+  written on the controller or on the Ludus host carry the identity of the user
+  running Ansible, read natively with `setup` (the `user` subset) and declared
+  explicitly rather than inherited from the process.
+
+### Changed — plays carry data files, gather facts on purpose, escalate narrowly
+
+- A play's variables live in a data file next to it (`vars/<play>.yml`, loaded
+  with `vars_files` ahead of any other data file the play names), never inline
+  on the play.
+- A play that uses no facts, directly or through the roles it applies, sets
+  `gather_facts: false`.
+- `become: true` sits on the task, block or role entry that needs root, never
+  on the whole play; the controller-side writes of the fact-harvest plays no
+  longer run under escalation.
+- The two `pipe` lookups that shelled out for the time read Jinja's `now()`.
+
+### Changed — argv-form commands
+
+- Every `ansible.builtin.command` is argv-form (one list element per argument),
+  including the ones whose program path is templated. The `shell` tasks stay:
+  each uses a pipeline, a subshell or an exit-status idiom; the Windows
+  `win_command` / `win_shell` tasks are PowerShell and stay as written.
+
 ### Changed — shared Ansible is imported from the repository that owns it
 
 - The play that creates and runs the range's GHOSTS container is
@@ -166,7 +242,7 @@ now gets Mozilla Thunderbird installed and preconfigured by one unified role, dr
 by a new deploy phase `4e`. Blueprint version bumped to **0.4.0** accordingly.
 
 - `blueprints/FGNW/campaign/ansible/roles/FGNW_thunderbird/` — new unified role.
-  Dispatches on `ansible_os_family`: `windows.yml` installs via
+  Dispatches on `ansible_facts['os_family']`: `windows.yml` installs via
   `chocolatey.chocolatey.win_chocolatey` through the range's Nexus `chocolatey-proxy`
   repo and drops `C:\Program Files\Mozilla Thunderbird\distribution\policies.json`;
   `macos.yml` drops `/Applications/Thunderbird.app/Contents/Resources/distribution/
@@ -244,7 +320,7 @@ standalone repository.
 ### Changed — browser-defaults + decoy-files Win/Mac role pairs merged to OS-dispatching single roles
 
 Follow-up to the macOS conversion (#16): the two role pairs that had a Windows + a macOS
-variant are now a single role each, dispatching on `ansible_os_family` to a `tasks/windows.yml`
+variant are now a single role each, dispatching on `ansible_facts['os_family']` to a `tasks/windows.yml`
 or `tasks/macos.yml`. Prevents the kind of divergence #17's scheme fix caught (one role on
 `http://`, the other on `https://`) by making there be only one place to change for shared
 semantics. Caller contract matches the Windows pattern (single `FGNW_village` var; the decoy
@@ -252,7 +328,7 @@ role additionally wants `FGNW_decoy_root`).
 
 - `blueprints/FGNW/campaign/ansible/roles/FGNW_browser_defaults/tasks/main.yml` — loads
   the shared village corpus, computes `FGNW_homepage` + `FGNW_bookmark_list` once, then
-  `include_tasks: windows.yml` or `include_tasks: macos.yml` based on `ansible_os_family`;
+  `include_tasks: windows.yml` or `include_tasks: macos.yml` based on `ansible_facts['os_family']`;
   fails loudly on anything else.
 - `blueprints/FGNW/campaign/ansible/roles/FGNW_browser_defaults/tasks/windows.yml`
   (Edge/IE HKU/HKLM + Netscape bookmarks HTML) and `tasks/macos.yml` (Firefox app-bundle

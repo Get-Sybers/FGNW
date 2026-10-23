@@ -6,14 +6,22 @@
 - name: Harvest AD / identity facts from every domain controller
   hosts: dc
   gather_facts: false
-  vars:
-    facts_out: latest
-    __ad_dir: "{{ playbook_dir }}/../facts-local/{{ facts_out }}/ad"
+  vars_files:
+    - vars/FGNW-facts-ad.yml
   tasks:
+    - name: "Read the controller user's identity (the owner of the files written here)"
+      ansible.builtin.setup:
+        gather_subset: ["!all", "!min", "user"]
+      delegate_to: localhost
+      delegate_facts: true
+      run_once: true
+      register: __ctl_user
     - name: Ensure the AD facts output dir exists (controller-side)
       ansible.builtin.file:
         path: "{{ __ad_dir }}"
         state: directory
+        owner: "{{ __ctl_user['ansible_facts']['ansible_user_id'] }}"
+        group: "{{ __ctl_user['ansible_facts']['ansible_user_gid'] }}"
         mode: "0700"
       delegate_to: localhost
       run_once: true
@@ -105,7 +113,7 @@
     - name: Query AD structure (one JSON blob per category)
       ansible.windows.win_shell: >-
         powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass
-        -File C:\Windows\Temp\FGNW-facts-harvest.ps1 -Category '{{ item.key }}'
+        -File C:\Windows\Temp\FGNW-facts-harvest.ps1 -Category '{{ item['key'] }}'
       register: __ad_q
       changed_when: false
       failed_when: false
@@ -138,27 +146,29 @@
           fsmo: 1
           schtasks: 1
       loop_control:
-        label: "{{ inventory_hostname }}:{{ item.key }}"
+        label: "{{ inventory_hostname }}:{{ item['key'] }}"
     - name: Write each category's JSON to the controller
       ansible.builtin.copy:
-        content: "{{ (item.stdout | default('')) | trim }}\n"
-        dest: "{{ __ad_dir }}/{{ inventory_hostname }}.{{ item.item.key }}.json"
+        content: "{{ (item['stdout'] | default('')) | trim }}\n"
+        dest: "{{ __ad_dir }}/{{ inventory_hostname }}.{{ item['item']['key'] }}.json"
+        owner: "{{ __ctl_user['ansible_facts']['ansible_user_id'] }}"
+        group: "{{ __ctl_user['ansible_facts']['ansible_user_gid'] }}"
         mode: "0600"
       delegate_to: localhost
       loop: "{{ __ad_q.results | default([]) }}"
       loop_control:
-        label: "{{ inventory_hostname }}.{{ item.item.key }}.json"
+        label: "{{ inventory_hostname }}.{{ item['item']['key'] }}.json"
       changed_when: false
       when: __ad_q is defined
     - name: Note any category that returned an error string
       ansible.builtin.debug:
-        msg: "{{ inventory_hostname }}:{{ item.item.key }} -> {{ item.stdout | default('NO STDOUT') | trim }}"
+        msg: "{{ inventory_hostname }}:{{ item['item']['key'] }} -> {{ item['stdout'] | default('NO STDOUT') | trim }}"
       loop: "{{ __ad_q.results | default([]) }}"
       loop_control:
-        label: "{{ inventory_hostname }}:{{ item.item.key }}"
+        label: "{{ inventory_hostname }}:{{ item['item']['key'] }}"
       when:
         - __ad_q is defined
-        - (item.stdout | default('')) is search('_error')
+        - (item['stdout'] | default('')) is search('_error')
     - name: Remove the staged harvest script (leave the DC as we found it)
       ansible.windows.win_file:
         path: C:\Windows\Temp\FGNW-facts-harvest.ps1

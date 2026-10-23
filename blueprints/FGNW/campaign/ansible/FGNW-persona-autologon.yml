@@ -2,8 +2,8 @@
 - name: Point workstation autologon at each persona's own domain account
   hosts: ghosts_clients
   gather_facts: false
-  vars:
-    fgnw_config_json: "{{ playbook_dir }}/../ad/NARUTO/data/config.json"
+  vars_files:
+    - vars/FGNW-persona-autologon.yml
   tasks:
     - name: Load persona timeline data (for sam/netbios/ad_domain per host)
       ansible.builtin.include_vars:
@@ -29,8 +29,8 @@
     - name: Configure Windows autologon for the persona account
       ansible.windows.win_regedit:
         path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon
-        name: "{{ item.name }}"
-        data: "{{ item.data }}"
+        name: "{{ item['name'] }}"
+        data: "{{ item['data'] }}"
         type: string
       loop:
         - { name: AutoAdminLogon, data: "1" }

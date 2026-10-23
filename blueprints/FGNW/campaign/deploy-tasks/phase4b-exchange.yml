@@ -14,9 +14,9 @@
       - ansible-playbook
       - -i
       - "{{ __tmp_infra_inv }}"
-      - "{{ item.1 }}"
+      - "{{ item[1] }}"
       - --limit
-      - "{{ item.0 }}"
+      - "{{ item[0] }}"
       - -e
       - force_reseed={{ force_reseed | default(false) | bool | string | lower }}
   args:
@@ -26,7 +26,7 @@
   changed_when: true
   loop: "{{ __exchange_steps }}"
   loop_control:
-    label: "{{ item.1 }} --limit {{ item.0 }}"
+    label: "{{ item[1] }} --limit {{ item[0] }}"
 - name: "deploy-tasks | phase4b-exchange | FGNW-owa-cert.yml (mail.<domain> OWA cert + trust on workstations)"
   ansible.builtin.command:
     argv: [ansible-playbook, -i, "{{ __tmp_infra_inv }}", FGNW-owa-cert.yml]

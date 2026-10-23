@@ -15,6 +15,8 @@
   ansible.builtin.file:
     path: /Applications/Firefox.app/Contents/Resources/distribution
     state: directory
+    owner: root
+    group: wheel
     mode: "0755"
   become: true
 
@@ -35,12 +37,14 @@
           "ManagedBookmarks": [
             {"toplevel_name": "{{ fgnw_browser_defaults_village }}"}
             {% for b in fgnw_browser_defaults_bookmark_list -%}
-            , {"name": {{ b.title | to_json }}, "url": {{ ('http://' ~ b.url) | to_json }}}
+            , {"name": {{ b['title'] | to_json }}, "url": {{ ('http://' ~ b['url']) | to_json }}}
             {% endfor %}
           ]
         }
       }
     dest: /Applications/Firefox.app/Contents/Resources/distribution/policies.json
+    owner: root
+    group: wheel
     mode: "0644"
   become: true
 
@@ -48,6 +52,8 @@
   ansible.builtin.file:
     path: /Library/Managed Preferences
     state: directory
+    owner: root
+    group: wheel
     mode: "0755"
   become: true
 
@@ -72,5 +78,7 @@
       </dict>
       </plist>
     dest: /Library/Managed Preferences/com.google.Chrome.plist
+    owner: root
+    group: wheel
     mode: "0644"
   become: true

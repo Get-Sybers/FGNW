@@ -1,0 +1,27 @@
+---
+dependencies: []
+galaxy_info:
+  role_name: move_to_ou
+  namespace: get_sybers
+  author: Get-Sybers
+  description: >-
+    Relocate existing domain computer objects into their target organisational unit.
+    Run on a domain controller, the role walks the lab host inventory, probes which
+    in-scope member computers (non-DC, in this domain, not LAPS-managed) already exist
+    in the directory, and moves each existing object to the OU named by its inventory
+    entry. Objects that do not yet exist are skipped, so the role is safe to run
+    repeatedly as hosts join.
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Windows
+      versions:
+        - all
+  galaxy_tags:
+    - fgnw
+    - activedirectory
+    - ou
+    - windows
+collections:
+  - ansible.windows
+  - microsoft.ad

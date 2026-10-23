@@ -1,0 +1,3 @@
+---
+# Play variables of FGNW-persona-autologon.yml, loaded with vars_files.
+fgnw_config_json: "{{ playbook_dir }}/../ad/NARUTO/data/config.json"

@@ -1,0 +1,40 @@
+---
+argument_specs:
+  main:
+    short_description: Bind a macOS host to an AD domain with dsconfigad (idempotent)
+    description:
+      - Reads the current directory-service state with `dsconfigad -show`, runs `dsconfigad -add` only when the
+        target domain is absent, then re-reads and asserts the host is bound.
+      - The admin user and password default to empty strings so the role can be included without them on an
+        already-bound host; when a bind is needed, the role asserts both are non-empty. The play supplies them.
+    options:
+      fgnw_mac_dsconfigad_domain:
+        type: str
+        default: sunagakure.wind.ninja
+        description:
+          - AD domain to bind to (the Hidden Sand child domain by default).
+      fgnw_mac_dsconfigad_computer:
+        type: str
+        default: "{{ (inventory_hostname | upper)[:15] }}"
+        description:
+          - AD computer object name. Defaults to the upper-cased inventory hostname truncated to AD's 15-character
+            pre-Windows-2000 limit.
+      fgnw_mac_dsconfigad_ou:
+        type: str
+        default: ""
+        description:
+          - Optional OU path for the computer object. Empty means Apple's default (the domain's Computers
+            container).
+      fgnw_mac_dsconfigad_admin_user:
+        type: str
+        default: ""
+        description:
+          - AD principal allowed to join computers, e.g. `domainadmin`. Required at play time when the host is
+            not bound yet; the role asserts it is non-empty before composing the dsconfigad command.
+      fgnw_mac_dsconfigad_admin_password:
+        type: str
+        default: ""
+        no_log: true
+        description:
+          - Password of that principal. Supplied by the play, never read from defaults; the tasks that carry it
+            run with no_log.

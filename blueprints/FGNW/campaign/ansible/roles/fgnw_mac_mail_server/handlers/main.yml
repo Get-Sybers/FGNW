@@ -1,13 +1,13 @@
 ---
 - name: Restart postfix
   ansible.builtin.command:
-    cmd: "postfix reload"
+    argv: [postfix, reload]
   changed_when: true
   become: true
 
 - name: Restart dovecot
   ansible.builtin.command:
-    cmd: "brew services restart dovecot"
+    argv: [brew, services, restart, dovecot]
   changed_when: true
   # become: true so the restart targets the system LaunchDaemon domain the "Start Dovecot"
   # task in tasks/main.yml loaded under sudo — without it, this handler would hit the

@@ -2,18 +2,8 @@
 - name: "Real-exchange: issue a REAL Exchange OWA certificate covering mail.<domain> and bind it to IIS"
   hosts: exchange_servers
   gather_facts: false
-  vars:
-    fgnw_owa_mail_domain_map:
-      konoha-mail: konohagakure.fire.ninja
-      # suna-mail removed: macOS mail host (Sand conversion), not in [exchange_servers].
-      oto-mail: otogakure.ninja
-      dark-mail: akatsuki.dark
-    __mail_fqdn: mail.{{ fgnw_owa_mail_domain_map[inventory_hostname] | default('') }}
-    fgnw_exchange_forest_root_map:
-      konoha-mail: fire.ninja
-      # suna-mail removed: see note above.
-      oto-mail: otogakure.ninja
-      dark-mail: akatsuki.dark
+  vars_files:
+    - vars/FGNW-owa-cert.yml
   tasks:
     - name: Ensure the OWA IIS cert covers mail.{{ fgnw_owa_mail_domain_map[inventory_hostname] | default('') }}
       ansible.windows.win_shell: |

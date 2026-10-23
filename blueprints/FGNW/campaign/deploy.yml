@@ -5,41 +5,8 @@
   gather_facts: true
   become: false
   vars_files:
+    - vars/deploy.yml
     - vars/common.yml
-  vars:
-    range_variant: regular
-    range_testing: true
-    range_fresh: false
-    range_skip_nexus: false
-    range_skip_exchange: false
-    range_from_phase: ""
-    force_reseed: false
-    bp_dir: "{{ playbook_dir | dirname }}"
-    ludus_root: /opt/ludus
-    ad_dir: "{{ playbook_dir }}/ad/NARUTO"
-    ansible_dir: "{{ playbook_dir }}/ansible"
-    ludus_user: range-admin
-    users_dir: /opt/ludus/users/{{ ludus_user }}
-    __variant_norm: "{{ 'regular' if range_variant == 'full' else range_variant }}"
-    __variant_map:
-      small:
-        ad_config: config-small.json
-        ad_data: inventory-small
-        ad_prov: inventory-small.yml
-        infra: inventory-small-infra.yml
-        modern_infra: false
-      regular:
-        ad_config: config.json
-        ad_data: inventory
-        ad_prov: inventory.yml
-        infra: inventory-infra.yml
-        modern_infra: false
-      xl:
-        ad_config: config.json
-        ad_data: inventory
-        ad_prov: inventory.yml
-        infra: inventory-infra.yml
-        modern_infra: true
   tasks:
     - name: "Preflight: stat the derived layout roots"
       ansible.builtin.stat:
@@ -54,17 +21,17 @@
     - name: "Preflight: assert the derived layout resolves (source-checkout layout)"
       ansible.builtin.assert:
         that:
-          - item.stat.exists
-          - item.stat.isdir
+          - item['stat']['exists']
+          - item['stat']['isdir']
         fail_msg: >-
-          Derived path '{{ item.item }}' does not exist. deploy.yml derives its layout
+          Derived path '{{ item['item'] }}' does not exist. deploy.yml derives its layout
           from playbook_dir ('{{ playbook_dir }}') and must run from a `ludus source add`
           checkout (…/sources/<id>/blueprints/FGNW/campaign) or an
           equivalent repo clone. Re-add the source, then run deploy.yml from its campaign/ dir.
         quiet: true
       loop: "{{ __layout_stat.results }}"
       loop_control:
-        label: "{{ item.item }}"
+        label: "{{ item['item'] }}"
     - name: "Preflight: assert the variant is known"
       ansible.builtin.assert:
         that: __variant_norm in __variant_map
@@ -90,6 +57,8 @@
       ansible.builtin.file:
         path: "{{ __tmp_dir }}"
         state: directory
+        owner: "{{ ansible_facts['user_id'] }}"
+        group: "{{ ansible_facts['user_gid'] }}"
         mode: "0700"
     - name: "Preflight: authenticate to Ludus (get_sybers.range.ludus_auth)"
       ansible.builtin.include_role:
@@ -98,6 +67,8 @@
       ansible.builtin.copy:
         content: "{{ lookup('file', __cfg_blueprint) | from_yaml | fgnw_variant(__variant_norm) | to_nice_yaml(indent=2, width=200) }}"
         dest: "{{ __cfg_users }}"
+        owner: "{{ ansible_facts['user_id'] }}"
+        group: "{{ ansible_facts['user_gid'] }}"
         mode: "0644"
     - name: "Preflight: announce"
       ansible.builtin.debug:

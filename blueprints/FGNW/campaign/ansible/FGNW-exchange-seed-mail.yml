@@ -2,25 +2,8 @@
 - name: "Real-exchange: seed REAL Exchange mailboxes with the character-quote corpus + LOE 2 alerts"
   hosts: exchange_servers
   gather_facts: false
-  vars:
-    # suna-mail intentionally absent: it is a macOS Postfix/Dovecot host now (Hidden Sand
-    # Village conversion). It is not in [exchange_servers], so it never resolves against
-    # these maps — the entries were dropped to make that explicit. The Sand mail corpus is
-    # seeded by fgnw_mac_mail_server from the same OWA/user-inboxes.yml file.
-    fgnw_exchange_map:
-      konoha-mail: { domain: konohagakure.fire.ninja }
-      oto-mail: { domain: otogakure.ninja }
-      dark-mail: { domain: akatsuki.dark }
-    fgnw_seed_mail_domain: "{{ fgnw_exchange_map[inventory_hostname].domain }}"
-    fgnw_exchange_forest_root_map:
-      konoha-mail: fire.ninja
-      oto-mail: otogakure.ninja
-      dark-mail: akatsuki.dark
-    fgnw_seed_mail_admin_domain: "{{ fgnw_exchange_forest_root_map[inventory_hostname] }}"
-    fgnw_seed_mail_admin_password: password
-    fgnw_seed_mail_state_dir: C:\ProgramData\FGNW
-    fgnw_seed_mail_sentinel: C:\ProgramData\FGNW\seed-mail.done
-    force_reseed: false
+  vars_files:
+    - vars/FGNW-exchange-seed-mail.yml
   tasks:
     - name: Probe this forest's end-of-seed marker
       ansible.windows.win_stat:

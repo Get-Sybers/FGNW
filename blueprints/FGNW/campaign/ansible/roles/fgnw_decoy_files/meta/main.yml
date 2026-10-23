@@ -1,0 +1,33 @@
+---
+dependencies: []
+galaxy_info:
+  role_name: fgnw_decoy_files
+  namespace: get_sybers
+  author: Get-Sybers
+  description: >-
+    Plant the per-village decoy document corpus on an FGNW range host. Unified Win+Mac role
+    dispatching on ansible_facts['os_family']: loads the shared content/filesystem/village-folders.yml
+    list once, then creates the directory tree and writes every file under the caller's root with
+    win_file + win_copy (Windows) or file + copy under become (macOS). A file whose authored
+    lore-accurate content exists under content/filesystem/documents/<village>/ gets that content,
+    any other gets a one-line placeholder; an existing file is never overwritten (force: false).
+    Caller passes the village key and the platform-correct root; the role has no default for
+    either, so a host is never pointed at the wrong corpus or path by accident.
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Windows
+      versions:
+        - all
+    - name: MacOSX
+      versions:
+        - all
+  galaxy_tags:
+    - fgnw
+    - decoy
+    - content
+    - windows
+    - macos
+collections:
+  - ansible.builtin
+  - ansible.windows

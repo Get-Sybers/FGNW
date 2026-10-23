@@ -1,0 +1,27 @@
+---
+dependencies: []
+galaxy_info:
+  role_name: adcs
+  namespace: get_sybers
+  author: Get-Sybers
+  description: >-
+    Stand up Active Directory Certificate Services on a Windows host of the range:
+    installs the AD-Certificate, ADCS-Cert-Authority and ADCS-Web-Enrollment features
+    (rebooting when the install asks for it), configures the host as an Enterprise Root
+    CA with Install-AdcsCertificationAuthority under the forest-root credential the play
+    supplies, optionally enables the web-enrollment endpoint and refreshes group policy
+    so the domain picks up the new CA. Original work of Get-Sybers.
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Windows
+      versions:
+        - "2019"
+        - "2022"
+  galaxy_tags:
+    - adcs
+    - activedirectory
+    - pki
+    - windows
+collections:
+  - ansible.windows

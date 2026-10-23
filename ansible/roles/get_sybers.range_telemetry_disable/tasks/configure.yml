@@ -1,13 +1,13 @@
 ---
 - name: "configure | Apply the telemetry-disabling registry values"
   ansible.windows.win_regedit:
-    path: "{{ item.path }}"
-    name: "{{ item.name }}"
-    data: "{{ item.data }}"
-    type: "{{ item.type }}"
+    path: "{{ item['path'] }}"
+    name: "{{ item['name'] }}"
+    data: "{{ item['data'] }}"
+    type: "{{ item['type'] }}"
   loop: "{{ range_telemetry_registry }}"
   loop_control:
-    label: "{{ item.path }}\\{{ item.name }} = {{ item.data }}"
+    label: "{{ item['path'] }}\\{{ item['name'] }} = {{ item['data'] }}"
 - name: "configure | Disable the telemetry scheduled tasks"
   ansible.windows.win_powershell:
     script: |

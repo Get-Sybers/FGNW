@@ -52,6 +52,6 @@
       <H1>{{ fgnw_browser_defaults_village }}</H1>
       <DL><p>
       {% for b in fgnw_browser_defaults_bookmark_list %}
-          <DT><A HREF="http://{{ b.url }}">{{ b.title }}</A>
+          <DT><A HREF="http://{{ b['url'] }}">{{ b['title'] }}</A>
       {% endfor %}
       </DL><p>

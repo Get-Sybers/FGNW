@@ -1,0 +1,6 @@
+---
+# Play variables of lat.yml (play 3), loaded with vars_files.
+data_path: ../ad/NARUTO/data
+privileged_user_task_domain: konohagakure.fire.ninja
+privileged_user_task_username: naruto.uzumaki
+privileged_user_task_password: "{{ lab.domains[privileged_user_task_domain].users[privileged_user_task_username].password }}"

@@ -1,0 +1,29 @@
+---
+dependencies: []
+galaxy_info:
+  role_name: fgnw_exchange_seed_mail
+  namespace: get_sybers
+  author: Get-Sybers
+  description: >-
+    Seed one forest's real Exchange mailboxes with the FGNW character-quote corpus (plus the
+    LOE 2 alert entries) as genuine SMTP mail. Loads content/OWA/user-inboxes.yml and the AD
+    ground truth ad/NARUTO/data/config.json, keeps only recipients that are real users of this
+    host's own domain, sends every message through the forest's own Exchange on localhost with
+    Send-MailMessage (runas the forest-root Administrator), then writes an end-of-seed marker
+    LAST so the caller's re-run guard can skip a forest that was seeded to completion. The send
+    is not idempotent: the caller play (FGNW-exchange-seed-mail.yml) probes the marker and
+    includes the role only when it is absent or force_reseed is set.
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Windows
+      versions:
+        - all
+  galaxy_tags:
+    - fgnw
+    - exchange
+    - mail
+    - windows
+collections:
+  - ansible.builtin
+  - ansible.windows

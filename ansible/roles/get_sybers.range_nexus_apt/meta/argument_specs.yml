@@ -14,7 +14,8 @@ argument_specs:
       range_nexus_apt_sources:
         type: dict
         description:
-          - Per-distro Nexus apt source lines, keyed by ansible_distribution (Debian, Kali). Default map lives in defaults/main.yml; a distro absent from the
+          - Per-distro Nexus apt source lines, keyed by ansible_facts['distribution'] (Debian, Kali).
+            Default map lives in defaults/main.yml; a distro absent from the
             map is skipped (end_host).
       range_nexus_apt_tolerate_clock_skew:
         type: bool

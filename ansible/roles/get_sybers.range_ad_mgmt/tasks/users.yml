@@ -21,21 +21,21 @@
     quiet: true
 - name: "users | Create users from the contract"
   microsoft.ad.user:
-    name: "{{ item.key }}"
-    sam_account_name: "{{ item.key }}"
-    firstname: "{{ item.value.firstname }}"
-    surname: "{{ item.value.surname | default(item.value.firstname, true) }}"
-    password: "{{ item.value.password }}"
+    name: "{{ item['key'] }}"
+    sam_account_name: "{{ item['key'] }}"
+    firstname: "{{ item['value']['firstname'] }}"
+    surname: "{{ item['value']['surname'] | default(item['value']['firstname'], true) }}"
+    password: "{{ item['value']['password'] }}"
     update_password: on_create
     password_never_expires: true
-    enabled: "{{ item.value.enabled | default(true) }}"
-    path: "{{ item.value.path | default('CN=Users,' ~ (domain.split('.') | map('regex_replace', '^', 'DC=') | join(','))) }}"
-    city: "{{ item.value.city | default(omit) }}"
-    description: "{{ item.value.description | default(omit) }}"
+    enabled: "{{ item['value']['enabled'] | default(true) }}"
+    path: "{{ item['value']['path'] | default('CN=Users,' ~ (domain.split('.') | map('regex_replace', '^', 'DC=') | join(','))) }}"
+    city: "{{ item['value']['city'] | default(omit) }}"
+    description: "{{ item['value']['description'] | default(omit) }}"
     groups:
-      add: "{{ item.value.groups }}"
+      add: "{{ item['value']['groups'] }}"
     state: present
   loop: "{{ (ad_users | default({})) | dict2items }}"
   loop_control:
-    label: "{{ item.key }}"
+    label: "{{ item['key'] }}"
   no_log: true

@@ -1,5 +1,5 @@
 ---
 - name: "install-setcap | Install — setcap cap_net_raw,cap_net_admin+eip"
-  ansible.builtin.command: >-
-    setcap cap_net_raw,cap_net_admin+eip {{ __zeek_bin_which.stdout | trim }}
+  ansible.builtin.command:
+    argv: [setcap, "cap_net_raw,cap_net_admin+eip", "{{ __zeek_bin_which.stdout | trim }}"]
   changed_when: true

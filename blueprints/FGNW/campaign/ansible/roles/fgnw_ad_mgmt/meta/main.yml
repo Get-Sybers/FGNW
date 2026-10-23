@@ -1,19 +1,29 @@
 ---
+dependencies: []
 galaxy_info:
+  role_name: fgnw_ad_mgmt
+  namespace: get_sybers
   author: Get-Sybers
-  description: >
+  description: >-
     Directory realizer for the FGNW owned AD-build layer. Reads the config.json contract for a
-    domain — domains[*].{organisation_units, groups, users} — and realizes it: creates the OUs,
-    the groups (per scope), the users (with their group memberships), and the declared group
-    membership. Rule 8 (one task, one action) throughout, driven by microsoft.ad.* module
-    semantics. The playbook (ad-data.yml) decides this runs on the domain controllers and
-    supplies ad_ou / ad_groups / ad_users from the contract; this role only groups and acts.
-    Original work of Get-Sybers.
+    domain (domains[*].organisation_units, groups and users) and realizes it on the domain
+    controller: creates the OUs, the groups per scope, the users with their group memberships
+    and the declared group members, then makes sure the built-in Administrator is a Domain
+    Admin. One task, one action, driven by microsoft.ad module semantics. The play
+    (ad-data.yml) decides it runs on the domain controllers and supplies ad_ou, ad_groups,
+    ad_users and domain from the contract; the role only groups and acts. Original work of
+    Get-Sybers.
   license: MIT
-  min_ansible_version: "2.12"
+  min_ansible_version: "2.15"
   platforms:
     - name: Windows
       versions:
         - "2019"
         - "2022"
-dependencies: []
+  galaxy_tags:
+    - fgnw
+    - activedirectory
+    - windows
+collections:
+  - ansible.builtin
+  - microsoft.ad

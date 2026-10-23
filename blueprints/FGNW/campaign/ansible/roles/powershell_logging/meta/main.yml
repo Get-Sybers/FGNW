@@ -1,20 +1,28 @@
 ---
+dependencies: []
 galaxy_info:
-  author: Get-Sybers
-  description: >
-    Enables the three PowerShell audit policies the FGNW blue-team detection lab
-    depends on — script block logging, module logging, and over-the-shoulder
-    transcription — by writing the corresponding Group Policy values under
-    HKLM:\SOFTWARE\Policies\Microsoft\Windows\PowerShell via
-    ansible.windows.win_regedit. Each stream is independently gated by a toggle,
-    and the values are the functional contract. Original work of Get-Sybers.
-    Not yet run against a live range; verify on the next server-day deploy.
   role_name: powershell_logging
+  namespace: get_sybers
+  author: Get-Sybers
+  description: >-
+    Enable the three PowerShell audit policies the FGNW blue-team detection lab
+    depends on -- script block logging, module logging and over-the-shoulder
+    transcription -- by writing the corresponding Group Policy values under
+    HKLM:\SOFTWARE\Policies\Microsoft\Windows\PowerShell with
+    ansible.windows.win_regedit. Each stream is independently gated by a toggle, and
+    the registry values are the functional contract.
   license: MIT
-  min_ansible_version: "2.12"
+  min_ansible_version: "2.15"
   platforms:
     - name: Windows
       versions:
         - "2019"
         - "2022"
-dependencies: []
+  galaxy_tags:
+    - fgnw
+    - powershell
+    - logging
+    - detection
+    - windows
+collections:
+  - ansible.windows

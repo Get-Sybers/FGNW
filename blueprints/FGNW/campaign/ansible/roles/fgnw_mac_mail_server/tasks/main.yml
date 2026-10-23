@@ -18,7 +18,7 @@
 # intentionally runs `brew --prefix` with no formula argument.
 - name: Resolve the Homebrew prefix
   ansible.builtin.command:
-    cmd: brew --prefix
+    argv: [brew, --prefix]
   register: fgnw_mac_mail_server_brew_prefix
   changed_when: false
 
@@ -67,6 +67,8 @@
 - name: Install the Postfix main.cf
   ansible.builtin.copy:
     dest: /etc/postfix/main.cf
+    owner: root
+    group: wheel
     mode: "0644"
     content: |
       myhostname = {{ fgnw_mac_mail_server_hostname }}
@@ -95,6 +97,8 @@
 - name: Install the Dovecot config at the resolved prefix
   ansible.builtin.copy:
     dest: "{{ fgnw_mac_mail_server_dovecot_conf }}"
+    owner: root
+    group: wheel
     mode: "0644"
     content: |
       protocols = imap lmtp
@@ -148,7 +152,7 @@
 
 - name: Load Postfix via launchd (built-in daemon)
   ansible.builtin.command:
-    cmd: launchctl enable system/org.postfix.master
+    argv: [launchctl, enable, system/org.postfix.master]
   register: fgnw_mac_mail_server_postfix_enable
   changed_when: fgnw_mac_mail_server_postfix_enable.rc == 0
   failed_when: false
@@ -156,7 +160,7 @@
 
 - name: Start Postfix
   ansible.builtin.command:
-    cmd: postfix start
+    argv: [postfix, start]
   register: fgnw_mac_mail_server_postfix_start
   changed_when: "'already running' not in (fgnw_mac_mail_server_postfix_start.stderr | default(''))"
   failed_when: >-
@@ -166,7 +170,7 @@
 
 - name: Start Dovecot (brew-installed launchd service)
   ansible.builtin.command:
-    cmd: brew services start dovecot
+    argv: [brew, services, start, dovecot]
   register: fgnw_mac_mail_server_dovecot_start
   changed_when: "'Successfully started' in (fgnw_mac_mail_server_dovecot_start.stdout | default(''))"
   failed_when: false

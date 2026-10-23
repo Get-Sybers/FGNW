@@ -1,0 +1,6 @@
+---
+# Play variables of FGNW-verify-emulation.yml, loaded with vars_files.
+fgnw_ghosts_stale_minutes: 15
+__any_infra_host: "{{ (groups['linux_infra'] | default([])) | first }}"
+range_second_octet: "{{ hostvars[__any_infra_host].ansible_host.split('.')[1] }}"
+ghosts_api_root: http://10.{{ range_second_octet }}.99.51:5000/api

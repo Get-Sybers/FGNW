@@ -21,6 +21,10 @@
   ansible.builtin.debug:
     msg: Range already SUCCESS with {{ __ludus_vmcount }} VM(s); no deploy needed.
   when: __ludus_deploy_done | bool
+- name: Read the identity of the user who runs the deploy (the owner of the error captures)
+  ansible.builtin.setup:
+    gather_subset: ["!all", "!min", "user"]
+  register: __lrd_user
 - name: Run bounded deploy attempts
   ansible.builtin.include_tasks: attempt.yml
   loop: "{{ range(1, (ludus_range_deploy_max_attempts | int) + 1) | list }}"

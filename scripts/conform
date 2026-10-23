@@ -96,24 +96,34 @@ for c in closure density one-action range-infra-boundary module-availability iso
   [[ -f scripts/check-${c}.py ]] && mark python3 "scripts/check-${c}.py"
 done
 step "role must-haves (§3): meta/main.yml, meta/argument_specs.yml, defaults/main.yml, tasks/main.yml, README.md"
-ROLES_DIR=roles
-[[ -d $ROLES_DIR ]] || ROLES_DIR=ansible/roles
-for r in "$ROLES_DIR"/*/; do
+# Every role tree this source ships: standalone task-roles, the in-tree
+# collections' roles and the blueprint campaign roles. A third-party role
+# bundled verbatim is listed under exclude_paths in .ansible-lint (linted
+# upstream, not here) and is exempt from the must-haves the same way.
+role_dirs() {
+  local r
+  for r in roles/*/ ansible/roles/*/ ansible/collections/*/roles/*/ blueprints/*/campaign/ansible/roles/*/; do
+    [[ -d $r ]] || continue
+    grep -qxF "  - $r" .ansible-lint && continue
+    echo "$r"
+  done
+}
+while IFS= read -r r; do
   for f in meta/main.yml meta/argument_specs.yml defaults/main.yml tasks/main.yml README.md; do
     [[ -f ${r}${f} ]] || {
       echo "  missing ${r}${f} (§3)"
       fail=1
     }
   done
-done
+done < <(role_dirs)
 step "molecule / idempotence coverage (§7/§12)"
 missing=0
-for r in "$ROLES_DIR"/*/; do
+while IFS= read -r r; do
   [[ -d ${r}molecule ]] || {
     echo "  no molecule scenario: ${r%/}"
     missing=$((missing + 1))
   }
-done
+done < <(role_dirs)
 if [[ $missing -gt 0 ]]; then
   echo "  WARNING: $missing role(s) without a molecule scenario — open gap (§12)."
 fi

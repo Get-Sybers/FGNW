@@ -14,9 +14,8 @@
 - name: AD-bind the Sand macOS hosts to sunagakure.wind.ninja
   hosts: macos_dev
   gather_facts: true
-  vars:
-    __lab_admin_user: domainadmin
-    __lab_admin_password: password
+  vars_files:
+    - vars/FGNW-mac-ad-bind.yml
   tasks:
     - name: Run the dsconfigad wrapper
       ansible.builtin.include_role:

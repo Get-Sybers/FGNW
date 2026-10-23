@@ -15,7 +15,7 @@ the public sources are disabled.
 | name | default | purpose |
 | --- | --- | --- |
 | `range_nexus_apt_base` | `"http://192.0.2.2:8081/repository"` | Base URL of the range Nexus endpoint; the per-distro `deb` lines are built from it. |
-| `range_nexus_apt_sources` | see `defaults/main.yml` | Per-distro Nexus source lines keyed by `ansible_distribution` (Debian, Kali). A distro absent from the map is skipped. |
+| `range_nexus_apt_sources` | see `defaults/main.yml` | Per-distro Nexus source lines keyed by `ansible_facts['distribution']` (Debian, Kali). A distro absent from the map is skipped. |
 | `range_nexus_apt_tolerate_clock_skew` | `true` | Write `apt.conf.d/99-nexus-clockskew` to tolerate a reverted VM's clock skew. |
 | `range_nexus_apt_max_future_seconds` | `"86400"` | `Acquire::Max-FutureTime` seconds written when clock-skew tolerance is on. |
 

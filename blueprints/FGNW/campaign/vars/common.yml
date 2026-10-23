@@ -1,6 +1,6 @@
 ---
 __phase_order: ["0", "1", 1b, 1c, "2", "3", "4", 4b, 4c, 4d, 4e, "5"]
-__tmp_dir: "{{ ansible_env.HOME }}/.FGNW-deploy"
+__tmp_dir: "{{ ansible_facts['env']['HOME'] }}/.FGNW-deploy"
 __tmp_prov_inv: "{{ __tmp_dir }}/prov-inv.yml"
 __tmp_infra_inv: "{{ __tmp_dir }}/infra-inv.yml"
 __tmp_ad_data_dir: "{{ __tmp_dir }}/ad-data"

@@ -1,6 +1,7 @@
 ---
 - name: Apply Microsoft Sysmon (Sysinternals) with the ACSC baseline config
   hosts: windows_realname
+  gather_facts: false
   tasks:
     - name: "Sysmon: apply Sysmon with the ACSC baseline config"
       ansible.builtin.include_role:

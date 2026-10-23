@@ -35,6 +35,8 @@
       ansible.builtin.copy:
         content: "{{ client_config_content.content | b64decode }}"
         dest: /opt/velociraptor-client/client.config.yaml
+        owner: root
+        group: root
         mode: "0644"
 - name: Download Velociraptor Linux executable
   ansible.builtin.get_url:
@@ -61,6 +63,8 @@
       [Install]
       WantedBy=multi-user.target
     dest: /etc/systemd/system/velociraptor.service
+    owner: root
+    group: root
     mode: "0644"
 - name: Reload systemd daemon
   ansible.builtin.systemd:

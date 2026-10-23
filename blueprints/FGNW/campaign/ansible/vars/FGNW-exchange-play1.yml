@@ -1,0 +1,16 @@
+---
+# Play variables of FGNW-exchange.yml (play 1), loaded with vars_files.
+# suna-mail intentionally absent from these maps: it is a macOS Postfix/Dovecot host
+# now (Hidden Sand Village conversion), is not in [exchange_servers], and never resolves
+# against them. The Sand mail path is stood up by FGNW-mac-mail.yml in phase 4d.
+fgnw_exchange_domainjoin_map:
+  konoha-mail: { domain: fire.ninja, dc_ip: "10.{{ ansible_host.split('.')[1] }}.10.15" }
+  oto-mail: { domain: otogakure.ninja, dc_ip: "10.{{ ansible_host.split('.')[1] }}.30.10" }
+  dark-mail: { domain: akatsuki.dark, dc_ip: "10.{{ ansible_host.split('.')[1] }}.87.10" }
+__dj: "{{ fgnw_exchange_domainjoin_map[inventory_hostname] }}"
+fgnw_exchange_original_child_domain_map:
+  konoha-mail: konohagakure.fire.ninja
+  oto-mail: otogakure.ninja
+  dark-mail: akatsuki.dark
+__orig_child: "{{ fgnw_exchange_original_child_domain_map[inventory_hostname] }}"
+__lab_admin_password: password

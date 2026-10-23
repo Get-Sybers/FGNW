@@ -1,0 +1,26 @@
+---
+dependencies: []
+galaxy_info:
+  role_name: fgnw_mac_ghosts_client
+  namespace: get_sybers
+  author: Get-Sybers
+  description: >-
+    Install the GHOSTS v9 Universal client on a macOS workstation and run it as a launchd
+    daemon that reports to the range's ghost9 server. Two halves selected by
+    fgnw_mac_ghosts_client_phase: `prestage` fetches the release tarball from GitHub, extracts
+    it under the install dir and rewrites ApiRootUrl (Phase 1c, while internet egress is still
+    open); `service` writes the LaunchDaemon plist and bootstraps it (Phase 4d, after
+    containment and AD). `all` runs both, for a manual re-run on a host that has egress.
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: MacOSX
+      versions:
+        - all
+  galaxy_tags:
+    - fgnw
+    - ghosts
+    - macos
+    - launchd
+collections:
+  - ansible.builtin

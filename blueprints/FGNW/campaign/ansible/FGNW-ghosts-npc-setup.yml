@@ -2,27 +2,8 @@
 - name: Seed GHOSTS 9 NPC cognitive profiles for FGNW flagship personas
   hosts: localhost
   gather_facts: false
-  vars:
-    __any_infra_host: "{{ (groups['linux_infra'] | default([])) | first }}"
-    range_second_octet: "{{ hostvars[__any_infra_host].ansible_host.split('.')[1] }}"
-    ghosts_api_root: http://10.{{ range_second_octet }}.99.51:5000/api
-    __flagship_sams:
-      - naruto.uzumaki
-      - shikamaru.nara
-      - kakashi.hatake
-      - tsunade
-      - might.guy
-      - orochimaru
-      - pain
-      - zetsu
-      - gaara
-    __rel_quality:
-      manager: 0.85
-      direct_report: 0.80
-      "team: The Sannin": 0.75
-      "team: Konoha Jonin": 0.65
-      "team: Kage Assembly": 0.70
-      department_fallback: 0.45
+  vars_files:
+    - vars/FGNW-ghosts-npc-setup.yml
   tasks:
     - name: Load persona baseline data (generated)
       ansible.builtin.include_vars:
@@ -82,16 +63,16 @@
         return_content: true
         status_code: 200
       register: __ghosts_npcs_all
-    - name: Index NPC by SAM account — {{ item.npcProfile.email.split('@')[0] }}
+    - name: Index NPC by SAM account — {{ item['npcProfile']['email'].split('@')[0] }}
       ansible.builtin.set_fact:
-        __npc_id_by_sam: "{{ __npc_id_by_sam | default({}) | combine({__sam: item.id}) }}"
+        __npc_id_by_sam: "{{ __npc_id_by_sam | default({}) | combine({__sam: item['id']}) }}"
       loop: >-
         {{ __ghosts_npcs_all.json
            | selectattr('npcProfile', 'defined')
            | selectattr('npcProfile.email', 'defined')
            | list }}
       vars:
-        __sam: "{{ item.npcProfile.email.split('@')[0] }}"
+        __sam: "{{ item['npcProfile']['email'].split('@')[0] }}"
     - name: Index hostname by SAM account — {{ item }}
       ansible.builtin.set_fact:
         __hostname_by_sam: >-
@@ -114,11 +95,11 @@
       ansible.builtin.set_fact:
         __existing_belief_names_by_sam: >-
           {{ __existing_belief_names_by_sam | default({}) | combine(
-               {__sam: (item.json | default([]) | map(attribute='name') | list)}
+               {__sam: (item['json'] | default([]) | map(attribute='name') | list)}
              ) }}
       loop: "{{ __existing_beliefs_results.results | selectattr('json', 'defined') | list }}"
       vars:
-        __sam: "{{ fgnw_ghosts.ghosts_personas[item.item].sam }}"
+        __sam: "{{ fgnw_ghosts.ghosts_personas[item['item']].sam }}"
     - name: Build flat list of all persona beliefs for API seeding
       ansible.builtin.set_fact:
         __all_belief_tasks: >-
@@ -130,23 +111,23 @@
                 })
               | list) }}
       loop: "{{ groups['ghosts_clients'] | default([]) }}"
-    - name: "Seed a belief for the host: {{ item.name ~ ' on ' ~ item.host }}"
+    - name: "Seed a belief for the host: {{ item['name'] ~ ' on ' ~ item['host'] }}"
       ansible.builtin.uri:
-        url: "{{ ghosts_api_root }}/npcs/{{ __npc_id_by_sam[item.sam] }}/beliefs"
+        url: "{{ ghosts_api_root }}/npcs/{{ __npc_id_by_sam[item['sam']] }}/beliefs"
         method: POST
         body_format: json
         body:
-          toNpcId: "{{ __npc_id_by_sam[item.sam] }}"
-          fromNpcId: "{{ __npc_id_by_sam[item.sam] }}"
-          name: "{{ item.name }}"
+          toNpcId: "{{ __npc_id_by_sam[item['sam']] }}"
+          fromNpcId: "{{ __npc_id_by_sam[item['sam']] }}"
+          name: "{{ item['name'] }}"
           step: 1
-          likelihood: "{{ item.likelihood }}"
-          posterior: "{{ item.likelihood }}"
+          likelihood: "{{ item['likelihood'] }}"
+          posterior: "{{ item['likelihood'] }}"
         status_code: 200
       loop: "{{ __all_belief_tasks | default([]) }}"
       when: >-
-        item.sam in __npc_id_by_sam
-        and item.name not in (__existing_belief_names_by_sam[item.sam] | default([]))
+        item['sam'] in __npc_id_by_sam
+        and item['name'] not in (__existing_belief_names_by_sam[item['sam']] | default([]))
     - name: Check existing knowledge records for each flagship NPC
       ansible.builtin.uri:
         url: "{{ ghosts_api_root }}/npcs/{{ __npc_id_by_sam[__sam] }}/knowledge"
@@ -162,11 +143,11 @@
       ansible.builtin.set_fact:
         __existing_knowledge_topics_by_sam: >-
           {{ __existing_knowledge_topics_by_sam | default({}) | combine(
-               {__sam: (item.json | default([]) | map(attribute='topic') | list)}
+               {__sam: (item['json'] | default([]) | map(attribute='topic') | list)}
              ) }}
       loop: "{{ __existing_knowledge_results.results | selectattr('json', 'defined') | list }}"
       vars:
-        __sam: "{{ fgnw_ghosts.ghosts_personas[item.item].sam }}"
+        __sam: "{{ fgnw_ghosts.ghosts_personas[item['item']].sam }}"
     - name: Build flat list of all persona knowledge topics for API seeding
       ansible.builtin.set_fact:
         __all_knowledge_tasks: >-
@@ -178,22 +159,22 @@
                 })
               | list) }}
       loop: "{{ groups['ghosts_clients'] | default([]) }}"
-    - name: "Seed a knowledge topic for the host: {{ item.topic ~ ' on ' ~ item.host }}"
+    - name: "Seed a knowledge topic for the host: {{ item['topic'] ~ ' on ' ~ item['host'] }}"
       ansible.builtin.uri:
-        url: "{{ ghosts_api_root }}/npcs/{{ __npc_id_by_sam[item.sam] }}/knowledge"
+        url: "{{ ghosts_api_root }}/npcs/{{ __npc_id_by_sam[item['sam']] }}/knowledge"
         method: POST
         body_format: json
         body:
-          toNpcId: "{{ __npc_id_by_sam[item.sam] }}"
-          fromNpcId: "{{ __npc_id_by_sam[item.sam] }}"
-          topic: "{{ item.topic }}"
+          toNpcId: "{{ __npc_id_by_sam[item['sam']] }}"
+          fromNpcId: "{{ __npc_id_by_sam[item['sam']] }}"
+          topic: "{{ item['topic'] }}"
           step: 1
-          value: "{{ item.value }}"
+          value: "{{ item['value'] }}"
         status_code: 200
       loop: "{{ __all_knowledge_tasks | default([]) }}"
       when: >-
-        item.sam in __npc_id_by_sam
-        and item.topic not in (__existing_knowledge_topics_by_sam[item.sam] | default([]))
+        item['sam'] in __npc_id_by_sam
+        and item['topic'] not in (__existing_knowledge_topics_by_sam[item['sam']] | default([]))
     - name: Check existing social connections for each flagship NPC
       ansible.builtin.uri:
         url: "{{ ghosts_api_root }}/npcs/{{ __npc_id_by_sam[__sam] }}/connections"
@@ -209,11 +190,11 @@
       ansible.builtin.set_fact:
         __existing_connection_ids_by_sam: >-
           {{ __existing_connection_ids_by_sam | default({}) | combine(
-               {__sam: (item.json | default([]) | map(attribute='connectedNpcId') | list)}
+               {__sam: (item['json'] | default([]) | map(attribute='connectedNpcId') | list)}
              ) }}
       loop: "{{ __existing_connections_results.results | selectattr('json', 'defined') | list }}"
       vars:
-        __sam: "{{ fgnw_ghosts.ghosts_personas[item.item].sam }}"
+        __sam: "{{ fgnw_ghosts.ghosts_personas[item['item']].sam }}"
     - name: Build flat list of inter-flagship social connections (Pass A)
       ansible.builtin.set_fact:
         __all_core_connection_tasks: >-
@@ -225,22 +206,22 @@
       loop: "{{ groups['ghosts_clients'] | default([]) }}"
       vars:
         __sam: "{{ fgnw_ghosts.ghosts_personas[item].sam }}"
-    - name: "Seed an inter-flagship connection (Pass A): {{ item.from_sam ~ ' → ' ~ item.to }}"
+    - name: "Seed an inter-flagship connection (Pass A): {{ item['from_sam'] ~ ' → ' ~ item['to'] }}"
       ansible.builtin.uri:
-        url: "{{ ghosts_api_root }}/npcs/{{ __npc_id_by_sam[item.from_sam] }}/connections"
+        url: "{{ ghosts_api_root }}/npcs/{{ __npc_id_by_sam[item['from_sam']] }}/connections"
         method: POST
         body_format: json
         body:
-          connectedNpcId: "{{ __npc_id_by_sam[item.to] }}"
-          name: "{{ fgnw_ghosts.ghosts_personas[__hostname_by_sam[item.to]].character }}"
-          distance: "{{ item.relationship }}"
-          relationshipStatus: "{{ __rel_quality[item.relationship] | default(0.55) }}"
+          connectedNpcId: "{{ __npc_id_by_sam[item['to']] }}"
+          name: "{{ fgnw_ghosts.ghosts_personas[__hostname_by_sam[item['to']]].character }}"
+          distance: "{{ item['relationship'] }}"
+          relationshipStatus: "{{ __rel_quality[item['relationship']] | default(0.55) }}"
         status_code: 200
       loop: "{{ __all_core_connection_tasks | default([]) }}"
       when: >-
-        item.from_sam in __npc_id_by_sam
-        and item.to in __npc_id_by_sam
-        and __npc_id_by_sam[item.to] not in (__existing_connection_ids_by_sam[item.from_sam] | default([]))
+        item['from_sam'] in __npc_id_by_sam
+        and item['to'] in __npc_id_by_sam
+        and __npc_id_by_sam[item['to']] not in (__existing_connection_ids_by_sam[item['from_sam']] | default([]))
     - name: Build flat list of named-character social connections (Pass B)
       ansible.builtin.set_fact:
         __all_named_connection_tasks: >-
@@ -252,21 +233,21 @@
       loop: "{{ groups['ghosts_clients'] | default([]) }}"
       vars:
         __sam: "{{ fgnw_ghosts.ghosts_personas[item].sam }}"
-    - name: "Seed a named-character connection (Pass B): {{ item.from_sam ~ ' → ' ~ item.to }}"
+    - name: "Seed a named-character connection (Pass B): {{ item['from_sam'] ~ ' → ' ~ item['to'] }}"
       ansible.builtin.uri:
-        url: "{{ ghosts_api_root }}/npcs/{{ __npc_id_by_sam[item.from_sam] }}/connections"
+        url: "{{ ghosts_api_root }}/npcs/{{ __npc_id_by_sam[item['from_sam']] }}/connections"
         method: POST
         body_format: json
         body:
-          connectedNpcId: "{{ item.to | to_uuid }}"
-          name: "{{ item.to }}"
-          distance: "{{ item.relationship }}"
-          relationshipStatus: "{{ __rel_quality[item.relationship] | default(0.55) }}"
+          connectedNpcId: "{{ item['to'] | to_uuid }}"
+          name: "{{ item['to'] }}"
+          distance: "{{ item['relationship'] }}"
+          relationshipStatus: "{{ __rel_quality[item['relationship']] | default(0.55) }}"
         status_code: 200
       loop: "{{ __all_named_connection_tasks | default([]) }}"
       when: >-
-        item.from_sam in __npc_id_by_sam
-        and (item.to | to_uuid) not in (__existing_connection_ids_by_sam[item.from_sam] | default([]))
+        item['from_sam'] in __npc_id_by_sam
+        and (item['to'] | to_uuid) not in (__existing_connection_ids_by_sam[item['from_sam']] | default([]))
     - name: Report NPC seeding summary
       ansible.builtin.debug:
         msg: >-

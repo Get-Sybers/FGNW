@@ -1,0 +1,69 @@
+---
+argument_specs:
+  main:
+    short_description: Plant a boot-triggered scheduled task running as a privileged account
+    description:
+      - Asserts that the privileged identity and credential were supplied, registers a
+        boot-triggered scheduled task that runs a long sleep as that account, and starts
+        it at once so the account's token is resident without a reboot.
+      - The password has no default (a role must not ship a credential); the calling
+        play supplies it. Identity and task-shape inputs have lab-safe defaults.
+    options:
+      privileged_user_task_username:
+        type: str
+        default: gaara
+        description: sAMAccountName of the privileged account the task runs as.
+      privileged_user_task_domain:
+        type: str
+        default: sunagakure.wind.ninja
+        description: Domain of the privileged account; combined with the username as user@domain.
+      privileged_user_task_password:
+        type: str
+        required: true
+        description: Password for the privileged account. No default by design; the play supplies it from the AD data model.
+      privileged_user_task_persistent_process_name:
+        type: str
+        default: PersistentDomainAdminProcess
+        description: Name of the scheduled task to register.
+      privileged_user_task_persistent_process_description:
+        type: str
+        default: >-
+          Keeps a privileged domain account's token resident in memory for the
+          Pass-the-Hash / token-impersonation workshop (restarts at boot).
+        description: Description recorded on the scheduled task.
+      privileged_user_task_persistent_process_duration:
+        type: int
+        default: 14400
+        description: Seconds the planted process sleeps (how long the token stays resident per run).
+      privileged_user_task_run_level:
+        type: str
+        default: highest
+        description: Run level the task executes at.
+      privileged_user_task_logon_type:
+        type: str
+        default: password
+        description: Logon type the task uses to authenticate the account.
+      privileged_user_task_restart_on_failure:
+        type: bool
+        default: true
+        description: Whether the task restarts after a failure.
+      privileged_user_task_restart_count:
+        type: int
+        default: 3
+        description: Number of restart attempts on failure.
+      privileged_user_task_stop_if_going_on_batteries:
+        type: bool
+        default: false
+        description: Whether the task stops when the host switches to battery power.
+      privileged_user_task_start_when_available:
+        type: bool
+        default: true
+        description: Whether the task runs as soon as possible after a missed start.
+      privileged_user_task_execution_time_limit:
+        type: str
+        default: PT0S
+        description: Task execution time limit (ISO 8601 duration); PT0S means no limit.
+      privileged_user_task_trigger_execution_time_limit:
+        type: str
+        default: PT0S
+        description: Boot-trigger execution time limit (ISO 8601 duration); PT0S means no limit.

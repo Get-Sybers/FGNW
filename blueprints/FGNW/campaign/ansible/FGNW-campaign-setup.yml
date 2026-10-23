@@ -2,14 +2,8 @@
 - name: Plant campaign attack primitives in Konoha (Leaf)
   hosts: konoha-dc1
   gather_facts: false
-  vars:
-    leaf_domain: konohagakure.fire.ninja
-    leaf_admin: konohagakure.fire.ninja\Administrator
-    leaf_admin_password: password
-    svc_name: svc-missionboard
-    svc_password: Ichiraku2003
-    svc_spn: HTTP/missionboard.konohagakure.fire.ninja
-    asrep_user: konohamaru.sarutobi
+  vars_files:
+    - vars/FGNW-campaign-setup.yml
   tasks:
     - name: Create the kerberoastable Leaf service account (SPN + weak password)
       community.windows.win_domain_user:

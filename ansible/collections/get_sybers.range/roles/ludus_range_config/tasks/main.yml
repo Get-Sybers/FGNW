@@ -14,10 +14,17 @@
       refusing to materialize the blueprint outside it.
     quiet: true
   when: ludus_range_config_blueprint_src | length > 0
+- name: Read the identity of the user who materializes the blueprint (the owner of the copy)
+  ansible.builtin.setup:
+    gather_subset: ["!all", "!min", "user"]
+  register: __lrc_user
+  when: ludus_range_config_blueprint_src | length > 0
 - name: Materialize the blueprint master into users/
   ansible.builtin.copy:
     src: "{{ ludus_range_config_blueprint_src }}"
     dest: "{{ ludus_range_config_src }}"
+    owner: "{{ __lrc_user['ansible_facts']['ansible_user_id'] }}"
+    group: "{{ __lrc_user['ansible_facts']['ansible_user_gid'] }}"
     mode: "0640"
     remote_src: true
   when: ludus_range_config_blueprint_src | length > 0

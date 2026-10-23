@@ -10,24 +10,30 @@
   ansible.builtin.copy:
     src: "{{ playbook_dir }}/../content/modern-infra/docker-compose.yml"
     dest: "{{ fgnw_modern_infra_root }}/docker-compose.yml"
+    owner: root
+    group: root
     mode: "0644"
   notify: Recreate modern-infra stack
 - name: Deploy LocalStack seed script
   ansible.builtin.copy:
     src: "{{ playbook_dir }}/../content/modern-infra/localstack-seed.sh"
     dest: "{{ fgnw_modern_infra_root }}/localstack-seed.sh"
+    owner: root
+    group: root
     mode: "0755"
 - name: Deploy OpenEMR patient seed data + script
   ansible.builtin.copy:
     src: "{{ playbook_dir }}/../content/modern-infra/{{ item }}"
     dest: "{{ fgnw_modern_infra_root }}/{{ item }}"
+    owner: root
+    group: root
     mode: "0644"
   loop:
     - patient-seed.csv
     - openemr-seed-patients.py
 - name: Bring up the Docker Compose stack
   ansible.builtin.command:
-    cmd: docker compose up -d
+    argv: [docker, compose, up, -d]
     chdir: "{{ fgnw_modern_infra_root }}"
   register: __compose_up
   changed_when: "'Started' in __compose_up.stdout or 'Created' in __compose_up.stdout"
@@ -42,7 +48,7 @@
   ignore_errors: true
 - name: Seed LocalStack (S3 bucket + IAM misconfiguration) — item 4
   ansible.builtin.command:
-    cmd: bash localstack-seed.sh
+    argv: [bash, localstack-seed.sh]
     chdir: "{{ fgnw_modern_infra_root }}"
   register: __localstack_seed
   failed_when: false
@@ -56,7 +62,7 @@
   failed_when: false # OpenEMR readiness is best-effort; the seed step below checks its own result
 - name: Seed OpenEMR patients from the real character roster — item 7
   ansible.builtin.command:
-    cmd: python3 openemr-seed-patients.py
+    argv: [python3, openemr-seed-patients.py]
     chdir: "{{ fgnw_modern_infra_root }}"
   register: __openemr_seed
   failed_when: false

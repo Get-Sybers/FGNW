@@ -1,0 +1,5 @@
+---
+# Play variables of FGNW-ninjasploitable-content.yml, loaded with vars_files.
+ninjasploitable_content_baked_marker: /var/lib/ludus/ninjasploitable_content_baked
+report_web_root: /var/www/html/reports
+report_upload_dir: /var/www/html/uploads

@@ -6,6 +6,8 @@
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
+    owner: root
+    group: wheel
     mode: "0755"
   loop:
     - "{{ fgnw_mac_ghosts_client_install_dir }}"

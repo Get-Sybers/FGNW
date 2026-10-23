@@ -2,14 +2,8 @@
 - name: "Preflight: assert the inventory matched the hosts this verify expects (guards against a vacuous pass)"
   hosts: localhost
   gather_facts: false
-  vars:
-    fgnw_variant: small
-    __expected_by_variant:
-      small: { windows_realname: 6, linux_infra: 3 }
-      regular: { windows_realname: 19, linux_infra: 3 }
-      full: { windows_realname: 19, linux_infra: 3 }
-      xl: { windows_realname: 19, linux_infra: 3 }
-    expected_hosts: "{{ __expected_by_variant[fgnw_variant] | default({}) }}"
+  vars_files:
+    - vars/FGNW-verify-connectivity-play1.yml
   pre_tasks:
     - name: "Preflight: assert fgnw_variant is known (it selects the matched-host floor)"
       tags: always
@@ -62,12 +56,12 @@
 - name: HTTP reachability + OWA checks from a representative Leaf workstation
   hosts: konoha-ws1
   gather_facts: false
-  vars:
-    range_second_octet: "{{ ansible_host.split('.')[1] }}"
+  vars_files:
+    - vars/FGNW-verify-connectivity-play2.yml
   tasks:
     - name: Check HTTP reachability to shared range infrastructure
       ansible.windows.win_uri:
-        url: "{{ item.url }}"
+        url: "{{ item['url'] }}"
         method: GET
         status_code: 200
         validate_certs: false
@@ -76,7 +70,7 @@
         - { name: ninjasploitable report intake, url: "http://10.{{ range_second_octet }}.90.10/reports/intake.php" }
         - { name: OWA login page (by DNS name), url: https://mail.konohagakure.fire.ninja/owa/auth/logon.aspx }
       loop_control:
-        label: "{{ item.name }}"
+        label: "{{ item['name'] }}"
       register: fgnw_verify_http
       ignore_errors: true
       ignore_unreachable: true
@@ -125,25 +119,25 @@
     - name: HTTP reachability summary (from konoha-ws1)
       ansible.builtin.debug:
         msg: >-
-          [{{ 'PASS' if item.status_code | default(0) == 200 else 'FAIL' }}]
-          {{ item.item.name }} ({{ item.item.url }})
-          {{ '' if item.status_code | default(0) == 200 else '-> status=' ~ (item.status_code | default('no response')) }}
+          [{{ 'PASS' if item['status_code'] | default(0) == 200 else 'FAIL' }}]
+          {{ item['item']['name'] }} ({{ item['item']['url'] }})
+          {{ '' if item['status_code'] | default(0) == 200 else '-> status=' ~ (item['status_code'] | default('no response')) }}
       loop: "{{ hostvars['konoha-ws1'].fgnw_verify_http_results | default([]) }}"
       loop_control:
-        label: "{{ item.item.name }}"
+        label: "{{ item['item']['name'] }}"
     - name: Per-forest OWA reachability + cert-trust summary (from konoha-ws1, best-effort)
       ansible.builtin.debug:
         msg: >-
           [{{
-            'OK' if ((item.status_code | default(0)) == 200 and (__certtrust[loop_idx].status_code | default(0)) == 200)
-            else ('WARN cert-NOT-trusted' if (item.status_code | default(0)) == 200 else 'skip forest-absent/unreachable')
+            'OK' if ((item["status_code"] | default(0)) == 200 and (__certtrust[loop_idx].status_code | default(0)) == 200)
+            else ('WARN cert-NOT-trusted' if (item['status_code'] | default(0)) == 200 else 'skip forest-absent/unreachable')
           }}]
-          mail.{{ item.item }}:
-          reachable(cert-ignored)={{ 'yes' if (item.status_code | default(0)) == 200 else 'no' }}
+          mail.{{ item['item'] }}:
+          reachable(cert-ignored)={{ 'yes' if (item['status_code'] | default(0)) == 200 else 'no' }}
           cert-trusted={{ 'yes' if (__certtrust[loop_idx].status_code | default(0)) == 200 else 'no' }}
       loop: "{{ hostvars['konoha-ws1'].fgnw_verify_owa_noverify_results | default([]) }}"
       loop_control:
-        label: mail.{{ item.item }}
+        label: mail.{{ item['item'] }}
         index_var: loop_idx
       vars:
         __certtrust: "{{ hostvars['konoha-ws1'].fgnw_verify_owa_certtrust_results | default([]) }}"
@@ -179,11 +173,11 @@
         fgnw_verify_gate_http_fails: >-
           {{
             fgnw_verify_gate_http_fails | default([])
-            + ([item.item.name] if (item.status_code | default(0)) != 200 else [])
+            + ([item['item']['name']] if (item['status_code'] | default(0)) != 200 else [])
           }}
       loop: "{{ hostvars['konoha-ws1'].fgnw_verify_http_results | default([]) }}"
       loop_control:
-        label: "{{ item.item.name }}"
+        label: "{{ item['item']['name'] }}"
     - name: "GATE: assert every required check passed"
       ansible.builtin.assert:
         that:

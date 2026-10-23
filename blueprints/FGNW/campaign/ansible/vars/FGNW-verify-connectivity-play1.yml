@@ -1,0 +1,9 @@
+---
+# Play variables of FGNW-verify-connectivity.yml (play 1), loaded with vars_files.
+fgnw_variant: small
+__expected_by_variant:
+  small: { windows_realname: 6, linux_infra: 3 }
+  regular: { windows_realname: 19, linux_infra: 3 }
+  full: { windows_realname: 19, linux_infra: 3 }
+  xl: { windows_realname: 19, linux_infra: 3 }
+expected_hosts: "{{ __expected_by_variant[fgnw_variant] | default({}) }}"

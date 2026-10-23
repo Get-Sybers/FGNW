@@ -1,0 +1,8 @@
+---
+# Play variables of adcs.yml, loaded with vars_files.
+data_path: ../ad/NARUTO/data
+adcs_forest_root_domain: wind.ninja
+adcs_domain_username: "{{ adcs_forest_root_domain }}\\Administrator"
+adcs_domain_password: "{{ lab.domains[adcs_forest_root_domain].adcs_domain_password }}"
+ca_common_name: Sunagakure Root CA
+adcs_ca_web_enrollment: true

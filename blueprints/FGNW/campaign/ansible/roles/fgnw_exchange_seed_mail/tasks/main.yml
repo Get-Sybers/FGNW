@@ -43,13 +43,13 @@
     -Body '{{ __body }}'
   loop: "{{ __fgnw_seed_mail_recipients | subelements('value') }}"
   loop_control:
-    label: "{{ item.0.key }} <- {{ item.1.subject[:40] }}"
+    label: "{{ item[0]['key'] }} <- {{ item[1]['subject'][:40] }}"
   no_log: true
   vars:
-    __from: "{{ item.1.from_address | regex_replace('[‘’‛]', \"'\") | replace(\"'\", \"''\") }}"
-    __to: "{{ item.0.key }}@{{ fgnw_seed_mail_domain }}"
-    __subject: "{{ item.1.subject | replace('\n', ' ') | regex_replace('[‘’‛]', \"'\") | replace(\"'\", \"''\") }}"
-    __body: "{{ item.1.body | regex_replace('[‘’‛]', \"'\") | replace(\"'\", \"''\") }}"
+    __from: "{{ item[1]['from_address'] | regex_replace('[‘’‛]', \"'\") | replace(\"'\", \"''\") }}"
+    __to: "{{ item[0]['key'] }}@{{ fgnw_seed_mail_domain }}"
+    __subject: "{{ item[1]['subject'] | replace('\n', ' ') | regex_replace('[‘’‛]', \"'\") | replace(\"'\", \"''\") }}"
+    __body: "{{ item[1]['body'] | regex_replace('[‘’‛]', \"'\") | replace(\"'\", \"''\") }}"
     ansible_become: true
     ansible_become_method: runas
     ansible_become_user: "{{ fgnw_seed_mail_admin_domain }}\\Administrator"

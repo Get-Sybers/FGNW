@@ -1,0 +1,27 @@
+---
+dependencies: []
+galaxy_info:
+  role_name: fgnw_modern_infra
+  namespace: get_sybers
+  author: Get-Sybers
+  description: >-
+    Bring up and seed the modern-infra container stack of the xl range variant (LOE 5): deploys
+    content/modern-infra/docker-compose.yml plus the two seed scripts under fgnw_modern_infra_root,
+    runs `docker compose up -d` (a local registry, DVWA, LocalStack and OpenEMR with MariaDB),
+    waits for LocalStack and OpenEMR, then seeds the LocalStack S3 bucket and over-broad IAM user
+    and the OpenEMR patient roster. Expects Docker Engine with the compose plugin already on the
+    host; the caller play applies geerlingguy.docker first.
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Debian
+      versions:
+        - all
+  galaxy_tags:
+    - fgnw
+    - docker
+    - compose
+    - localstack
+    - openemr
+collections:
+  - ansible.builtin
