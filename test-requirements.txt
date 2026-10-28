@@ -2,7 +2,7 @@
 # place these versions are pinned (docs/04 §6). ansible-core >= 2.19 is what
 # get_sybers.lxc requires.
 ansible-core==2.21.5
-ansible-lint==26.9.0
+ansible-lint==26.10.1
 yamllint==1.38.0
 prek==0.5.5
 pyyaml==6.0.3
