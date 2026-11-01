@@ -88,6 +88,9 @@
     - name: Phase 1b (Ghost9 CT)
       ansible.builtin.include_tasks: deploy-tasks/phase1b-ghost9.yml
       when: __phase_order.index('1b') | int >= __start_idx | int
+    - name: Phase 1b2 (Emulator CT — hypervisor-level user activity injector)
+      ansible.builtin.include_tasks: deploy-tasks/phase1b2-emulator.yml
+      when: __phase_order.index('1b2') | int >= __start_idx | int
     - name: Phase 1c (macOS dev base — pre-containment Homebrew + mac-dev-playbook)
       ansible.builtin.include_tasks: deploy-tasks/phase1c-macos-base.yml
       when: __phase_order.index('1c') | int >= __start_idx | int

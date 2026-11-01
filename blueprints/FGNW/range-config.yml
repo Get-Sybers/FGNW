@@ -649,3 +649,17 @@ ludus_extensions:
     # node's cached local:vztmpl/ghost9.tar first (lxc_guest pulls only when it is absent).
     template_image: "ghcr.io/get-sybers/lxc/ghost9@sha256:37ff20ad1b59e9b95ae83ee9d28f2e2079da16fbf0afbce4b4a9bd69e088044c"
     template_version: "0.1.1"
+  emulator:
+    vlan: 99
+    ip_last_octet: 52
+    hostname_suffix: emulator
+    api_port: 8080
+    cores: 2
+    memory_mb: 512
+    rootfs_gb: 4
+    # fgnw-emulator OCI image, built from blueprints/FGNW/campaign/emulator/Containerfile
+    # and pushed to a registry.  Pin this to a digest once the image is published;
+    # placeholder shown here — replace before deploying.
+    # Build: cd blueprints/FGNW/campaign/emulator && podman build -t fgnw-emulator:0.1.0 .
+    template_image: "ghcr.io/get-sybers/fgnw-emulator:0.1.0"
+    template_version: "0.1.0"

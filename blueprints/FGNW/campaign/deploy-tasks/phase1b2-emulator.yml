@@ -1,0 +1,210 @@
+---
+# Phase 1b2 — the fgnw-emulator LXC
+#
+# Deploys a Debian 13 container running the fgnw-emulator binary on VLAN 99
+# at 10.<range>.99.52.  The emulator drives per-persona activity into each
+# workstation VM via the Proxmox HMP monitor (sendkey keyboard injection) and
+# the QEMU Guest Agent exec endpoint — completely transparent to the guest OS.
+#
+# Pre-conditions:
+#   phase1  — range VMs exist (emulator maps hostnames → VMIDs via PVE API)
+#   phase1b — ghost9 LXC is up (emulator reports activity to the GHOSTS API)
+#
+# Extra-vars required (pass via -e @<0600 file>):
+#   emulator_ct_api_user          PVE API token user  (e.g. "emulator@pve")
+#   emulator_ct_api_token_id      token ID
+#   emulator_ct_api_token_secret  token secret
+#   emulator_ct_api_host          PVE host URL (e.g. "https://pve01:8006")
+#   emulator_ct_storage           Proxmox storage pool for the CT rootfs
+#   emulator_api_token            Bearer token for the emulator's own REST API
+#   emulator_persona_passwords    inline YAML map hostname→password (or path to file)
+#
+# The PVE token must carry:
+#   VM.Monitor    on the GHOSTS workstation VMs   (HMP sendkey)
+#   VM.Guest      on the GHOSTS workstation VMs   (QGA exec)
+#   VM.Audit      on the node                     (qemu list)
+#   SDN.Use       on the range VNet               (CT network)
+#   LXC.Create    on the CT storage               (create the CT)
+#
+# NOT a Ludus range object — `ludus range rm` will not remove it.
+
+- name: "deploy-tasks | phase1b2-emulator | Guard: scoped PVE token was passed"
+  ansible.builtin.assert:
+    that:
+      - emulator_ct_api_user | default('') | length > 0
+      - emulator_ct_api_token_id | default('') | length > 0
+      - emulator_ct_api_token_secret | default('') | length > 0
+      - emulator_ct_api_host | default('') | length > 0
+    fail_msg: >-
+      Phase 1b2 (emulator CT) needs a scoped PVE API token. Pass it via an
+      owner-only extra-vars file: ansible-playbook deploy.yml -e @<0600 file>
+      defining emulator_ct_api_user, emulator_ct_api_token_id,
+      emulator_ct_api_token_secret and emulator_ct_api_host.
+    quiet: true
+
+- name: "deploy-tasks | phase1b2-emulator | Read the range config"
+  ansible.builtin.slurp:
+    src: "{{ __cfg_blueprint }}"
+  register: __em_cfg_raw
+
+- name: "deploy-tasks | phase1b2-emulator | Parse the emulator extensions block"
+  ansible.builtin.set_fact:
+    __em_ext: "{{ ((__em_cfg_raw.content | b64decode | from_yaml).ludus_extensions | default({})).emulator | default({}) }}"
+
+- name: "deploy-tasks | phase1b2-emulator | Assert the config carries the emulator placement contract"
+  ansible.builtin.assert:
+    that:
+      - __em_ext.vlan is defined
+      - __em_ext.ip_last_octet is defined
+      - __em_ext.hostname_suffix is defined
+      - __em_ext.api_port is defined
+      - __em_ext.cores is defined
+      - __em_ext.memory_mb is defined
+      - __em_ext.rootfs_gb is defined
+      - __em_ext.template_image is defined
+    fail_msg: >-
+      range-config.yml is missing a complete ludus_extensions.emulator block.
+      Add vlan, ip_last_octet, hostname_suffix, api_port, cores, memory_mb,
+      rootfs_gb, template_image (the fgnw-emulator OCI image).
+    quiet: true
+
+- name: "deploy-tasks | phase1b2-emulator | Read the range number"
+  ansible.builtin.command:
+    argv: [/usr/local/bin/ludus, range, list, --json]
+  environment:
+    LUDUS_API_KEY: "{{ __ludus_api_key }}"
+  register: __em_list
+  changed_when: false
+  no_log: true
+
+- name: "deploy-tasks | phase1b2-emulator | Set the range number"
+  ansible.builtin.set_fact:
+    __range_number: "{{ (__em_list.stdout | from_json).rangeNumber }}"
+
+- name: "deploy-tasks | phase1b2-emulator | Locate the ghost9 API URL"
+  ansible.builtin.set_fact:
+    __ghost9_api_url: >-
+      http://10.{{ __range_number }}.{{
+        ((__em_cfg_raw.content | b64decode | from_yaml).ludus_extensions | default({})).ghost9.vlan | default(99)
+      }}.{{
+        ((__em_cfg_raw.content | b64decode | from_yaml).ludus_extensions | default({})).ghost9.ip_last_octet | default(51)
+      }}:{{
+        ((__em_cfg_raw.content | b64decode | from_yaml).ludus_extensions | default({})).ghost9.api_port | default(5000)
+      }}/api
+
+- name: "deploy-tasks | phase1b2-emulator | Resolve CT ID (range_number * 1000 + 1, same slot convention as ghost9)"
+  ansible.builtin.set_fact:
+    __em_ctid: "{{ (__range_number | int) * 1000 + 1 }}"
+
+- name: "deploy-tasks | phase1b2-emulator | Write the passwords file (0600, shredded by cleanup)"
+  ansible.builtin.copy:
+    content: "{{ emulator_persona_passwords }}"
+    dest: "{{ __tmp_dir }}/emulator-passwords.yml"
+    owner: "{{ ansible_facts['user_id'] }}"
+    group: "{{ ansible_facts['user_gid'] }}"
+    mode: "0600"
+  when: emulator_persona_passwords | default('') | length > 0
+
+- name: "deploy-tasks | phase1b2-emulator | Pull and run the emulator container via pct + OCI"
+  # The emulator CT is a plain Debian 13 container running the fgnw-emulator
+  # binary as a systemd service.  We create it with pct, copy in the config
+  # files, and start the service.
+  ansible.builtin.shell: |
+    set -euo pipefail
+
+    CTID={{ __em_ctid }}
+    IMAGE="{{ __em_ext.template_image }}"
+    VLAN="{{ __em_ext.vlan }}"
+    IP="10.{{ __range_number }}.{{ __em_ext.vlan }}.{{ __em_ext.ip_last_octet }}"
+    GW="10.{{ __range_number }}.{{ __em_ext.vlan }}.1"
+    STORAGE="{{ emulator_ct_storage }}"
+    CORES="{{ __em_ext.cores }}"
+    MEM="{{ __em_ext.memory_mb }}"
+    DISK="{{ __em_ext.rootfs_gb }}"
+
+    # Destroy existing CT if present
+    if pct status $CTID &>/dev/null; then
+      pct stop $CTID --force || true
+      pct destroy $CTID --force || true
+    fi
+
+    # Create from OCI image using pct import-from (PVE 8.2+)
+    pct create $CTID \
+      --hostname "r{{ __range_number }}-{{ __em_ext.hostname_suffix }}" \
+      --cores $CORES \
+      --memory $MEM \
+      --rootfs "$STORAGE:$DISK" \
+      --net0 "name=eth0,bridge=vmbr0,tag=$VLAN,ip=$IP/24,gw=$GW" \
+      --unprivileged 1 \
+      --features "nesting=1" \
+      --start 0 \
+      --ostype debian
+
+    # Inject the container rootfs from the OCI image
+    pct import-from-oci $CTID $IMAGE --storage $STORAGE
+
+    # Bind-mount persona config directory from the Ludus host
+    pct set $CTID --mp0 "/opt/ludus/sources/{{ __source_id }}/blueprints/FGNW/campaign/content/ghosts,mp=/etc/fgnw-emulator/ghosts,ro=1"
+
+    pct start $CTID
+    sleep 5
+
+    # Write the environment file for the systemd unit
+    pct exec $CTID -- bash -c "cat > /etc/fgnw-emulator/env << 'EOF'
+    PVE_HOST={{ emulator_ct_api_host }}
+    PVE_USER={{ emulator_ct_api_user }}
+    PVE_TOKEN_ID={{ emulator_ct_api_token_id }}
+    PVE_SECRET={{ emulator_ct_api_token_secret }}
+    PVE_NODE={{ emulator_ct_api_host | urlsplit('hostname') }}
+    RANGE_NUMBER={{ __range_number }}
+    PERSONA_TIMELINES=/etc/fgnw-emulator/ghosts/persona-timelines.yml
+    PERSONA_OVERRIDES=/etc/fgnw-emulator/ghosts/persona-overrides.yml
+    PERSONA_PASSWORDS=/etc/fgnw-emulator/passwords.yml
+    GHOSTS_API_URL={{ __ghost9_api_url }}
+    API_LISTEN=:{{ __em_ext.api_port }}
+    API_TOKEN={{ emulator_api_token | default('') }}
+    DRY_RUN=false
+    EOF
+    chmod 600 /etc/fgnw-emulator/env"
+
+    # Install the systemd unit
+    pct exec $CTID -- bash -c "cat > /etc/systemd/system/fgnw-emulator.service << 'EOF'
+    [Unit]
+    Description=FGNW Hypervisor-Level User Emulator
+    After=network.target
+    [Service]
+    EnvironmentFile=/etc/fgnw-emulator/env
+    ExecStart=/usr/local/bin/fgnw-emulator
+    Restart=on-failure
+    RestartSec=10s
+    User=emulator
+    [Install]
+    WantedBy=multi-user.target
+    EOF"
+
+    pct exec $CTID -- systemctl daemon-reload
+    pct exec $CTID -- systemctl enable fgnw-emulator
+    pct exec $CTID -- systemctl start fgnw-emulator
+  args:
+    executable: /bin/bash
+  changed_when: true
+  no_log: true
+
+- name: "deploy-tasks | phase1b2-emulator | Wait for the API to become healthy"
+  ansible.builtin.uri:
+    url: "http://10.{{ __range_number }}.{{ __em_ext.vlan }}.{{ __em_ext.ip_last_octet }}:{{ __em_ext.api_port }}/health"
+    return_content: true
+    status_code: 200
+  register: __em_health
+  retries: 12
+  delay: 10
+  until: __em_health.status == 200
+
+- name: "deploy-tasks | phase1b2-emulator | Announce the client contract"
+  ansible.builtin.debug:
+    msg: >-
+      Emulator CT {{ __em_ctid }} is up for range {{ __range_number }}
+      (fgnw-emulator {{ __em_ext.template_version | default('0.1.0') }}):
+      API http://10.{{ __range_number }}.{{ __em_ext.vlan }}.{{ __em_ext.ip_last_octet }}:{{ __em_ext.api_port }}
+      (Bearer token auth: {{ (emulator_api_token | default('') | length > 0) | ternary('enabled', 'disabled') }}).
+      NOT a Ludus range object — ludus range rm will not remove it.
