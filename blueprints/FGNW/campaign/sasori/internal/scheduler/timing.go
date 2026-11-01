@@ -78,6 +78,22 @@ func IsLunchWindow(t time.Time) bool {
 	return mins >= 11*60+45 && mins <= 13*60+15
 }
 
+// IsShortBreakAMWindow returns true between 10:15 and 10:45 — the mid-morning
+// break slot that triggers a short LockUnlockCycle.
+func IsShortBreakAMWindow(t time.Time) bool {
+	h, m, _ := t.Clock()
+	mins := h*60 + m
+	return mins >= 10*60+15 && mins <= 10*60+45
+}
+
+// IsShortBreakPMWindow returns true between 14:30 and 15:15 — the mid-afternoon
+// break slot.
+func IsShortBreakPMWindow(t time.Time) bool {
+	h, m, _ := t.Clock()
+	mins := h*60 + m
+	return mins >= 14*60+30 && mins <= 15*60+15
+}
+
 // --- package-level RNG (seeded once) ----------------------------------------
 
 var (

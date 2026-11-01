@@ -45,6 +45,7 @@ import (
 
 	"github.com/get-sybers/sasori/internal/api"
 	"github.com/get-sybers/sasori/internal/config"
+	"github.com/get-sybers/sasori/internal/ghosts"
 	"github.com/get-sybers/sasori/internal/persona"
 	"github.com/get-sybers/sasori/internal/proxmox"
 	"github.com/get-sybers/sasori/internal/scheduler"
@@ -122,8 +123,15 @@ func main() {
 		passwords = map[string]string{}
 	}
 
+	// --- GHOSTS client (optional) ----------------------------------------
+	var ghostsCl *ghosts.Client
+	if cfg.GhostsAPIURL != "" {
+		ghostsCl = ghosts.New(cfg.GhostsAPIURL)
+		slog.Info("ghosts reporting enabled", "url", cfg.GhostsAPIURL)
+	}
+
 	// --- Scheduler ------------------------------------------------------
-	sched := scheduler.New(pve, vmMap, personas, passwords, cfg.DryRun)
+	sched := scheduler.New(pve, vmMap, personas, passwords, ghostsCl, cfg.DryRun)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/get-sybers/sasori/internal/activity"
+	"github.com/get-sybers/sasori/internal/ghosts"
 	"github.com/get-sybers/sasori/internal/persona"
 	"github.com/get-sybers/sasori/internal/proxmox"
 )
@@ -19,7 +20,7 @@ type Event struct {
 	Hostname string
 	VMID     int
 	Kind     activity.Kind
-	Note     string
+	Note     string // optional human-readable detail
 	Err      error
 }
 
@@ -29,6 +30,7 @@ type Scheduler struct {
 	vmMap     map[string]proxmox.VMInfo // hostname → VM
 	personas  []persona.Persona
 	passwords map[string]string // hostname → plaintext password
+	ghostsCl  *ghosts.Client    // nil if GHOSTS reporting is disabled
 	dryRun    bool
 
 	mu      sync.RWMutex
@@ -40,11 +42,13 @@ type Scheduler struct {
 
 // New creates a Scheduler.  passwords maps inventory hostnames to the
 // domain user's plaintext password (used for unlock injection).
+// ghostsClient may be nil to disable GHOSTS activity reporting.
 func New(
 	pve *proxmox.Client,
 	vmMap map[string]proxmox.VMInfo,
 	personas []persona.Persona,
 	passwords map[string]string,
+	ghostsClient *ghosts.Client,
 	dryRun bool,
 ) *Scheduler {
 	return &Scheduler{
@@ -52,6 +56,7 @@ func New(
 		vmMap:     vmMap,
 		personas:  personas,
 		passwords: passwords,
+		ghostsCl:  ghostsClient,
 		dryRun:    dryRun,
 		eventCh:   make(chan Event, 256),
 	}
@@ -177,6 +182,19 @@ func (s *Scheduler) runPersona(ctx context.Context, p *persona.Persona) {
 			lunchDone = false // reset for tomorrow
 		}
 
+		// Short break lock-cycles: mid-morning and mid-afternoon.
+		if IsShortBreakAMWindow(now) || IsShortBreakPMWindow(now) {
+			sc := s.sessionController(p, vm.VMID)
+			if err := sc.LockUnlockCycle(ShortBreakDuration(), 55); err != nil {
+				s.emit(p, vm.VMID, activity.KindLock, err)
+			} else {
+				s.emit(p, vm.VMID, activity.KindUnlock, nil)
+			}
+			// Sleep until the break window ends to avoid re-triggering.
+			time.Sleep(5 * time.Minute)
+			continue
+		}
+
 		// Normal activity.
 		kind := activity.Sample(weights)
 		if err := s.execActivity(p, vm.VMID, kind); err != nil {
@@ -230,7 +248,7 @@ func (s *Scheduler) execActivity(p *persona.Persona, vmid int, kind activity.Kin
 
 func (s *Scheduler) sessionController(p *persona.Persona, vmid int) *activity.SessionController {
 	pw := s.passwords[p.Hostname]
-	return activity.NewSessionController(s.pve, vmid, p.ADDomain, p.SAM, pw, s.dryRun)
+	return activity.NewSessionController(s.pve, vmid, p.ADDomain, p.SAM, pw, p.OS, s.dryRun)
 }
 
 func (s *Scheduler) emit(p *persona.Persona, vmid int, kind activity.Kind, err error) {
@@ -249,20 +267,38 @@ func (s *Scheduler) emit(p *persona.Persona, vmid int, kind activity.Kind, err e
 	}
 	s.mu.Unlock()
 
-	// Non-blocking broadcast.
+	// Non-blocking broadcast to API watchers.
 	select {
 	case s.eventCh <- ev:
 	default:
+	}
+
+	// Best-effort GHOSTS reporting — never block or fail emulation.
+	if s.ghostsCl != nil {
+		go func() {
+			if reportErr := s.ghostsCl.ReportActivity(
+				p.Hostname, string(kind), err == nil, ev.Note,
+			); reportErr != nil {
+				slog.Debug("ghosts report failed", "hostname", p.Hostname, "err", reportErr)
+			}
+		}()
 	}
 }
 
 // --- content helpers --------------------------------------------------------
 
-// personaPhrase returns a short typed phrase flavoured for the persona.
-// These are the kinds of things a real user types into Notepad, a chat box,
-// or a search bar — mundane, brief, in-character.
+// personaPhrase returns a short typed phrase for the persona.
+// Prefers phrases loaded from the overrides YAML; falls back to built-in
+// per-hostname defaults, then a generic fallback.
 func personaPhrase(p *persona.Persona) string {
-	phrases := map[string][]string{
+	if len(p.Phrases) > 0 {
+		rngMu.Lock()
+		idx := rng.Intn(len(p.Phrases))
+		rngMu.Unlock()
+		return p.Phrases[idx]
+	}
+	// Built-in defaults keyed by hostname.
+	defaults := map[string][]string{
 		"konoha-ws1": {
 			"mission report draft\n",
 			"ichiraku ramen lunch order\n",
@@ -311,7 +347,7 @@ func personaPhrase(p *persona.Persona) string {
 			"allied shinobi coordination\n",
 		},
 	}
-	options, ok := phrases[p.Hostname]
+	options, ok := defaults[p.Hostname]
 	if !ok || len(options) == 0 {
 		return "meeting notes\n"
 	}
@@ -321,11 +357,18 @@ func personaPhrase(p *persona.Persona) string {
 	return options[idx]
 }
 
-// personaDocPath returns a UNC path to a decoy document on the village share
-// for the persona to "open".  The paths mirror the filesystem corpus staged
-// by the fgnw_decoy_files role.
+// personaDocPath returns a path to a decoy document for the persona to open.
+// Prefers doc_paths loaded from the overrides YAML; falls back to built-in
+// per-hostname defaults.  Returns "" if no paths are configured.
 func personaDocPath(p *persona.Persona) string {
-	docs := map[string][]string{
+	if len(p.DocPaths) > 0 {
+		rngMu.Lock()
+		idx := rng.Intn(len(p.DocPaths))
+		rngMu.Unlock()
+		return p.DocPaths[idx]
+	}
+	// Built-in defaults (Windows UNC paths) keyed by hostname.
+	defaults := map[string][]string{
 		"konoha-ws1": {
 			`\\konoha-fs\leaf$\Mission Reports\naruto_uzumaki_field_report.docx`,
 			`\\konoha-fs\leaf$\Personnel\uzumaki_clan_register.docx`,
@@ -359,7 +402,7 @@ func personaDocPath(p *persona.Persona) string {
 			`\\suna-fs\sand$\Kazekage Office\security_review.docx`,
 		},
 	}
-	options, ok := docs[p.Hostname]
+	options, ok := defaults[p.Hostname]
 	if !ok || len(options) == 0 {
 		return ""
 	}

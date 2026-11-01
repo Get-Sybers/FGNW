@@ -14,22 +14,25 @@ import (
 
 // Persona is the merged view of one FGNW character's emulation parameters.
 type Persona struct {
-	Hostname string // inventory hostname, e.g. "konoha-ws1"
-	Character string // display name, e.g. "Naruto Uzumaki"
-	SAM       string // sAMAccountName, e.g. "naruto.uzumaki"
-	ADDomain  string // e.g. "konohagakure.fire.ninja"
-	Netbios   string // e.g. "KONOHA"
-	Homepage  string
+	Hostname    string
+	Character   string
+	SAM         string
+	ADDomain    string
+	Netbios     string
+	Homepage    string
 	HasOWAInbox bool
 	BrowseURLs  []string
 
 	// From overrides
 	SignatureURLs []string
-	Pace          string // "obsessive" | "normal" | "idle"
-	ActiveStart   string // local time, e.g. "08:00:00"
-	ActiveEnd     string // local time, e.g. "18:00:00"
+	Pace          string   // "obsessive" | "normal" | "idle"
+	ActiveStart   string   // local time, e.g. "08:00:00"
+	ActiveEnd     string   // local time, e.g. "18:00:00"
 	AdminActivity bool
 	Note          string
+	OS            string   // "windows" (default) or "macos"
+	Phrases       []string // optional typed phrases; scheduler falls back to built-in if empty
+	DocPaths      []string // optional decoy document paths (UNC on Windows, Unix on macOS)
 
 	// Derived
 	ActiveWindow [2]time.Time // filled by DeriveWindows()
@@ -70,12 +73,33 @@ type overridesFile struct {
 	GhostsOverrides map[string]overrideEntry `yaml:"ghosts_overrides"`
 }
 
+type beliefEntry struct {
+	Name       string  `yaml:"name"`
+	Likelihood float64 `yaml:"likelihood"`
+}
+
+type knowledgeEntry struct {
+	Topic string `yaml:"topic"`
+	Value int    `yaml:"value"`
+}
+
 type overrideEntry struct {
-	SignatureURLs []string           `yaml:"signature_urls"`
-	Pace         string             `yaml:"pace"`
-	ActiveHours  *activeHoursEntry  `yaml:"active_hours"`
-	AdminActivity bool              `yaml:"admin_activity"`
-	Note          string            `yaml:"note"`
+	SignatureURLs  []string          `yaml:"signature_urls"`
+	Pace           string            `yaml:"pace"`
+	ActiveHours    *activeHoursEntry `yaml:"active_hours"`
+	AdminActivity  bool              `yaml:"admin_activity"`
+	Note           string            `yaml:"note"`
+	OS             string            `yaml:"os"`       // "windows" (default) or "macos"
+	Phrases        []string          `yaml:"phrases"`  // optional typed phrases for sasori
+	DocPaths       []string          `yaml:"doc_paths"` // optional decoy document paths for sasori
+
+	// The following fields are consumed by GHOSTS, not sasori.
+	Beliefs         []beliefEntry    `yaml:"beliefs"`
+	KnowledgeTopics []knowledgeEntry `yaml:"knowledge_topics"`
+	// ReconLegs is an Akatsuki-only GHOSTS field for the intel campaign beat
+	// (DoS target subnet, rate, duration). Intentionally not modelled in sasori;
+	// GHOSTS handles it via timeline entries.
+	ReconLegs interface{} `yaml:"recon_legs"`
 }
 
 type activeHoursEntry struct {
@@ -109,6 +133,7 @@ func Load(timelinesPath, overridesPath string) ([]Persona, error) {
 			Pace:        "normal",
 			ActiveStart: "08:00:00",
 			ActiveEnd:   "18:00:00",
+			OS:          "windows",
 		}
 		if oe, ok := ov.GhostsOverrides[hostname]; ok {
 			if len(oe.SignatureURLs) > 0 {
@@ -127,6 +152,15 @@ func Load(timelinesPath, overridesPath string) ([]Persona, error) {
 			}
 			p.AdminActivity = oe.AdminActivity
 			p.Note = oe.Note
+			if oe.OS != "" {
+				p.OS = oe.OS
+			}
+			if len(oe.Phrases) > 0 {
+				p.Phrases = oe.Phrases
+			}
+			if len(oe.DocPaths) > 0 {
+				p.DocPaths = oe.DocPaths
+			}
 		}
 		personas = append(personas, p)
 	}

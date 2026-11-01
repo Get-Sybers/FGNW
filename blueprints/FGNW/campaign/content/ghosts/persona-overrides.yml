@@ -134,8 +134,17 @@ ghosts_overrides:
     signature_urls: [www.gaara-for-kazekage.com, www.kazekage-office.gov.sand]
     pace: normal
     active_hours: { start: 00:00:00, end: 23:59:00 }
-    note: Kazekage; account active 24/7 (no anomaly flagged because it's consistent).
+    note: Kazekage; account active 24/7 (no anomaly flagged because it's consistent). macOS workstation.
     admin_activity: true
+    os: macos
+    phrases:
+      - "kazekage office memo\n"
+      - "sand village security review\n"
+      - "allied shinobi coordination\n"
+      - "wind country budget\n"
+    doc_paths:
+      - "/Volumes/sand/Kazekage Office/security_review.docx"
+      - "/Volumes/sand/Administrative/kazekage_correspondence.docx"
     beliefs:
       - { name: I fight for the sake of those who need me, likelihood: 0.97 }
       - { name: One must have a reason to exist beyond one's own survival, likelihood: 0.95 }

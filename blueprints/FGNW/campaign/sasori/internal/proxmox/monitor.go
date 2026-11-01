@@ -53,6 +53,14 @@ func (c *Client) TypeString(vmid int, text string, delayMs float64, errorRate fl
 	return nil
 }
 
+// MouseMove sends a relative mouse-move HMP command to vmid.
+// dx and dy are signed pixel deltas.  Unlike SendKey, mouse_move is a
+// standalone HMP command that cannot be embedded in sendkey — this method
+// issues it directly via the monitor endpoint.
+func (c *Client) MouseMove(vmid, dx, dy int) error {
+	return c.monitor(vmid, fmt.Sprintf("mouse_move %d %d", dx, dy))
+}
+
 // monitor posts a raw HMP command string to the QEMU monitor for vmid.
 func (c *Client) monitor(vmid int, command string) error {
 	path := fmt.Sprintf("nodes/%s/qemu/%d/monitor", c.node, vmid)
