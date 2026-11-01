@@ -3,7 +3,7 @@
 > `range-config.yml` lists: **AD content** — OUs, groups, users, memberships
 > (`get_sybers.range_password_policy` + `get_sybers.range_ad_mgmt`,
 > sysmon + ACSC event logging on the Windows VMs, and **real
-> Exchange 2019** on the three Windows `-mail` servers) are applied by `range deploy` itself rather than by
+> Exchange 2019** on the Leaf `-mail` server, `konoha-mail`) are applied by `range deploy` itself rather than by
 > `campaign/deploy.yml`, so what **doesn't** happen is the emulation/attack tail: the Nexus cache
 > seed (0), the ghost9 GHOSTS server CT (1b — a `get_sybers.lxc` container created on the PVE
 > node from the published ghost9 template), content seeding (4), threat artefacts (4c), and
@@ -71,9 +71,9 @@ ludus range errors
 ```
 
 Exchange is **real Exchange 2019** (`get_sybers.range_exchange` + `get_sybers.range_exchange_seed`)
-on the three Windows `-mail` servers (`konoha-mail`, `oto-mail`, `dark-mail`; the Sand forest's
-`suna-mail` is macOS Postfix/Dovecot), and it runs **last** — ordered after the DCs' AD-content
-roles via `depends_on`, since it needs the directory in place.
+on the Leaf `-mail` server (`konoha-mail`; the Sand forest's `suna-mail` is macOS Postfix/Dovecot,
+and the Sound and Akatsuki forests have no mail server), and it runs **last** — ordered after the
+DCs' AD-content roles via `depends_on`, since it needs the directory in place.
 To (re)apply just the **AD content** on an already-built range — without a full redeploy — limit
 the run to the two AD roles at the user-defined-roles stage:
 
@@ -149,7 +149,7 @@ ludus range deploy --only-roles get_sybers.cluster.cluster_ceph_orphan_sweep -t 
   per-VM `roles:` lists (stock Ludus resolves the run order from the config and gates each role
   with `when: role_name in only_roles` — it cannot inject a role that isn't listed). So the sweep
   role must first be **added** to a carrier VM's `roles:` list — the **`attacker`** VM is a natural
-  choice (present in all three variants) — via `ludus range config get`/`set`. Without that entry,
+  choice — via `ludus range config get`/`set`. Without that entry,
   `--only-roles` has no candidate and silently runs nothing.
 - **Delegation, not play targeting.** Stock Ludus applies user-defined roles **on the range VM**
   (the generated play is `hosts: <vm_name>`). The sweep works anyway because **every host-touching

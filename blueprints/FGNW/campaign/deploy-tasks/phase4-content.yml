@@ -33,17 +33,10 @@
     argv:
       - ansible-playbook
       - -i
-      - "{{ ad_dir }}/data/{{ __v.ad_data }}"
+      - "{{ ad_dir }}/data/inventory"
       - -i
       - "{{ __tmp_prov_inv }}"
       - dnsforwarder.yml
   args:
     chdir: "{{ ansible_dir }}"
   changed_when: true
-- name: "deploy-tasks | phase4-content | FGNW-modern-infra.yml (xl only)"
-  ansible.builtin.command:
-    argv: [ansible-playbook, -i, "{{ __tmp_infra_inv }}", FGNW-modern-infra.yml]
-  args:
-    chdir: "{{ ansible_dir }}"
-  changed_when: true
-  when: __v.modern_infra | bool

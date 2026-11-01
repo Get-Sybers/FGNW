@@ -91,7 +91,7 @@ ghosts_personas:
     ad_domain: otogakure.ninja
     netbios: OTO
     homepage: http://www.konoha-portal.leaf
-    has_owa_inbox: true
+    has_owa_inbox: false
     browse_urls:
       - http://www.konoha-portal.leaf
       - http://www.hokage-office.gov.leaf
@@ -108,7 +108,7 @@ ghosts_personas:
     ad_domain: akatsuki.dark
     netbios: AKATSUKI
     homepage: http://www.ame-portal.rain
-    has_owa_inbox: true
+    has_owa_inbox: false
     browse_urls:
       - http://www.ame-portal.rain
       - http://www.pain-gospel.rain
@@ -125,7 +125,7 @@ ghosts_personas:
     ad_domain: akatsuki.dark
     netbios: AKATSUKI
     homepage: http://www.shinobi-world-news.com
-    has_owa_inbox: true
+    has_owa_inbox: false
     browse_urls:
       - http://www.shinobi-world-news.com
       - http://www.missionboard.net
@@ -142,11 +142,11 @@ ghosts_personas:
     ad_domain: sunagakure.wind.ninja
     netbios: SUNA
     homepage: http://www.suna-portal.sand
-    # has_owa_inbox is a vestige of an earlier range config that used OWA; it is not read
-    # by anything today, so the uniform `true` across every persona entry is kept. The
-    # Sand mail path is Postfix/Dovecot + Thunderbird (IMAP) on macOS; the GHOSTS Universal
-    # client (fgnw_mac_ghosts_client) drives the browse_urls the same way the Windows
-    # client did before the conversion.
+    # has_owa_inbox gates the authenticated-EWS mail event in the Windows GHOSTS timeline
+    # (templates/FGNW-ghosts.timeline.json.j2), so it is false for workstations whose village
+    # has no Exchange server (Oto, Akatsuki). suna-ws1 is macOS, driven by the GHOSTS Universal
+    # client (fgnw_mac_ghosts_client) which ignores this flag; the Sand mail path is
+    # Postfix/Dovecot + Thunderbird (IMAP). The value is a no-op here, left true.
     has_owa_inbox: true
     browse_urls:
       - http://www.suna-portal.sand

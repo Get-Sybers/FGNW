@@ -27,22 +27,18 @@
 - name: "deploy-tasks | materialize-infra-inv | Render the provider inventory (RANGENUMBER)"
   ansible.builtin.copy:
     content: >-
-      {{ (lookup('file', ad_dir ~ '/providers/ludus/' ~ __v.ad_prov)) | replace('RANGENUMBER', __range_number | string) }}
+      {{ (lookup('file', ad_dir ~ '/providers/ludus/inventory.yml')) | replace('RANGENUMBER', __range_number | string) }}
     dest: "{{ __tmp_prov_inv }}"
     owner: "{{ ansible_facts['user_id'] }}"
     group: "{{ ansible_facts['user_gid'] }}"
     mode: "0644"
 - name: "deploy-tasks | materialize-infra-inv | Read the static infra inventory template"
   ansible.builtin.slurp:
-    src: "{{ ad_dir }}/providers/ludus/{{ __v.infra }}"
+    src: "{{ ad_dir }}/providers/ludus/inventory-infra.yml"
   register: __infra_tpl
 - name: "deploy-tasks | materialize-infra-inv | Render RANGENUMBER -> range 2nd octet"
   ansible.builtin.set_fact:
     __infra_rendered: "{{ (__infra_tpl.content | b64decode) | replace('RANGENUMBER', __range_number | string) }}"
-- name: "deploy-tasks | materialize-infra-inv | Uncomment modern-infra (xl only)"
-  ansible.builtin.set_fact:
-    __infra_rendered: "{{ __infra_rendered | replace('; modern-infra ansible_host', 'modern-infra ansible_host') }}"
-  when: __v.modern_infra | bool
 - name: "deploy-tasks | materialize-infra-inv | Write the infra inventory (owner-only, BEFORE the password)"
   ansible.builtin.copy:
     content: "{{ __infra_rendered }}"

@@ -1,10 +1,10 @@
 ---
-- name: "deploy-tasks | phase4b-exchange | Select the forests for this variant"
+- name: "deploy-tasks | phase4b-exchange | Select the Exchange forest"
   ansible.builtin.set_fact:
     # suna-mail (Sunagakure) is NOT in this list — it is a macOS host running
-    # Postfix/Dovecot now, stood up by phase 4d (FGNW-mac-mail.yml). Only the three
-    # villages that still run Exchange 2019 live here.
-    __forests: "{{ ['konoha-mail'] if __variant_norm == 'small' else ['konoha-mail', 'oto-mail', 'dark-mail'] }}"
+    # Postfix/Dovecot now, stood up by phase 4d (FGNW-mac-mail.yml). Konoha is the
+    # only village that still runs Exchange 2019.
+    __forests: ['konoha-mail']
 - name: "deploy-tasks | phase4b-exchange | Build the ordered per-forest step list"
   ansible.builtin.set_fact:
     __exchange_steps: "{{ __forests | product(['FGNW-exchange.yml', 'FGNW-exchange-seed-mail.yml']) | list }}"

@@ -18,8 +18,7 @@ content by design, reviewed under the range rubric, not a defect.
   group with forest-root Enterprise-Admin credentials, validates `CertSvc` and
   `certutil -ping`, then creates and publishes the ESC1 template.
 - `ad/NARUTO/data/inventory` puts the Sand child DC in `[adcs]` as `dc04`
-  (`suna-dc1`'s `dict_key`). `inventory-small`'s `[adcs]` group is empty, so
-  `adcs.yml` is a no-op on the small range.
+  (`suna-dc1`'s `dict_key`).
 - `deploy-tasks/phase3-ad.yml` runs `adcs.yml` after the Phase-3 content tail,
   once the forest exists. Phase 3 runs inside the contained range (containment
   is Phase 2), so anything the step needs from outside is already cached in

@@ -1,9 +1,6 @@
 ---
 # Play variables of FGNW-verify-connectivity.yml (play 1), loaded with vars_files.
-fgnw_variant: small
-__expected_by_variant:
-  small: { windows_realname: 6, linux_infra: 3 }
-  regular: { windows_realname: 19, linux_infra: 3 }
-  full: { windows_realname: 19, linux_infra: 3 }
-  xl: { windows_realname: 19, linux_infra: 3 }
-expected_hosts: "{{ __expected_by_variant[fgnw_variant] | default({}) }}"
+# Single-size range: the matched-host floor is the deployed Windows + Linux count.
+# windows_realname = ghosts_clients(8) + village_dcs(6) + exchange_servers(1) = 15;
+# linux_infra = attacker + ninjasploitable + kali = 3. (macOS hosts are verified elsewhere.)
+expected_hosts: { windows_realname: 15, linux_infra: 3 }

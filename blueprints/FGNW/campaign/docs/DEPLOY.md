@@ -43,8 +43,6 @@ is part of the Ludus install and stays empty:
 ```bash
 cd /opt/ludus/sources/<sourceID>/blueprints/FGNW/campaign
 ansible-playbook deploy.yml
-ansible-playbook deploy.yml -e range_variant=small
-ansible-playbook deploy.yml -e range_variant=xl
 ansible-playbook deploy.yml -e range_from_phase=4b
 ansible-playbook deploy.yml -e range_skip_exchange=true
 ```
@@ -121,8 +119,6 @@ blueprint checkout on the Ludus host:
 
 cd /opt/ludus/sources/<sourceID>/blueprints/FGNW/campaign
 ansible-playbook deploy.yml
-ansible-playbook deploy.yml -e range_variant=small
-ansible-playbook deploy.yml -e range_variant=xl
 ansible-playbook deploy.yml -e range_from_phase=4b
 ansible-playbook deploy.yml -e range_fresh=true
 
@@ -156,7 +152,7 @@ Exchange 2019 install + mail seed — Exchange is a default part of the deploy, 
 - `range_skip_exchange=true` to opt OUT of Phase 4b for a quick run that doesn't need mail.
 - `range_from_phase=<token>` to resume partway through instead of re-running earlier (slow)
   phases, e.g. after fixing an issue:
-  `ansible-playbook deploy.yml -e range_variant=small -e range_from_phase=3`.
+  `ansible-playbook deploy.yml -e range_from_phase=3`.
   Phase tokens match this doc's phase numbers (`0 1 1b 1c 2 3 4 4b 4c 4d 4e 5`).
 It is **not** idempotent against an already-deployed range when run from phase 0 — Phase 1
 reconfigures and redeploys the VMs. Use `-e range_from_phase=<token>` to resume/re-apply later phases
@@ -197,7 +193,7 @@ the teardown fails loudly and prints that command rather than escalating on its 
 **Containment is ON by default** for this range. The server-side orchestrator exposes
 `range_testing`, and the shared Phase 2–5 composition intentionally always runs Phase 2.
 **Direction of travel: keep orchestration in Ansible.** The deploy entry point should do no more
-than run the Ansible deploy, parameterised by which variant (small vs full) and whether server-side
+than run the Ansible deploy, parameterised by whether server-side
 teardown is requested. The genuinely Ludus-native bits are Phase 0/1 (`range deploy`, `range config
 set`) and Phase 2 (`testing start`/`allow`/`status`); those stay driven through the Ansible phase
 tasks rather than ad-hoc shell wrappers.
@@ -229,19 +225,15 @@ ludus range list
 
 ```
 
-`range-config.yml` is the only range config, and setting it by hand deploys all 23 VMs.
-To deploy a variant, let `deploy.yml` cut it out of the superset for you — that is the
-supported path, and it writes the rendered config into your own `users/` tree:
+`range-config.yml` is the only range config — the single 20-VM range. `deploy.yml` writes it
+into your own `users/` tree and sets it as part of Phase 1, so you normally just run:
 
 ```text
 
-ansible-playbook deploy.yml -e range_variant=small
 ansible-playbook deploy.yml
-ansible-playbook deploy.yml -e range_variant=xl
 
 ```
 
-See [`RANGE-CONFIG-VARIANTS.md`](RANGE-CONFIG-VARIANTS.md) for the selection model.
 The config has **no `network:` block** — normal networking. Blocking is applied later
 (Phase 2) via testing mode, not a persistent firewall drop.
 `deploy-tasks/phase1b-ghost9.yml` reads the range config's root-level
@@ -317,32 +309,26 @@ inventories keyed by `dict_key`; substitute `RANGENUMBER` with this range's seco
 octet (the `N` in the `10.N.0.0/16` network shown by `ludus range list`).
 The AD-build inventory is **Windows-AD-hosts only** — the Phase-3 content plays target the
 Windows AD host groups (dc/server/domain), so Linux infra + GHOSTS/OWA aliases must NOT be in
-it (they live in the `*-infra` inventory used in Phases 4-5). For the SMALL range, the AD data
-model must also be the 3-domain `config-small.json`.
-**Never copy `config-small.json` over `config.json`.** That is the retired mechanism: it wrote
-a *tracked* file, and a run killed before its restore left small AD data in `config.json`,
-which every later resume skips past and which `fgnw_exchange_seed_mail` and
-`FGNW-ninjasploitable-join` read at runtime. Copy the variant's config into a scratch dir and
-repoint the chain with `-e data_path=` instead — extra-vars outrank the `data_path` default each
-play sets for its `vars_files: {{ data_path }}/config.json`, so one flag repoints the whole chain.
-`deploy.yml` does exactly this (into `~/.FGNW-deploy/ad-data/`).
+it (they live in the `*-infra` inventory used in Phases 4-5). The AD data model is the 6-domain
+`config.json`.
+The chain reads its data model through `-e data_path=` — extra-vars outrank the `data_path`
+default each play sets for its `vars_files: {{ data_path }}/config.json`, so one flag repoints the
+whole chain. `deploy.yml` copies `config.json` into a scratch dir (`~/.FGNW-deploy/ad-data/`) and
+points the chain at it.
 
 ```text
 
 cd /opt/ludus/sources/<sourceID>/blueprints/FGNW/campaign/ansible
 install -d -m 0700 ~/.FGNW-deploy/ad-data
-install -m 0600 ../ad/NARUTO/data/config-small.json ~/.FGNW-deploy/ad-data/config.json
-sed 's/RANGENUMBER/<N>/g' ../ad/NARUTO/providers/ludus/inventory-small.yml > /tmp/prov-inv.yml
+install -m 0600 ../ad/NARUTO/data/config.json ~/.FGNW-deploy/ad-data/config.json
+sed 's/RANGENUMBER/<N>/g' ../ad/NARUTO/providers/ludus/inventory.yml > /tmp/prov-inv.yml
 for playbook in tgtdelegation.yml ad-data.yml lat.yml reboot.yml adcs.yml; do
-  timeout 30m ansible-playbook -i ../ad/NARUTO/data/inventory-small -i /tmp/prov-inv.yml \
+  timeout 30m ansible-playbook -i ../ad/NARUTO/data/inventory -i /tmp/prov-inv.yml \
     -e data_path=$HOME/.FGNW-deploy/ad-data "$playbook"
 done
 
 ```
 
-- **Full range:** use `../ad/NARUTO/data/inventory` + `../ad/NARUTO/providers/ludus/inventory.yml`
-  (AD-only, RANGENUMBER-substituted) and `config.json` (it has all 6 domains) as the
-  `data_path` source.
 - AD hosts are named by `dict_key` (dc01/dc02/dc05/srv03/srv08…); WinRM is https/5986.
 - Promotion / join / trust are native (phase 1 `ludus range deploy`) and not in this tail, so
   there is no promotion re-run hazard here; the tail plays (content + attack primitives) are
@@ -352,19 +338,19 @@ done
   from the `powershell-proxy` cache; it falls back to the internet if the Nexus is absent.
   It also points each host's DNS at its DC first (router as fallback) so the cross-forest
   trust setup can resolve the other forest (fixes A12).
-Run with the **infra** inventory (`inventory-small-infra.yml` / `inventory-infra.yml` —
-real-hostname `linux_infra`/`ghosts_clients`/`exchange_servers` groups), NOT the AD-build
+Run with the **infra** inventory (`inventory-infra.yml` — real-hostname
+`linux_infra`/`ghosts_clients`/`exchange_servers` groups), NOT the AD-build
 inventory. Materialize it too. Order matters (later ones preflight earlier HTTP targets):
 
 ```text
 
-sed 's/RANGENUMBER/<N>/g' ../ad/NARUTO/providers/ludus/inventory-small-infra.yml > /tmp/infra-inv.yml
+sed 's/RANGENUMBER/<N>/g' ../ad/NARUTO/providers/ludus/inventory-infra.yml > /tmp/infra-inv.yml
 ansible-playbook -i /tmp/infra-inv.yml FGNW-attacker-web.yml
 ansible-playbook -i /tmp/infra-inv.yml FGNW-themed-sites.yml
 ansible-playbook -i /tmp/infra-inv.yml FGNW-recon-tooling.yml
 ansible-playbook -i /tmp/infra-inv.yml FGNW-ninjasploitable-content.yml
 ansible-playbook -i /tmp/infra-inv.yml FGNW-ninjasploitable-join.yml
-ansible-playbook -i $(pwd)/../ad/NARUTO/data/inventory-small -i /tmp/prov-inv.yml dnsforwarder.yml
+ansible-playbook -i $(pwd)/../ad/NARUTO/data/inventory -i /tmp/prov-inv.yml dnsforwarder.yml
 ansible-playbook -i /tmp/infra-inv.yml FGNW-persona-autologon.yml
 ansible-playbook -i /tmp/infra-inv.yml FGNW-decoy-content.yml
 ansible-playbook -i /tmp/infra-inv.yml FGNW-browser-defaults.yml
@@ -382,30 +368,21 @@ materialized infra inventory automatically (as a `[linux_infra:vars]` group var)
 get it from `ludus range inventory` and add `ansible_ssh_pass=<pw>` under `[linux_infra:vars]` in the
 materialized inventory (ghosts/kali override it per-host, so this is safe for the whole group).
 Phase 4b is a default phase: `deploy.yml` runs it automatically between Phase 4 and Phase 5, and
-`-e range_skip_exchange=true` opts out. `FGNW-exchange.yml` (real per-forest Microsoft Exchange
+`-e range_skip_exchange=true` opts out. `FGNW-exchange.yml` (real Microsoft Exchange
 2019) and `FGNW-exchange-seed-mail.yml` (real `Send-MailMessage` delivery of the
 `content/OWA/user-inboxes.yml` quote corpus + LOE 2's alert messages) are the mail mechanism on the
-three Windows mail servers — `konoha-mail` (Leaf), `oto-mail` (Sound) and `dark-mail` (Akatsuki).
-The Sand forest's `suna-mail` is a macOS Postfix/Dovecot host (Phase 4d), not Exchange. On the small
-range only `konoha-mail` exists (70 Leaf mailboxes, send connectors, OWA), so Phase 4b installs mail
-there; on the full range each Windows mail server is installed one forest at a time — see the
-commands below and [`OWA-REAL-VS-SIMULATED.md`](OWA-REAL-VS-SIMULATED.md).
-Run manually, after Phase 4 (content) and before Phase 5 (emulation start):
-**Small range**: only `konoha-mail` exists (`oto-mail`/`dark-mail` do not) — use
-`inventory-small-infra.yml`. **Full range**: the three Windows mail servers exist — use
-`inventory-infra.yml` (`suna-mail` is macOS Postfix/Dovecot, stood up in Phase 4d, not here). The
-small range's own AD-build inventory never included `konoha-mail`, so `FGNW-exchange.yml`'s first
-play domain-joins it directly — no separate manual step needed.
+Leaf mail server `konoha-mail` (70 Leaf mailboxes, OWA). The Sand forest's `suna-mail` is a macOS
+Postfix/Dovecot host (Phase 4d), not Exchange; the Sound and Akatsuki forests have no mail server.
+See [`OWA-REAL-VS-SIMULATED.md`](OWA-REAL-VS-SIMULATED.md).
+Run manually, after Phase 4 (content) and before Phase 5 (emulation start) — use the
+`inventory-infra.yml` infra inventory. `FGNW-exchange.yml`'s first play domain-joins `konoha-mail`
+itself, so no separate manual join step is needed.
 
 ```text
 
 sed 's/RANGENUMBER/<N>/g' ../ad/NARUTO/providers/ludus/inventory-infra.yml > /tmp/infra-inv.yml
 ansible-playbook -i /tmp/infra-inv.yml FGNW-exchange.yml --limit konoha-mail
 ansible-playbook -i /tmp/infra-inv.yml FGNW-exchange-seed-mail.yml --limit konoha-mail
-ansible-playbook -i /tmp/infra-inv.yml FGNW-exchange.yml --limit oto-mail
-ansible-playbook -i /tmp/infra-inv.yml FGNW-exchange-seed-mail.yml --limit oto-mail
-ansible-playbook -i /tmp/infra-inv.yml FGNW-exchange.yml --limit dark-mail
-ansible-playbook -i /tmp/infra-inv.yml FGNW-exchange-seed-mail.yml --limit dark-mail
 ansible-playbook -i /tmp/infra-inv.yml FGNW-owa-cert.yml
 
 ```
@@ -546,16 +523,16 @@ ansible-playbook -i /tmp/infra-inv.yml FGNW-verify-emulation.yml
 Tear down with `ludus range rm`.
 
 ---
-Or use the client/server orchestrator above for the small variant — see the invocation sections earlier in this document.
+Or use the client/server orchestrator above — see the invocation sections earlier in this document.
 
 | | | |
 | --- | --- | --- |
 | 0 | Nexus (once) | `ludus range deploy -t nexus` → `ansible-playbook /opt/ludus/users/range-admin/.ansible/collections/ansible_collections/get_sybers/infra/playbooks/nexus-setup.yml` |
-| 1 | VMs | `ansible-playbook deploy.yml -e range_variant=small` (renders the small variant out of `range-config.yml`, sets it, deploys) |
+| 1 | VMs | `ansible-playbook deploy.yml` (sets `range-config.yml` and deploys it) |
 | 2 | Containment | `ludus testing start` |
 | 3 | AD build | Promotion / child domains / joins / the fire↔oto trust are **native** — they run in phase 1 `ludus range deploy` (see `range-config.yml`). Phase-3 tail only: materialize inventory → run `tgtdelegation.yml → ad-data.yml (fgnw_ad_mgmt content) → lat.yml → reboot.yml` (+ `adcs.yml`). Defender-disable is native now (`windows.gpos: [disable_defender]`, phase 1) |
-| 4 | Content | `FGNW-attacker-web.yml`, `FGNW-themed-sites.yml`, `FGNW-recon-tooling.yml` (regular/xl), `FGNW-ninjasploitable-content.yml`, `FGNW-ninjasploitable-join.yml`, `dnsforwarder.yml`, `FGNW-persona-autologon.yml`, `FGNW-decoy-content.yml`, `FGNW-browser-defaults.yml`, `FGNW-browser-extensions.yml`, `FGNW-acsc-logging.yml`, `FGNW-sysmon-linux.yml` |
-| 4b | Exchange (default) | `FGNW-exchange.yml` → `FGNW-exchange-seed-mail.yml` (`--limit konoha-mail` small; the three Windows forests one-at-a-time full) → `FGNW-owa-cert.yml` (once) |
+| 4 | Content | `FGNW-attacker-web.yml`, `FGNW-themed-sites.yml`, `FGNW-recon-tooling.yml`, `FGNW-ninjasploitable-content.yml`, `FGNW-ninjasploitable-join.yml`, `dnsforwarder.yml`, `FGNW-persona-autologon.yml`, `FGNW-decoy-content.yml`, `FGNW-browser-defaults.yml`, `FGNW-browser-extensions.yml`, `FGNW-acsc-logging.yml`, `FGNW-sysmon-linux.yml` |
+| 4b | Exchange (default) | `FGNW-exchange.yml` → `FGNW-exchange-seed-mail.yml` (`--limit konoha-mail`) → `FGNW-owa-cert.yml` (once) |
 | 4c | Campaign primitives | `FGNW-campaign-setup.yml` (Kerberoast SPN + AS-REP, Leaf) — runs against konoha-dc1 via provider inventory |
 | 4d | macOS services | `FGNW-mac-ad-bind.yml` → `FGNW-mac-mail.yml` (Sand Postfix/Dovecot) → `FGNW-mac-services.yml` |
 | 4e | Thunderbird | `FGNW-thunderbird.yml` (Exchange IMAP enable + Thunderbird on every workstation) |

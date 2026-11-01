@@ -22,10 +22,8 @@ blueprints/FGNW/
 └── campaign/
 ```
 
-There is a single range config. Variants are selected out of it at deploy time with
-`ansible-playbook deploy.yml -e range_variant=<small|xl>` — `small` is a 9-VM single-node
-subset, the default is the 22-VM range, and `xl` is all 23 including `modern-infra`. See
-`FGNW/campaign/docs/RANGE-CONFIG-VARIANTS.md`.
+There is a single range config, `range-config.yml`, deployed as-is: a 20-VM, six-domain
+range with one Exchange 2019 server (`konoha-mail`, in the Leaf forest).
 `ludus source add` reads only the three files above. Everything else the range
 needs to be *populated* after `ludus range deploy` — AD build, decoy content,
 GHOSTS emulation, verification — lives under `campaign/` and is run by hand:
@@ -126,4 +124,4 @@ cd /opt/ludus/sources/<sourceID>/blueprints/FGNW/campaign
 ansible-playbook deploy.yml
 ```
 
-Full procedure, variants and phase tokens: [`campaign/docs/DEPLOY.md`](campaign/docs/DEPLOY.md).
+Full procedure and phase tokens: [`campaign/docs/DEPLOY.md`](campaign/docs/DEPLOY.md).

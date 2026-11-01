@@ -372,31 +372,6 @@ ludus:
       - get_sybers.range_ghosts_browser
       - name: get_sybers.sysmon
       - name: get_sybers.acsc_event_logging
-  - vm_name: "{{ range_id }}-oto-mail"
-    force_ip: true
-    target_node: pi-02
-    hostname: "{{ range_id }}-oto-mail"
-    template: win2022-exchange2019-x64-template
-    vlan: 30
-    ip_last_octet: 20
-    ram_gb: 8
-    cpus: 4
-    windows:
-      sysprep: true
-    domain:
-      fqdn: otogakure.ninja
-      role: member
-    testing:
-      snapshot: true
-      block_internet: true
-    roles:
-      - name: get_sybers.sysmon
-      - name: get_sybers.acsc_event_logging
-      - name: get_sybers.range_exchange
-        depends_on:
-          - vm_name: "{{ range_id }}-oto-dc1"
-            role: get_sybers.range_ad_mgmt
-      - name: get_sybers.range_exchange_seed
   - vm_name: "{{ range_id }}-akatsuki-dc1"
     force_ip: true
     target_node: pi-01
@@ -464,31 +439,6 @@ ludus:
       - get_sybers.range_ghosts_browser
       - name: get_sybers.sysmon
       - name: get_sybers.acsc_event_logging
-  - vm_name: "{{ range_id }}-dark-mail"
-    force_ip: true
-    target_node: pi-02
-    hostname: "{{ range_id }}-dark-mail"
-    template: win2022-exchange2019-x64-template
-    vlan: 87
-    ip_last_octet: 20
-    ram_gb: 8
-    cpus: 4
-    windows:
-      sysprep: true
-    domain:
-      fqdn: akatsuki.dark
-      role: member
-    testing:
-      snapshot: true
-      block_internet: true
-    roles:
-      - name: get_sybers.sysmon
-      - name: get_sybers.acsc_event_logging
-      - name: get_sybers.range_exchange
-        depends_on:
-          - vm_name: "{{ range_id }}-akatsuki-dc1"
-            role: get_sybers.range_ad_mgmt
-      - name: get_sybers.range_exchange_seed
   - vm_name: "{{ range_id }}-ninjasploitable"
     force_ip: true
     target_node: pi-03
@@ -681,40 +631,7 @@ ludus:
       block_internet: true
     roles:
       - name: get_sybers.range_nexus_apt
-  - vm_name: "{{ range_id }}-modern-infra"
-    target_node: pi-01
-    hostname: "{{ range_id }}-modern-infra"
-    template: debian-12-x64-server-template
-    vlan: 99
-    ip_last_octet: 52
-    ram_gb: 8
-    cpus: 4
-    linux:
-      packages:
-        - ca-certificates
-    testing:
-      snapshot: true
-      block_internet: true
-    roles:
-      - name: get_sybers.range_nexus_apt
 ludus_extensions:
-  variants:
-    include:
-      small: [fire-dc1, konoha-dc1, konoha-mail, konoha-ws1, oto-dc1, oto-ws1, ninjasploitable, attacker, kali]
-      xl_extra: [modern-infra]
-    target_node:
-      small: { "*": !!null "" }
-      xl: {}
-    overrides:
-      small:
-        fire-dc1: { ram_gb: 8, cpus: 4 }
-        konoha-dc1: { ram_gb: 8, cpus: 4 }
-        oto-dc1: { ram_gb: 8, cpus: 4 }
-        kali: { ram_gb: 8 }
-        konoha-ws1: { ram_gb: 6 }
-        oto-ws1: { ram_gb: 6 }
-        ninjasploitable: { ram_gb: 4 }
-        attacker: { ram_gb: 4 }
   ghost9:
     vlan: 99
     ip_last_octet: 51

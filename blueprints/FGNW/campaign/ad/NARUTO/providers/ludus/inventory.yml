@@ -14,8 +14,8 @@
 ;   srv-konoha konoha-mail (DNS=dc02)               srv03..07 konoha-ws1..5 (DNS=dc02)
 ;   dc03 wind-dc1 (wind.ninja root, DNS=self)      dc04 suna-dc1 (child, DNS=dc03)
 ;   (srv02 suna-ws1 + srv-suna suna-mail are macOS now — see inventory-infra.yml [macos_dev])
-;   dc05 oto-dc1 (otogakure.ninja root, DNS=self)  srv08 oto-ws1 (DNS=dc05)  srv-oto oto-mail (DNS=dc05)
-;   dc06 akatsuki-dc1 (akatsuki.dark root, DNS=self) srv09/10 akatsuki-ws1/2 (DNS=dc06)  srv-akatsuki dark-mail (DNS=dc06)
+;   dc05 oto-dc1 (otogakure.ninja root, DNS=self)  srv08 oto-ws1 (DNS=dc05)
+;   dc06 akatsuki-dc1 (akatsuki.dark root, DNS=self) srv09/10 akatsuki-ws1/2 (DNS=dc06)
 ; ------------------------------------------------ fire.ninja / konohagakure — VLAN 10
 dc01 ansible_host=10.RANGENUMBER.10.15 dns_domain=dc01 dict_key=dc01
 dc02 ansible_host=10.RANGENUMBER.10.10 dns_domain=dc01 dict_key=dc02
@@ -34,12 +34,10 @@ dc04 ansible_host=10.RANGENUMBER.20.10 dns_domain=dc03 dict_key=dc04
 ; ------------------------------------------------ otogakure.ninja — VLAN 30
 dc05 ansible_host=10.RANGENUMBER.30.10 dns_domain=dc05 dict_key=dc05
 srv08 ansible_host=10.RANGENUMBER.30.11 dns_domain=dc05 dict_key=srv08
-srv-oto ansible_host=10.RANGENUMBER.30.20 dns_domain=dc05 dict_key=srv-oto
 ; ------------------------------------------------ akatsuki.dark — VLAN 87
 dc06 ansible_host=10.RANGENUMBER.87.10 dns_domain=dc06 dict_key=dc06
 srv09 ansible_host=10.RANGENUMBER.87.11 dns_domain=dc06 dict_key=srv09
 srv10 ansible_host=10.RANGENUMBER.87.12 dns_domain=dc06 dict_key=srv10
-srv-akatsuki ansible_host=10.RANGENUMBER.87.20 dns_domain=dc06 dict_key=srv-akatsuki
 [all:vars]
 ; domain_name : folder inside ad/
 domain_name=NARUTO

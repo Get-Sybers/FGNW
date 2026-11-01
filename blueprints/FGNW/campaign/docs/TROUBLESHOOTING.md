@@ -27,7 +27,7 @@ The source-add step in CLIENT-DEPLOY.md / QUICK-DEPLOY.md installs them into the
 path the campaign playbooks resolve from.
 Fix it **at the build phase, in the role/config** — never as a manual live-only command (Rule 3;
 containment later removes internet and silently breaks live-only fixes). Then resume with
-`ansible-playbook deploy.yml -e range_variant=<variant> -e range_from_phase=<N>`.
+`ansible-playbook deploy.yml -e range_from_phase=<N>`.
 - **Custom `tasks/`-based role fix didn't take?** Each user has an independent copy at
   `users/<user>/.ansible/roles/<role>/` that `ludus ansible role add` does NOT refresh — `cp` the
   patched source into range-admin's copy before redeploying.
@@ -38,7 +38,7 @@ containment later removes internet and silently breaks live-only fixes). Then re
 - **Contained and a package step needs Nexus/internet:** `ludus testing start` blocks 192.0.2.2
   too. Surgically `ludus testing allow -i 192.0.2.2` → do the work → `ludus testing deny -i
   192.0.2.2`. Do NOT `ludus testing stop` (reverts snapshots).
-- **Role can't find `aleemladha.ludus_exchange` or `geerlingguy.docker`:** both are installed from
+- **Role can't find `aleemladha.ludus_exchange`:** it is installed from
   GitHub by `blueprints/FGNW/requirements.yml` (`ansible-galaxy role install -r
   blueprints/FGNW/requirements.yml -p /opt/ludus/users/range-admin/.ansible/roles`); export
   `ANSIBLE_ROLES_PATH=/opt/ludus/users/range-admin/.ansible/roles` before a direct
@@ -77,14 +77,13 @@ inline as comments.
   single quotes in a `Send-MailMessage` call break the parser; move the quoting into the task's
   own `vars:`. Separately, `.NET`'s `MailMessage.Subject` rejects embedded newlines outright
   (unlike `Body`) — a multi-line quote flowing into an auto-generated subject fails.
-- **The small range's AD-build data never included the `-owa` hosts** (`inventory-small`,
-  `config-small.json`). `FGNW-exchange.yml` therefore domain-joins them itself rather than
-  re-running the ~37-minute AD build — that play is not redundant, do not remove it.
+- **`FGNW-exchange.yml` domain-joins its Exchange host itself** (play 1) rather than relying
+  solely on the AD build — an idempotent safety step, not redundant; do not remove it.
 - **Cross-forest trust can't resolve the other forest:** each host's DNS must point at its DC
   first (range router only as fallback) — a host using the range router as primary DNS makes
   trust setup fail. Re-run `dnsforwarder.yml` for cross-village DNS.
 - **`'domain_name' is undefined` running `dnsforwarder.yml`:** it needs the AD-build inventories
-  (`data/inventory-small` + the providers inventory), NOT the infra inventory.
+  (`data/inventory` + the providers inventory), NOT the infra inventory.
 The range was rebuilt and old SSH host keys are stale. Clear them:
 
 ```bash

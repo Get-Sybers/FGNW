@@ -18,6 +18,33 @@ has no release tag yet.
 
 ## [Unreleased]
 
+### Removed — single range size, single Exchange server
+
+- **One size.** Removed the range-size variant system. `range-config.yml` is now a single, flat,
+  directly-deployed config (what the old `regular`/default variant produced): the
+  `ludus_extensions.variants` block, the `fgnw_variant` filter plugin and its CI self-test, the
+  `-e range_variant=` interface and the `__variant_map` deploy plumbing, and the
+  `config-small.json` / `inventory-small` / `inventory-small.yml` / `inventory-small-infra.yml`
+  data files are all gone.
+- **No `modern-infra`.** Removed the `xl`-only `modern-infra` VM and everything it carried: the
+  `FGNW-modern-infra.yml` play, the `fgnw_modern_infra` role, the `content/modern-infra/` Compose
+  stack, the `docs/MODERN-INFRA.md` doc, and the now-orphaned `geerlingguy.docker` dependency.
+- **One Exchange server.** Removed the `oto-mail` (Sound) and `dark-mail` (Akatsuki) Exchange 2019
+  servers and their mail wiring; `konoha-mail` (Leaf, in `konohagakure.fire.ninja`) is the only
+  Exchange server. The `otogakure.ninja` and `akatsuki.dark` domains are otherwise unchanged — DCs,
+  workstations, AD users, the `fire.ninja ↔ otogakure.ninja` trust, GHOSTS personas and decoy
+  content all remain; those villages simply no longer run mail. The Sand macOS `suna-mail`
+  (Postfix/Dovecot) is untouched.
+- The range is now 20 VMs (was 22 for the default, 23 for `xl`).
+
+### Changed — single-size deploy pipeline
+
+- Phase 4b (Exchange install/seed) and Phase 4e (Thunderbird) now target only the Leaf Exchange;
+  Thunderbird is skipped on workstations in villages without an Exchange server, and the kept
+  `konoha-mail` builds no cross-forest send connectors. The `FGNW-verify-connectivity.yml`
+  matched-host floor is a single fixed value (`windows_realname: 15, linux_infra: 3`) instead of a
+  per-variant map.
+
 ### Fixed — the phase 1b contract to `get_sybers.lxc.deploy_ghost9_range`
 
 - `get_sybers.lxc` is pinned at the commit whose `deploy_ghost9_range` play is the

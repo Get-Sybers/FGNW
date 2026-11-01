@@ -219,30 +219,6 @@
                 "vulns": [
                     "disable_firewall"
                 ]
-            },
-            "srv-oto": {
-                "hostname": "oto-mail",
-                "type": "server",
-                "local_admin_password": "AnsibleAutomation123!",
-                "domain": "otogakure.ninja",
-                "path": "DC=otogakure,DC=ninja",
-                "use_laps": false,
-                "scripts": [],
-                "vulns": [
-                    "disable_firewall"
-                ]
-            },
-            "srv-akatsuki": {
-                "hostname": "dark-mail",
-                "type": "server",
-                "local_admin_password": "AnsibleAutomation123!",
-                "domain": "akatsuki.dark",
-                "path": "DC=akatsuki,DC=dark",
-                "use_laps": false,
-                "scripts": [],
-                "vulns": [
-                    "disable_firewall"
-                ]
             }
         },
         "domains": {

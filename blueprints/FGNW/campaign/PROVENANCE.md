@@ -9,7 +9,7 @@ The Fourth Great Ninja War campaign is the original work of Get-Sybers, under th
 
 **Roles** (`ansible/roles/`): `fgnw_ad_mgmt`, `fgnw_browser_defaults`,
 `fgnw_browser_extensions`, `fgnw_decoy_files`, `fgnw_exchange_seed_mail`,
-`fgnw_modern_infra`, `fgnw_themed_sites`, `ludus_tool_cache`, `adcs`, `dnsforwarder`,
+`fgnw_themed_sites`, `ludus_tool_cache`, `adcs`, `dnsforwarder`,
 `move_to_ou`, `password_policy`, `powershell_logging`, `privileged_user_task`.
 
 **Playbooks** (`ansible/`): all `FGNW-*.yml` and `ghost9-*.yml` playbooks, plus
@@ -28,7 +28,6 @@ repositories by `blueprints/FGNW/requirements.yml` unless marked bundled):
 | Role | Origin / license |
 | --- | --- |
 | `aleemladha.ludus_exchange` | <https://github.com/aleemladha/ludus_exchange>, commit `319bb51d`; GPL-3.0 |
-| `geerlingguy.docker` | <https://github.com/geerlingguy/ansible-role-docker>, 7.5.5; MIT |
 | `wireshark` | bundled; MIT (`meta/main.yml`) |
 
 ---

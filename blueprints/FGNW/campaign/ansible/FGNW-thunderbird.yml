@@ -1,16 +1,17 @@
 ---
 # Phase 4e — Mozilla Thunderbird mail-client stack for every workstation in the range.
 #
-# Konoha / Oto / Akatsuki workstations talk IMAP+SMTP to their village's Exchange server:
-# the first play below enables the Microsoft Exchange IMAP4 service on each Exchange host
-# and sets the login type to plain-text (required because the sealed range runs no TLS, and
-# Exchange's IMAP service refuses cleartext logons by default). The Sand workstation
-# (suna-ws1) talks to the Postfix/Dovecot stack `fgnw_mac_mail_server` stood up in Phase 4d.
+# Konoha workstations talk IMAP+SMTP to the Leaf Exchange server (konoha-mail): the first
+# play below enables the Microsoft Exchange IMAP4 service on it and sets the login type to
+# plain-text (required because the sealed range runs no TLS, and Exchange's IMAP service
+# refuses cleartext logons by default). Workstations in villages with no Exchange server
+# (Oto, Akatsuki) are skipped. The Sand workstation (suna-ws1) talks to the Postfix/Dovecot
+# stack `fgnw_mac_mail_server` stood up in Phase 4d.
 #
 # Per-host identity (user / display / domain) is read from `content/ghosts/persona-timelines.yml`
 # — the same source of truth GHOSTS uses — so a persona rename lands in both tools in one edit.
 # Per-village mail-server FQDNs live in `vars/FGNW-thunderbird-map.yml`.
-- name: Enable Exchange IMAP4 on each village Exchange server (Konoha / Oto / Akatsuki)
+- name: Enable Exchange IMAP4 on the Leaf Exchange server (konoha-mail)
   hosts: exchange_servers
   gather_facts: false
   tasks:
@@ -58,12 +59,16 @@
         file: "{{ playbook_dir }}/../content/ghosts/persona-timelines.yml"
         name: __ptl
 
-    - name: "Tbird: resolve this host's persona and its village mail server"
+    - name: "Tbird: resolve this host's persona"
       ansible.builtin.set_fact:
         __p: "{{ __ptl.ghosts_personas[inventory_hostname] }}"
-        __mail_fqdn: "{{ __fgnw_village_mail_fqdn[__ptl.ghosts_personas[inventory_hostname].ad_domain] }}"
 
-    - name: "Tbird: install + preconfigure Thunderbird for the persona {{ __p.sam }}"
+    - name: "Tbird: resolve this host's village mail server (villages with an Exchange server only)"
+      ansible.builtin.set_fact:
+        __mail_fqdn: "{{ __fgnw_village_mail_fqdn[__p.ad_domain] }}"
+      when: __p.ad_domain in __fgnw_village_mail_fqdn
+
+    - name: "Tbird: install + preconfigure Thunderbird (Exchange villages only) for the persona {{ __p.sam }}"
       ansible.builtin.include_role:
         name: fgnw_thunderbird
       vars:
@@ -72,6 +77,7 @@
         fgnw_thunderbird_mail_domain: "{{ __p.ad_domain }}"
         fgnw_thunderbird_imap_server: "{{ __mail_fqdn }}"
         fgnw_thunderbird_smtp_server: "{{ __mail_fqdn }}"
+      when: __p.ad_domain in __fgnw_village_mail_fqdn
 
 - name: Thunderbird on the Sand macOS workstation (IMAP to Dovecot, SMTP to Postfix)
   hosts: macos_dev

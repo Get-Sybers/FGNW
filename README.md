@@ -56,7 +56,7 @@ replace them with the nodes of your cluster before deploying. The blueprint
 README ([`blueprints/FGNW/README.md`](blueprints/FGNW/README.md)) explains the
 placeholders, the macOS hosts and the Thunderbird mail clients; the deploy
 guide ([`blueprints/FGNW/campaign/docs/DEPLOY.md`](blueprints/FGNW/campaign/docs/DEPLOY.md))
-is the full procedure with its phase tokens and variants. The GHOSTS server
+is the full procedure with its phase tokens. The GHOSTS server
 container the range's user emulation reports to is created by the `get_sybers.lxc`
 collection's `deploy_ghost9_range` play from its ghost9 template
 ([get-sybers/lxc](https://github.com/Get-Sybers/LXC)): `requirements.yml` pins the

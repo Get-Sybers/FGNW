@@ -14,10 +14,6 @@ roles:
     src: https://github.com/aleemladha/ludus_exchange.git
     scm: git
     version: 319bb51d9f774e0150468af17ceb7de80576879d
-  - name: geerlingguy.docker
-    src: https://github.com/geerlingguy/ansible-role-docker.git
-    scm: git
-    version: 7.5.5
 collections:
   - name: ansible.windows
     version: 2.7.0

@@ -40,8 +40,7 @@ commented out and the play passes them.
   the feature install and the reboot need. The CA configuration step authenticates separately
   with `adcs_domain_username` / `adcs_domain_password` through `-Credential`.
 - Windows Server in a forest that is already built. In this repository the `[adcs]` group of the
-  AD-build inventory names `dc04` (the Sand child DC, `suna-dc1`); `inventory-small` leaves the
-  group empty, so the small range never runs the role.
+  AD-build inventory names `dc04` (the Sand child DC, `suna-dc1`).
 
 ## Idempotence
 

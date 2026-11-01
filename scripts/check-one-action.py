@@ -158,10 +158,10 @@ A_ROLES = {
     "password_policy", "powershell_logging", "privileged_user_task", "security", "settings",
     "trusts",
 }
-B_ROLES = {"aleemladha.ludus_exchange", "geerlingguy.docker", "wireshark"}
+B_ROLES = {"aleemladha.ludus_exchange", "wireshark"}
 C_ROLES = {
     "fgnw_browser_defaults", "fgnw_browser_extensions", "fgnw_decoy_files",
-    "fgnw_exchange_seed_mail", "fgnw_modern_infra", "fgnw_owa_inboxes", "fgnw_themed_sites",
+    "fgnw_exchange_seed_mail", "fgnw_owa_inboxes", "fgnw_themed_sites",
     "ludus_tool_cache",
     "fgnw_ad_mgmt",
 }

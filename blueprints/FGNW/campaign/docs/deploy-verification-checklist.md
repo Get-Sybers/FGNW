@@ -1,12 +1,9 @@
 Concrete post-deploy checks for the range. Work through this list each time the range is deployed to
-confirm each built piece actually works (not just that the config parses), and to cover the
-full-range pieces the small-range deploys do not exercise.
+confirm each built piece actually works (not just that the config parses).
 Order of operations for a full bring-up:
 
-1. `ludus range config set -f range-config.yml` then `ludus range deploy` (provisions VMs + roles).
-   That file is the 23-VM superset, so setting it by hand gives the `xl` set; to verify a specific
-   variant, deploy it with `ansible-playbook deploy.yml -e range_variant=<small|xl>` instead and
-   let the preflight render it (see [`RANGE-CONFIG-VARIANTS.md`](RANGE-CONFIG-VARIANTS.md)).
+1. `ludus range config set -f range-config.yml` then `ludus range deploy` (provisions VMs + roles),
+   or let `ansible-playbook deploy.yml` set the config and drive the deploy as its Phase 1.
 2. AD promotion, child domains, member joins and the `fire ↔ oto` trust are **native** — built by
    `ludus range deploy` in step 1 (see the `domain:`/`roles:` blocks in
    [`range-config.yml`](../../range-config.yml)). Then run the Phase-3 tail against the AD
@@ -26,9 +23,8 @@ Notation: `10.<r>.` = `10.<range_second_octet>.`. Windows checks run over WinRM 
 - `ludus range list` shows all 9 workstations `SUCCESS`/powered-on with expected IPs:
       konoha-ws1..5 = `10.<r>.10.21`–`.25`, oto-ws1 = `10.<r>.30.11`,
       akatsuki-ws1/2 = `10.<r>.87.11`/`.12`, suna-ws1 = `10.<r>.20.11`.
-- Each is at the intended spec (**4 GB / 2 vCPU** — bumped for the native Selenium browser; the
-      small range's konoha-ws1/oto-ws1 are 6 GB / 2 vCPU) — check the Proxmox VM config or
-      `ludus range list` detail.
+- Each is at the intended spec (**4 GB / 2 vCPU** — bumped for the native Selenium browser) —
+      check the Proxmox VM config or `ludus range list` detail.
 - Chrome + a version-**matched** chromedriver installed (`range_ghosts_browser` role): on a
       workstation, `& 'C:\Program Files\Google\Chrome\Application\chrome.exe' --version` and
       `chromedriver --version` show the SAME Chrome major version, and `ghosts.exe` drives a **visible**
@@ -99,36 +95,26 @@ Notation: `10.<r>.` = `10.<range_second_octet>.`. Windows checks run over WinRM 
 Konoha/Leaf (`konoha-mail`):
 - Real Exchange 2019 CU15 ISO URL set in `FGNW-exchange.yml`.
 - Exchange installed on konoha-mail (`Get-Service MSExchangeFrontendTransport` → Running,
-      auto-start). The small range's AD-build inventory never included the `-owa` hosts, so
-      `FGNW-exchange.yml`'s own first play domain-joins it directly (to its forest root, not its own
-      child domain).
+      auto-start). `FGNW-exchange.yml`'s own first play domain-joins it directly (to its forest root,
+      not its own child domain).
 - User mailboxes created on konoha-mail (`Get-Mailbox` → the real Leaf users).
 - All AD groups mail-enabled on konoha-mail (`Get-DistributionGroup`/`Get-Group` confirms).
-- Cross-forest send connectors present on konoha-mail (`Get-SendConnector` shows all 3
-      `to-<other domain>` connectors).
+- No cross-forest send connectors on konoha-mail (`Get-SendConnector` shows no `to-<other domain>`
+      connectors — konoha-mail is the only Exchange forest, so the mesh is empty).
 - Real OWA login page responds (`https://localhost/owa/` → HTTP 200).
 - Real mail delivery: `FGNW-exchange-seed-mail.yml` delivers the character-quote corpus via
       genuine `Send-MailMessage`/SMTP.
 - Spot-check a few real mailboxes (e.g. `naruto.uzumaki`) actually received mail from their real
       correspondents (Kakashi, Sai, Sakura for Naruto, per `content/ghosts/email-relationships.yml`) —
       confirms the relationship graph's output actually landed, not just that the send count looks right.
-- Real end-to-end CROSS-FOREST test: send from a Leaf mailbox to a Sound/Akatsuki address →
-      delivered; reply to a non-existent (throwaway Akatsuki) address → NDR bounce. Needs Sound/Akatsuki
-      to have Exchange installed — the send connectors exist on Leaf's side but the other ends need to
-      be live targets.
+- Real NDR test: a Leaf message to a non-existent address returns a genuine NDR bounce. (There is
+      no cross-forest delivery test — Sound and Akatsuki have no Exchange, so konoha-mail is the only
+      mail forest.)
 - Delivered messages' From headers carry each sender's own forest domain
       (`<sender>@sunagakure.wind.ninja`, `@otogakure.ninja`, `@akatsuki.dark`, …), since
       `user-inboxes.yml` records `from_address` per sender forest and the seed play sends with it.
-Sound/Akatsuki (`oto-mail`/`dark-mail`) — full range only (the Sand forest's `suna-mail` is
-macOS Postfix/Dovecot, not Exchange — verify it separately per Phase 4d):
-- Exchange installed on oto-mail / dark-mail (`--limit <host>`, full range only).
-- User mailboxes created per forest (`Get-Mailbox` returns each domain's users).
-- All AD groups mail-enabled per forest.
-- Cross-forest send connectors present on each (`to-<other domain>` ×3 per org).
-- `FGNW-exchange-seed-mail.yml` run once per forest (NOT idempotent — don't re-run against
-      an already-seeded forest, it duplicates messages).
-- Real cross-forest end-to-end test (Leaf ↔ Sound ↔ Akatsuki delivery + NDR bounce on a bad
-      address) — only meaningful once the three Windows forests have Exchange installed.
+Hidden Sand (`suna-mail`) is macOS Postfix/Dovecot, not Exchange — verify it separately per
+Phase 4d. The Sound and Akatsuki forests have no mail server.
 - `FGNW-campaign-setup.yml` ran clean against `konoha-dc1`.
 - Kerberoastable service account present: `Get-ADUser svc-missionboard -Properties ServicePrincipalNames`
       shows the SPN; the account has a weak (crackable) password.

@@ -14,7 +14,6 @@ at the end of this file.
 | **Something broke — fix it** | [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md) |
 | **Use the range as a red/blue scenario** | [`docs/FGNW-CAMPAIGN.md`](docs/FGNW-CAMPAIGN.md) — guided attack-chain walkthrough |
 | **Understand GHOSTS persona activity** | [`content/ghosts/persona-behaviour.md`](content/ghosts/persona-behaviour.md) |
-| **Deploy only the small (9-VM) variant** | [`docs/SMALL-RANGE.md`](docs/SMALL-RANGE.md) |
 
 ---
 Everything Ludus reads sits at `blueprints/FGNW/`. The `campaign/`
@@ -24,8 +23,7 @@ but `deploy.yml` uses it entirely.
 ```text
 blueprints/FGNW/
 ├── blueprint.yml              Ludus blueprint manifest (id, name, config pointer)
-├── range-config.yml           THE range config — the 23-VM superset plus the
-│                              `ludus_extensions.variants` map every variant is cut from
+├── range-config.yml           THE range config — the single 20-VM range, deployed as-is
 └── campaign/                  All orchestration, content, and docs (Ludus ignores this)
     ├── README.md              One-paragraph intro — start here if you've never seen the range
     ├── Index.md               ← this file: complete doc map
@@ -35,14 +33,14 @@ blueprints/FGNW/
     │
     ├── ad/                    Active Directory build data (Shinju)
     │   └── NARUTO/
-    │       ├── data/          config.json (AD schema for all 6 forests), config-small.json,
-    │       │                  and the host inventory files used by the Shinju playbook chain
+    │       ├── data/          config.json (AD schema for all 6 forests) and the
+    │       │                  host inventory files used by the Shinju playbook chain
     │       └── providers/
-    │           └── ludus/     inventory.yml, inventory-small.yml, *-infra.yml variants
+    │           └── ludus/     inventory.yml and inventory-infra.yml
     │                          (RANGENUMBER placeholder — substitute the range second octet)
     │
     ├── ansible/               Post-deploy playbooks and the campaign's own roles
-    │   ├── FGNW-*.yml         22 FGNW-prefixed playbooks — run in Phases 4–5 (see below)
+    │   ├── FGNW-*.yml         28 FGNW-prefixed playbooks — run in Phases 4–5 (see below)
     │   ├── ad-data.yml        AD content (OUs/groups/users) via fgnw_ad_mgmt, Phase 3
     │   ├── ansible.cfg        Ansible config for this blueprint
     │   └── roles/             The campaign's own roles (fgnw_*, adcs, …); third-party roles come from GitHub via the blueprint's requirements.yml
@@ -73,8 +71,7 @@ blueprints/FGNW/
     │
     ├── docs/                  All user-facing documentation (see map below)
     ├── tests/                 Isolated sub-range deploy fixtures for unit testing individual subsystems
-    ├── filter_plugins/        Ansible filters used by deploy.yml (fgnw_variants.py — variant selection)
-    └── ci/                    CI support scripts (syntax-check.sh, variant-filter-selftest.py)
+    └── ci/                    CI support scripts (syntax-check.sh, path-resolution-check.py, …)
 ```
 
 ---
@@ -85,8 +82,6 @@ blueprints/FGNW/
 | [`ludus-requirements.yml`](ludus-requirements.yml) | Machine-readable prerequisites checklist — templates to build, Nexus repos, roles to install, Ludus deploy-tag inventory | Before first deploy; after any Ludus upgrade |
 | [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md) | Failure runbook — rangeState=ERROR recovery, Nexus issues, Exchange errors, AD build failures, sysmon_linux timing | When something breaks |
 | [`docs/deploy-verification-checklist.md`](docs/deploy-verification-checklist.md) | Post-deploy checks — per-subsystem pass/fail assertions | After every full deploy |
-| [`docs/SMALL-RANGE.md`](docs/SMALL-RANGE.md) | Small range topology (9 VMs), footprint table, what's kept vs dropped | When deploying the small variant |
-| [`docs/RANGE-CONFIG-VARIANTS.md`](docs/RANGE-CONFIG-VARIANTS.md) | The single-config model — how `-e range_variant=` cuts small/regular/xl out of one file, and how to add a VM or a variant | Before editing `range-config.yml` |
 | [`docs/CLIENT-DEPLOY.md`](docs/CLIENT-DEPLOY.md) | Client-side deploy path (Ludus CLI over the v2 API) — builds the range VMs + native AD and containment; the scenario tail runs server-side via `deploy.yml` | When driving the range build from a client |
 | Doc | What it covers | |
 
@@ -97,14 +92,13 @@ blueprints/FGNW/
 | Doc | What it covers |
 | --- | --- |
 | [`docs/ghosts-emulation.md`](docs/ghosts-emulation.md) | GHOSTS emulation design: the persona model and the data-regeneration scripts |
-| [`docs/OWA-REAL-VS-SIMULATED.md`](docs/OWA-REAL-VS-SIMULATED.md) | Real Exchange 2019 / OWA on the three Windows forests |
+| [`docs/OWA-REAL-VS-SIMULATED.md`](docs/OWA-REAL-VS-SIMULATED.md) | Real Exchange 2019 / OWA on the Leaf forest (konoha-mail) |
 | [`docs/ADCS.md`](docs/ADCS.md) | ADCS / ESC1 cert path on the Sand forest |
-| [`docs/MODERN-INFRA.md`](docs/MODERN-INFRA.md) | The modern-infra stack shipped in the `xl` range variant (LOE 5) |
 | [`docs/range-design.md`](docs/range-design.md) | Range design: the AD model and the content layers |
 
 ---
-All 22 `FGNW-*.yml` playbooks live in `ansible/`. They run against the infra inventory
-(`inventory-{small-,}infra.yml`) unless noted. The phase each belongs to matches
+All 28 `FGNW-*.yml` playbooks live in `ansible/`. They run against the infra inventory
+(`inventory-infra.yml`) unless noted. The phase each belongs to matches
 `deploy-tasks/phase4-content.yml` / `phase4b-exchange.yml` / `phase4c-threat.yml` /
 `phase5-emulation.yml`.
 
@@ -112,7 +106,7 @@ All 22 `FGNW-*.yml` playbooks live in `ansible/`. They run against the infra inv
 | --- | --- | --- |
 | `FGNW-attacker-web.yml` | 4 | Nginx tool-cache + 144-domain themed sinkhole on the attacker VM |
 | `FGNW-themed-sites.yml` | 4 | Per-domain themed pages on the attacker nginx (LOE 4 village portals) |
-| `FGNW-recon-tooling.yml` | 4 | nmap (portable) + cannon script on akatsuki-ws2 (regular/xl only) |
+| `FGNW-recon-tooling.yml` | 4 | nmap (portable) + cannon script on akatsuki-ws2 |
 | `FGNW-ninjasploitable-content.yml` | 4 | Themes ninjasploitable as the Leaf mission-report intake (`/reports/intake.php`) |
 | `FGNW-ninjasploitable-join.yml` | 4 | Domain-joins ninjasploitable to `fire.ninja` (Linux domain member) |
 | `FGNW-persona-autologon.yml` | 4 | Forces each flagship's first interactive domain logon via autologon + reboot |

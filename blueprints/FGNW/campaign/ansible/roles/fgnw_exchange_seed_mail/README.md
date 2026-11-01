@@ -1,9 +1,9 @@
 # fgnw_exchange_seed_mail
 
 Seeds one forest's **real Exchange mailboxes** with the FGNW character-quote corpus (plus the
-LOE 2 alert entries) as genuine SMTP mail. The role runs on the Exchange server of each of the
-three villages that still run Exchange (`konoha-mail`, `oto-mail`, `dark-mail`; the Hidden Sand
-mail stack is `fgnw_mac_mail_server`), after `FGNW-exchange.yml` has installed Exchange. The
+LOE 2 alert entries) as genuine SMTP mail. The role runs on the Leaf Exchange server
+(`konoha-mail`; the Hidden Sand mail stack is `fgnw_mac_mail_server`, and the Sound and Akatsuki
+forests have no mail server), after `FGNW-exchange.yml` has installed Exchange. The
 outcome is an inbox per real domain user filled with correspondence from named teammates, and an
 end-of-seed marker on the server that records the delivery.
 
@@ -80,13 +80,9 @@ From `FGNW-exchange-seed-mail.yml`:
   vars:
     fgnw_exchange_map:
       konoha-mail: { domain: konohagakure.fire.ninja }
-      oto-mail: { domain: otogakure.ninja }
-      dark-mail: { domain: akatsuki.dark }
     fgnw_seed_mail_domain: "{{ fgnw_exchange_map[inventory_hostname].domain }}"
     fgnw_exchange_forest_root_map:
       konoha-mail: fire.ninja
-      oto-mail: otogakure.ninja
-      dark-mail: akatsuki.dark
     fgnw_seed_mail_admin_domain: "{{ fgnw_exchange_forest_root_map[inventory_hostname] }}"
     fgnw_seed_mail_admin_password: password
     fgnw_seed_mail_state_dir: C:\ProgramData\FGNW

@@ -1,7 +1,7 @@
 A Naruto-themed multi-domain Active Directory range for [Ludus](https://docs.ludus.cloud/):
 four AD forests / six domains (Land of Fire + Hidden Leaf, Land of Wind + Hidden Sand,
 Hidden Sound) plus the isolated Akatsuki C2 forest, 9 GHOSTS user-emulation personas, decoy village content, real
-Exchange 2019 OWA on the three Windows forests, and Postfix/Dovecot on the Sand macOS forest.
+Exchange 2019 OWA on the Leaf forest (`konoha-mail`), and Postfix/Dovecot on the Sand macOS forest.
 **→ New here? Start with [`Index.md`](Index.md) — the complete navigation guide.**
 
 | Layer | What's in it |
@@ -26,11 +26,7 @@ The range comes with a full guided red/blue scenario: **the Akatsuki's infiltrat
 Shinobi Forces**, mapping every technique above to a lore beat and a real host/account/trust. See
 [`docs/FGNW-CAMPAIGN.md`](docs/FGNW-CAMPAIGN.md).
 
-| Variant | VMs | RAM | Use when |
-| --- | --- | --- | --- |
-| `small` | 9 | 64 GB | Quick validation; Leaf + Sound + infra only |
-| `regular` (default) — **canonical** | 22 | 104 GB | The range. All 6 domains and all 9 personas. |
-| `xl` | 23 | 112 GB | Canonical + the LOE-5 `modern-infra` VM |
+The range is a single fixed size: **20 VMs** across all 6 domains, with all 9 GHOSTS personas.
 
 1. **Read the prerequisites** — [`ludus-requirements.yml`](ludus-requirements.yml) lists every template,
    Nexus repo, and role that must exist on the Ludus server before `ludus range deploy` will succeed.
