@@ -1,4 +1,4 @@
-// Package config loads and validates the fgnw-emulator configuration from
+// Package config loads and validates the sasori configuration from
 // environment variables (primary) with an optional YAML file fallback.
 package config
 
@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-// Config is the full runtime configuration for fgnw-emulator.
+// Config is the full runtime configuration for sasori.
 type Config struct {
 	// Proxmox API connection
 	PVEHost     string // e.g. "https://pve01.example.com:8006"
@@ -47,8 +47,8 @@ func Load() (*Config, error) {
 		PVESecret:            env("PVE_SECRET", ""),
 		PVEInsecure:          envBool("PVE_INSECURE", false),
 		PVENode:              env("PVE_NODE", "pve"),
-		PersonaTimelinesPath: env("PERSONA_TIMELINES", "/etc/fgnw-emulator/persona-timelines.yml"),
-		PersonaOverridesPath: env("PERSONA_OVERRIDES", "/etc/fgnw-emulator/persona-overrides.yml"),
+		PersonaTimelinesPath: env("PERSONA_TIMELINES", "/etc/sasori/persona-timelines.yml"),
+		PersonaOverridesPath: env("PERSONA_OVERRIDES", "/etc/sasori/persona-overrides.yml"),
 		GhostsAPIURL:         env("GHOSTS_API_URL", ""),
 		APIListenAddr:        env("API_LISTEN", ":8080"),
 		APIToken:             env("API_TOKEN", ""),

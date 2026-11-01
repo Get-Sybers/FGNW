@@ -1,7 +1,7 @@
 ---
-# Phase 1b2 — the fgnw-emulator LXC
+# Phase 1b2 — the sasori LXC
 #
-# Deploys a Debian 13 container running the fgnw-emulator binary on VLAN 99
+# Deploys a Debian 13 container running the sasori binary on VLAN 99
 # at 10.<range>.99.52.  The emulator drives per-persona activity into each
 # workstation VM via the Proxmox HMP monitor (sendkey keyboard injection) and
 # the QEMU Guest Agent exec endpoint — completely transparent to the guest OS.
@@ -65,7 +65,7 @@
     fail_msg: >-
       range-config.yml is missing a complete ludus_extensions.emulator block.
       Add vlan, ip_last_octet, hostname_suffix, api_port, cores, memory_mb,
-      rootfs_gb, template_image (the fgnw-emulator OCI image).
+      rootfs_gb, template_image (the sasori OCI image).
     quiet: true
 
 - name: "deploy-tasks | phase1b2-emulator | Read the range number"
@@ -106,7 +106,7 @@
   when: emulator_persona_passwords | default('') | length > 0
 
 - name: "deploy-tasks | phase1b2-emulator | Pull and run the emulator container via pct + OCI"
-  # The emulator CT is a plain Debian 13 container running the fgnw-emulator
+  # The emulator CT is a plain Debian 13 container running the sasori
   # binary as a systemd service.  We create it with pct, copy in the config
   # files, and start the service.
   ansible.builtin.shell: |
@@ -144,37 +144,37 @@
     pct import-from-oci $CTID $IMAGE --storage $STORAGE
 
     # Bind-mount persona config directory from the Ludus host
-    pct set $CTID --mp0 "/opt/ludus/sources/{{ __source_id }}/blueprints/FGNW/campaign/content/ghosts,mp=/etc/fgnw-emulator/ghosts,ro=1"
+    pct set $CTID --mp0 "/opt/ludus/sources/{{ __source_id }}/blueprints/FGNW/campaign/content/ghosts,mp=/etc/sasori/ghosts,ro=1"
 
     pct start $CTID
     sleep 5
 
     # Write the environment file for the systemd unit
-    pct exec $CTID -- bash -c "cat > /etc/fgnw-emulator/env << 'EOF'
+    pct exec $CTID -- bash -c "cat > /etc/sasori/env << 'EOF'
     PVE_HOST={{ emulator_ct_api_host }}
     PVE_USER={{ emulator_ct_api_user }}
     PVE_TOKEN_ID={{ emulator_ct_api_token_id }}
     PVE_SECRET={{ emulator_ct_api_token_secret }}
     PVE_NODE={{ emulator_ct_api_host | urlsplit('hostname') }}
     RANGE_NUMBER={{ __range_number }}
-    PERSONA_TIMELINES=/etc/fgnw-emulator/ghosts/persona-timelines.yml
-    PERSONA_OVERRIDES=/etc/fgnw-emulator/ghosts/persona-overrides.yml
-    PERSONA_PASSWORDS=/etc/fgnw-emulator/passwords.yml
+    PERSONA_TIMELINES=/etc/sasori/ghosts/persona-timelines.yml
+    PERSONA_OVERRIDES=/etc/sasori/ghosts/persona-overrides.yml
+    PERSONA_PASSWORDS=/etc/sasori/passwords.yml
     GHOSTS_API_URL={{ __ghost9_api_url }}
     API_LISTEN=:{{ __em_ext.api_port }}
     API_TOKEN={{ emulator_api_token | default('') }}
     DRY_RUN=false
     EOF
-    chmod 600 /etc/fgnw-emulator/env"
+    chmod 600 /etc/sasori/env"
 
     # Install the systemd unit
-    pct exec $CTID -- bash -c "cat > /etc/systemd/system/fgnw-emulator.service << 'EOF'
+    pct exec $CTID -- bash -c "cat > /etc/systemd/system/sasori.service << 'EOF'
     [Unit]
     Description=FGNW Hypervisor-Level User Emulator
     After=network.target
     [Service]
-    EnvironmentFile=/etc/fgnw-emulator/env
-    ExecStart=/usr/local/bin/fgnw-emulator
+    EnvironmentFile=/etc/sasori/env
+    ExecStart=/usr/local/bin/sasori
     Restart=on-failure
     RestartSec=10s
     User=emulator
@@ -183,8 +183,8 @@
     EOF"
 
     pct exec $CTID -- systemctl daemon-reload
-    pct exec $CTID -- systemctl enable fgnw-emulator
-    pct exec $CTID -- systemctl start fgnw-emulator
+    pct exec $CTID -- systemctl enable sasori
+    pct exec $CTID -- systemctl start sasori
   args:
     executable: /bin/bash
   changed_when: true
@@ -204,7 +204,7 @@
   ansible.builtin.debug:
     msg: >-
       Emulator CT {{ __em_ctid }} is up for range {{ __range_number }}
-      (fgnw-emulator {{ __em_ext.template_version | default('0.1.0') }}):
+      (sasori {{ __em_ext.template_version | default('0.1.0') }}):
       API http://10.{{ __range_number }}.{{ __em_ext.vlan }}.{{ __em_ext.ip_last_octet }}:{{ __em_ext.api_port }}
       (Bearer token auth: {{ (emulator_api_token | default('') | length > 0) | ternary('enabled', 'disabled') }}).
       NOT a Ludus range object — ludus range rm will not remove it.

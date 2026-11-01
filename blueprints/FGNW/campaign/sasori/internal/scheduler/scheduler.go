@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/get-sybers/fgnw-emulator/internal/activity"
-	"github.com/get-sybers/fgnw-emulator/internal/persona"
-	"github.com/get-sybers/fgnw-emulator/internal/proxmox"
+	"github.com/get-sybers/sasori/internal/activity"
+	"github.com/get-sybers/sasori/internal/persona"
+	"github.com/get-sybers/sasori/internal/proxmox"
 )
 
 // Event is one emitted activity record — written to the activity log and

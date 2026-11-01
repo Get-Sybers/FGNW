@@ -1,4 +1,4 @@
-// Package activity defines the activity types fgnw-emulator can inject into a
+// Package activity defines the activity types sasori can inject into a
 // VM, and the per-persona weighting that chooses between them.
 package activity
 

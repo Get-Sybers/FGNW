@@ -1,5 +1,5 @@
 // Package proxmox wraps the Proxmox VE REST API for the operations
-// fgnw-emulator needs: VM discovery, HMP sendkey (keyboard injection via the
+// sasori needs: VM discovery, HMP sendkey (keyboard injection via the
 // QEMU monitor), and QEMU Guest Agent exec (for high-level guest ops).
 //
 // All calls use a PVE API token (PVEAPIUser!TokenID=Secret) rather than

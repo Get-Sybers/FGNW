@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/get-sybers/fgnw-emulator/internal/proxmox"
+	"github.com/get-sybers/sasori/internal/proxmox"
 )
 
 // SessionController runs the lifecycle actions (lock, unlock, logoff) for a

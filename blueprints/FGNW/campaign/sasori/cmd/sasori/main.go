@@ -1,4 +1,4 @@
-// fgnw-emulator: hypervisor-level user activity injection for the FGNW range.
+// sasori: hypervisor-level user activity injection for the FGNW range.
 //
 // Runs in an LXC on the Proxmox host, reads the FGNW persona configs, and
 // drives per-persona goroutines that inject keyboard input, lock/unlock cycles,
@@ -41,11 +41,11 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/get-sybers/fgnw-emulator/internal/api"
-	"github.com/get-sybers/fgnw-emulator/internal/config"
-	"github.com/get-sybers/fgnw-emulator/internal/persona"
-	"github.com/get-sybers/fgnw-emulator/internal/proxmox"
-	"github.com/get-sybers/fgnw-emulator/internal/scheduler"
+	"github.com/get-sybers/sasori/internal/api"
+	"github.com/get-sybers/sasori/internal/config"
+	"github.com/get-sybers/sasori/internal/persona"
+	"github.com/get-sybers/sasori/internal/proxmox"
+	"github.com/get-sybers/sasori/internal/scheduler"
 )
 
 const version = "0.1.0"
@@ -61,7 +61,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	slog.Info("fgnw-emulator starting",
+	slog.Info("sasori starting",
 		"version", version,
 		"range", cfg.RangeNumber,
 		"dry_run", cfg.DryRun,
@@ -140,7 +140,7 @@ func main() {
 	slog.Info("shutdown signal received")
 	sched.Stop()
 	cancel()
-	slog.Info("fgnw-emulator stopped")
+	slog.Info("sasori stopped")
 }
 
 // loadPasswords reads a simple YAML file of the form:
@@ -151,7 +151,7 @@ func main() {
 // Returns an empty map and an error if the file is missing or unparseable.
 func loadPasswords(path string) (map[string]string, error) {
 	if path == "" {
-		path = "/etc/fgnw-emulator/passwords.yml"
+		path = "/etc/sasori/passwords.yml"
 	}
 	data, err := os.ReadFile(path)
 	if err != nil {

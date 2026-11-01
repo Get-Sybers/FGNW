@@ -1,4 +1,4 @@
-// Package api exposes the fgnw-emulator REST API.
+// Package api exposes the sasori REST API.
 //
 // Endpoints:
 //
@@ -26,10 +26,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/get-sybers/fgnw-emulator/internal/activity"
-	"github.com/get-sybers/fgnw-emulator/internal/persona"
-	"github.com/get-sybers/fgnw-emulator/internal/proxmox"
-	"github.com/get-sybers/fgnw-emulator/internal/scheduler"
+	"github.com/get-sybers/sasori/internal/activity"
+	"github.com/get-sybers/sasori/internal/persona"
+	"github.com/get-sybers/sasori/internal/proxmox"
+	"github.com/get-sybers/sasori/internal/scheduler"
 )
 
 // Server is the API HTTP server.

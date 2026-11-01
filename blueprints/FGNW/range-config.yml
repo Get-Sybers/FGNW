@@ -657,9 +657,9 @@ ludus_extensions:
     cores: 2
     memory_mb: 512
     rootfs_gb: 4
-    # fgnw-emulator OCI image, built from blueprints/FGNW/campaign/emulator/Containerfile
+    # sasori OCI image, built from blueprints/FGNW/campaign/emulator/Containerfile
     # and pushed to a registry.  Pin this to a digest once the image is published;
     # placeholder shown here — replace before deploying.
-    # Build: cd blueprints/FGNW/campaign/emulator && podman build -t fgnw-emulator:0.1.0 .
-    template_image: "ghcr.io/get-sybers/fgnw-emulator:0.1.0"
+    # Build: cd blueprints/FGNW/campaign/emulator && podman build -t sasori:0.1.0 .
+    template_image: "ghcr.io/get-sybers/sasori:0.1.0"
     template_version: "0.1.0"

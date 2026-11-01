@@ -1,4 +1,4 @@
-// Package persona loads the FGNW persona data that fgnw-emulator uses to
+// Package persona loads the FGNW persona data that sasori uses to
 // schedule and shape per-character activity.  It reads the same two YAML files
 // the GHOSTS Ansible playbook reads, so the emulator and GHOSTS always agree on
 // who lives on which workstation and when they work.
