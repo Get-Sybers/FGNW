@@ -233,6 +233,7 @@ into your own `users/` tree and sets it as part of Phase 1, so you normally just
 ansible-playbook deploy.yml
 
 ```
+
 The config has **no `network:` block** — normal networking. Blocking is applied later
 (Phase 2) via testing mode, not a persistent firewall drop.
 `deploy-tasks/phase1b-ghost9.yml` reads the range config's root-level

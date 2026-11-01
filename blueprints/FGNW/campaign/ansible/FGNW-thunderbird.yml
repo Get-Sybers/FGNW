@@ -63,11 +63,15 @@
       ansible.builtin.set_fact:
         __p: "{{ __ptl.ghosts_personas[inventory_hostname] }}"
 
-    - name: "Tbird: install + preconfigure Thunderbird for the persona {{ __p.sam }} (villages with an Exchange server only)"
+    - name: "Tbird: resolve this host's village mail server (villages with an Exchange server only)"
+      ansible.builtin.set_fact:
+        __mail_fqdn: "{{ __fgnw_village_mail_fqdn[__p.ad_domain] }}"
+      when: __p.ad_domain in __fgnw_village_mail_fqdn
+
+    - name: "Tbird: install + preconfigure Thunderbird (Exchange villages only) for the persona {{ __p.sam }}"
       ansible.builtin.include_role:
         name: fgnw_thunderbird
       vars:
-        __mail_fqdn: "{{ __fgnw_village_mail_fqdn[__p.ad_domain] }}"
         fgnw_thunderbird_user: "{{ __p.sam }}"
         fgnw_thunderbird_display_name: "{{ __p.character }}"
         fgnw_thunderbird_mail_domain: "{{ __p.ad_domain }}"
