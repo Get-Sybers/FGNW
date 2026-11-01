@@ -52,7 +52,7 @@ if [[ "${#missing[@]}" -gt 0 ]]; then
 fi
 
 # ── Build ───────────────────────────────────────────────────────────────────
-BIN="$(mktemp -t sasori-XXXXXXXX)"
+BIN="$(mktemp "${TMPDIR:-/tmp}/sasori-XXXXXXXX")"
 trap 'rm -f "$BIN"' EXIT
 
 echo "Building sasori from ${SASORI_DIR} ..."
