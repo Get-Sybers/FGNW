@@ -1,0 +1,15 @@
+---
+added:
+  - >-
+    ``ludus_range_deploy`` - the deploy wait is no longer silent. The terminal-state
+    poll now surfaces the observed ``rangeState`` and a per-VM power/IP summary each
+    iteration, and a tail of the live ``ludus range logs`` every
+    ``ludus_range_deploy_debug_log_every`` polls, so an operator can see what each VM
+    is up to and where a deploy is failing instead of watching one task sit for up to
+    the whole poll budget. Gated on the new default-on ``ludus_range_deploy_debug``
+    (set it ``false`` to restore the original quiet ``until`` poll); tuned by
+    ``ludus_range_deploy_debug_log_lines`` (``40``) and
+    ``ludus_range_deploy_debug_log_every`` (``3``). The raw ``ludus`` reads keep
+    ``no_log`` (they carry ``LUDUS_API_KEY``); only parsed, secret-free output is
+    shown. The completion gate (wait for a terminal state, bounded, timeout fatal) is
+    unchanged.

@@ -13,7 +13,8 @@ in the play (it publishes `__ludus_api_key`).
 | file | entry point? | what it does |
 | --- | --- | --- |
 | `main.yml` | **yes** — the only one | preflight → read state → skip-if-SUCCESS → bounded attempt loop → assert SUCCESS |
-| `attempt.yml` | no (internal `include_tasks`, looped) | one bounded attempt: re-check state, fire unless already DEPLOYING, poll to terminal, classify SUCCESS/FAILED/ERROR/timeout, capture ERROR diagnostics |
+| `attempt.yml` | no (internal `include_tasks`, looped) | one bounded attempt: re-check state, fire unless already DEPLOYING, poll to terminal (via `poll.yml`), classify SUCCESS/FAILED/ERROR/timeout, capture ERROR diagnostics |
+| `poll.yml` | no (internal `include_tasks`, looped per poll) | one poll iteration: read `range list --json`, and — when `ludus_range_deploy_debug` — surface the observed rangeState, a per-VM power/IP table and (every `ludus_range_deploy_debug_log_every` polls) a tail of the live `range logs`, then wait `poll_delay`; the loop stops on a terminal state |
 | `state.yml` | no (internal `include_tasks`) | read `range list --json` into `__ludus_state` / `__ludus_vmcount` / `__ludus_testing`, safe on a never-deployed range |
 
 | name | default | purpose |
@@ -26,6 +27,9 @@ in the play (it publishes `__ludus_api_key`).
 | `ludus_range_deploy_error_retry` | `true` | Retry a transient ERROR by re-firing the idempotent deploy. |
 | `ludus_range_deploy_poll_retries` | `270` | Poll iterations to a terminal state (270 x 20s = 90 min). |
 | `ludus_range_deploy_poll_delay` | `20` | Seconds between polls. |
+| `ludus_range_deploy_debug` | `true` | Surface rangeState + a per-VM power/IP table each poll, and a live `range logs` tail periodically, so the wait is not silent. Set `false` for a quiet poll. |
+| `ludus_range_deploy_debug_log_lines` | `40` | Lines of `range logs` to tail when surfacing the deploy log. |
+| `ludus_range_deploy_debug_log_every` | `3` | Tail the deploy log once every N polls (per-VM state is shown every poll). |
 | `ludus_range_deploy_capture_errors` | `true` | Persist each errored attempt's `range errors` before logs roll over (#320); best-effort. |
 | `ludus_range_deploy_error_capture_dir` | `$HOME/.ludus-deploy-errors` (in defaults) | Where errored-attempt diagnostics are written. |
 | `ludus_range_deploy_bin` | `/usr/local/bin/ludus` | Path to the ludus CLI binary. |
