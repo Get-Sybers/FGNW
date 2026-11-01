@@ -4,7 +4,7 @@
 > `scripts/ludus-ra.sh` and `scripts/preflight.sh`.
 >
 > The heavy **server-side** deploy — the full `ansible-playbook deploy.yml` phase orchestration
-> (content, Exchange, threat, emulation, verify) and its resume/variant machinery — is **not** a
+> (content, Exchange, threat, emulation, verify) and its resume machinery — is **not** a
 > client path. It runs on the Ludus host; see [`DEPLOY.md`](DEPLOY.md).
 > **AD is native now.** The six domains and the
 > fire↔otogakure forest trust are built by `ludus range deploy` itself (native `domain:` blocks +
@@ -53,10 +53,8 @@ the run to the two AD roles at the user-defined-roles stage:
 ludus range deploy --only-roles get_sybers.range_password_policy,get_sybers.range_ad_mgmt -t user-defined-roles
 ```
 
-`range-config.yml` is the 23-VM superset, so setting it by hand deploys the `xl` set. Variants are
-a flag on the server-side orchestrator, not a different file — `ansible-playbook deploy.yml
--e range_variant=small` (9 VMs) or `=xl` (23), no flag for the regular 22. See
-[`RANGE-CONFIG-VARIANTS.md`](RANGE-CONFIG-VARIANTS.md).
+`range-config.yml` is the single 20-VM range, deployed as-is — setting it by hand (or letting
+`deploy.yml` set it) deploys the whole range. There are no size variants.
 > **`-f` uploads a LOCAL file** — it does not read the server's source tree. Run it from a checkout
 > at the same commit you refreshed in Step 1 (or let the server-side `deploy.yml` set it from its own
 > source tree), so you deploy the source-of-truth and not a drifted local copy.
@@ -74,7 +72,7 @@ export LUDUS_API_KEY=<range-admin API key>
 ansible-playbook deploy.yml -e range_from_phase=3
 ```
 
-See [`DEPLOY.md`](DEPLOY.md) for phase tokens, resume flags, and variant handling.
+See [`DEPLOY.md`](DEPLOY.md) for phase tokens and resume flags.
 
 ```bash
 ludus range list

@@ -5,6 +5,6 @@
 # shortname here if a village mail server is ever renamed.
 __fgnw_village_mail_fqdn:
   konohagakure.fire.ninja: "konoha-mail.konohagakure.fire.ninja"
-  otogakure.ninja: "oto-mail.otogakure.ninja"
-  akatsuki.dark: "dark-mail.akatsuki.dark"
   sunagakure.wind.ninja: "suna-mail.sunagakure.wind.ninja"
+# Oto and Akatsuki have no mail server, so they are absent here; FGNW-thunderbird.yml
+# skips any workstation whose ad_domain is not a key in this map.

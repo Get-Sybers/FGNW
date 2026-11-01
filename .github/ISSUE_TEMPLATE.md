@@ -7,7 +7,7 @@ admin key or a vaulted file.
 - Ludus server version (`ludus version`) and Proxmox VE version (`pveversion`):
 - FGNW blueprint version (`blueprints/FGNW/blueprint.yml`), or the branch and commit:
 - `ansible-core` version on the deploy controller (`ansible --version`):
-- The range variant (`range_variant`), the deploy phase token and the `-e` inputs you ran it with (values redacted where secret):
+- The deploy phase token and the `-e` inputs you ran it with (values redacted where secret):
 - For a range problem, the output of `ludus range status` and `ludus range list --json` (range number only):
 
 # Issue description

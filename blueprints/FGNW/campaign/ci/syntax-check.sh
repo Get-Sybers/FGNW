@@ -12,7 +12,7 @@ fail() {
 pass() { printf '  ok    %s\n' "$1"; }
 echo "syntax-check: $repo_root"
 echo
-echo "[1/5] ansible-playbook --syntax-check (orchestrators)"
+echo "[1/4] ansible-playbook --syntax-check (orchestrators)"
 if command -v ansible-playbook > /dev/null 2>&1; then
   for pb in "${ORCHESTRATORS[@]}"; do
     if [[ ! -f $pb ]]; then
@@ -37,7 +37,7 @@ else
   fi
 fi
 echo
-echo "[2/5] YAML parse (orchestrators + $TASK_DIR/)"
+echo "[2/4] YAML parse (orchestrators + $TASK_DIR/)"
 if ! python3 - "$TASK_DIR" "${ORCHESTRATORS[@]}" << 'PY'
 import glob
 import os
@@ -102,14 +102,14 @@ then
   failures=$((failures + 1))
 fi
 echo
-echo "[3/5] path resolution (ci/path-resolution-check.py)"
+echo "[3/4] path resolution (ci/path-resolution-check.py)"
 if python3 "$repo_root/ci/path-resolution-check.py"; then
   pass "path resolution"
 else
   fail "path resolution"
 fi
 echo
-echo "[4/5] ludus_progress callback self-test (ci/progress-callback-selftest.py)"
+echo "[4/4] ludus_progress callback self-test (ci/progress-callback-selftest.py)"
 if command -v ansible-playbook > /dev/null 2>&1; then
   if python3 "$repo_root/ci/progress-callback-selftest.py"; then
     pass "ludus_progress self-test"
@@ -125,14 +125,6 @@ else
   fi
 fi
 echo
-echo "----------------------------------------------------------------------"
-echo
-echo "[5/5] variant filter self-test (ci/variant-filter-selftest.py)"
-if python3 "$repo_root/ci/variant-filter-selftest.py"; then
-  pass "variant filter self-test"
-else
-  fail "variant filter self-test"
-fi
 if [[ $failures -ne 0 ]]; then
   echo "RESULT: FAILED ($failures check group(s) failed)"
   exit 1

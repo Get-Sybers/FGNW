@@ -1,6 +1,0 @@
----
-- name: Recreate modern-infra stack
-  ansible.builtin.command:
-    argv: [docker, compose, up, -d, --force-recreate]
-    chdir: "{{ fgnw_modern_infra_root }}"
-  changed_when: true

@@ -5,12 +5,6 @@
   vars_files:
     - vars/FGNW-verify-connectivity-play1.yml
   pre_tasks:
-    - name: "Preflight: assert fgnw_variant is known (it selects the matched-host floor)"
-      tags: always
-      ansible.builtin.assert:
-        that: fgnw_variant in __expected_by_variant
-        fail_msg: fgnw_variant must be one of {{ __expected_by_variant.keys() | list }}, got '{{ fgnw_variant }}'.
-        quiet: true
     - name: "Preflight: expected_hosts must define BOTH keys (a partial -e override silently zeroes the other)"
       tags: always
       ansible.builtin.assert:
@@ -21,8 +15,7 @@
         fail_msg: >-
           expected_hosts must define BOTH windows_realname and linux_infra. Ansible -e REPLACES
           the whole dict (it does not merge), so a PARTIAL override silently zeroes the omitted
-          key -- refusing to run rather than pass vacuously. Either set
-          -e fgnw_variant=small|regular|full|xl, or pass a COMPLETE dict:
+          key -- refusing to run rather than pass vacuously. Pass a COMPLETE dict:
           -e '{"expected_hosts": {"windows_realname": N, "linux_infra": M}}'.
         quiet: true
     - name: "Preflight: assert konoha-ws1 (source of every gating HTTP check) is in the inventory"
@@ -47,8 +40,7 @@
           (expected >= {{ expected_hosts.windows_realname | int }}),
           linux_infra={{ groups['linux_infra'] | default([]) | length }}
           (expected >= {{ expected_hosts.linux_infra | int }}).
-          Did you forget `-i <inventory>`? Set -e fgnw_variant=small|regular|full|xl for this
-          range's floor, or DECLARE a complete override:
+          Did you forget `-i <inventory>`? DECLARE a complete override:
           -e '{"expected_hosts": {"windows_realname": N, "linux_infra": M}}'.
         success_msg: >-
           Inventory matched the expected host groups (windows_realname={{ groups['windows_realname'] | default([]) | length }},

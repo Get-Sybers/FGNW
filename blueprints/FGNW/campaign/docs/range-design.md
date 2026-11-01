@@ -7,8 +7,8 @@ villages, with decoy infrastructure (the ninjasploitable target, the attacker
 web server, Exchange/OWA, village file shares, simulated internet traffic) that
 makes the range read as a lived-in network rather than a bare lab. This document
 is the design reference for the AD data model and the content-generation layers;
-the live VM topology is in [`range-config.yml`](../../range-config.yml),
-[`SMALL-RANGE.md`](SMALL-RANGE.md) and [`FGNW-CAMPAIGN.md`](FGNW-CAMPAIGN.md).
+the live VM topology is in [`range-config.yml`](../../range-config.yml) and
+[`FGNW-CAMPAIGN.md`](FGNW-CAMPAIGN.md).
 
 ## Domains and forests
 

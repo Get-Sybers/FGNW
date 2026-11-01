@@ -23,9 +23,7 @@ run FAILS (a gate that matched nothing is not a gate; the house standard):
   2. INCLUDES Every `include_tasks:` value resolves next to the including file
               or under the campaign dir, the two places Ansible will look.
   3. RENDERED Every path-like chunk referencing a resolvable var is rendered.
-              `{{ __v.<key> }}` is expanded over EVERY variant in __variant_map,
-              so a variant-only breakage (the F5 class) fails even though no
-              single deploy exercises all variants. users_dir is a server path,
+              users_dir is a server path,
               so its collection/role prefixes are translated back to this
               source tree (.ansible/collections/ansible_collections/
               get_sybers/<c>/ → ansible/collections/get_sybers.<c>/) — the
@@ -67,7 +65,6 @@ TASK_DIR = CAMPAIGN / "deploy-tasks"
 ANSIBLE_DIR = CAMPAIGN / "ansible"
 LAYOUT_KEYS = ("bp_dir", "ludus_root", "ad_dir", "ansible_dir", "ludus_user", "users_dir")
 TOKEN_RE = re.compile(r"\{\{ (\w+)((?: \| (?:dirname|basename))*) \}\}")
-VARIANT_RE = re.compile(r"\{\{ __v\.(\w+)(?: \| (dirname|basename))? \}\}")
 BARE_YML_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*\.ya?ml$")
 QUOTED_YML_RE = re.compile(r"'([A-Za-z0-9][A-Za-z0-9._-]*\.ya?ml)'")
 FILTERS = {"dirname": os.path.dirname, "basename": os.path.basename, None: lambda s: s}
@@ -169,9 +166,6 @@ def derive_layout(rep: Report) -> dict:
             continue
         ctx[key] = val
         rep.ok(f"{key} = {val}")
-    ctx["__variant_map"] = vars_block.get("__variant_map") or {}
-    if not ctx["__variant_map"]:
-        rep.fail("__variant_map", "empty or missing — variant expansion has nothing to expand")
     return ctx
 def users_dir_to_source(path: str, layout: dict) -> str | None:
     """Map a server-side users_dir path back to this source tree, or None if it is
@@ -217,14 +211,6 @@ def check_includes(files: dict[Path, dict], rep: Report):
                          + ", ".join(str(c) for c in candidates))
     if not found:
         rep.fail("include_tasks sweep", "matched no include_tasks at all — the check is broken")
-def expand_variants(chunk: str, variant_map: dict) -> list[tuple[str, str]]:
-    if not VARIANT_RE.search(chunk) or not variant_map:
-        return [("", chunk)]
-    out = []
-    for vn, vv in variant_map.items():
-        out.append((f" [{vn}]", VARIANT_RE.sub(
-            lambda m: FILTERS[m.group(2)](str(vv.get(m.group(1), m.group(0)))), chunk)))
-    return out
 def check_rendered(files: dict[Path, dict], layout: dict, rep: Report):
     """Group 3 — path chunks referencing resolvable vars, per-file context."""
     print("\n[3/4] derived paths (per-file context, variants expanded)")
@@ -240,43 +226,42 @@ def check_rendered(files: dict[Path, dict], layout: dict, rep: Report):
             for chunk in extract_path_chunks(s):
                 if not gate.search(chunk):
                     continue
-                for tag, expanded in expand_variants(chunk, layout["__variant_map"]):
-                    rendered = render(expanded, ctx)
-                    claim = f"{path.name}: {chunk}{tag}"
-                    if claim in seen:
+                rendered = render(chunk, ctx)
+                claim = f"{path.name}: {chunk}"
+                if claim in seen:
+                    continue
+                seen.add(claim)
+                found += 1
+                if "{{" in rendered:
+                    rep.skip(f"{claim} -> {rendered!r} (runtime vars remain)")
+                    continue
+                if not rendered.startswith("/"):
+                    rep.skip(f"{claim} (renders to a non-path value)")
+                    continue
+                target = os.path.normpath(rendered)
+                if any(target.startswith(str(CAMPAIGN / d) + "/") or
+                       target == str(CAMPAIGN / d) for d in RUNTIME_SUBTREES):
+                    rep.skip(f"{claim} (runtime harvest output, created by the play)")
+                    continue
+                if rendered.startswith(layout["users_dir"]):
+                    mapped = users_dir_to_source(rendered, layout)
+                    if mapped is None:
+                        rep.skip(f"{claim} (runtime state under users_dir)")
                         continue
-                    seen.add(claim)
-                    found += 1
-                    if "{{" in rendered:
-                        rep.skip(f"{claim} -> {rendered!r} (runtime vars remain)")
-                        continue
-                    if not rendered.startswith("/"):
-                        rep.skip(f"{claim} (renders to a non-path value)")
-                        continue
-                    target = os.path.normpath(rendered)
-                    if any(target.startswith(str(CAMPAIGN / d) + "/") or
-                           target == str(CAMPAIGN / d) for d in RUNTIME_SUBTREES):
-                        rep.skip(f"{claim} (runtime harvest output, created by the play)")
-                        continue
-                    if rendered.startswith(layout["users_dir"]):
-                        mapped = users_dir_to_source(rendered, layout)
-                        if mapped is None:
-                            rep.skip(f"{claim} (runtime state under users_dir)")
-                            continue
-                        target = mapped
-                    if not in_source_tree(target):
-                        rep.skip(f"{claim} -> {target} (outside the source tree — server runtime)")
-                        continue
-                    if rendered.endswith(".bak"):
-                        if Path(target).parent.is_dir():
-                            rep.ok(f"{claim} (parent dir of runtime artifact)")
-                        else:
-                            rep.fail(claim, f"parent directory missing: {Path(target).parent}")
-                        continue
-                    if Path(target).exists():
-                        rep.ok(f"{claim} -> {target}")
+                    target = mapped
+                if not in_source_tree(target):
+                    rep.skip(f"{claim} -> {target} (outside the source tree — server runtime)")
+                    continue
+                if rendered.endswith(".bak"):
+                    if Path(target).parent.is_dir():
+                        rep.ok(f"{claim} (parent dir of runtime artifact)")
                     else:
-                        rep.fail(claim, f"resolved to a nonexistent path: {target}")
+                        rep.fail(claim, f"parent directory missing: {Path(target).parent}")
+                    continue
+                if Path(target).exists():
+                    rep.ok(f"{claim} -> {target}")
+                else:
+                    rep.fail(claim, f"resolved to a nonexistent path: {target}")
     if not found:
         rep.fail("derived-path sweep", "matched no derived paths at all — the check is broken")
 def check_bare(files: dict[Path, dict], layout: dict, rep: Report):

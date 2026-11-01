@@ -1,4 +1,4 @@
-The full `FGNW` range is 22 VMs / ~104 GB (xl is 23 / ~112 GB) — too large to
+The full `FGNW` range is 20 VMs — too large to
 stand up just to check that a subsystem works. These are **small, single-purpose sub-range
 configs** that each deploy only the VMs needed to exercise one thing, so you can validate the range
 piece-by-piece on a modest RAM budget.

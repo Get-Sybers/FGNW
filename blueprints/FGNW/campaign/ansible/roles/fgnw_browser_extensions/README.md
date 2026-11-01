@@ -3,9 +3,9 @@
 Managed browser extensions for the FGNW GHOSTS workstations. The role force-installs extensions
 through Microsoft Edge's `ExtensionInstallForcelist` policy: two benign extensions from the Edge
 Add-ons store for baseline realism, and one deliberately risky extension, "Konoha Form Helper",
-served from an update feed on the attacker VM, the range's browser-extension initial-access and
-persistence vector described in [`docs/MODERN-INFRA.md`](../../../docs/MODERN-INFRA.md). The
-outcome is an Edge that installs the three extensions on its next policy refresh.
+served from an update feed on the attacker VM — the range's browser-extension initial-access and
+persistence vector. The outcome is an Edge that installs the three extensions on its next policy
+refresh.
 
 ## What it does
 

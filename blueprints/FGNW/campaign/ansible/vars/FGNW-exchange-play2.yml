@@ -4,13 +4,9 @@ fgnw_exchange_iso_url: https://download.microsoft.com/download/7/0/a/70a4d908-ea
 # suna-mail absent: macOS mail host (Sand conversion); see note at the top of this file.
 fgnw_exchange_map:
   konoha-mail: { org: Konoha, domain: konohagakure.fire.ninja }
-  oto-mail: { org: Oto, domain: otogakure.ninja }
-  dark-mail: { org: Akatsuki, domain: akatsuki.dark }
 __me: "{{ fgnw_exchange_map[inventory_hostname] }}"
 fgnw_exchange_forest_root_map:
   konoha-mail: fire.ninja
-  oto-mail: otogakure.ninja
-  dark-mail: akatsuki.dark
 __forest_root: "{{ fgnw_exchange_forest_root_map[inventory_hostname] }}"
 ludus_os_version: "2022"
 ludus_exchange_iso_url: "{{ fgnw_exchange_iso_url }}"

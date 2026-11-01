@@ -26,8 +26,8 @@
                                   Jinja/octets pre-rendered through set_fact).
     range_second_octet          : range number, for the shared-infra IPs (attacker/OWA)
   Shared infra IPs (from range-config.yml): attacker sinkhole 10.<r>.99.50,
-  each forest's own -owa server at 10.<r>.{{ ghosts_owa_octet }}.20 (konoha-mail is VLAN 10,
-  suna-mail 20, oto-mail 30, dark-mail 87). Browse/signature URLs resolve to the attacker
+  each forest's -owa IP at 10.<r>.{{ ghosts_owa_octet }}.20 (per-forest octet: Leaf 10, Sand 20,
+  Sound 30, Akatsuki 87; only Leaf/konoha-mail runs real Exchange). Browse/signature URLs resolve to the attacker
   sinkhole via its catch-all vhost + the range dns_rewrites.
   The night shift reuses the SAME events as the day shift so out-of-hours traffic looks like the
   same person working late, not a different behaviour profile. Its window is the exact complement

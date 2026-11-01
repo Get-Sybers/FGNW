@@ -1,4 +1,4 @@
-; POST-DEPLOY / INFRA inventory (full range). ansible_host MUST be IPv4 (RANGENUMBER
+; POST-DEPLOY / INFRA inventory. ansible_host MUST be IPv4 (RANGENUMBER
 ; -> range 2nd octet). These hosts are NOT part of the Windows Shinju AD chain —
 ; they are targeted by the post-deploy FGNW-*.yml playbooks and the Linux domain-join
 ; step. Kept separate from the AD-build inventory (inventory.yml) so the Shinju `hosts: all`
@@ -15,13 +15,6 @@
 [linux_infra]
 attacker ansible_host=10.RANGENUMBER.99.50
 ninjasploitable ansible_host=10.RANGENUMBER.90.10
-; LOE 5 (docs/MODERN-INFRA.md) -- only exists in the `xl` range variant
-; (`deploy.yml -e range_variant=xl`). Debian VM, inherits [linux_infra:vars]
-; below (debian user, per-deploy generated password) -- no override needed.
-; COMMENTED OUT BY DEFAULT: on a regular or small deploy there is no backing VM, so every
-; [linux_infra]-targeted play reports it unreachable (noisy, non-fatal). Uncomment ONLY
-; when the range was deployed with -e range_variant=xl.
-; modern-infra ansible_host=10.RANGENUMBER.99.52
 ; ghost9 (the ghost9 CT) and kali (Kali) are VLAN-99 auxiliary
 ; infra with different default creds than the Debian boxes above (per-host overrides
 ; of the [linux_infra:vars] defaults) -- added so FGNW-verify-connectivity.yml /
@@ -55,13 +48,11 @@ oto-ws1 ansible_host=10.RANGENUMBER.30.11
 akatsuki-ws1 ansible_host=10.RANGENUMBER.87.11
 akatsuki-ws2 ansible_host=10.RANGENUMBER.87.12
 ; ------------------------------------------------
-; Exchange 2019 mail servers (real hostnames — aliases of srv-konoha/srv-suna/srv-oto/
-; srv-akatsuki). Domain-joined by the AD chain first, then targeted by FGNW-exchange.yml.
+; Exchange 2019 mail server (real hostname — alias of srv-konoha). Domain-joined by the
+; AD chain first, then targeted by FGNW-exchange.yml.
 ; ------------------------------------------------
 [exchange_servers]
 konoha-mail ansible_host=10.RANGENUMBER.10.20
-oto-mail ansible_host=10.RANGENUMBER.30.20
-dark-mail ansible_host=10.RANGENUMBER.87.20
 ; DCs by REAL hostname (all 6 forest/domain controllers) — targeted by post-deploy
 ; playbooks that need every DC (FGNW-decoy-content.yml's konoha/oto/akatsuki hosts,
 ; FGNW-acsc-logging.yml, etc). Same boxes as dc01-dc06 in the AD-build inventory.
@@ -72,10 +63,9 @@ wind-dc1 ansible_host=10.RANGENUMBER.20.15
 suna-dc1 ansible_host=10.RANGENUMBER.20.10
 oto-dc1 ansible_host=10.RANGENUMBER.30.10
 akatsuki-dc1 ansible_host=10.RANGENUMBER.87.10
-; Every Windows host in the full range, by real hostname — the target for playbooks that
+; Every Windows host in the range, by real hostname — the target for playbooks that
 ; apply to all Windows VMs regardless of role (FGNW-acsc-logging.yml,
-; FGNW-verify-connectivity.yml). Mirrors the [windows_realname] group already defined
-; in inventory-small-infra.yml.
+; FGNW-verify-connectivity.yml).
 [windows_realname:children]
 ghosts_clients
 village_dcs

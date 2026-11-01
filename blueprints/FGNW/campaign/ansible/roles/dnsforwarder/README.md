@@ -20,8 +20,7 @@ village.
    record for that address in the DC's own zone. A domain without an entry in the map, or a mail
    host that does not answer on 5986, gets no record from this role.
 
-The `dnsforwarder_domains` default lists the six domains of the regular range; the small range
-(three DCs) gets only the forwarders whose DC its inventory carries.
+The `dnsforwarder_domains` default lists the six domains of the range.
 
 ## Inputs
 

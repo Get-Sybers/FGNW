@@ -26,8 +26,6 @@ exclude_paths:
   # .yml names; they are not YAML and cannot be parsed as such.
   - blueprints/FGNW/campaign/ad/NARUTO/providers/ludus/inventory.yml
   - blueprints/FGNW/campaign/ad/NARUTO/providers/ludus/inventory-infra.yml
-  - blueprints/FGNW/campaign/ad/NARUTO/providers/ludus/inventory-small.yml
-  - blueprints/FGNW/campaign/ad/NARUTO/providers/ludus/inventory-small-infra.yml
   # The template catalogue icons: binary files under a directory ansible-lint's
   # default kinds classify as Jinja template text.
   - templates/*/icon.png
@@ -40,14 +38,13 @@ kinds:
 # requirements (blueprints/FGNW/requirements.yml `roles:`) or at template
 # build time; they are not part of this tree, so the plays that apply them are
 # linted against a mock.
-# aleemladha.ludus_exchange and geerlingguy.docker are installed from GitHub by
-# blueprints/FGNW/requirements.yml; the campaign plays apply them. (Keep this list
+# aleemladha.ludus_exchange is installed from GitHub by
+# blueprints/FGNW/requirements.yml; the campaign plays apply it. (Keep this list
 # free of comment lines: scripts/conform reads it to build the syntax-check stubs.)
 mock_roles:
   - badsectorlabs.ludus_flarevm
   - geerlingguy.dotfiles
   - aleemladha.ludus_exchange
-  - geerlingguy.docker
 # §18: lowercase letters, digits, underscores; starts with a letter.
 # §28: internal / registered values may carry the double-underscore prefix.
 var_naming_pattern: "^(__)?[a-z][a-z0-9_]*$"

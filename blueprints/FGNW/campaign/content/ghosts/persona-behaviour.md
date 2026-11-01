@@ -75,8 +75,8 @@ so the cadence looks human and isn't identical across boxes.
 3. Opens the real Exchange **OWA login page** for the persona's own forest, by DNS name
    (`https://mail.<forest-domain>/owa/auth/logon.aspx` — e.g. `mail.konohagakure.fire.ninja` for a
    Leaf persona). This is a browser-history/visual signal only — OWA is forms-based auth, so opening
-   the page does not authenticate. Best-effort: a forest with no `-owa` mail server (Sound/Akatsuki
-   in the small range) simply doesn't resolve and the browse is a soft no-op.
+   the page does not authenticate. Best-effort: a forest with no `-owa` mail server (Sound and
+   Akatsuki) simply doesn't resolve and the browse is a soft no-op.
 
 Between loops the handler idles before browsing the list again; it drives one Chrome instance per
 shift rather than leaving stale per-URL windows behind.
