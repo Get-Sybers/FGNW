@@ -1,0 +1,98 @@
+---
+# One iteration of the `ludus range deploy` wait, looped from attempt.yml over
+# the poll budget. Ansible cannot break a loop and does not stream a task's
+# stdout live, so visibility is built from one task per poll: each iteration
+# reads the observed rangeState + per-VM list and — gated on
+# ludus_range_deploy_debug (default true) — surfaces them, plus a tail of the
+# live `ludus range logs` every ludus_range_deploy_debug_log_every polls, so
+# the otherwise-silent 90-min+ wait shows which VMs are up and where a deploy
+# is failing. `__ludus_polling` is the break: the iteration that observes a
+# terminal state still displays it, then clears the flag so every later
+# iteration is a no-op (skipped silently under display_skipped_hosts = false).
+# The `ludus` reads keep no_log (they carry LUDUS_API_KEY in environment:); the
+# human-readable output comes from following debug tasks that touch only
+# parsed, secret-free stdout, so visibility never weakens the secret hygiene.
+- name: "poll | Read the range state, {{ __poll_iter ~ '/' ~ ludus_range_deploy_poll_retries }}"
+  ansible.builtin.command:
+    argv: ["{{ ludus_range_deploy_bin }}", range, list, --json]
+  environment:
+    LUDUS_API_KEY: "{{ __ludus_api_key }}"
+  register: __ludus_poll
+  changed_when: false
+  failed_when: false
+  no_log: true
+  when: __ludus_polling | bool
+- name: "poll | Parse the observed state + VM list, {{ __poll_iter ~ '/' ~ ludus_range_deploy_poll_retries }}"
+  ansible.builtin.set_fact:
+    __ludus_state: >-
+      {{ ((__ludus_poll.stdout | from_json).rangeState | default('UNKNOWN'))
+         if ((__ludus_poll.rc | default(1)) == 0
+             and (__ludus_poll.stdout | default('') | trim).startswith('{'))
+         else 'UNKNOWN' }}
+    __ludus_vms: >-
+      {{ ((__ludus_poll.stdout | from_json).VMs | default([]))
+         if ((__ludus_poll.rc | default(1)) == 0
+             and (__ludus_poll.stdout | default('') | trim).startswith('{'))
+         else [] }}
+    __ludus_vmcount: >-
+      {{ ((__ludus_poll.stdout | from_json).VMs | default([]) | length)
+         if ((__ludus_poll.rc | default(1)) == 0
+             and (__ludus_poll.stdout | default('') | trim).startswith('{'))
+         else 0 }}
+  when: __ludus_polling | bool
+- name: "poll | Surface rangeState + which VMs are up, {{ __poll_iter ~ '/' ~ ludus_range_deploy_poll_retries }}"
+  ansible.builtin.debug:
+    msg:
+      - >-
+        rangeState={{ __ludus_state }}  poll {{ __poll_iter ~ '/' ~ ludus_range_deploy_poll_retries }}
+        ({{ __ludus_vms | selectattr('poweredOn', 'defined') | selectattr('poweredOn') | list | length }}/{{ __ludus_vms | length }} powered on)
+      - >-
+        up:      {{ __ludus_vms | selectattr('poweredOn', 'defined') | selectattr('poweredOn') | map(attribute='name') | sort | join(', ') }}
+      - >-
+        pending:
+        {{ ((__ludus_vms | rejectattr('poweredOn', 'defined') | map(attribute='name') | list)
+            + (__ludus_vms | selectattr('poweredOn', 'defined') | rejectattr('poweredOn') | map(attribute='name') | list))
+           | sort | join(', ') }}
+  when:
+    - __ludus_polling | bool
+    - ludus_range_deploy_debug | bool
+- name: "poll | Read a tail of the live deploy log, {{ __poll_iter ~ '/' ~ ludus_range_deploy_poll_retries }}"
+  ansible.builtin.command:
+    argv:
+      - "{{ ludus_range_deploy_bin }}"
+      - range
+      - logs
+      - --tail
+      - "{{ ludus_range_deploy_debug_log_lines | int }}"
+  environment:
+    LUDUS_API_KEY: "{{ __ludus_api_key }}"
+  register: __ludus_logs
+  changed_when: false
+  failed_when: false
+  no_log: true
+  when:
+    - __ludus_polling | bool
+    - ludus_range_deploy_debug | bool
+    - __ludus_state == 'DEPLOYING'
+    - (__poll_iter | int) % (ludus_range_deploy_debug_log_every | int) == 0
+- name: "poll | Surface the live deploy log tail, {{ __poll_iter ~ '/' ~ ludus_range_deploy_poll_retries }}"
+  ansible.builtin.debug:
+    msg: "{{ __ludus_logs.stdout_lines | default([]) }}"
+  when:
+    - __ludus_polling | bool
+    - ludus_range_deploy_debug | bool
+    - __ludus_state == 'DEPLOYING'
+    - (__poll_iter | int) % (ludus_range_deploy_debug_log_every | int) == 0
+    - (__ludus_logs.stdout | default('') | trim | length) > 0
+- name: "poll | Wait before the next read, {{ __poll_iter ~ '/' ~ ludus_range_deploy_poll_retries }}"
+  ansible.builtin.pause:
+    seconds: "{{ ludus_range_deploy_poll_delay | int }}"
+  when:
+    - __ludus_polling | bool
+    - __ludus_state not in ['SUCCESS', 'FAILED', 'ERROR']
+- name: "poll | Stop once a terminal state is observed, {{ __poll_iter ~ '/' ~ ludus_range_deploy_poll_retries }}"
+  ansible.builtin.set_fact:
+    __ludus_polling: false
+  when:
+    - __ludus_polling | bool
+    - __ludus_state in ['SUCCESS', 'FAILED', 'ERROR']

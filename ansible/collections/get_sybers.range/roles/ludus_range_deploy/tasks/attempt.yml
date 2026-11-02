@@ -35,7 +35,26 @@
   changed_when: true
   no_log: true
   when: __ludus_prefire_state != 'DEPLOYING'
-- name: "attempt | Poll until a terminal state, attempt {{ __attempt }}"
+# Visible poll (ludus_range_deploy_debug, default on): an explicit per-iteration
+# loop so each poll can surface rangeState + per-VM state and tail the live
+# deploy log (poll.yml sets __ludus_state/__ludus_vmcount directly; the trailing
+# iterations after a terminal state are skipped via __ludus_polling).
+- name: "attempt | Reset the observed state before polling, attempt {{ __attempt }}"
+  ansible.builtin.set_fact:
+    __ludus_state: DEPLOYING
+    __ludus_polling: true
+  when: ludus_range_deploy_debug | bool
+- name: "attempt | Poll to a terminal state, surfacing per-VM progress, attempt {{ __attempt }}"
+  ansible.builtin.include_tasks: poll.yml
+  loop: "{{ range(1, (ludus_range_deploy_poll_retries | int) + 1) | list }}"
+  loop_control:
+    loop_var: __poll_iter
+    label: "attempt {{ __attempt }} · poll {{ __poll_iter }}/{{ ludus_range_deploy_poll_retries }}"
+  when: ludus_range_deploy_debug | bool
+# Quiet poll (ludus_range_deploy_debug off): the original single until-retry
+# poll, which emits no interim output — unchanged behaviour for operators who
+# want a silent wait.
+- name: "attempt | Poll until a terminal state (quiet), attempt {{ __attempt }}"
   ansible.builtin.command:
     argv: ["{{ ludus_range_deploy_bin }}", range, list, --json]
   environment:
@@ -51,7 +70,8 @@
     and (__ludus_poll.stdout | default('') | trim | length) > 0
     and (__ludus_poll.stdout | default('') | trim).startswith('{')
     and ((__ludus_poll.stdout | from_json).rangeState | default('')) in ['SUCCESS', 'FAILED', 'ERROR']
-- name: "attempt | Parse the terminal state, attempt {{ __attempt }}"
+  when: not (ludus_range_deploy_debug | bool)
+- name: "attempt | Parse the terminal state (quiet), attempt {{ __attempt }}"
   ansible.builtin.set_fact:
     __ludus_state: >-
       {{ ((__ludus_poll.stdout | from_json).rangeState | default('UNKNOWN'))
@@ -63,6 +83,7 @@
          if ((__ludus_poll.rc | default(1)) == 0
              and (__ludus_poll.stdout | default('') | trim).startswith('{'))
          else 0 }}
+  when: not (ludus_range_deploy_debug | bool)
 - name: "attempt | Succeeded, attempt {{ __attempt }}"
   ansible.builtin.set_fact:
     __ludus_deploy_done: true

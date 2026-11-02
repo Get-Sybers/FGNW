@@ -18,6 +18,22 @@ has no release tag yet.
 
 ## [Unreleased]
 
+### Added — visible range-deploy poll
+
+- **The `ludus range deploy` wait is no longer a black box.** `get_sybers.range.ludus_range_deploy`
+  previously fired the deploy and then polled `ludus range list --json` on a silent `no_log` /
+  `until:` loop for up to the whole poll budget (Phase 1 sets it to 360 × 20s = 2h), so an operator
+  saw one spinning task and nothing about which VM was up or where a deploy was failing. The poll is
+  now an explicit per-iteration loop (`tasks/poll.yml`) that, gated on the new default-on
+  `ludus_range_deploy_debug`, surfaces the observed `rangeState` and a per-VM power-state summary every
+  poll and tails the live `ludus range logs` every `ludus_range_deploy_debug_log_every` polls — all
+  inline in the deploy's own stdout. The raw `ludus` reads keep `no_log` (they carry
+  `LUDUS_API_KEY`); only parsed, secret-free output is shown, so visibility does not weaken secret
+  hygiene. New tunables (`defaults/main.yml`, `meta/argument_specs.yml`): `ludus_range_deploy_debug`
+  (`true`), `ludus_range_deploy_debug_log_lines` (`40`), `ludus_range_deploy_debug_log_every` (`3`).
+  Set `ludus_range_deploy_debug: false` to restore the quiet poll. The completion gate (wait for
+  `SUCCESS`/`FAILED`/`ERROR`, bounded, timeout fatal) is unchanged.
+
 ### Removed — single range size, single Exchange server
 
 - **One size.** Removed the range-size variant system. `range-config.yml` is now a single, flat,

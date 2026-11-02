@@ -48,6 +48,24 @@ argument_specs:
         default: 20
         description:
           - Seconds between state polls.
+      ludus_range_deploy_debug:
+        type: bool
+        default: true
+        description:
+          - When true (default), the terminal-state poll surfaces the observed rangeState and a per-VM power-state summary each iteration, and a tail of the
+            live `ludus range logs` every ludus_range_deploy_debug_log_every polls, so the otherwise-silent wait shows what each VM is up to and where a
+            deploy is failing. Set false to restore a quiet poll. The raw `ludus` reads keep no_log either way; only parsed, secret-free output is shown.
+      ludus_range_deploy_debug_log_lines:
+        type: int
+        default: 40
+        description:
+          - Lines of the live `ludus range logs` to tail when ludus_range_deploy_debug surfaces the deploy log.
+      ludus_range_deploy_debug_log_every:
+        type: int
+        default: 3
+        description:
+          - Tail the live deploy log once every N poll iterations (with ludus_range_deploy_poll_delay, the cadence). Per-VM state is shown every poll; the
+            log tail is throttled to this interval to keep the output readable.
       ludus_range_deploy_capture_errors:
         type: bool
         default: true
