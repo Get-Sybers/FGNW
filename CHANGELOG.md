@@ -25,7 +25,7 @@ has no release tag yet.
   `until:` loop for up to the whole poll budget (Phase 1 sets it to 360 × 20s = 2h), so an operator
   saw one spinning task and nothing about which VM was up or where a deploy was failing. The poll is
   now an explicit per-iteration loop (`tasks/poll.yml`) that, gated on the new default-on
-  `ludus_range_deploy_debug`, surfaces the observed `rangeState` and a per-VM power/IP table every
+  `ludus_range_deploy_debug`, surfaces the observed `rangeState` and a per-VM power-state summary every
   poll and tails the live `ludus range logs` every `ludus_range_deploy_debug_log_every` polls — all
   inline in the deploy's own stdout. The raw `ludus` reads keep `no_log` (they carry
   `LUDUS_API_KEY`); only parsed, secret-free output is shown, so visibility does not weaken secret

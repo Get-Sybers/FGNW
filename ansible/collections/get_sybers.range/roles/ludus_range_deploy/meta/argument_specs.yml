@@ -52,7 +52,7 @@ argument_specs:
         type: bool
         default: true
         description:
-          - When true (default), the terminal-state poll surfaces the observed rangeState and a per-VM power/IP table each iteration, and a tail of the
+          - When true (default), the terminal-state poll surfaces the observed rangeState and a per-VM power-state summary each iteration, and a tail of the
             live `ludus range logs` every ludus_range_deploy_debug_log_every polls, so the otherwise-silent wait shows what each VM is up to and where a
             deploy is failing. Set false to restore a quiet poll. The raw `ludus` reads keep no_log either way; only parsed, secret-free output is shown.
       ludus_range_deploy_debug_log_lines:

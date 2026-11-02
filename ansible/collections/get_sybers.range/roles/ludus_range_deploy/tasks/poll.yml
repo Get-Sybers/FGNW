@@ -45,11 +45,14 @@
     msg:
       - >-
         rangeState={{ __ludus_state }}  poll {{ __poll_iter ~ '/' ~ ludus_range_deploy_poll_retries }}
-        ({{ __ludus_vms | selectattr('poweredOn') | list | length }}/{{ __ludus_vms | length }} powered on)
+        ({{ __ludus_vms | selectattr('poweredOn', 'defined') | selectattr('poweredOn') | list | length }}/{{ __ludus_vms | length }} powered on)
       - >-
-        up:      {{ __ludus_vms | selectattr('poweredOn') | map(attribute='name') | sort | join(', ') }}
+        up:      {{ __ludus_vms | selectattr('poweredOn', 'defined') | selectattr('poweredOn') | map(attribute='name') | sort | join(', ') }}
       - >-
-        pending: {{ __ludus_vms | rejectattr('poweredOn') | map(attribute='name') | sort | join(', ') }}
+        pending:
+        {{ ((__ludus_vms | rejectattr('poweredOn', 'defined') | map(attribute='name') | list)
+            + (__ludus_vms | selectattr('poweredOn', 'defined') | rejectattr('poweredOn') | map(attribute='name') | list))
+           | sort | join(', ') }}
   when:
     - __ludus_polling | bool
     - ludus_range_deploy_debug | bool
