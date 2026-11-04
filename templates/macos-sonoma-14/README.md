@@ -1,36 +1,43 @@
 Ludus template for **macOS Sonoma 14.1.1**, installed on Proxmox via the
 [OpenCore](https://github.com/acidanthera/OpenCorePkg) bootloader and built with
-Packer + Ansible.
+Packer + Ansible - **fully unattended**: one `ludus templates build` produces the
+registered template with no console interaction.
 > Registered template name: **`macos-sonoma-14-template`** (the `vm_name` default) - not the
 > directory name. Use it for `build` / `rm` / `status`. It **must contain `macos`** -
 > Ludus keys its macOS deploy handling on that substring.
 The Windows and Linux ISO templates here build with Packer's `proxmox-iso`
 builder + an autounattend/preseed answer file. **macOS has no equivalent** - Apple
-ships no unattended-install mechanism, so the OS install (Disk Utility format ->
-Install macOS -> Setup Assistant -> create the first user) is unavoidably
-**interactive**, done once at the Proxmox console/VNC. macOS also boots only
-through an **OpenCore** bootloader, which `proxmox-iso` cannot drive, and it would
-time out waiting for an SSH communicator that never appears.
-So - like the metasploitable templates, which use a Packer `null` source because
-no installer ISO fits `proxmox-iso` - this template uses a `null` source and does
-the real work in **Ansible**, shipped in the `get_sybers.templates` collection each `.pkr.hcl`
-installs and runs by FQCN (`ansible-playbook get_sybers.templates.build`):
+ships no answer-file installer, macOS boots only through an **OpenCore** bootloader
+that `proxmox-iso` cannot drive, and the installer ISO is an Apple Partition Map
+image that UEFI cannot even enumerate. So - like the metasploitable templates,
+which use a Packer `null` source because no installer ISO fits `proxmox-iso` - this
+template uses a `null` source and does the real work in **Ansible**, shipped in the
+`get_sybers.templates` collection each `.pkr.hcl` installs and runs by FQCN
+(`ansible-playbook get_sybers.templates.build`):
 [`build.yml`](../../ansible/collections/get_sybers.templates/playbooks/build.yml) runs the
 [`macos_template`](../../ansible/collections/get_sybers.templates/roles/macos_template/) role, which drives Proxmox over
-its REST API (no shell orchestration script). It runs in **two phases** that
-`ludus templates build` steps through on successive runs (the phase is
-auto-detected from VM state - Ludus can't pass extra `-var`s):
+its REST API and the VM's console over the API's VNC websocket:
 
-1. **PREPARE** (no VM yet): assert the ISO checksums, have Proxmox download +
-   verify both ISOs (a bundled `proxmox_iso_download` module), create the VM with
-   the full macOS layout, and boot it. On **Intel hosts no root step is needed** -
-   the OpenCore ISO bundles VirtualSMC, so there is no `isa-applesmc`/OSK
-   requirement; only **AMD hosts** need a one-time root `qm set --args` (PREPARE
-   prints it). **No template exists yet** - you then do the one-time interactive
-   install.
-2. **FINALIZE** (VM installed + reachable over SSH): provision in-guest over SSH
-   (install a guest agent + Command Line Tools, clone hygiene), embed OpenCore onto
-   the disk ESP, remove the install media, and convert the VM to a Ludus template.
+1. **PREPARE**: assert the ISO checksums, have Proxmox download + verify both ISOs
+   (a bundled `proxmox_iso_download` module); extract the installer's
+   `BaseSystem.dmg` (macOS Recovery, a GPT disk OpenCore boots) with `7z`, convert
+   it with `qemu-img`, upload it to the ISO storage as `import` content and attach
+   it as a second disk; create the VM (q35/OVMF, OpenCore + installer CDs, virtio
+   NIC, guest agent on ISA serial) and boot it. On **Intel hosts no root step is
+   needed** - the OpenCore ISO bundles VirtualSMC; only **AMD hosts** need a
+   one-time root `qm set --args` (PREPARE prints it, then re-run).
+2. **Console-driven install**: the role's driver recognises screens by pixel probes
+   and types into the Recovery Terminal - find the blank target disk, erase it as
+   APFS "Macintosh HD", run `startosinstall --agreetolicense --nointeraction`,
+   wait through the installer's reboots to Setup Assistant; then reset, pick
+   **macOS Base System** in the OpenCore picker and, from Recovery, write a
+   first-boot LaunchDaemon onto the installed Data volume (md5-verified) plus
+   `.AppleSetupDone`. The first boot creates **`localuser` / `password`** (admin),
+   enables Remote Login (SSH) and skips Setup Assistant for that user.
+3. **FINALIZE** (same run): provision in-guest over SSH (install a guest agent +
+   Command Line Tools, clone hygiene), embed OpenCore onto the disk ESP, remove the
+   Recovery disk and install media, move the disk to the template pool if it was
+   installed on local storage, and convert the VM to a Ludus template.
 The role is standard Ansible (idempotent `uri` tasks, `assert` validation,
 `block`/`rescue`, `no_log`/`become` for secrets) and needs no external collection;
 see its [README](../../ansible/collections/get_sybers.templates/roles/macos_template/README.md).
@@ -43,9 +50,9 @@ interfaces are reset for clean cloning.
 The build **refuses to run** until the macOS ISO is pinned, and Proxmox verifies
 the download against it (the rule-9 guarantee `iso_url`+`iso_checksum` give the
 stock templates). The OpenCore ISO and guest-agent checksums are **already pinned
-and verified**; only the macOS installer ISO is yours to pin. klabsdev publishes no digest, so record the
-sha256 of the copy you fetch and set it in [`macos-sonoma-14.pkr.hcl`](macos-sonoma-14.pkr.hcl)
-**before** `ludus templates add`:
+and verified**; the macOS installer ISO's sha256 is pinned to the klabsdev
+image. If you supply a different copy, record its sha256 and set it in
+[`macos-sonoma-14.pkr.hcl`](macos-sonoma-14.pkr.hcl) **before** `ludus templates add`:
 
 ```text
 sha256sum macOS-Sonoma-14.1.1.iso
@@ -54,48 +61,48 @@ sha256sum macOS-Sonoma-14.1.1.iso
 `ludus templates build` has no flag to pass extra `-var`s, so editing the
 `default`s in the `.pkr.hcl` is the only way to set these.
 
+## Host prerequisites
+
+- `7z` (Debian package `7zip`) on the Proxmox node Ludus builds on; `qemu-img` and
+  `curl` are always there.
+- The ISO storage must allow **`import`** content as well as `iso`
+  (`pvesm set local --content <existing>,import`), for the Recovery boot image.
+- A local storage (ZFS/LVM-thin/dir) with ~90 GiB free when the Ludus pool is
+  networked (Ceph RBD, NFS): the installer's final APFS seal is a stream of small
+  synchronous writes that crawls for hours on networked storage, so the role
+  installs locally and FINALIZE moves the finished disk to the pool. Set
+  `build_storage_pool` to force a storage.
+
 ```bash
 ludus templates add -d templates/macos-sonoma-14
 ludus templates build -n macos-sonoma-14-template
 ```
 
-PREPARE ends by printing what to do next. At the Proxmox **console/VNC** for the
-new VM:
-
-1. In the OpenCore boot picker, choose **Install macOS**.
-2. **Disk Utility** -> erase the SATA disk as **APFS** (e.g. "Macintosh HD").
-3. Install macOS (several automatic reboots - keep selecting the disk / "macOS
-   Installer" in the OpenCore picker until it boots the installed OS).
-4. In **Setup Assistant**, create the first user matching the template vars -
-   **`localuser` / `password`** by default (skip Apple ID). This account needs sudo
-   (Setup Assistant's first user is an admin).
-5. Enable **Remote Login (SSH)** for that admin user - macOS 13+:
-   *System Settings -> General -> Sharing -> Remote Login*; macOS 12:
-   *System Preferences -> Sharing -> Remote Login*.
-Then re-run the same command to finalize:
-
-```bash
-ludus templates build -n macos-sonoma-14-template
-```
-
-Confirm success with `ludus templates list` showing this name `TRUE` - packer's
-"Build complete!" for PREPARE only means the VM is ready to install, **not** that
-a template exists. Watch progress with `ludus templates logs` (the Ansible output
-is captured there).
+Expect ~45-60 minutes on local SSD storage: ~5 min ISO staging, ~20 min install,
+~10 min first boot + provisioning (the Command Line Tools download from Apple),
+and the disk move to the pool. Watch `ludus templates logs`; the console driver
+prints each state change (Recovery seen, Terminal opened, disk erased, installer
+rebooted, install complete, Base System picked, daemon injected) and saves a PNG of
+each under the build's `ANSIBLE_LOCAL_TEMP/macos-template/console-<vmid>/` on the
+node. Confirm success with `ludus templates list` showing this name `TRUE`.
+If the driver fails, the VM is left in place with those screenshots; `ludus
+templates rm` it (or destroy the VM) and re-run.
 > **AMD hosts only:** the qemu `args` option (forcing the CPU model) is
 > `root@pam`-only in Proxmox. On AMD, PREPARE prints the exact
-> `qm set <vmid> --args '...'` + `qm start <vmid>` to run once as root on the node,
-> then continue at step 1. Intel hosts need none of this.
-`localuser` / `password` (the `ssh_username` / `ssh_password` vars) - created by you
-in Setup Assistant, used by FINALIZE, and what Ludus's macOS deploy expects.
-Intentionally weak; an isolated-range template. Change both vars **and** Ludus's
-`group_vars/macos.yml` together if you harden them.
+> `qm set <vmid> --args '...'` to run once as root on the node, then re-run the
+> build: the role finds the VM and installs unattended. Intel hosts need none of this.
+`localuser` / `password` (the `ssh_username` / `ssh_password` vars) - created by the
+first-boot daemon, used by FINALIZE, and what Ludus's macOS deploy expects.
+Intentionally weak; an isolated-range template. Printable ASCII only (they are
+typed through the console). Change both vars **and** Ludus's `group_vars/macos.yml`
+together if you harden them.
 
-- **Not verified end-to-end.** Authored to the Ludus / Packer / Ansible / template
-  standards and cross-checked against Ludus's own macOS deploy code, but without a
-  live Proxmox+macOS run - treat the first build as a bring-up and watch
-  `ludus templates logs`. The macOS-specific knobs (`guest_cpu`, `guest_nic_model`,
-  `vga`, `qemu_args`) are overridable variables; some hosts may need tuning.
+- **Not yet verified end-to-end for macOS Sonoma 14.1.1.** The unattended flow was validated on
+  macOS Monterey 12.7.1 (Proxmox VE 9.2 / Ludus 2.3, Intel host, Ceph RBD template pool,
+  local ZFS build storage); this version uses the same role and media layout, so treat
+  the first build as a bring-up and watch `ludus templates logs` / the console
+  screenshots. The screen probes assume the 1280x800 console the `vmware` VGA gives
+  OpenCore and Recovery.
 - **Guest agent is third-party.** `mav2287/mac-guest-agent` (MIT) is downloaded
   in-guest and checksum-verified before install; it is required for Ludus IP
   discovery. Set `install_guest_agent = false` to opt out (then deploys must
@@ -104,8 +111,8 @@ Intentionally weak; an isolated-range template. Change both vars **and** Ludus's
   finished template self-boots with no ISO attached; if that step fails it falls
   back to keeping the OpenCore ISO attached as the boot CD.
 - **Command Line Tools install** needs Apple's software-update servers reachable
-  from the build network (Ludus's NAT provides this). If it fails, install them
-  once in the VM's Terminal (`xcode-select --install`) and re-run FINALIZE.
+  from the build network (Ludus's NAT provides this). If it fails, re-run the
+  build: FINALIZE resumes on the existing VM.
 - **Licensing.** Apple's EULA restricts macOS to Apple-branded hardware; running
   it on non-Apple hosts is your compliance call. This template ships no Apple
   software, only automation around media you supply.

@@ -14,6 +14,23 @@
       Storage '{{ macos_template_iso_storage }}' is not available for 'iso' content on node
       {{ macos_template_node }}. This build will not change cluster storage config (issue
     quiet: true
+- name: "prepare | Confirm the ISO storage also allows 'import' content (the Recovery boot disk is staged there)"
+  no_log: true
+  ansible.builtin.uri:
+    url: "{{ macos_template_api_host }}/api2/json/nodes/{{ macos_template_node }}/storage?content=import"
+    method: GET
+    headers: "{{ macos_template_auth_headers }}"
+    validate_certs: "{{ macos_template_validate_certs }}"
+  register: macos_template_import_store
+- name: "prepare | Assert the ISO storage accepts 'import' content"
+  ansible.builtin.assert:
+    that: macos_template_import_store.json.data | selectattr('storage', 'equalto', macos_template_iso_storage) | list | length > 0
+    fail_msg: >-
+      Storage '{{ macos_template_iso_storage }}' does not allow 'import' content on node
+      {{ macos_template_node }}. The unattended install boots macOS Recovery from a disk image
+      extracted from the installer ISO, which is uploaded there as an importable image. Enable it
+      once on the node: pvesm set {{ macos_template_iso_storage }} --content <existing content>,import
+    quiet: true
 - name: "prepare | Ensure the OpenCore ISO is present and verified in ISO storage"
   get_sybers.templates.proxmox_iso_download:
     api_host: "{{ macos_template_api_host }}"
@@ -57,6 +74,135 @@
       when:
         - macos_template_ignore_msrs.content is defined
         - (macos_template_ignore_msrs.content | b64decode | trim) not in ['Y', '1']
+# --- Build storage -----------------------------------------------------------
+# The macOS installer's final phase (APFS snapshot + seal) is a stream of small
+# synchronous writes. On network storage (Ceph RBD here: ~20 ms per write) it
+# crawls at ~100 writes/s and looks hung for hours at "Less than a minute
+# remaining"; on a local zvol the same install finishes in ~15 minutes. So the
+# install runs on a local storage when the template pool is networked, and
+# FINALIZE moves the finished disk to the template pool.
+- name: "prepare | List the node's image-capable storages"
+  no_log: true
+  ansible.builtin.uri:
+    url: "{{ macos_template_api_host }}/api2/json/nodes/{{ macos_template_node }}/storage?content=images&enabled=1"
+    method: GET
+    headers: "{{ macos_template_auth_headers }}"
+    validate_certs: "{{ macos_template_validate_certs }}"
+  register: macos_template_storages
+- name: "prepare | Pick the storage the install runs on (explicit, else local when the pool is networked)"
+  ansible.builtin.set_fact:
+    macos_template_build_storage_resolved: >-
+      {{ macos_template_build_storage if (macos_template_build_storage | length > 0)
+         else (__local_candidates[0].storage if (__pool_is_network and (__local_candidates | length > 0))
+               else macos_template_storage_pool) }}
+  vars:
+    __pool_entry: "{{ macos_template_storages.json.data | selectattr('storage', 'equalto', macos_template_storage_pool) | list | first | default({}) }}"
+    __pool_is_network: "{{ (__pool_entry.type | default('')) in macos_template_network_storage_types }}"
+    __local_candidates: >-
+      {{ macos_template_storages.json.data
+         | selectattr('active', 'defined') | selectattr('active', 'equalto', 1)
+         | selectattr('type', 'in', macos_template_local_storage_types)
+         | sort(attribute='avail', reverse=true) | list }}
+- name: "prepare | Report the build storage decision"
+  ansible.builtin.debug:
+    msg: >-
+      Installing on storage '{{ macos_template_build_storage_resolved }}'
+      {{ '(the template pool)' if macos_template_build_storage_resolved == macos_template_storage_pool
+         else '(local; FINALIZE moves the disk to ' ~ macos_template_storage_pool ~ ')' }}.
+# --- Recovery boot disk --------------------------------------------------------
+# OpenCore/OVMF cannot boot the installer ISO itself: it is an Apple Partition
+# Map image, invisible to UEFI. Its BaseSystem.dmg (the Recovery image) is a GPT
+# disk that boots fine, so it is extracted with 7z, converted to raw with
+# qemu-img, uploaded as an importable image and attached as a second disk.
+- name: "prepare | Look for an already-staged Recovery boot image"
+  no_log: true
+  ansible.builtin.uri:
+    url: "{{ macos_template_api_host }}/api2/json/nodes/{{ macos_template_node }}/storage/{{ macos_template_iso_storage }}/content?content=import"
+    method: GET
+    headers: "{{ macos_template_auth_headers }}"
+    validate_certs: "{{ macos_template_validate_certs }}"
+  register: macos_template_import_content
+- name: "prepare | Record the Recovery boot image volume id"
+  ansible.builtin.set_fact:
+    macos_template_basesystem_volid: "{{ macos_template_iso_storage }}:import/{{ macos_template_basesystem_name }}"
+- name: "prepare | Stage the Recovery boot image (extract, convert, upload)"
+  when: macos_template_import_content.json.data | selectattr('volid', 'equalto', macos_template_basesystem_volid) | list | length == 0
+  block:
+    - name: "prepare | Require 7z on the build host (extracts BaseSystem.dmg from the HFS+ installer image)"
+      ansible.builtin.command: which 7z
+      register: macos_template_7z
+      changed_when: false
+      failed_when: macos_template_7z.rc != 0
+    - name: "prepare | Resolve the installer ISO path on the node"
+      no_log: true
+      ansible.builtin.uri:
+        url: >-
+          {{ macos_template_api_host }}/api2/json/nodes/{{ macos_template_node }}/storage/{{ macos_template_iso_storage
+          }}/content/{{ macos_template_iso_storage }}:iso/{{ macos_template_iso_name }}
+        method: GET
+        headers: "{{ macos_template_auth_headers }}"
+        validate_certs: "{{ macos_template_validate_certs }}"
+      register: macos_template_iso_volume
+    - name: "prepare | Create the build work directory"
+      ansible.builtin.file:
+        path: "{{ macos_template_work_dir }}"
+        state: directory
+        mode: "0700"
+    - name: "prepare | Locate BaseSystem.dmg inside the installer image"
+      ansible.builtin.shell: >-
+        set -o pipefail;
+        7z l -slt {{ macos_template_iso_volume.json.data.path | quote }} | sed -n 's/^Path = //p' | grep '/BaseSystem/BaseSystem\.dmg$' | head -1
+      args:
+        executable: /bin/bash
+      register: macos_template_dmg_path
+      changed_when: false
+      failed_when: macos_template_dmg_path.stdout | length == 0
+    - name: "prepare | Extract BaseSystem.dmg"
+      ansible.builtin.shell: >-
+        7z x -so {{ macos_template_iso_volume.json.data.path | quote }} {{ macos_template_dmg_path.stdout | quote }}
+        > {{ (macos_template_work_dir ~ '/basesystem.dmg') | quote }}
+      args:
+        creates: "{{ macos_template_work_dir }}/basesystem.dmg"
+    - name: "prepare | Convert BaseSystem.dmg to a raw GPT disk image"
+      ansible.builtin.command: >-
+        qemu-img convert -f dmg -O raw {{ macos_template_work_dir }}/basesystem.dmg {{ macos_template_work_dir }}/basesystem.raw
+      args:
+        creates: "{{ macos_template_work_dir }}/basesystem.raw"
+    - name: "prepare | Write the API auth headers for curl (kept off the command line)"
+      ansible.builtin.copy:
+        dest: "{{ macos_template_work_dir }}/auth-headers"
+        mode: "0600"
+        content: |
+          {% for k, v in macos_template_auth_headers.items() %}
+          {{ k }}: {{ v }}
+          {% endfor %}
+      no_log: true
+    # curl, not uri: uri's form-multipart builds the whole 1.1 GiB body in memory;
+    # curl streams it. The auth headers come from the 0600 file, not the argv.
+    - name: "prepare | Upload the Recovery boot image to the ISO storage as importable content" # noqa: command-instead-of-module
+      ansible.builtin.command: >-
+        curl -sS -f {{ '' if macos_template_validate_certs else '-k' }}
+        -H @{{ macos_template_work_dir }}/auth-headers
+        -F content=import
+        -F filename=@{{ macos_template_work_dir }}/basesystem.raw;filename={{ macos_template_basesystem_name }}
+        {{ macos_template_api_host }}/api2/json/nodes/{{ macos_template_node }}/storage/{{ macos_template_iso_storage }}/upload
+      register: macos_template_upload
+      changed_when: true
+    - name: "prepare | Wait for the upload task to finish"
+      ansible.builtin.include_tasks: _wait_task.yml
+      vars:
+        wt_upid: "{{ (macos_template_upload.stdout | from_json).data }}"
+        wt_node: "{{ macos_template_node }}"
+  always:
+    - name: "prepare | Remove the local staging files"
+      ansible.builtin.file:
+        path: "{{ macos_template_work_dir }}/{{ item }}"
+        state: absent
+      loop:
+        - auth-headers
+        - basesystem.dmg
+        - basesystem.raw
+# --- The VM ----------------------------------------------------------------------
 - name: "prepare | Get the next free VM id"
   no_log: true
   ansible.builtin.uri:
@@ -69,7 +215,7 @@
   ansible.builtin.set_fact:
     macos_template_vmid: "{{ macos_template_nextid.json.data }}"
     macos_template_mac: "BC:24:11:{{ '%02x:%02x:%02x' | format(256 | random, 256 | random, 256 | random) }}"
-- name: "prepare | Create the macOS VM (q35/OVMF, SATA disk, virtio NIC, OpenCore + installer CDs)"
+- name: "prepare | Create the macOS VM (q35/OVMF; target disk + Recovery disk on SATA; OpenCore + installer CDs)"
   no_log: true
   ansible.builtin.uri:
     url: "{{ macos_template_api_host }}/api2/json/nodes/{{ macos_template_node }}/qemu"
@@ -88,18 +234,23 @@
       machine: "{{ macos_template_machine }}"
       bios: "{{ macos_template_bios }}"
       ostype: other
-      efidisk0: "{{ macos_template_storage_pool }}:1,efitype={{ macos_template_efitype }},pre-enrolled-keys=0"
-      sata0: "{{ macos_template_storage_pool }}:{{ macos_template_vm_disk_size }},format={{ macos_template_storage_format }},ssd=1,discard=on"
+      efidisk0: "{{ macos_template_build_storage_resolved }}:1,efitype={{ macos_template_efitype }},pre-enrolled-keys=0"
+      sata0: >-
+        {{ macos_template_build_storage_resolved }}:{{ macos_template_vm_disk_size }},{{
+        ('format=' ~ macos_template_storage_format ~ ',')
+        if (macos_template_storage_format | length > 0 and macos_template_build_storage_resolved == macos_template_storage_pool) else ''
+        }}cache={{ macos_template_disk_cache_build }},ssd=1,discard=on
+      sata1: "{{ macos_template_build_storage_resolved }}:0,import-from={{ macos_template_basesystem_volid }},cache={{ macos_template_disk_cache_build }}"
       ide0: "{{ macos_template_iso_storage }}:iso/{{ macos_template_opencore_name }},media=cdrom"
       ide2: "{{ macos_template_iso_storage }}:iso/{{ macos_template_iso_name }},media=cdrom"
-      boot: "order=ide0;sata0"
+      boot: "order=ide0"
       vga: "{{ macos_template_vga }}"
       net0: "{{ macos_template_guest_nic_model }}={{ macos_template_mac }},bridge={{ macos_template_bridge }}"
       agent: "enabled=1,type=isa"
       pool: "{{ macos_template_pool | default(omit, true) }}"
       description: "{{ macos_template_description }}"
   register: macos_template_create
-- name: "prepare | Wait for the create task to finish"
+- name: "prepare | Wait for the create task (it also imports the Recovery disk) to finish"
   ansible.builtin.include_tasks: _wait_task.yml
   vars:
     wt_upid: "{{ macos_template_create.json.data }}"
@@ -145,13 +296,12 @@
           - "Could not set qemu 'args' with the build token (root@pam-only in Proxmox)."
           - "This AMD host needs the CPU model forced. Run once as root on {{ macos_template_node }}:"
           - "    qm set {{ macos_template_vmid }} --args '{{ macos_template_args }}'"
-          - "    qm start {{ macos_template_vmid }}"
-          - "Then complete the interactive install (see README) and re-run the build."
+          - "Then re-run 'ludus templates build -n {{ macos_template_vm_name }}' to install unattended."
 - name: "prepare | No args needed (Intel host - VirtualSMC in the OpenCore ISO handles SMC)"
   when: macos_template_args | length == 0
   ansible.builtin.set_fact:
     macos_template_args_ready: true
-- name: "prepare | Start the VM (boots OpenCore -> macOS installer)"
+- name: "prepare | Start the VM (OpenCore boots the Recovery disk)"
   when: macos_template_args_ready | bool
   no_log: true
   ansible.builtin.uri:
@@ -159,18 +309,75 @@
     method: POST
     headers: "{{ macos_template_auth_headers }}"
     validate_certs: "{{ macos_template_validate_certs }}"
-- name: "prepare | PREPARE complete - interactive install instructions"
-  ansible.builtin.debug:
-    msg:
-      - "==========================================================================="
-      - "PREPARE COMPLETE - NO TEMPLATE EXISTS YET (this is expected)."
-      - "VM {{ macos_template_vmid }} ({{ macos_template_vm_name }}) on node {{ macos_template_node }}."
-      - "{{ 'If a qm-set remedy was printed above, run it as root first.' if not (macos_template_args_ready | bool) else 'The VM has been started.' }}"
-      - "macOS cannot be installed unattended. At the Proxmox console/VNC:"
-      - "  1. In the OpenCore picker choose 'Install macOS'."
-      - "  2. Disk Utility -> erase the SATA disk as APFS (e.g. 'Macintosh HD')."
-      - "  3. Install macOS (several reboots; keep picking the disk / installer)."
-      - "  4. Setup Assistant: create user {{ macos_template_ssh_username }} / {{ macos_template_ssh_password }} (skip Apple ID)."
-      - "  5. Settings -> General -> Sharing -> Remote Login (SSH) = on for that user."
-      - "Then re-run 'ludus templates build -n {{ macos_template_vm_name }}' to FINALIZE."
-      - "==========================================================================="
+- name: "prepare | Stop here when the AMD args still need root (re-run after qm set)"
+  when: not (macos_template_args_ready | bool)
+  ansible.builtin.set_fact:
+    macos_template_installed: false
+- name: "prepare | Install macOS unattended"
+  when: macos_template_args_ready | bool
+  block:
+    - name: "prepare | Create the console log directory (screenshots of every state change)"
+      ansible.builtin.file:
+        path: "{{ macos_template_work_dir }}/console-{{ macos_template_vmid }}"
+        state: directory
+        mode: "0700"
+    - name: "prepare | Drive the install from the VM console (Recovery -> erase -> startosinstall -> first-boot daemon)"
+      ansible.builtin.command:
+        argv: "{{ __driver_argv + (['--insecure'] if not (macos_template_validate_certs | bool) else []) }}"
+      vars:
+        __driver_argv:
+          - python3
+          - "{{ role_path }}/files/console/macos_unattended.py"
+          - --stage
+          - all
+          - --api-host
+          - "{{ macos_template_api_host }}"
+          - --node
+          - "{{ macos_template_node }}"
+          - --vmid
+          - "{{ macos_template_vmid }}"
+          - --token-user
+          - "{{ macos_template_api_user }}"
+          - --log-dir
+          - "{{ macos_template_work_dir }}/console-{{ macos_template_vmid }}"
+          - --username
+          - "{{ macos_template_ssh_username }}"
+          - --password
+          - "{{ macos_template_ssh_password }}"
+          - --firstboot-script
+          - "{{ role_path }}/files/firstboot/ludus-first-boot.sh"
+          - --launchd-plist
+          - "{{ role_path }}/files/firstboot/com.ludus.firstboot.plist"
+          - --boot-timeout
+          - "{{ macos_template_console_boot_timeout }}"
+          - --install-timeout
+          - "{{ macos_template_install_timeout }}"
+      environment:
+        PVE_TOKEN_SECRET: "{{ macos_template_api_token_secret | default('') }}"
+        PVE_TICKET: "{{ macos_template_ticket.json.data.ticket | default('') }}"
+        PVE_CSRF: "{{ macos_template_ticket.json.data.CSRFPreventionToken | default('') }}"
+      register: macos_template_console
+      changed_when: true
+    - name: "prepare | Show the console driver's trace"
+      ansible.builtin.debug:
+        msg: "{{ macos_template_console.stdout_lines }}"
+    - name: "prepare | Record that macOS is installed (the first boot creates the user and enables SSH)"
+      ansible.builtin.set_fact:
+        macos_template_installed: true
+        macos_template_match:
+          vmid: "{{ macos_template_vmid }}"
+          node: "{{ macos_template_node }}"
+          status: running
+          template: 0
+  rescue:
+    - name: "prepare | The unattended install failed - leave the VM for inspection"
+      ansible.builtin.debug:
+        msg:
+          - "The console driver did not complete the macOS install on VM {{ macos_template_vmid }}."
+          - "{{ macos_template_console.stdout_lines | default([]) }}"
+          - "{{ macos_template_console.stderr_lines | default([]) }}"
+          - "Screenshots: {{ macos_template_work_dir }}/console-{{ macos_template_vmid }}/"
+          - "Destroy VM {{ macos_template_vmid }} (or finish the install by hand) and re-run the build."
+    - name: "prepare | Fail the build"
+      ansible.builtin.fail:
+        msg: "unattended macOS install failed on VM {{ macos_template_vmid }}"

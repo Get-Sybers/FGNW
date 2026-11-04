@@ -2,19 +2,22 @@
 # TUI/GUI picker. Packer requires a literal default, so this stays a static string.
 variable "description" {
   type    = string
-  default = "macOS Tahoe 26.0 (beta) for Ludus - OpenCore-booted on Proxmox. Two-phase Ansible build with a one-time interactive install; see README before building."
+  default = "macOS Tahoe 26.0 (beta) for Ludus - OpenCore-booted on Proxmox. Fully unattended Ansible build (Recovery-driven install over the Proxmox console API); see README."
 }
 variable "icon_path" {
   type    = string
   default = "icon.png"
 }
-# macOS has no unattended installer (no preseed/autounattend equivalent) and boots
-# only through OpenCore, so it cannot use Packer's proxmox-iso builder. Like the
-# metasploitable templates it uses a "null" source; the real work is an Ansible
-# role get_sybers.templates.macos_template (run by build.yml) that orchestrates Proxmox over its
-# REST API. READ README.md before building - the OS install is a one-time
-# interactive step, and the finished template is tuned for `ludus range deploy`
-# (localuser creds, virtio NIC, a QEMU guest agent, working /usr/bin/python3).
+# macOS has no answer-file installer (no preseed/autounattend equivalent) and
+# boots only through OpenCore, so it cannot use Packer's proxmox-iso builder.
+# Like the metasploitable templates it uses a "null" source; the real work is an
+# Ansible role get_sybers.templates.macos_template (run by build.yml) that
+# orchestrates Proxmox over its REST API and drives the macOS install from the
+# VM console (VNC over the API): Recovery -> erase -> startosinstall -> a
+# first-boot daemon that creates the user and enables SSH. One `ludus templates
+# build` produces the template with no console interaction; it is tuned for
+# `ludus range deploy` (localuser creds, virtio NIC, a QEMU guest agent, working
+# /usr/bin/python3). See README.md.
 variable "source_url" {
   type        = string
   default     = "https://cdn.klabsdev.com/MacImages/macOS-Tahoe-Beta-26.0.iso"
@@ -113,8 +116,23 @@ variable "qemu_args" {
   type    = string
   default = ""
 }
-# First-user credentials created interactively in Setup Assistant, then used by
-# FINALIZE to SSH in and provision. Ludus's macOS deploy hard-codes these, so keep
+# Storage the install runs on. Empty = the Ludus template pool, unless that pool is
+# networked (Ceph RBD, NFS...): the installer's final APFS seal is a stream of small
+# synchronous writes that crawls for hours there, so the role then picks the local
+# storage with the most free space and FINALIZE moves the finished disk to the pool.
+variable "build_storage_pool" {
+  type    = string
+  default = ""
+}
+# Upper bound in seconds for the console-driven install (copy phase, the ~30 min
+# installer phase and the first boot). Generous: a slow host is not a failure.
+variable "install_timeout" {
+  type    = string
+  default = "14400"
+}
+# First-user credentials. The role's first-boot daemon creates this admin user in
+# the installed guest (printable ASCII only - they are typed through the console)
+# and FINALIZE SSHes in with them. Ludus's macOS deploy hard-codes these, so keep
 # them unless you also change Ludus's group_vars. Intentionally weak - isolated range.
 variable "ssh_username" {
   type    = string
@@ -220,6 +238,8 @@ build {
       "GUEST_AGENT_CHECKSUM=${var.guest_agent_checksum}",
       "INSTALL_CLT=${var.install_clt}",
       "EMBED_OPENCORE=${var.embed_opencore}",
+      "BUILD_STORAGE_POOL=${var.build_storage_pool}",
+      "INSTALL_TIMEOUT=${var.install_timeout}",
       "SSH_USERNAME=${var.ssh_username}",
       "SSH_PASSWORD=${var.ssh_password}",
       "TASK_TIMEOUT=7200",

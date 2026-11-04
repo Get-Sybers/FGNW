@@ -15,8 +15,29 @@ macos_template_ssh_password: "password"
 macos_template_skip_provision: false
 macos_template_validate_certs: false
 macos_template_task_timeout: 7200
-macos_template_ip_retries: 60
-macos_template_ssh_wait_timeout: 120
+macos_template_ip_retries: 120
+macos_template_ssh_wait_timeout: 600
+# Storage the install runs on. Empty = the template pool, unless the pool is a
+# network storage (Ceph RBD, NFS, ...) - then the busiest-free local storage on
+# the node, because the installer's final APFS seal (a long run of small
+# synchronous writes) crawls for hours on networked storage. FINALIZE moves the
+# finished disk to the template pool either way.
+macos_template_build_storage: ""
+macos_template_network_storage_types: ["rbd", "nfs", "cifs", "iscsi", "iscsidirect", "glusterfs", "cephfs"]
+macos_template_local_storage_types: ["zfspool", "lvmthin", "lvm", "dir", "btrfs"]
+# Scratch dir on the build host for the extracted Recovery image and the console
+# driver's screenshots (one PNG per screen-state change, kept for post-mortem).
+macos_template_work_dir: "{{ lookup('ansible.builtin.env', 'ANSIBLE_LOCAL_TEMP') | default('/tmp', true) }}/macos-template"
+# Name of the Recovery boot image staged in the ISO storage's import/ area.
+macos_template_basesystem_name: "{{ macos_template_vm_name }}-basesystem.raw"
+# Disk cache mode while installing (unsafe: no flushes, ~20x faster on RBD) and
+# the mode written into the finished template.
+macos_template_disk_cache_build: "unsafe"
+macos_template_disk_cache_final: "writeback"
+# Console driver limits: seconds for Recovery to appear after a boot, and for
+# the whole install (phase 1 copy, the ~30-minute installer phase, first boot).
+macos_template_console_boot_timeout: 600
+macos_template_install_timeout: 14400
 macos_template_install_guest_agent: true
 macos_template_guest_agent_url: "https://github.com/mav2287/mac-guest-agent/releases/download/v2.5.6/mac-guest-agent"
 macos_template_guest_agent_checksum: "sha256:fa501be5d8707b92b6b112d359007bb12163d5e95b3931f1fd7307b42afc03aa"

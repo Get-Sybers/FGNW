@@ -19,6 +19,38 @@
     method: POST
     headers: "{{ macos_template_auth_headers }}"
     validate_certs: "{{ macos_template_validate_certs }}"
+# macOS TCC blocks reading the (removable) OpenCore CD from an SSH session, even as
+# root, so the EFI folder to embed on the ESP is extracted on the build host and
+# pushed to the guest by the provision play.
+- name: "finalize_discover | Stage OpenCore's EFI folder for the ESP embed"
+  when: macos_template_embed_opencore | bool
+  block:
+    - name: "finalize_discover | Resolve the OpenCore ISO path on the node"
+      no_log: true
+      ansible.builtin.uri:
+        url: >-
+          {{ macos_template_api_host }}/api2/json/nodes/{{ macos_template_node_target }}/storage/{{ macos_template_iso_storage
+          }}/content/{{ macos_template_iso_storage }}:iso/{{ macos_template_opencore_name }}
+        method: GET
+        headers: "{{ macos_template_auth_headers }}"
+        validate_certs: "{{ macos_template_validate_certs }}"
+      register: macos_template_oc_volume
+    - name: "finalize_discover | Create the build work directory"
+      ansible.builtin.file:
+        path: "{{ macos_template_work_dir }}"
+        state: directory
+        mode: "0700"
+    - name: "finalize_discover | Extract EFI_RELEASE/EFI from the OpenCore ISO"
+      ansible.builtin.command: >-
+        7z x -y -o{{ macos_template_work_dir }}/opencore {{ macos_template_oc_volume.json.data.path | quote }} EFI_RELEASE/EFI
+      args:
+        creates: "{{ macos_template_work_dir }}/opencore/EFI_RELEASE/EFI/OC/OpenCore.efi"
+    # tar, not a module: creating an archive has no ansible-core module (community.general.archive is not a dependency here).
+    - name: "finalize_discover | Pack it as a tarball for the guest" # noqa: command-instead-of-module
+      ansible.builtin.command: >-
+        tar -cf {{ macos_template_work_dir }}/opencore-efi.tar -C {{ macos_template_work_dir }}/opencore/EFI_RELEASE EFI
+      args:
+        creates: "{{ macos_template_work_dir }}/opencore-efi.tar"
 - name: "finalize_discover | Extract the VM's MAC address from its net0 config"
   ansible.builtin.set_fact:
     macos_template_mac_lower: "{{ (macos_template_cfg.json.data.net0 | regex_search('([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}')) | default('') | lower }}"
@@ -47,7 +79,7 @@
       ansible.builtin.debug:
         msg:
           - "VM {{ macos_template_vmid }} has no DHCP lease yet - macOS is not reachable."
-          - "Finish the interactive install and enable Remote Login (SSH), then re-run the build."
+          - "If the unattended install is still running, let it finish (check the console) and re-run the build."
     - name: "finalize_discover | Mark FINALIZE not ready"
       ansible.builtin.set_fact:
         macos_template_finalize_ready: false
@@ -86,7 +118,7 @@
           ansible.builtin.debug:
             msg:
               - "SSH is not open on {{ macos_template_ip }}:22 within {{ macos_template_ssh_wait_timeout }}s."
-              - "Enable Remote Login for {{ macos_template_ssh_username }} (Settings -> Sharing) and re-run the build."
+              - "The first-boot daemon should have enabled Remote Login; check /var/log/ludus-firstboot.log in the guest and re-run the build."
         - name: "finalize_discover | Mark FINALIZE not ready"
           ansible.builtin.set_fact:
             macos_template_finalize_ready: false

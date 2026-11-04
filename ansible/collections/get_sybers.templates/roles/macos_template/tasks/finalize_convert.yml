@@ -40,8 +40,15 @@
       until: macos_template_stat2.json.data.status == "stopped"
       retries: 24
       delay: 5
-- name: "finalize_convert | Remove install media (OpenCore embedded on disk -> drop both ISOs)"
-  when: macos_template_oc_embedded | default(false) | bool
+- name: "finalize_convert | Read the stopped VM's config (disks to detach / move)"
+  no_log: true
+  ansible.builtin.uri:
+    url: "{{ macos_template_api_host }}/api2/json/nodes/{{ macos_template_node_target }}/qemu/{{ macos_template_vmid }}/config"
+    method: GET
+    headers: "{{ macos_template_auth_headers }}"
+    validate_certs: "{{ macos_template_validate_certs }}"
+  register: macos_template_final_cfg
+- name: "finalize_convert | Detach the Recovery boot disk (sata1) and the install media"
   no_log: true
   ansible.builtin.uri:
     url: "{{ macos_template_api_host }}/api2/json/nodes/{{ macos_template_node_target }}/qemu/{{ macos_template_vmid }}/config"
@@ -50,11 +57,19 @@
     validate_certs: "{{ macos_template_validate_certs }}"
     body_format: form-urlencoded
     body:
-      delete: "ide0,ide2"
-      boot: "order=sata0"
-  failed_when: false
-- name: "finalize_convert | Detach only the installer ISO (OpenCore stays the boot CD)"
-  when: not (macos_template_oc_embedded | default(false) | bool)
+      delete: >-
+        {{ ((['sata1'] if macos_template_final_cfg.json.data.sata1 is defined else [])
+            + (['ide0', 'ide2'] if (macos_template_oc_embedded | default(false) | bool) else ['ide2'])) | join(',') }}
+      boot: "{{ 'order=sata0' if (macos_template_oc_embedded | default(false) | bool) else 'order=ide0;sata0' }}"
+- name: "finalize_convert | Re-read the config to find the now-unused Recovery disk volume"
+  no_log: true
+  ansible.builtin.uri:
+    url: "{{ macos_template_api_host }}/api2/json/nodes/{{ macos_template_node_target }}/qemu/{{ macos_template_vmid }}/config"
+    method: GET
+    headers: "{{ macos_template_auth_headers }}"
+    validate_certs: "{{ macos_template_validate_certs }}"
+  register: macos_template_final_cfg2
+- name: "finalize_convert | Delete the detached Recovery disk (unusedN entries)"
   no_log: true
   ansible.builtin.uri:
     url: "{{ macos_template_api_host }}/api2/json/nodes/{{ macos_template_node_target }}/qemu/{{ macos_template_vmid }}/config"
@@ -63,8 +78,78 @@
     validate_certs: "{{ macos_template_validate_certs }}"
     body_format: form-urlencoded
     body:
-      ide2: "none,media=cdrom"
+      delete: "{{ macos_template_final_cfg2.json.data | dict2items | selectattr('key', 'match', '^unused[0-9]+$') | map(attribute='key') | join(',') }}"
+  when: macos_template_final_cfg2.json.data | dict2items | selectattr('key', 'match', '^unused[0-9]+$') | list | length > 0
+- name: "finalize_convert | Remove the staged Recovery boot image from the ISO storage"
+  no_log: true
+  ansible.builtin.uri:
+    url: >-
+      {{ macos_template_api_host }}/api2/json/nodes/{{ macos_template_node_target }}/storage/{{ macos_template_iso_storage
+      }}/content/{{ macos_template_iso_storage }}:import/{{ macos_template_basesystem_name }}
+    method: DELETE
+    headers: "{{ macos_template_auth_headers }}"
+    validate_certs: "{{ macos_template_validate_certs }}"
+    status_code: [200, 400, 404, 500]
   failed_when: false
+- name: "finalize_convert | Move the system disk to the template pool if it was installed on local storage"
+  when: (macos_template_final_cfg.json.data.sata0 | regex_replace(':.*$', '')) != macos_template_storage_pool
+  block:
+    - name: "finalize_convert | Start the disk move (sata0 -> {{ macos_template_storage_pool }})"
+      no_log: true
+      ansible.builtin.uri:
+        url: "{{ macos_template_api_host }}/api2/json/nodes/{{ macos_template_node_target }}/qemu/{{ macos_template_vmid }}/move_disk"
+        method: POST
+        headers: "{{ macos_template_auth_headers }}"
+        validate_certs: "{{ macos_template_validate_certs }}"
+        body_format: form-urlencoded
+        body:
+          disk: sata0
+          storage: "{{ macos_template_storage_pool }}"
+          format: "{{ macos_template_storage_format | default(omit, true) }}"
+          delete: 1
+      register: macos_template_move
+    - name: "finalize_convert | Wait for the disk move to finish"
+      ansible.builtin.include_tasks: _wait_task.yml
+      vars:
+        wt_upid: "{{ macos_template_move.json.data }}"
+        wt_node: "{{ macos_template_node_target }}"
+    - name: "finalize_convert | Move the EFI vars disk alongside it"
+      no_log: true
+      ansible.builtin.uri:
+        url: "{{ macos_template_api_host }}/api2/json/nodes/{{ macos_template_node_target }}/qemu/{{ macos_template_vmid }}/move_disk"
+        method: POST
+        headers: "{{ macos_template_auth_headers }}"
+        validate_certs: "{{ macos_template_validate_certs }}"
+        body_format: form-urlencoded
+        body:
+          disk: efidisk0
+          storage: "{{ macos_template_storage_pool }}"
+          delete: 1
+      register: macos_template_move_efi
+    - name: "finalize_convert | Wait for the EFI disk move to finish"
+      ansible.builtin.include_tasks: _wait_task.yml
+      vars:
+        wt_upid: "{{ macos_template_move_efi.json.data }}"
+        wt_node: "{{ macos_template_node_target }}"
+- name: "finalize_convert | Read the config once more (final disk volume ids)"
+  no_log: true
+  ansible.builtin.uri:
+    url: "{{ macos_template_api_host }}/api2/json/nodes/{{ macos_template_node_target }}/qemu/{{ macos_template_vmid }}/config"
+    method: GET
+    headers: "{{ macos_template_auth_headers }}"
+    validate_certs: "{{ macos_template_validate_certs }}"
+  register: macos_template_final_cfg3
+- name: "finalize_convert | Set the system disk's template-time cache mode (build mode was cache=unsafe)"
+  no_log: true
+  ansible.builtin.uri:
+    url: "{{ macos_template_api_host }}/api2/json/nodes/{{ macos_template_node_target }}/qemu/{{ macos_template_vmid }}/config"
+    method: PUT
+    headers: "{{ macos_template_auth_headers }}"
+    validate_certs: "{{ macos_template_validate_certs }}"
+    body_format: form-urlencoded
+    body:
+      sata0: >-
+        {{ macos_template_final_cfg3.json.data.sata0 | regex_replace(',cache=[a-z]+', '') }},cache={{ macos_template_disk_cache_final }}
 - name: "finalize_convert | Convert the VM to a Ludus template"
   no_log: true
   ansible.builtin.uri:

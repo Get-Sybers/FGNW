@@ -41,4 +41,6 @@ macos_template_guest_agent_checksum: >-
   {{ lookup('ansible.builtin.env', 'GUEST_AGENT_CHECKSUM')
      | default('sha256:fa501be5d8707b92b6b112d359007bb12163d5e95b3931f1fd7307b42afc03aa', true) }}
 macos_template_install_clt: "{{ lookup('ansible.builtin.env', 'INSTALL_CLT') | default('true', true) | bool }}"
+macos_template_build_storage: "{{ lookup('ansible.builtin.env', 'BUILD_STORAGE_POOL') | default('', true) }}"
+macos_template_install_timeout: "{{ lookup('ansible.builtin.env', 'INSTALL_TIMEOUT') | default('14400', true) }}"
 macos_template_embed_opencore: "{{ lookup('ansible.builtin.env', 'EMBED_OPENCORE') | default('true', true) | bool }}"
