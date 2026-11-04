@@ -225,6 +225,7 @@ build {
       "TASK_TIMEOUT=7200",
       "ANSIBLE_HOME=${var.ansible_home}",
       "ANSIBLE_LOCAL_TEMP=${var.ansible_home}/tmp",
+      "ANSIBLE_REMOTE_TMP=${var.ansible_home}/tmp",
       "ANSIBLE_PERSISTENT_CONTROL_PATH_DIR=${var.ansible_home}/pc",
       "ANSIBLE_SSH_CONTROL_PATH_DIR=${var.ansible_home}/cp",
       "ANSIBLE_COLLECTIONS_PATH=${path.root}/collections",
