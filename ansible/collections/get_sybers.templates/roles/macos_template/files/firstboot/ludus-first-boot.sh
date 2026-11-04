@@ -27,14 +27,14 @@ done
 /usr/bin/id "$USERNAME" || exit 1
 
 # Remote Login (SSH) for everyone, plus the SSH access group when present.
-/bin/launchctl enable system/com.openssh.sshd 2 > /dev/null
-/bin/launchctl load -w /System/Library/LaunchDaemons/ssh.plist 2 > /dev/null
-/usr/sbin/systemsetup -setremotelogin on 2 > /dev/null
-/usr/sbin/dseditgroup -o edit -a "$USERNAME" -t user com.apple.access_ssh 2 > /dev/null || true
+/bin/launchctl enable system/com.openssh.sshd 2> /dev/null
+/bin/launchctl load -w /System/Library/LaunchDaemons/ssh.plist 2> /dev/null
+/usr/sbin/systemsetup -setremotelogin on 2> /dev/null
+/usr/sbin/dseditgroup -o edit -a "$USERNAME" -t user com.apple.access_ssh 2> /dev/null || true
 
 # Never show Setup Assistant: system-wide and for the new user's first login.
 /usr/bin/touch /var/db/.AppleSetupDone
-/usr/bin/touch /private/var/db/.AppleSetupDone 2 > /dev/null
+/usr/bin/touch /private/var/db/.AppleSetupDone 2> /dev/null
 HOME_DIR="/Users/$USERNAME"
 /bin/mkdir -p "$HOME_DIR/Library/Preferences"
 PREF="$HOME_DIR/Library/Preferences/com.apple.SetupAssistant"
@@ -45,7 +45,7 @@ for key in DidSeeCloudSetup DidSeePrivacy DidSeeSiriSetup DidSeeAppearanceSetup 
 done
 /usr/bin/defaults write "$PREF" LastSeenCloudProductVersion -string "$(/usr/bin/sw_vers -productVersion)"
 /usr/bin/defaults write "$PREF" LastSeenBuddyBuildVersion -string "$(/usr/bin/sw_vers -buildVersion)"
-/usr/sbin/chown "$USERNAME" "$HOME_DIR/Library" "$HOME_DIR/Library/Preferences" "$PREF.plist" 2 > /dev/null || true
+/usr/sbin/chown "$USERNAME" "$HOME_DIR/Library" "$HOME_DIR/Library/Preferences" "$PREF.plist" 2> /dev/null || true
 
 # Self-destruct: this must only ever run once.
 /bin/rm -f /Library/LaunchDaemons/com.ludus.firstboot.plist
