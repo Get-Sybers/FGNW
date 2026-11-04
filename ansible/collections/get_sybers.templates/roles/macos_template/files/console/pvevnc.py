@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Tiny RFB (VNC) client for driving a Proxmox VM's console - stdlib only.
 
 Transports:
