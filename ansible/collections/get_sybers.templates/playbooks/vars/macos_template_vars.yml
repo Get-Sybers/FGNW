@@ -1,5 +1,5 @@
 ---
-macos_template_api_host: "{{ lookup('ansible.builtin.env', 'PROXMOX_URL') }}"
+macos_template_api_host: "{{ lookup('ansible.builtin.env', 'PROXMOX_URL') | regex_replace('/api2/json/?$', '') }}"
 macos_template_api_user: "{{ lookup('ansible.builtin.env', 'PVE_TOKEN_USER') or lookup('ansible.builtin.env', 'PROXMOX_USERNAME') }}"
 macos_template_api_token_secret: "{{ lookup('ansible.builtin.env', 'PVE_TOKEN_SECRET') }}"
 macos_template_api_password: "{{ lookup('ansible.builtin.env', 'PROXMOX_PASSWORD') }}"
