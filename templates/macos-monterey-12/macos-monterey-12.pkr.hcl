@@ -22,7 +22,7 @@ variable "source_url" {
 }
 variable "source_checksum" {
   type        = string
-  default     = ""
+  default     = "sha256:b05ddc6922a83afc38b0f6133d5b95b2612783cefe58b97dec794fdff0195ee1"
   description = "REQUIRED: \"<algo>:<hex>\" digest of the macOS ISO. The build refuses to run without it, and Proxmox verifies the download against it (rule 9). klabsdev publishes no digest, so record the sha256 of the copy you fetch: `sha256sum <file>` (or `shasum -a 256 <file>` on macOS)."
 }
 variable "source_iso_name" {
