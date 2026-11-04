@@ -3,6 +3,14 @@
   hosts: localhost
   connection: local
   gather_facts: false
+  # Scope the writable module work dir to this local play only. Under Ludus the
+  # build process's $HOME is the service user's home (/home/ludus, mode 700),
+  # which the build user cannot write, so the default remote_tmp (~/.ansible/tmp)
+  # fails. This must NOT be a global env var: the FINALIZE guest-SSH play below
+  # needs its own default so it writes under the guest's home, not this
+  # build-machine path.
+  vars:
+    ansible_remote_tmp: "{{ lookup('ansible.builtin.env', 'ANSIBLE_LOCAL_TEMP') | default('/tmp/.ansible-ludus-macos', true) }}"
   vars_files:
     - vars/macos_template_vars.yml
   roles:
@@ -22,6 +30,9 @@
   hosts: localhost
   connection: local
   gather_facts: false
+  # Local play - same writable remote_tmp as the orchestrate play above.
+  vars:
+    ansible_remote_tmp: "{{ lookup('ansible.builtin.env', 'ANSIBLE_LOCAL_TEMP') | default('/tmp/.ansible-ludus-macos', true) }}"
   vars_files:
     - vars/macos_template_vars.yml
   tasks:
