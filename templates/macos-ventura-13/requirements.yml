@@ -1,0 +1,15 @@
+---
+# The shared macOS template-baking content lives in the get_sybers.templates
+# collection in this repo. The build installs it at build time via ansible-galaxy
+# (the .pkr.hcl shell-local runs `ansible-galaxy collection install -r
+# requirements.yml`), then runs it by FQCN (get_sybers.templates.build).
+#
+# Installed from the git source rather than a relative `type: dir`: when Ludus
+# installs this template as a source, the template dir is copied outside the repo
+# tree, so `../../ansible/collections/get_sybers.templates` no longer resolves and
+# ansible-galaxy fails before the build starts. The version is a 40-hex commit
+# SHA (the repo's pin discipline for git sources), so a build is reproducible:
+# bump it to the merge commit of any change to the collection.
+collections:
+  - name: git+https://github.com/Get-Sybers/FGNW.git#/ansible/collections/get_sybers.templates
+    version: e0e3a7ee06db06fb4babe88ee85bd650ffccd635

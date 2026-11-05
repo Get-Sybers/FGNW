@@ -85,8 +85,9 @@ Intel hosts. `get_sybers.templates` goes to 0.2.0.
   remedy message.
 - Credentials must be printable ASCII (they are typed through the console).
 - This Sequoia template shares the role and media layout but was not re-run in
-  FGNW#19 (its README says so); the other macOS versions validated there were
-  removed from this source in FGNW#21.
+  FGNW#19 (its README says so); it was built end-to-end on a stock Ludus node in
+  FGNW#24. The Monterey / Ventura / Sonoma / Tahoe templates were removed in
+  FGNW#21 and restored unchanged (plus the same pin and notes) afterwards.
 - The build storage must be one the Ludus build token can allocate on. Ludus
   grants its users `Datastore.AllocateSpace` on its own VM and ISO storages only,
   so the role now checks each local candidate's effective privileges

@@ -1,0 +1,5 @@
+---
+- name: "Flare-vm: install FLARE VM via the upstream ludus_flarevm role"
+  hosts: all
+  roles:
+    - badsectorlabs.ludus_flarevm

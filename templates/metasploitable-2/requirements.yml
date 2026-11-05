@@ -1,0 +1,12 @@
+---
+# This template's provisioning consumes the shared get_sybers.templates
+# collection (ansible-standards §2: don't repeat roles). scripts/import.sh
+# installs it at build time and runs its provision.yml play by FQCN
+# (get_sybers.templates.provision). Relative to this template directory the
+# collection is two levels up under ansible/collections/; the whole source is
+# present at build time (`ludus source add`). If a template is ever built in
+# isolation, replace the dir source with the published git/Galaxy pin (an exact
+# version, per §9a).
+collections:
+  - name: ../../ansible/collections/get_sybers.templates
+    type: dir

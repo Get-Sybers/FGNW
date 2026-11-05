@@ -18,6 +18,22 @@ has no release tag yet.
 
 ## [Unreleased]
 
+### Changed — the full Packer template library is back
+
+- **Restored the eight templates removed in #21** (`flare-vm`, `win11-22h2-x64-enterprise-appxfix`,
+  `metasploitable-2`, `metasploitable-3`, `macos-monterey-12`, `macos-sonoma-14`, `macos-tahoe-26`,
+  `macos-ventura-13`) and, with them, the `get_sybers.templates.metasploitable_provision` role, its
+  `provision.yml` playbook and the `badsectorlabs.ludus_flarevm` mock-role; `templates/README.md`
+  and `source.yml` describe the full set again. A Ludus source ships every template it builds, so
+  a template dir dropped from the source leaves the installed copy orphaned on the node. The
+  removal never shipped, so its *Unreleased* entry and the collection fragment are gone rather
+  than countered.
+- The restored templates meet the gates the surviving ones were brought up to in #22: `packer fmt`
+  clean, and `win11-22h2-x64-enterprise-appxfix` declares and wires `proxmox_username` /
+  `proxmox_password` into its `proxmox-iso` source (all 13 templates `packer validate` with the
+  Ludus plugins). The four restored macOS templates carry the same commit pin and storage note as
+  `macos-sequoia-15`.
+
 ### Fixed — macOS template builds unattended on a stock Ludus node
 
 - **`get_sybers.templates.macos_template` picks a build storage the Ludus token can use.** The
@@ -91,20 +107,6 @@ has no release tag yet.
   (`true`), `ludus_range_deploy_debug_log_lines` (`40`), `ludus_range_deploy_debug_log_every` (`3`).
   Set `ludus_range_deploy_debug: false` to restore the quiet poll. The completion gate (wait for
   `SUCCESS`/`FAILED`/`ERROR`, bounded, timeout fatal) is unchanged.
-
-### Removed — unused Packer templates
-
-- **Dropped the Packer templates that no range in this source deploys.** Removed `flare-vm`,
-  `win11-22h2-x64-enterprise-appxfix`, `metasploitable-2`, `metasploitable-3`, and the
-  `macos-monterey-12` / `macos-sonoma-14` / `macos-tahoe-26` / `macos-ventura-13` macOS images.
-  The FGNW blueprint (`blueprints/FGNW/range-config.yml`) references only
-  `win2022-server-x64-appxfix`, `win10-22h2-x64-enterprise-appxfix`, `win2022-exchange2019-x64`,
-  `macos-sequoia-15` and `ninjasploitable`, which are what `templates/` now ships. `templates/README.md`
-  and `source.yml` are trimmed to match, and the `badsectorlabs.ludus_flarevm` mock-role (only the
-  `flare-vm` play applied it) is dropped from `.ansible-lint`. In the shared `get_sybers.templates`
-  collection, the now-orphaned `metasploitable_provision` role and its `provision.yml` playbook are
-  removed (recorded in a collection changelog fragment); `windows_ngen` and `macos_template` are
-  unchanged.
 
 ### Removed — single range size, single Exchange server
 

@@ -1,0 +1,11 @@
+---
+argument_specs:
+  main:
+    short_description: Provision an imported Linux disk image before templating
+    description:
+      - >-
+        One-time pre-template provisioning for an imported-disk-image guest: SSH
+        host-key regeneration, machine-id reset, and a best-effort
+        qemu-guest-agent install. Takes no input; every step uses C(raw) so it
+        works on guests too old to have a usable Python interpreter.
+    options: {}

@@ -1,7 +1,0 @@
----
-removed_features:
-  - >-
-    metasploitable_provision - the role and the ``provision.yml`` playbook are
-    removed. The ``metasploitable-2`` and ``metasploitable-3`` templates they
-    provisioned are no longer shipped by this source, so they had no remaining
-    consumer.

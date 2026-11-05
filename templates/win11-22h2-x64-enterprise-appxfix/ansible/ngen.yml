@@ -1,0 +1,6 @@
+---
+# Thin Packer entry point. The play (and its action, the windows_ngen role) ships
+# once in the get_sybers.templates collection; the Packer `ansible` provisioner
+# installs it via galaxy_file (../../requirements.yml) and runs this wrapper.
+- name: Precompile the .NET native images (get_sybers.templates ngen play)
+  ansible.builtin.import_playbook: get_sybers.templates.ngen
