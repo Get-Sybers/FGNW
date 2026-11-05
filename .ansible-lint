@@ -42,7 +42,6 @@ kinds:
 # blueprints/FGNW/requirements.yml; the campaign plays apply it. (Keep this list
 # free of comment lines: scripts/conform reads it to build the syntax-check stubs.)
 mock_roles:
-  - badsectorlabs.ludus_flarevm
   - geerlingguy.dotfiles
   - aleemladha.ludus_exchange
 # §18: lowercase letters, digits, underscores; starts with a letter.

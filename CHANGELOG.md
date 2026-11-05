@@ -56,6 +56,18 @@ has no release tag yet.
   Set `ludus_range_deploy_debug: false` to restore the quiet poll. The completion gate (wait for
   `SUCCESS`/`FAILED`/`ERROR`, bounded, timeout fatal) is unchanged.
 
+### Removed — unused Packer templates
+
+- **Dropped the Packer templates that no range in this source deploys.** Removed `flare-vm`,
+  `win11-22h2-x64-enterprise-appxfix`, `metasploitable-2`, `metasploitable-3`, and the
+  `macos-monterey-12` / `macos-sonoma-14` / `macos-tahoe-26` / `macos-ventura-13` macOS images.
+  The FGNW blueprint (`blueprints/FGNW/range-config.yml`) references only
+  `win2022-server-x64-appxfix`, `win10-22h2-x64-enterprise-appxfix`, `win2022-exchange2019-x64`,
+  `macos-sequoia-15` and `ninjasploitable`, which are what `templates/` now ships. `templates/README.md`
+  and `source.yml` are trimmed to match, and the `badsectorlabs.ludus_flarevm` mock-role (only the
+  `flare-vm` play applied it) is dropped from `.ansible-lint`. The shared `get_sybers.templates`
+  collection roles are unchanged; `metasploitable_provision` now has no in-tree consumer.
+
 ### Removed — single range size, single Exchange server
 
 - **One size.** Removed the range-size variant system. `range-config.yml` is now a single, flat,
