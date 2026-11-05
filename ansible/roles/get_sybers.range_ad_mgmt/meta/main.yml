@@ -1,6 +1,7 @@
 ---
 galaxy_info:
   author: Get-Sybers
+  namespace: get_sybers
   description: >
     Directory realizer for the FGNW owned AD-build layer. Self-loads the config.json contract
     (shipped in files/) and, keyed by the `domain` role_var, realizes domains[domain].{
