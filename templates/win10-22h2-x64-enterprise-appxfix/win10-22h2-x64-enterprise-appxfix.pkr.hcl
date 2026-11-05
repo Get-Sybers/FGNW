@@ -106,12 +106,12 @@ source "proxmox-iso" "win10-22h2-x64-enterprise" {
   cpu_type        = "host"
   scsi_controller = "virtio-scsi-single"
   disks {
-    disk_size         = "${var.vm_disk_size}"
-    format            = "${var.proxmox_storage_format}"
-    storage_pool      = "${var.proxmox_storage_pool}"
-    type              = "virtio"
-    discard           = true
-    io_thread         = true
+    disk_size    = "${var.vm_disk_size}"
+    format       = "${var.proxmox_storage_format}"
+    storage_pool = "${var.proxmox_storage_pool}"
+    type         = "virtio"
+    discard      = true
+    io_thread    = true
   }
   pool                     = "${var.proxmox_pool}"
   insecure_skip_tls_verify = "${var.proxmox_skip_tls_verify}"
@@ -121,9 +121,9 @@ source "proxmox-iso" "win10-22h2-x64-enterprise" {
   # discards verification) and let Proxmox verify the copy it already holds and
   # skip the 5.5 GB transfer. The upstream BSL template omits this; the Ludus
   # stock templates set it. This is a supported packer option, not a rewrite.
-  iso_download_pve         = true
-  iso_storage_pool         = "${var.iso_storage_pool}"
-  memory                   = "${var.vm_memory}"
+  iso_download_pve = true
+  iso_storage_pool = "${var.iso_storage_pool}"
+  memory           = "${var.vm_memory}"
   network_adapters {
     bridge = "${var.ludus_nat_interface}"
     model  = "virtio"

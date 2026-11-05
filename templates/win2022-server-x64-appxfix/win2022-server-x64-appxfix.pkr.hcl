@@ -142,8 +142,10 @@ source "proxmox-iso" "win2022-server-x64" {
   }
   node                 = "${var.proxmox_host}"
   os                   = "${var.os}"
+  password             = "${var.proxmox_password}"
   proxmox_url          = "${var.proxmox_url}"
   template_description = "${local.template_description}"
+  username             = "${var.proxmox_username}"
   vm_name              = "${var.vm_name}"
   winrm_insecure       = true
   winrm_password       = "${var.winrm_password}"
