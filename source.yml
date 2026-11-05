@@ -11,8 +11,8 @@ description: >-
   target, Velociraptor), the cross-tier task-roles (ludus_auth_check, Sysmon
   for Windows and Linux, ACSC event logging and forwarding, the auditd and
   Sysmon Linux ports, Zeek) and the Packer template library: the Windows
-  AppX-fix images, Exchange 2019, FLARE VM, Metasploitable 2/3, OpenCore macOS
-  and Ninjasploitable. Register it with `ludus source add`, then apply the
+  AppX-fix images, Exchange 2019, an OpenCore macOS (Sequoia) image and
+  Ninjasploitable. Register it with `ludus source add`, then apply the
   blueprint and build the templates it names.
 authors:
   - Get-Sybers <99623331+Get-Sybers@users.noreply.github.com>

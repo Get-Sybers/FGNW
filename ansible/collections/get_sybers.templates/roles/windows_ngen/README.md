@@ -3,8 +3,7 @@
 Run .NET native-image generation (ngen) during a Windows template bake.
 
 Factored out of the `ansible/ngen.yml` playbook that was copied verbatim into the
-`win11-22h2-x64-enterprise-appxfix`, `win2022-server-x64-appxfix`, and
-`win2022-exchange2019-x64` templates.
+`win2022-server-x64-appxfix` and `win2022-exchange2019-x64` templates.
 
 ## What it does
 
