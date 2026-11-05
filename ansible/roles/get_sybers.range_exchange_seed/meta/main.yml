@@ -1,6 +1,7 @@
 ---
 galaxy_info:
   author: Get-Sybers
+  namespace: get_sybers
   description: >
     Seed real Exchange mailboxes with the FGNW character-quote corpus (+ LOE-2 alert entries) as
     genuine SMTP mail, per forest, at the Ludus user-defined-roles stage. Source-delivered

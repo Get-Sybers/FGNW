@@ -18,6 +18,16 @@ has no release tag yet.
 
 ## [Unreleased]
 
+### Fixed — the range roles install under the name the range config uses
+
+- **`get_sybers.range_ad_mgmt`, `range_exchange`, `range_exchange_seed`, `range_nexus_apt` and
+  `range_password_policy` declare `galaxy_info.namespace: get_sybers`.** Ludus names an installed
+  source role `<namespace>.<role_name>` and falls back to `galaxy_info.author` when there is no
+  namespace, so these five — whose author is `Get-Sybers` — landed on the server as
+  `Get-Sybers.range_*`, and `ludus range config set` of the FGNW blueprint refused the config with
+  *the role 'get_sybers.range_password_policy' does not exist on the Ludus server*. The other
+  roles already carried the namespace. Re-add the source's roles with `--force` after updating.
+
 ### Fixed — template builds install their collections on a Ludus server
 
 - **`ninjasploitable`, `win2022-server-x64-appxfix` and `win2022-exchange2019-x64` install their
