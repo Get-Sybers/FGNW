@@ -59,8 +59,15 @@ shfmt, actionlint) are already covered by prek + conform and are not duplicated.
   validates here validates on a Ludus server. This covers the class of defects —
   truncated builds, missing Ludus variables — that `conform` does not.
 - **`.github/workflows/ludus-source.yml`** — a new required check
-  (`ludus-source-green`, registered in `.github/rulesets/main.json`) running the
-  linter + self-tests and the Packer smoke on every PR and push.
+  (`ludus-source-green`, registered in `.github/rulesets/main.json`) running, on
+  every PR and push, the linter + self-tests, the Packer smoke, and a
+  `reference-check` that re-derives `ludus-reference/` from the exact upstream
+  commits each file records as its `provenance` (not `main`) and fails on any
+  mismatch — so a hand-edit or a stale reference file is caught on the pull
+  request, while upstream Ludus advancing stays the weekly drift job's concern.
+  `update_ludus_reference.py` normalises the copied range-config schema (no
+  trailing whitespace, one final newline) so the committed copy is hook-clean and
+  round-trips through the check.
 - **`.github/workflows/ludus-reference-drift.yml`** — a weekly job that
   re-derives `ludus-reference/` from upstream Ludus `main`
   (`scripts/update_ludus_reference.py`, `make update-reference`) and opens a

@@ -27,7 +27,8 @@ Runs on every pull request and push to `main`, and on demand
 | --- | --- | --- |
 | `source-lint` | `python3 scripts/ludus_source_lint.py --root . --format github`, then `python3 -m pytest -q tests` | every template, blueprint and range-config matches the Ludus conventions, and the linter's own rules still pass their self-tests |
 | `packer-smoke` | `scripts/install_ludus_packer.sh` then `scripts/packer_smoke.sh --inspect` | every template `packer fmt`-checks and `packer validate`s with the plugin set and variable set the Ludus server uses |
-| `ludus-source-green` | aggregates the two above | the single required status check for this workflow |
+| `reference-check` | `scripts/update_ludus_reference.py --check` pinned to the commits `ludus-reference/versions.json` records as its `provenance` | the committed `ludus-reference/` was not hand-edited away from its recorded upstream source |
+| `ludus-source-green` | aggregates the three above | the single required status check for this workflow |
 
 The yamllint, ansible-lint, shellcheck, shfmt and actionlint that a standalone
 Ludus source might also run here are already part of the house gate (prek and
@@ -83,12 +84,20 @@ natively. Locally, `make packer-tools` then `make packer-validate`.
 ## Keeping the reference data current
 
 `ludus-reference/` is derived from upstream Ludus and the Bad Sector Labs source
-at a recorded commit (each file carries its `provenance`). `ludus-reference-drift.yml`
-re-derives it from upstream `main` every Monday with
-`scripts/update_ludus_reference.py` and opens a tracking issue when a fact the
-rules depend on has changed, so the gate never silently falls behind the Ludus
-server. Regenerate it by hand with `make update-reference`; check it with
-`make check-reference`.
+at a recorded commit (each file carries its `provenance`). Two checks keep it
+honest, and they watch different things:
+
+- On every pull request, the `reference-check` job re-derives it from the exact
+  commits the `provenance` records and fails on any mismatch — so a hand-edit or
+  a stale file is caught, while upstream Ludus advancing does not turn unrelated
+  PRs red.
+- `ludus-reference-drift.yml` re-derives it from upstream `main` every Monday
+  (`scripts/update_ludus_reference.py`) and opens a tracking issue when a fact
+  the rules depend on has changed, so the gate never silently falls behind the
+  Ludus server.
+
+Regenerate it by hand with `make update-reference`; compare against upstream
+`main` with `make check-reference`.
 
 ## Make targets
 

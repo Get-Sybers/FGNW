@@ -61,10 +61,38 @@ jobs:
         run: scripts/install_ludus_packer.sh
       - name: packer fmt -check + packer validate (Ludus plugin and variable set)
         run: scripts/packer_smoke.sh --inspect
+  reference-check:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Python 3.13
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: test-requirements.txt
+      - name: Install the pinned toolchain (test-requirements.txt)
+        run: |
+          python3 -m pip install --user -r test-requirements.txt
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: ludus-reference/ matches its recorded provenance commits
+        # Re-derive from the exact upstream commits versions.json records (not
+        # main), so a hand-edit or a stale ludus-reference/ fails here, while
+        # upstream Ludus advancing does not — that is the weekly
+        # ludus-reference-drift job's signal, not a per-PR gate.
+        run: |
+          ludus_ref="$(python3 -c "import json; print(json.load(open('ludus-reference/versions.json'))['provenance']['ludus']['commit'])")"
+          bsl_ref="$(python3 -c "import json; print(json.load(open('ludus-reference/versions.json'))['provenance']['ludus_source_bsl']['commit'])")"
+          python3 scripts/update_ludus_reference.py --check --ref "$ludus_ref" --bsl-ref "$bsl_ref"
   ludus-source-green:
     name: ludus-source-green
     if: ${{ always() }}
-    needs: [source-lint, packer-smoke]
+    needs: [source-lint, packer-smoke, reference-check]
     runs-on: ubuntu-24.04
     permissions: {}
     timeout-minutes: 2
