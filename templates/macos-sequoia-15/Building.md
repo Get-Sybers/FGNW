@@ -1,41 +1,33 @@
-# Building the macOS templates unattended
+# Building the macOS template unattended
 
-These notes capture the build mechanism and the end-to-end validation recorded in
-[FGNW#19](https://github.com/Get-Sybers/FGNW/pull/19) -- *Build the macOS templates
-unattended (console-driven install, local build storage)* -- which took
-`get_sybers.templates` to 0.2.0. They apply to the shared `macos_template` role
-that every `templates/macos-*` directory builds with; the validation below was run
-against macOS Monterey 12.7.1.
+One `ludus templates build -n macos-sequoia-15-template` produces the registered
+macOS template in a single unattended run: no console interaction, no second build,
+no root step on an Intel host. The build is the shared `macos_template` role in the
+`get_sybers.templates` collection, run by Packer's `null` source. This page explains
+why the build is shaped the way it is and what is verified about it.
 
-## Summary
-
-`ludus templates build -n macos-*-template` now produces the macOS template in
-**one unattended run** - no console interaction, no second build, no root step on
-Intel hosts. `get_sybers.templates` goes to 0.2.0.
-
-### What was blocking it, and what this changes
+## Why the build looks like this
 
 - **The installer ISO is invisible to UEFI/OpenCore** (it is an Apple Partition Map
-  image). PREPARE now extracts `BaseSystem.dmg` (macOS Recovery, a GPT disk
-  OpenCore boots fine) out of the ISO with `7z`, converts it with `qemu-img`,
-  uploads it to the ISO storage as `import` content (curl, headers from a 0600
-  file) and attaches it as `sata1` via `import-from`. No `args`, no `qm`, no root.
+  image). PREPARE extracts `BaseSystem.dmg` (macOS Recovery, a GPT disk OpenCore
+  boots) out of the ISO with `7z`, converts it with `qemu-img`, uploads it to the ISO
+  storage as `import` content (curl, headers from a 0600 file) and attaches it as
+  `sata1` via `import-from`. No `args`, no `qm`, no root.
 - **The "APFS sealing hang" at "Less than a minute remaining" is storage latency,
-  not macOS.** Measured on the build host: the installer's last phase is a stream
-  of small synchronous writes - on Ceph RBD ~20 ms each, ~100-200 writes/s, and the
-  VM sat at that screen for >50 minutes still crawling (QMP `query-blockstats`:
-  35,000 s of cumulative write wait). On a local zvol the identical install (same
-  ISO, same OpenCore v0.7, same VM shape) completed to Setup Assistant in 15-17
-  minutes, three times out of three. The role therefore installs on the local
-  storage with the most free space whenever the template pool is a network type,
+  not macOS.** The installer's last phase is a stream of small synchronous writes:
+  on Ceph RBD ~20 ms each, ~100-200 writes/s, and the VM sits at that screen for
+  well over 50 minutes still crawling (QMP `query-blockstats`: 35,000 s of
+  cumulative write wait). On local storage the identical install (same ISO, same
+  OpenCore v0.7, same VM shape) reaches Setup Assistant in 15-17 minutes. The role
+  therefore installs on local storage whenever the template pool is a network type,
   and FINALIZE moves the finished disk (+ EFI vars) to the pool. `build_storage_pool`
-  / `macos_template_build_storage` overrides it. The OpenCore kext/driver set (Lilu,
-  VirtualSMC, WhateverGreen, VoodooPS2, AppleMCEReporterDisabler;
-  OpenRuntime/OpenHfsPlus, APFS jumpstart) was checked against the ISO's
-  `config.plist` and is the intended LongQT set for Monterey; it is not the cause.
+  / `macos_template_build_storage` overrides the choice. The OpenCore kext/driver set
+  (Lilu, VirtualSMC, WhateverGreen, VoodooPS2, AppleMCEReporterDisabler;
+  OpenRuntime/OpenHfsPlus, APFS jumpstart) is the intended LongQT set and is not a
+  factor.
 - **Console driver** (`roles/macos_template/files/console/`, stdlib-only Python):
   opens the VM console through the Proxmox API (`vncproxy` + `vncwebsocket`, exactly
-  what noVNC does - needs only `VM.Console`, so it works as the Ludus build user),
+  what noVNC does; it needs only `VM.Console`, so it runs as the Ludus build user),
   recognises screens by pixel probes, and types into the Recovery Terminal: find the
   blank target disk, `diskutil eraseDisk APFS "Macintosh HD"`, `startosinstall
   --agreetolicense --nointeraction`, wait the installer out (black-screen reboot ->
@@ -50,47 +42,46 @@ Intel hosts. `get_sybers.templates` goes to 0.2.0.
   (`localuser`/`password`, substituted at build time), enables Remote Login,
   suppresses Setup Assistant for that user, and removes itself. FINALIZE runs in the
   same build from there.
-- **Provision-play bugs found by the first real end-to-end run** (the play had never
-  been exercised): macOS TCC blocks reading the removable OpenCore CD over SSH, so
-  the EFI folder is now extracted on the build host and pushed as a tarball (`cp`
-  onto the FAT32 ESP also choked on xattrs); the "first APFS disk" heuristic picked
-  the Recovery disk instead of the system disk; `async` on `raw` is unsupported and
-  failed every FINALIZE (now `shutdown -h +1`); the guest-agent install was not
-  idempotent on re-runs.
+- **Provisioning details that exist for a reason:** the OpenCore EFI folder is
+  extracted on the build host and pushed as a tarball, because macOS TCC blocks
+  reading the removable OpenCore CD over SSH and `cp` onto the FAT32 ESP chokes on
+  xattrs; the system disk is the APFS container holding "Macintosh HD", not the
+  first APFS disk (that is the Recovery disk); the final power-off is
+  `shutdown -h +1`, because `async` is unsupported on `raw`; the guest-agent install
+  is idempotent, so FINALIZE can be re-run on an existing VM.
 
-### Validation (Proxmox VE 9.2.9, Ludus 2.3.10, Intel host, Ceph RBD pool, local-zfs build storage)
+## What is verified
 
-- Three fresh Monterey 12.7.1 installs on local-zfs reached Setup Assistant
-  unattended (two driven entirely by the driver's `install` stage); the inject stage
-  booted Base System from the picker and injected the daemon; the first boot created
-  `localuser` (admin, `com.apple.access_ssh`), SSH worked, `/var/db/.AppleSetupDone`
-  present, daemon self-removed.
-- The provision play ran clean against that guest (CLT/python3, guest agent,
-  hostname, EFI embed, scheduled shutdown): `ok=19 changed=9 failed=0 rescued=0`.
-- The FINALIZE API sequence (detach media, `move_disk` sata0 + efidisk0 to
-  `ludus-ceph` with delete, cache mode) was exercised with the same parameters; the
-  VM then booted from the embedded OpenCore on Ceph with no ISO attached and was
-  SSH-reachable in 30 s.
+- **macOS Sequoia 15.4 builds end-to-end on a stock Ludus node** (Proxmox VE 9.2,
+  Ludus 2.3, Intel host, Ceph RBD template pool, `local` dir build storage): one
+  `ludus templates build` runs PREPARE, the console-driven install, first boot and
+  FINALIZE unattended in about 25 minutes and registers the template `BUILT` in pool
+  `SHARED`, with the system and EFI disks on the pool, OpenCore embedded and no ISO
+  attached. The console driver works over the API's `vncwebsocket` transport with
+  the Ludus build token.
+- **The template deploys the way Ludus expects.** A linked clone boots from the
+  pool, reports its IPv4 through the guest agent within about two minutes, accepts
+  SSH as `localuser`/`password`, has a working `/usr/bin/python3`, and sudo prompts
+  for the password - what Ludus's `group_vars/macos.yml` assumes.
+- **The same role installs macOS Monterey 12.7.1** the same way (it is the version
+  the console driver was developed against): the install reaches Setup Assistant
+  unattended, the first boot creates `localuser` (admin, `com.apple.access_ssh`)
+  and SSH works, the provision play runs clean, and the finished VM boots from the
+  embedded OpenCore on Ceph with no ISO attached. Ventura, Sonoma and Tahoe are not
+  part of this source.
 - `yamllint --strict`, `ansible-lint --profile production` (collection + templates
-  copy) and every `scripts/check-*.py` gate pass.
-- Not exercised in this PR: the `vncwebsocket` transport under a real Ludus token
-  (the driver was driven over the VNC unix socket in the dev harness; the websocket
-  client follows noVNC's handshake and uses the token in the `Authorization` header
-  like every other API call).
+  copy), the Ludus-source linter and every `scripts/check-*.py` gate pass.
 
-### Operator notes
+## Operator notes
 
 - Node prerequisites: `7z` (`apt install 7zip`), and the ISO storage must allow
   `import` content (`pvesm set local --content ...,import`). Both are asserted with a
   remedy message.
 - Credentials must be printable ASCII (they are typed through the console).
-- This Sequoia template shares the role and media layout but was not re-run in
-  FGNW#19 (its README says so); the other macOS versions validated there were
-  removed from this source in FGNW#21.
 - The build storage must be one the Ludus build token can allocate on. Ludus
   grants its users `Datastore.AllocateSpace` on its own VM and ISO storages only,
-  so the role now checks each local candidate's effective privileges
+  so the role checks each local candidate's effective privileges
   (`/access/permissions`) and skips the ones it cannot use instead of failing at
-  VM creation; on a stock Ludus node that typically selects the `local` dir
-  storage over a bare `local-zfs`. The template's collection dependency is pinned
-  to a commit, not `main`, so a build is reproducible.
+  VM creation; on a stock Ludus node that selects the `local` dir storage over a
+  bare `local-zfs`. The template's collection dependency is pinned to a commit, not
+  `main`, so a build is reproducible.

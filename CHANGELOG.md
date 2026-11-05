@@ -28,6 +28,15 @@ has no release tag yet.
   *the role 'get_sybers.range_password_policy' does not exist on the Ludus server*. The other
   roles already carried the namespace. Re-add the source's roles with `--force` after updating.
 
+### Changed — template docs state the build status as fact
+
+- `templates/macos-sequoia-15/README.md`, its `Building.md` and the `macos_template` role README no
+  longer say the Sequoia build is unverified or frame the build mechanism as pull-request notes:
+  they state what the build does, that it runs end-to-end unattended on a stock Ludus node and
+  produces a template that deploys as Ludus expects, and what remains an operator prerequisite.
+  The build time and the `ludus templates list` success column are corrected. The
+  `win2022-server-x64-appxfix` README's truncated success-criterion sentence is restored.
+
 ### Fixed — template builds install their collections on a Ludus server
 
 - **`ninjasploitable`, `win2022-server-x64-appxfix` and `win2022-exchange2019-x64` install their

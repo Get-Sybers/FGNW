@@ -83,13 +83,13 @@ ludus templates add -d templates/macos-sequoia-15
 ludus templates build -n macos-sequoia-15-template
 ```
 
-Expect ~45-60 minutes on local SSD storage: ~5 min ISO staging, ~20 min install,
-~10 min first boot + provisioning (the Command Line Tools download from Apple),
-and the disk move to the pool. Watch `ludus templates logs`; the console driver
-prints each state change (Recovery seen, Terminal opened, disk erased, installer
-rebooted, install complete, Base System picked, daemon injected) and saves a PNG of
-each under the build's `ANSIBLE_LOCAL_TEMP/macos-template/console-<vmid>/` on the
-node. Confirm success with `ludus templates list` showing this name `TRUE`.
+The build takes about 25 minutes on local storage: ISO staging, the install, first
+boot + provisioning (the Command Line Tools download from Apple), and the disk move
+to the pool. Watch `ludus templates logs`; the console driver prints each state
+change (Recovery seen, Terminal opened, disk erased, installer rebooted, install
+complete, Base System picked, daemon injected) and saves a PNG of each under the
+build's `ANSIBLE_LOCAL_TEMP/macos-template/console-<vmid>/` on the node. Confirm
+success with `ludus templates list` showing this name as `BUILT`.
 If the driver fails, the VM is left in place with those screenshots; `ludus
 templates rm` it (or destroy the VM) and re-run.
 > **AMD hosts only:** the qemu `args` option (forcing the CPU model) is
@@ -102,12 +102,13 @@ Intentionally weak; an isolated-range template. Printable ASCII only (they are
 typed through the console). Change both vars **and** Ludus's `group_vars/macos.yml`
 together if you harden them.
 
-- **Not yet verified end-to-end for macOS Sequoia 15.4.** The unattended flow was validated on
-  macOS Monterey 12.7.1 (Proxmox VE 9.2 / Ludus 2.3, Intel host, Ceph RBD template pool,
-  local ZFS build storage); this version uses the same role and media layout, so treat
-  the first build as a bring-up and watch `ludus templates logs` / the console
-  screenshots. The screen probes assume the 1280x800 console the `vmware` VGA gives
-  OpenCore and Recovery.
+- **Builds end-to-end on a stock Ludus node.** On Proxmox VE 9.2 / Ludus 2.3 (Intel
+  host, Ceph RBD template pool, `local` dir build storage) one `ludus templates build`
+  takes macOS Sequoia 15.4 through PREPARE, the console-driven install, first boot and
+  FINALIZE unattended and registers it `BUILT` in pool `SHARED`; a clone boots from the
+  pool, reports its IP through the guest agent, and accepts SSH as `localuser` with a
+  working `/usr/bin/python3` and sudo. The screen probes assume the 1280x800 console
+  the `vmware` VGA gives OpenCore and Recovery.
 - **Guest agent is third-party.** `mav2287/mac-guest-agent` (MIT) is downloaded
   in-guest and checksum-verified before install; it is required for Ludus IP
   discovery. Set `install_guest_agent = false` to opt out (then deploys must

@@ -53,10 +53,9 @@ In the build log, look for the `=== remove-appx-sysprep-blockers ===`
 transcript sections: the first lists the EdgeUpdate service disable and policy
 key, the second lists any packages found and removed, and **fails the build** if
 any blocker remains installed-but-not-provisioned.
-A full range deploy from the rebuilt template where the sysprep **rescue tasks
-are skipped** — `Remove AppX packages reported by the failed Sysprep attempt`
-and `Retry Sysprep ...` never run — not merely a deploy that succeeds after
-retries (that was the pre-
+The image is correct when a full range deploy from it **skips the sysprep rescue
+tasks** — `Remove AppX packages reported by the failed Sysprep attempt` and
+`Retry Sysprep ...` never run — rather than merely succeeding after retries. The
 2-OSD Ceph I/O constraint (ERR-22) is independent of the AppX blocker.
 After any `ludus-server --update`, diff this directory against the refreshed
 stock tree and fold in upstream changes:
