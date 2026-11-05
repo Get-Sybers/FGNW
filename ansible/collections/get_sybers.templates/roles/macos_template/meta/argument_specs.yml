@@ -5,10 +5,13 @@ argument_specs:
     description:
       - >-
         Orchestrates Proxmox over its REST API to build an OpenCore-booted macOS
-        template in two phases (PREPARE then FINALIZE) around a one-time
-        interactive macOS install. Entry point is C(tasks/main.yml); the
+        template fully unattended: PREPARE creates the VM, boots macOS Recovery
+        from a disk image extracted out of the installer ISO and drives the
+        install from the VM console (VNC over the API); a first-boot daemon then
+        creates the admin user and enables SSH so FINALIZE can provision the
+        guest and convert it. Entry point is C(tasks/main.yml); the
         C(provision) and C(finalize_convert) task files are driven by the
-        collection's C(build.yml) play on the respective phase.
+        collection's C(build.yml) play.
       - >-
         Connection and template-identity inputs have no safe default and are
         supplied by the play (see C(playbooks/vars/macos_template_vars.yml), which maps
@@ -139,13 +142,60 @@ argument_specs:
         type: int
         default: 0
       macos_template_ssh_username:
-        description: In-guest user created during the interactive install, used for provisioning over SSH.
+        description: >-
+          Admin user the first-boot daemon creates in the installed guest (printable ASCII only;
+          it is typed through the console), used for provisioning over SSH and by Ludus deploy.
         type: str
         default: localuser
       macos_template_ssh_password:
-        description: Password for O(macos_template_ssh_username).
+        description: Password for O(macos_template_ssh_username) (printable ASCII only).
         type: str
         default: password
+      macos_template_build_storage:
+        description: >-
+          Storage the install runs on. Empty picks the template pool, unless that pool is a
+          network storage (O(macos_template_network_storage_types)) - then the local storage
+          (O(macos_template_local_storage_types)) with the most free space, because the
+          installer's final APFS seal crawls for hours on networked storage. FINALIZE moves
+          the finished disk to the template pool when they differ.
+        type: str
+        default: ""
+      macos_template_network_storage_types:
+        description: Proxmox storage types treated as networked (triggers the local build storage).
+        type: list
+        elements: str
+        default: ["rbd", "nfs", "cifs", "iscsi", "iscsidirect", "glusterfs", "cephfs"]
+      macos_template_local_storage_types:
+        description: Proxmox storage types eligible as the local build storage.
+        type: list
+        elements: str
+        default: ["zfspool", "lvmthin", "lvm", "dir", "btrfs"]
+      macos_template_work_dir:
+        description: >-
+          Scratch directory on the build host for the extracted Recovery image and the
+          console driver's per-state screenshots (kept for post-mortem).
+        type: str
+        default: "{{ lookup('ansible.builtin.env', 'ANSIBLE_LOCAL_TEMP') | default('/tmp', true) }}/macos-template"
+      macos_template_basesystem_name:
+        description: Filename of the Recovery boot image staged as C(import) content in the ISO storage.
+        type: str
+        default: "{{ macos_template_vm_name }}-basesystem.raw"
+      macos_template_disk_cache_build:
+        description: Proxmox disk cache mode for the system disk while installing (C(unsafe) skips flushes).
+        type: str
+        default: unsafe
+      macos_template_disk_cache_final:
+        description: Disk cache mode written into the finished template.
+        type: str
+        default: writeback
+      macos_template_console_boot_timeout:
+        description: Seconds the console driver waits for macOS Recovery to appear after a boot.
+        type: int
+        default: 600
+      macos_template_install_timeout:
+        description: Seconds the console driver allows the installer phases and first boot in total.
+        type: int
+        default: 14400
       macos_template_skip_provision:
         description: Skip the in-guest provisioning play (FINALIZE still converts to a template).
         type: bool
@@ -157,11 +207,11 @@ argument_specs:
       macos_template_ip_retries:
         description: How many times (x5s) to poll for the guest's DHCP lease during FINALIZE.
         type: int
-        default: 60
-      macos_template_ssh_wait_timeout:
-        description: Seconds to wait for SSH to open on the guest during FINALIZE.
-        type: int
         default: 120
+      macos_template_ssh_wait_timeout:
+        description: Seconds to wait for SSH to open on the guest during FINALIZE (the first boot enables it).
+        type: int
+        default: 600
       macos_template_install_guest_agent:
         description: Install the macOS QEMU guest agent (required for Ludus IP discovery).
         type: bool

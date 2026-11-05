@@ -1,7 +1,7 @@
 ---
 namespace: get_sybers
 name: templates
-version: 0.1.0
+version: 0.2.0
 readme: README.md
 authors:
   - Get-Sybers <99623331+Get-Sybers@users.noreply.github.com>

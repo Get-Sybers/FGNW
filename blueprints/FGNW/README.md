@@ -72,10 +72,11 @@ Register the source and build the templates it needs:
 ludus source add https://github.com/Get-Sybers/FGNW --all
 ludus templates build -n win2022-server-x64-appxfix-template,win10-22h2-x64-enterprise-appxfix-template,win2022-exchange2019-x64-template,ninjasploitable-x64-server-template
 # Hidden Sand Village (Sunagakure) runs on macOS — suna-ws1 (workstation) and suna-mail
-# (Postfix/Dovecot). The macOS template builds in two phases around a one-time interactive
-# install, and you must pin the installer ISO first — see templates/macos-sequoia-15/README.md.
+# (Postfix/Dovecot). The macOS template builds unattended (the role drives the install
+# from the VM console); the node needs 7z and an ISO storage that allows `import`
+# content — see templates/macos-sequoia-15/README.md.
 ludus templates add -d templates/macos-sequoia-15
-ludus templates build -n macos-sequoia-15-template   # PREPARE; after the interactive install, re-run the same command to FINALIZE
+ludus templates build -n macos-sequoia-15-template   # one run: install, first boot, provision, convert
 ludus blueprint apply <sourceID>/FGNW
 ```
 

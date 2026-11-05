@@ -1,0 +1,32 @@
+---
+major_changes:
+  - >-
+    macos_template - the build is fully unattended. PREPARE boots macOS Recovery
+    from the installer ISO's BaseSystem.dmg (extracted with 7z, converted with
+    qemu-img, uploaded as ``import`` content and attached via ``import-from``),
+    and a stdlib-only console driver (``files/console/``, VNC over the Proxmox
+    API, needs only VM.Console) erases the disk, runs ``startosinstall``, then
+    injects a first-boot LaunchDaemon (``files/firstboot/``) that creates the
+    admin user, enables SSH and skips Setup Assistant. FINALIZE runs in the same
+    build; the one-time interactive install is gone.
+minor_changes:
+  - >-
+    macos_template - the install runs on a local storage when the template pool
+    is networked (the installer's APFS seal crawls for hours on Ceph RBD) and
+    FINALIZE moves the finished disk to the pool. New ``macos_template_build_storage``,
+    ``macos_template_install_timeout``, ``macos_template_console_boot_timeout``,
+    ``macos_template_work_dir``, ``macos_template_basesystem_name``,
+    ``macos_template_disk_cache_build`` / ``macos_template_disk_cache_final`` and
+    the storage-type lists; ``macos_template_ip_retries`` / ``macos_template_ssh_wait_timeout``
+    defaults raised for the first boot.
+  - >-
+    macos_template - FINALIZE detaches and deletes the Recovery boot disk and
+    removes its staged image from the ISO storage.
+bugfixes:
+  - >-
+    macos_template - provision mounts the OpenCore CD before copying its EFI
+    folder onto the ESP (macOS does not auto-mount the hybrid ISO, so the embed
+    always fell back to keeping the ISO attached).
+  - >-
+    macos_template - the in-guest shutdown no longer uses ``async`` on
+    ``ansible.builtin.raw`` (unsupported; it failed provisioning every time).

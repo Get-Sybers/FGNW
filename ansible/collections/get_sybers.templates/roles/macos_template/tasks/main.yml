@@ -65,9 +65,12 @@
 - name: "Record the matching VM (if any)"
   ansible.builtin.set_fact:
     macos_template_match: "{{ (macos_template_resources.json.data | selectattr('name', 'equalto', macos_template_vm_name) | list | first) | default({}) }}"
-- name: "PREPARE - no VM with this name exists yet"
+- name: "PREPARE - no VM with this name exists yet: create it and install macOS unattended"
   when: macos_template_match.vmid is not defined
   ansible.builtin.include_tasks: prepare.yml
+- name: "FINALIZE - the install just completed in this run (first boot creates the user and opens SSH)"
+  when: macos_template_installed | default(false) | bool
+  ansible.builtin.include_tasks: finalize_discover.yml
 - name: "Nothing to do - a template with this name already exists"
   when:
     - macos_template_match.vmid is defined

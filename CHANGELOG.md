@@ -18,6 +18,28 @@ has no release tag yet.
 
 ## [Unreleased]
 
+### Changed — macOS templates build unattended
+
+- **`ludus templates build -n macos-*-template` now produces the template in one run with no
+  console interaction.** `get_sybers.templates.macos_template` (0.2.0) boots macOS Recovery from
+  the installer ISO's `BaseSystem.dmg` (the APM installer ISO itself is invisible to UEFI/OpenCore:
+  it is extracted with `7z`, converted with `qemu-img`, uploaded as `import` content and attached
+  via `import-from`), then a stdlib-only console driver (VNC over the Proxmox API, `VM.Console`
+  only - no root, no `qm`) erases the disk, runs `startosinstall --agreetolicense --nointeraction`,
+  waits the installer out, boots Recovery again from the OpenCore picker and injects a first-boot
+  LaunchDaemon that creates `localuser`, enables SSH and skips Setup Assistant. FINALIZE (guest
+  provisioning, OpenCore embed, template conversion) runs in the same build.
+- **The "sealing hang" was storage latency, not macOS.** The installer's last phase (APFS snapshot +
+  seal, "Less than a minute remaining") is a stream of small synchronous writes that crawls at
+  ~100-200 writes/s on Ceph RBD (~20 ms per write) and looks hung for hours; on a local zvol the
+  same install completes in ~15 minutes. The role now installs on the local storage with the most
+  free space whenever the template pool is a network type, and FINALIZE moves the finished disk to
+  the pool (`build_storage_pool` / `macos_template_build_storage` overrides it).
+- Fixes in the shared provision play found by the first end-to-end run: the OpenCore CD is mounted
+  before its EFI folder is embedded (macOS does not auto-mount the hybrid ISO), and the in-guest
+  shutdown no longer uses `async` on `raw` (unsupported; it failed every FINALIZE). Each
+  `macos-*` `.pkr.hcl` gains `build_storage_pool` and `install_timeout`.
+
 ### Added — visible range-deploy poll
 
 - **The `ludus range deploy` wait is no longer a black box.** `get_sybers.range.ludus_range_deploy`

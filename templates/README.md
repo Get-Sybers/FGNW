@@ -38,17 +38,18 @@ ludus templates build -n ninjasploitable-x64-server-template
    ship inside a Ludus install are overwritten by `ludus-server --update`, so
    they cannot carry a local fix. When a stock build genuinely needs one, the
    copy lives here instead — see `win2022-server-x64-appxfix/`.
-3. **Interactive OpenCore installs** for guests with no unattended installer.
+3. **Console-driven OpenCore installs** for guests with no answer-file installer.
    macOS ships no preseed/autounattend equivalent and boots only through an
    OpenCore bootloader (which also emulates the Apple SMC via VirtualSMC), so it
    cannot use `proxmox-iso` at all. The `macos-*/` templates use a Packer `null`
    source that just launches **Ansible** (`build.yml` → the `macos_template`
    role), which drives Proxmox over its REST API — no shell orchestration script —
-   in two phases: **PREPARE** (download + verify both ISOs, create and configure
-   the VM, boot it for a one-time interactive macOS install) then **FINALIZE**
-   (provision in-guest over SSH, embed OpenCore onto the disk, and convert to a
-   template). `ludus templates build` is run twice; the phase is auto-detected
-   from VM state. See each dir's README.
+   and the VM's console over the API's VNC websocket: **PREPARE** (download +
+   verify both ISOs, stage the Recovery image out of the installer ISO, create the
+   VM, erase the disk and run `startosinstall` from Recovery, inject a first-boot
+   daemon that creates the user and enables SSH) then **FINALIZE** (provision
+   in-guest over SSH, embed OpenCore onto the disk, and convert to a template) —
+   all in one unattended `ludus templates build`. See each dir's README.
 
 - `win2022-server-x64-appxfix/` — derivative of the stock `packer/win2022-server-x64`
   template with ALL AppX sysprep blockers removed and EdgeUpdate disabled at
@@ -63,14 +64,14 @@ ludus templates build -n ninjasploitable-x64-server-template
 - `metasploitable-3/` — default `source_url` points at Rapid7's published
   Vagrant Cloud box.
 - `macos-*/` — five macOS versions (Tahoe 26, Sequoia 15, Sonoma 14, Ventura 13,
-  Monterey 12), all built the same way: a two-phase **Ansible** build (a shared
+  Monterey 12), all built the same way: an unattended **Ansible** build (a shared
   `macos_template` role, run by packer's `null` source) that boots macOS via
-  **OpenCore**. The macOS installer ISO
+  **OpenCore** and drives the install from the VM console. The macOS installer ISO
   is yours to pin — the OpenCore ISO and QEMU-guest-agent checksums ship pinned and
   verified — and Proxmox verifies every download (the rule-9 guarantee for media it
-  can't fetch through `iso_url`). The macOS install itself is a one-time interactive
-  console step, because Apple ships no unattended installer, so
-  `ludus templates build` is run twice (PREPARE, then FINALIZE). FINALIZE tunes the
+  can't fetch through `iso_url`). Apple ships no answer-file installer, so the role
+  types the install into macOS Recovery over the API's VNC console and a first-boot
+  daemon creates the user; one `ludus templates build` does it all. FINALIZE tunes the
   image for `ludus range deploy` — `localuser`/`password` creds, a **virtio** NIC
   (Ludus rewrites clones to virtio), a **QEMU guest agent** (Ludus resolves IPs only
   via the agent), working `/usr/bin/python3`, and clone hygiene — and embeds OpenCore
