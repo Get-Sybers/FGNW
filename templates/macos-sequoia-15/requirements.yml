@@ -7,8 +7,9 @@
 # Installed from the git source rather than a relative `type: dir`: when Ludus
 # installs this template as a source, the template dir is copied outside the repo
 # tree, so `../../ansible/collections/get_sybers.templates` no longer resolves and
-# ansible-galaxy fails before the build starts. Pin to a commit instead of `main`
-# for a reproducible build.
+# ansible-galaxy fails before the build starts. The version is a 40-hex commit
+# SHA (the repo's pin discipline for git sources), so a build is reproducible:
+# bump it to the merge commit of any change to the collection.
 collections:
   - name: git+https://github.com/Get-Sybers/FGNW.git#/ansible/collections/get_sybers.templates
-    version: main
+    version: e0e3a7ee06db06fb4babe88ee85bd650ffccd635
