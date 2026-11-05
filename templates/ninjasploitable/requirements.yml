@@ -1,0 +1,14 @@
+---
+# Collections the build-time bake play (ansible/ninjasploitable-bake.yml) needs,
+# installed by the Packer `ansible` provisioner's galaxy_file so the template builds
+# standalone (`ludus templates add -d templates/ninjasploitable`; the build host has
+# internet, per the README):
+#   community.general -> apache2_module (enable php / rewrite / headers)
+#   ansible.mysql     -> mysql_user / mysql_db (root-passwordless + vulnerable_db)
+# ansible.builtin modules need no collection. Versions match the repo-wide pins in
+# the root requirements.yml (ansible-standards §9a: one exact version per entry).
+collections:
+  - name: community.general
+    version: "10.3.0"
+  - name: ansible.mysql
+    version: "5.2.0"

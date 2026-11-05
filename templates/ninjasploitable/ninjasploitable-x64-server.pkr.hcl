@@ -135,6 +135,39 @@ source "proxmox-iso" "ninjasploitable-x64-server" {
 }
 build {
   sources = ["source.proxmox-iso.ninjasploitable-x64-server"]
+
   # #365 + #461 — bake the ninjasploitable vulnerable-service + realmd/sssd AD-join
-  # packages AND the themed vulnerable web content so a fresh clone already serves
-  # /vulnerable
+  # packages AND the themed vulnerable web content (incl. /reports/intake.php and the
+  # intentionally-vulnerable MariaDB) so a fresh clone already serves /vulnerable with
+  # no deploy step. The play self-gates on /var/lib/ludus/ninjasploitable_content_baked
+  # (written last), so a rebuild over a good bake is a no-op. community.general
+  # (apache2_module) and ansible.mysql (mysql_user/mysql_db) install from
+  # requirements.yml via galaxy_file.
+  provisioner "ansible" {
+    playbook_file = "ansible/ninjasploitable-bake.yml"
+    galaxy_file   = "requirements.yml"
+    use_proxy     = false
+    user          = "${var.ssh_username}"
+    extra_arguments = [
+      "--extra-vars", "ansible_password=${var.ssh_password} ansible_become_pass=${var.ssh_password}",
+    ]
+    ansible_env_vars = [
+      "ANSIBLE_HOME=${var.ansible_home}",
+      "ANSIBLE_HOST_KEY_CHECKING=False",
+    ]
+    skip_version_check = true
+  }
+
+  # Stock BSL Debian behaviour: install a first-boot oneshot that regenerates unique
+  # SSH host keys on each clone and then disables itself. Kept last.
+  provisioner "ansible" {
+    playbook_file = "ansible/reset-ssh-host-keys.yml"
+    use_proxy     = false
+    user          = "${var.ssh_username}"
+    extra_arguments = [
+      "--extra-vars", "ansible_password=${var.ssh_password} ansible_become_pass=${var.ssh_password}",
+    ]
+    ansible_env_vars   = ["ANSIBLE_HOME=${var.ansible_home}"]
+    skip_version_check = true
+  }
+}
