@@ -18,6 +18,45 @@ has no release tag yet.
 
 ## [Unreleased]
 
+### Added — Ludus-source CI: convention linter, Packer smoke, reference drift
+
+Brings the native Ludus-source CI from the LudusPlusPlus source into FGNW, as an
+additive layer: FGNW's existing `ci.yml`/`conform` gate is unchanged, and the
+checks LudusPlusPlus's own CI shares with it (yamllint, ansible-lint, shellcheck,
+shfmt, actionlint) are already covered by prek + conform and are not duplicated.
+
+- **`scripts/ludus_source_lint.py`** (`make lint-source`, self-tests
+  `make test-source`) — holds every template, blueprint and range-config to the
+  native Ludus conventions, with the rules derived from facts vendored under
+  `ludus-reference/` (the build-time variables Ludus injects, the Proxmox builder
+  bindings, default credentials, builtin and Bad Sector Labs template names, and
+  the range-config JSON schema). Taught the macOS exception: a `null`-source
+  template whose `vm_name` contains `macos` skips the Proxmox-builder rules
+  (T007/T010), so FGNW's whole source lints clean.
+- **`scripts/packer_smoke.sh` + `scripts/install_ludus_packer.sh`**
+  (`make packer-tools` then `make packer-validate`) — `packer fmt -check` +
+  `packer validate` run with the exact Packer plugin set (badsectorlabs/proxmox,
+  hashicorp/ansible) and `-var` set the Ludus server uses, so a template that
+  validates here validates on a Ludus server. This covers the class of defects —
+  truncated builds, missing Ludus variables — that `conform` does not.
+- **`.github/workflows/ludus-source.yml`** — a new required check
+  (`ludus-source-green`, registered in `.github/rulesets/main.json`) running the
+  linter + self-tests and the Packer smoke on every PR and push.
+- **`.github/workflows/ludus-reference-drift.yml`** — a weekly job that
+  re-derives `ludus-reference/` from upstream Ludus `main`
+  (`scripts/update_ludus_reference.py`, `make update-reference`) and opens a
+  tracking issue when the facts the rules depend on have changed.
+- Pins `python-hcl2`, `jsonschema` and `pytest` in `test-requirements.txt`, and
+  scopes the vendored test fixtures and reference data out of the yamllint /
+  ansible-lint / markdownlint / gitleaks gates.
+- `ninjasploitable-x64-server.pkr.hcl`: both ansible provisioners now set
+  `ANSIBLE_LOCAL_TEMP` / `ANSIBLE_PERSISTENT_CONTROL_PATH_DIR` /
+  `ANSIBLE_SSH_CONTROL_PATH_DIR` under `ansible_home` (linter T017), matching the
+  macOS template.
+- Documented in `doc/ludus-source-ci.md`, linked from `doc/index.md`. The house
+  standards under `doc/standards/` are carried verbatim from their source and
+  are left unchanged.
+
 ### Fixed — Packer template library: structure, native variables, build method
 
 - **`templates/ninjasploitable/ninjasploitable-x64-server.pkr.hcl` had a truncated `build` block** —
@@ -34,6 +73,11 @@ has no release tag yet.
   specified" / "password or token must be specified".
 - `win10-22h2-x64-enterprise-appxfix`: `packer fmt` whitespace normalisation (no functional change).
 - All five Packer templates now pass `packer validate` and `packer fmt -check`.
+- `ninjasploitable/ansible/ninjasploitable-bake.yml`: unmangled the baked pages' CSS — closed every
+  dangling `<style>` rule and completed two cut-off `border` values across `login.php`, `upload.php`,
+  `index.html` and `reports/intake.php`, and repaired the truncated `intake.php` `<h2>` heading.
+  Presentation only (a 24-for-24 line swap confined to CSS/HTML); the intentional SQLi,
+  unrestricted-upload and root-passwordless-MariaDB behaviour is byte-for-byte unchanged.
 
 ### Changed — macOS templates build unattended
 

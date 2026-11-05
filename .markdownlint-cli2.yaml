@@ -24,3 +24,5 @@ ignores:
   - ".cache"
   - ".tox"
   - ".venv"
+  - "tests/fixtures" # vendored Ludus-source fixtures (held to the Ludus linter)
+  - "ludus-reference" # generated Ludus reference data (make update-reference)

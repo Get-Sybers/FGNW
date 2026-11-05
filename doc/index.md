@@ -28,6 +28,7 @@ Ludus host. The GHOSTS server container comes from the ghost9 template of the si
 | [Packer templates](../templates/README.md) | **The template library**: one directory per image, what each registers as and what it is for |
 | [Ludus deploy tags](ludus/ludus-deploy-tags.md) | **Reference**: every tag `ludus range deploy` and `ludus testing` ship, what drives it, and the class it falls in |
 | [Standards](standards/02-Ansible-Standards.md) | **The house rules** every role, play and repository control is held to: the Ansible standard, the [CI workflow](standards/03-ansible-ci-workflow.md), [linting, conformance and the merge gate](standards/04-Linting-and-Conformance.md) |
+| [Ludus-source CI](ludus-source-ci.md) | **The Ludus-source gate**: the `ludus-source` workflow that lints every template and blueprint against the native Ludus conventions and `packer validate`s the builds with the Ludus plugin set, plus the weekly upstream-reference drift check |
 
 Every task-role documents its own contract in its `README.md` under [`ansible/roles/`](../ansible/roles), and every
 collection role under [`ansible/collections/`](../ansible/collections).

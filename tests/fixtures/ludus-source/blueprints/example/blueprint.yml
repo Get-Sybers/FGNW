@@ -1,0 +1,13 @@
+# blueprint.yml: display metadata for one blueprint (read by `ludus source add`).
+# Field rules come from ParseBlueprintManifest() in ludus-api/source_schema.go.
+
+manifest_version: 1          # schema version; leave at 1
+id: example                  # must match this directory's path under blueprints/
+name: "LudusPlusPlus example"
+description: "Single Debian 13 VM built from this source's own template — a smoke test that the source installs end to end."
+version: 0.1.0               # semver; bump on every change
+config: range-config.yml     # relative to this file
+
+tags: [example, debian]
+# thumbnail_path: thumbnail.png   # optional, relative to this file
+# min_ludus_version: 2.1.2        # optional hard install gate

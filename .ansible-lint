@@ -20,6 +20,8 @@ exclude_paths:
   - changelogs/
   - tests/output/
   - extensions/molecule/*/files/
+  # Vendored Ludus-source test fixtures; held to scripts/ludus_source_lint.py.
+  - tests/fixtures/
   # A third-party role bundled verbatim (PROVENANCE.md); linted upstream, not here.
   - blueprints/FGNW/campaign/ansible/roles/wireshark/
   # INI inventories that the AD-build chain (and its docs) address by these
