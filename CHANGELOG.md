@@ -34,6 +34,11 @@ has no release tag yet.
   specified" / "password or token must be specified".
 - `win10-22h2-x64-enterprise-appxfix`: `packer fmt` whitespace normalisation (no functional change).
 - All five Packer templates now pass `packer validate` and `packer fmt -check`.
+- `ninjasploitable/ansible/ninjasploitable-bake.yml`: unmangled the baked pages' CSS — closed every
+  dangling `<style>` rule and completed two cut-off `border` values across `login.php`, `upload.php`,
+  `index.html` and `reports/intake.php`, and repaired the truncated `intake.php` `<h2>` heading.
+  Presentation only (a 24-for-24 line swap confined to CSS/HTML); the intentional SQLi,
+  unrestricted-upload and root-passwordless-MariaDB behaviour is byte-for-byte unchanged.
 
 ### Changed — macOS templates build unattended
 
