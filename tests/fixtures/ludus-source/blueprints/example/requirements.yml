@@ -1,0 +1,7 @@
+# requirements.yml: every galaxy role, collection, and subscription role this
+# blueprint needs from outside the source. The example references no roles.
+#
+#   roles:               ansible-galaxy roles (galaxy.ansible.com or a git repo via `src:`)
+#   collections:         required for any 3-part FQCN role (`namespace.collection.role`)
+#   subscription_roles:  license-gated roles served from the Ludus catalog (names only)
+roles: []

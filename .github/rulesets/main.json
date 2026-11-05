@@ -44,6 +44,10 @@
           {
             "context": "all_green",
             "integration_id": 15368
+          },
+          {
+            "context": "ludus-source-green",
+            "integration_id": 15368
           }
         ]
       }

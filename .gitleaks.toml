@@ -16,4 +16,9 @@ paths = [
   # role's mailbox roster.
   '''blueprints/FGNW/campaign/ad/NARUTO/data/config(-small)?\.json$''',
   '''ansible/roles/get_sybers\.range_(ad_mgmt|exchange_seed)/files/config\.json$''',
+  # Default Ludus provisioning credentials (localuser:password, debian:debian,
+  # kali:kali, ...) vendored from upstream Ludus group_vars as CI reference data,
+  # plus the same public defaults in the linter's test fixtures — never live.
+  '''ludus-reference/credentials\.json$''',
+  '''tests/fixtures/.*''',
 ]

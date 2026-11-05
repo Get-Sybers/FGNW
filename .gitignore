@@ -20,6 +20,8 @@ Thumbs.db
 .vscode/
 # --- tool caches ---
 .cache/
+# Packer + the Ludus plugin set installed by scripts/install_ludus_packer.sh.
+.tools/
 .lycheecache
 .ruff_cache/
 .mypy_cache/

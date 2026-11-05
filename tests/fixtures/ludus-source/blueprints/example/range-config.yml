@@ -1,0 +1,13 @@
+# Range config applied by `ludus blueprint apply <sourceID>/example`.
+# Validated in CI against the Ludus range-config JSON schema
+# (ludus-reference/range-config.jsonschema) plus the offline checks the Ludus
+# server performs on `range config set` / `blueprint apply`.
+ludus:
+  - vm_name: "{{ range_id }}-lpp-debian13"
+    hostname: "lpp-debian13"
+    template: ludusplusplus-debian-13-x64-server-template
+    vlan: 10
+    ip_last_octet: 10
+    ram_gb: 2
+    cpus: 2
+    linux: true

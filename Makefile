@@ -22,3 +22,24 @@ conform: lint ## the house gate: yamllint, ansible-lint, syntax-check, pins, sta
 .PHONY: upgrade
 upgrade: ## raise every collection pin, keep the result only if conform passes
 	./scripts/upgrade
+.PHONY: lint-source
+lint-source: ## Ludus source/template/blueprint linter (scripts/ludus_source_lint.py)
+	python3 scripts/ludus_source_lint.py --root .
+.PHONY: test-source
+test-source: ## the linter self-tests (tests/)
+	python3 -m pytest -q tests
+.PHONY: packer-tools
+packer-tools: ## install Packer + the Ludus plugin set into .tools/ (ludus-reference/versions.json)
+	scripts/install_ludus_packer.sh
+.PHONY: packer-fmt
+packer-fmt: ## rewrite the templates with packer fmt
+	packer fmt -recursive templates
+.PHONY: packer-validate
+packer-validate: ## packer fmt -check + validate every template the way Ludus builds it
+	scripts/packer_smoke.sh
+.PHONY: check-reference
+check-reference: ## fail if upstream Ludus main drifted from ludus-reference/
+	python3 scripts/update_ludus_reference.py --check
+.PHONY: update-reference
+update-reference: ## regenerate ludus-reference/ from upstream Ludus main
+	python3 scripts/update_ludus_reference.py
