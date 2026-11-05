@@ -21,7 +21,8 @@ PLUGINS="$TOOLS/packer-plugins"
 PLUGIN_API="${PACKER_PLUGIN_API_VERSION:-x5.0}"
 mkdir -p "$BIN" "$PLUGINS" "$TOOLS/downloads"
 
-read -r REF_PACKER REF_PROXMOX_SRC REF_PROXMOX_VER REF_ANSIBLE_SRC REF_ANSIBLE_VER < <(python3 - "$REFERENCE/versions.json" <<'PY'
+read -r REF_PACKER REF_PROXMOX_SRC REF_PROXMOX_VER REF_ANSIBLE_SRC REF_ANSIBLE_VER < <(
+  python3 - "$REFERENCE/versions.json" << 'PY'
 import json, sys
 v = json.load(open(sys.argv[1]))
 p = v["plugins"]
@@ -35,25 +36,34 @@ ANSIBLE_PLUGIN_VERSION="${ANSIBLE_PLUGIN_VERSION:-$REF_ANSIBLE_VER}"
 case "$(uname -s)" in
   Linux) OS=linux ;;
   Darwin) OS=darwin ;;
-  *) echo "unsupported OS: $(uname -s)" >&2; exit 1 ;;
+  *)
+    echo "unsupported OS: $(uname -s)" >&2
+    exit 1
+    ;;
 esac
 case "$(uname -m)" in
-  x86_64|amd64) ARCH=amd64 ;;
-  aarch64|arm64) ARCH=arm64 ;;
-  *) echo "unsupported architecture: $(uname -m)" >&2; exit 1 ;;
+  x86_64 | amd64) ARCH=amd64 ;;
+  aarch64 | arm64) ARCH=arm64 ;;
+  *)
+    echo "unsupported architecture: $(uname -m)" >&2
+    exit 1
+    ;;
 esac
 
 sha256_check() { # <file> <expected>
   local actual
-  if command -v sha256sum >/dev/null 2>&1; then actual="$(sha256sum "$1" | awk '{print $1}')"; else actual="$(shasum -a 256 "$1" | awk '{print $1}')"; fi
-  [ "$actual" = "$2" ] || { echo "checksum mismatch for $1: $actual != $2" >&2; return 1; }
+  if command -v sha256sum > /dev/null 2>&1; then actual="$(sha256sum "$1" | awk '{print $1}')"; else actual="$(shasum -a 256 "$1" | awk '{print $1}')"; fi
+  [[ $actual == "$2" ]] || {
+    echo "checksum mismatch for $1: $actual != $2" >&2
+    return 1
+  }
 }
 unzip_to() { # <zip> <dir>
-  if command -v unzip >/dev/null 2>&1; then unzip -qq -o "$1" -d "$2"; else python3 -c 'import sys,zipfile; zipfile.ZipFile(sys.argv[1]).extractall(sys.argv[2])' "$1" "$2"; fi
+  if command -v unzip > /dev/null 2>&1; then unzip -qq -o "$1" -d "$2"; else python3 -c 'import sys,zipfile; zipfile.ZipFile(sys.argv[1]).extractall(sys.argv[2])' "$1" "$2"; fi
 }
 
 # --- Packer -------------------------------------------------------------------
-if [ -x "$BIN/packer" ] && [ "$("$BIN/packer" version 2>/dev/null | head -n1)" = "Packer v$PACKER_VERSION" ]; then
+if [[ -x "$BIN/packer" ]] && [[ "$("$BIN/packer" version 2> /dev/null | head -n1)" == "Packer v$PACKER_VERSION" ]]; then
   echo "packer v$PACKER_VERSION already installed in $BIN"
 else
   base="https://releases.hashicorp.com/packer/$PACKER_VERSION"
@@ -62,7 +72,10 @@ else
   curl -fsSL -o "$zip" "$base/packer_${PACKER_VERSION}_${OS}_${ARCH}.zip"
   curl -fsSL -o "$zip.sums" "$base/packer_${PACKER_VERSION}_SHA256SUMS"
   expected="$(awk -v f="packer_${PACKER_VERSION}_${OS}_${ARCH}.zip" '$2==f {print $1}' "$zip.sums")"
-  [ -n "$expected" ] || { echo "no checksum for packer_${PACKER_VERSION}_${OS}_${ARCH}.zip in SHA256SUMS" >&2; exit 1; }
+  [[ -n $expected ]] || {
+    echo "no checksum for packer_${PACKER_VERSION}_${OS}_${ARCH}.zip in SHA256SUMS" >&2
+    exit 1
+  }
   sha256_check "$zip" "$expected"
   tmp="$(mktemp -d)"
   unzip_to "$zip" "$tmp"
@@ -80,7 +93,7 @@ install_plugin() { # <source like github.com/owner/name> <version>
   name="${source##*/}"
   owner="$(basename "$(dirname "$source")")"
   repo="packer-plugin-$name"
-  if packer plugins installed 2>/dev/null | grep -q "/${source}/packer-plugin-${name}_v${version}_"; then
+  if packer plugins installed 2> /dev/null | grep -q "/${source}/packer-plugin-${name}_v${version}_"; then
     echo "plugin $source v$version already installed"
     return 0
   fi
@@ -95,7 +108,10 @@ install_plugin() { # <source like github.com/owner/name> <version>
   curl -fsSL -o "$zip" "https://github.com/$owner/$repo/releases/download/v$version/${binary}.zip"
   curl -fsSL -o "$sums" "https://github.com/$owner/$repo/releases/download/v$version/${repo}_v${version}_SHA256SUMS"
   expected="$(awk -v f="${binary}.zip" '$2==f {print $1}' "$sums")"
-  [ -n "$expected" ] || { echo "no checksum for ${binary}.zip" >&2; return 1; }
+  [[ -n $expected ]] || {
+    echo "no checksum for ${binary}.zip" >&2
+    return 1
+  }
   sha256_check "$zip" "$expected"
   tmp="$(mktemp -d)"
   unzip_to "$zip" "$tmp"
@@ -105,10 +121,14 @@ install_plugin() { # <source like github.com/owner/name> <version>
   # which predates `packer plugins install --path`.
   mkdir -p "$PLUGINS/$source"
   install -m 0755 "$tmp/$binary" "$PLUGINS/$source/$binary"
-  if command -v sha256sum >/dev/null 2>&1; then sha256sum "$PLUGINS/$source/$binary" | awk '{print $1}' > "$PLUGINS/$source/${binary}_SHA256SUM"
+  if command -v sha256sum > /dev/null 2>&1; then
+    sha256sum "$PLUGINS/$source/$binary" | awk '{print $1}' > "$PLUGINS/$source/${binary}_SHA256SUM"
   else shasum -a 256 "$PLUGINS/$source/$binary" | awk '{print $1}' > "$PLUGINS/$source/${binary}_SHA256SUM"; fi
   rm -rf "$tmp"
-  packer plugins installed | grep -q "/${source}/${binary}" || { echo "plugin $source v$version is not visible to packer after manual install" >&2; return 1; }
+  packer plugins installed | grep -q "/${source}/${binary}" || {
+    echo "plugin $source v$version is not visible to packer after manual install" >&2
+    return 1
+  }
 }
 
 install_plugin "$REF_PROXMOX_SRC" "$PROXMOX_PLUGIN_VERSION"
@@ -121,5 +141,5 @@ echo
 echo "export PATH=\"$BIN:\$PATH\""
 echo "export PACKER_PLUGIN_PATH=\"$PLUGINS\""
 # Propagate to later GitHub Actions steps when running in a workflow.
-if [ -n "${GITHUB_PATH:-}" ]; then echo "$BIN" >> "$GITHUB_PATH"; fi
-if [ -n "${GITHUB_ENV:-}" ]; then echo "PACKER_PLUGIN_PATH=$PLUGINS" >> "$GITHUB_ENV"; fi
+if [[ -n ${GITHUB_PATH:-} ]]; then echo "$BIN" >> "$GITHUB_PATH"; fi
+if [[ -n ${GITHUB_ENV:-} ]]; then echo "PACKER_PLUGIN_PATH=$PLUGINS" >> "$GITHUB_ENV"; fi

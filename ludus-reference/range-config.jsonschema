@@ -224,7 +224,7 @@
                         }
                     ],
                     "description": "The single machine or range of machines from the vlan_dst to apply the rule to"
-                },                
+                },
                 "protocol": {
                     "type": "string",
                     "enum": [ "tcp", "udp", "udplite", "icmp", "ipv6-icmp", "esp", "ah", "sctp", "all" ],
@@ -720,7 +720,7 @@
                     "type": "array",
                     "item": {
                         "type": "string",
-                        "description": "A full iptables command to run at the end of router setup; example: iptables -I LUDUS_DEFAULTS -i ens18 -s 192.0.2.103 -j ACCEPT" 
+                        "description": "A full iptables command to run at the end of router setup; example: iptables -I LUDUS_DEFAULTS -i ens18 -s 192.0.2.103 -j ACCEPT"
                     }
                 },
                 "target_node": {
