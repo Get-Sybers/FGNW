@@ -4,13 +4,11 @@
 # standalone (`ludus templates add -d templates/ninjasploitable`; the build host has
 # internet, per the README):
 #   community.general -> apache2_module (enable php / rewrite / headers)
-#   community.mysql   -> mysql_user / mysql_db (root-passwordless + vulnerable_db)
-# ansible.builtin modules need no collection.
-#
-# NOTE: left unpinned because this environment cannot reach Ansible Galaxy to choose
-# versions compatible with the Ludus packer host's ansible-core. ansible-standards
-# §9a wants an exact version on each entry -- set them once a compatible version is
-# confirmed on the build host.
+#   ansible.mysql     -> mysql_user / mysql_db (root-passwordless + vulnerable_db)
+# ansible.builtin modules need no collection. Versions match the repo-wide pins in
+# the root requirements.yml (ansible-standards §9a: one exact version per entry).
 collections:
   - name: community.general
-  - name: community.mysql
+    version: "10.3.0"
+  - name: ansible.mysql
+    version: "5.2.0"

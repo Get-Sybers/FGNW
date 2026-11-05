@@ -141,7 +141,7 @@ build {
   # intentionally-vulnerable MariaDB) so a fresh clone already serves /vulnerable with
   # no deploy step. The play self-gates on /var/lib/ludus/ninjasploitable_content_baked
   # (written last), so a rebuild over a good bake is a no-op. community.general
-  # (apache2_module) and community.mysql (mysql_user/mysql_db) install from
+  # (apache2_module) and ansible.mysql (mysql_user/mysql_db) install from
   # requirements.yml via galaxy_file.
   provisioner "ansible" {
     playbook_file = "ansible/ninjasploitable-bake.yml"

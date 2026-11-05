@@ -25,9 +25,8 @@ has no release tag yet.
   the native `ansible` provisioners that run `ansible/ninjasploitable-bake.yml` (bake the
   vulnerable-service + AD-join packages and themed web content, #365/#461) and
   `ansible/reset-ssh-host-keys.yml`. Added `templates/ninjasploitable/requirements.yml` so the
-  provisioner's `galaxy_file` installs `community.general` (apache2_module) and `community.mysql`
-  (mysql_user/mysql_db), and corrected an invalid FQCN in the bake play (`ansible.mysql.*` →
-  `community.mysql.*`).
+  provisioner's `galaxy_file` installs `community.general` (apache2_module) and `ansible.mysql`
+  (mysql_user/mysql_db), pinned to the repo-wide collection versions.
 - **`win2022-server-x64-appxfix` and `win2022-exchange2019-x64` omitted required Ludus variables.**
   `ludus-packer` mandates the full proxmox variable block in every template; both declared only 9 of
   11. Added the `proxmox_username` / `proxmox_password` declarations and wired them into the
