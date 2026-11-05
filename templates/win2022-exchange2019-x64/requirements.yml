@@ -1,11 +1,16 @@
 ---
 # This template's Ansible build consumes the shared get_sybers.templates
-# collection (ansible-standards §2: don't repeat roles). It is installed at build
-# time (the Packer `ansible` provisioner's galaxy_file) and referenced by FQCN.
-# Relative to this template directory the collection is two levels up under
-# ansible/collections/; the whole source is present at build time
-# (`ludus source add`). If a template is ever built in isolation, replace the dir
-# source with the published git/Galaxy pin (an exact version, per §9a).
+# collection (ansible-standards §2: don't repeat roles). The .pkr.hcl shell-local
+# provisioner installs it at build time (`ansible-galaxy collection install -r
+# requirements.yml`, which also pulls its community.windows dependency) and
+# ansible/ngen.yml refers to it by FQCN.
+#
+# Installed from the git source rather than a relative `type: dir`: when Ludus
+# installs this template as a source, the template dir is copied outside the repo
+# tree, so `../../ansible/collections/get_sybers.templates` no longer resolves and
+# ansible-galaxy fails before the play starts. The version is a 40-hex commit SHA
+# (the repo's pin discipline for git sources), so a build is reproducible: bump it
+# to the merge commit of any change to the collection.
 collections:
-  - name: ../../ansible/collections/get_sybers.templates
-    type: dir
+  - name: git+https://github.com/Get-Sybers/FGNW.git#/ansible/collections/get_sybers.templates
+    version: edd9a00fbeb60a6700c9f7120aabdd7f34aacddf

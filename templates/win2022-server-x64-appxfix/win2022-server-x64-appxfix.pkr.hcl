@@ -168,9 +168,22 @@ build {
   provisioner "powershell" {
     scripts = ["scripts/optimize-assemblies.ps1"]
   }
+  # The collections ansible/ngen.yml needs (requirements.yml) are installed here,
+  # not via the ansible provisioner's `galaxy_file`: the plugin runs ansible-galaxy
+  # with packer's own environment, not `ansible_env_vars`, so on a Ludus server
+  # (the service runs with ProtectHome=read-only) it dies creating ~/.ansible/tmp.
+  # Run with ANSIBLE_HOME under ansible_home instead, the collections land in the
+  # first entry of the ANSIBLE_COLLECTIONS_PATH Ludus exports (the user's
+  # collections), where the ansible provisioner finds them without an override.
+  provisioner "shell-local" {
+    environment_vars = [
+      "ANSIBLE_HOME=${var.ansible_home}",
+      "ANSIBLE_LOCAL_TEMP=${var.ansible_home}/tmp",
+    ]
+    inline = ["ansible-galaxy collection install -r \"${path.root}/requirements.yml\""]
+  }
   provisioner "ansible" {
     playbook_file = "ansible/ngen.yml"
-    galaxy_file   = "requirements.yml"
     use_proxy     = false
     user          = "${var.winrm_username}"
     extra_arguments = [

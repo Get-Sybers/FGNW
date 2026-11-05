@@ -18,6 +18,21 @@ has no release tag yet.
 
 ## [Unreleased]
 
+### Fixed — template builds install their collections on a Ludus server
+
+- **`ninjasploitable`, `win2022-server-x64-appxfix` and `win2022-exchange2019-x64` install their
+  collections with a `shell-local` provisioner, not the `ansible` provisioner's `galaxy_file`.** The
+  packer ansible plugin runs `ansible-galaxy` with packer's own environment and ignores
+  `ansible_env_vars`, so on a Ludus server — whose service runs with `ProtectHome=read-only` —
+  it died creating `~/.ansible/tmp` (`Read-only file system`, exit status 5) and every build with a
+  `galaxy_file` failed at the first Ansible step. The install now runs with `ANSIBLE_HOME` /
+  `ANSIBLE_LOCAL_TEMP` under `ansible_home` and lands in the user's collections (the first entry of
+  the `ANSIBLE_COLLECTIONS_PATH` Ludus exports), where the `ansible` provisioners find it.
+- **The two Windows templates pin `get_sybers.templates` as a git source at a commit** instead of a
+  relative `type: dir` path, the same way `macos-sequoia-15` does: Ludus copies an installed template
+  dir outside the repo tree, so `../../ansible/collections/get_sybers.templates` did not resolve and
+  the install would have failed anyway.
+
 ### Added — Ludus-source CI: convention linter, Packer smoke, reference drift
 
 Brings the native Ludus-source CI from the LudusPlusPlus source into FGNW, as an

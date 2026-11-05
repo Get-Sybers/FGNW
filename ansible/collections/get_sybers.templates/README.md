@@ -35,9 +35,12 @@ installs it at build time, then refers to its content by FQCN:
   `ansible-galaxy collection install -r requirements.yml` then invokes the
   collection's `build.yml` play. The build env-bridge lives in
   `playbooks/vars/macos_template_vars.yml`.
-- **Windows** (`templates/win*`): the Packer `ansible` provisioner sets
-  `galaxy_file = requirements.yml` and runs the two-line `ansible/ngen.yml`,
-  which `import_playbook`s the collection's `ngen.yml` play.
+- **Windows** (`templates/win*`): a Packer `shell-local` provisioner runs
+  `ansible-galaxy collection install -r requirements.yml` under `ansible_home`
+  (not the `ansible` provisioner's `galaxy_file`, which ignores `ansible_env_vars`
+  and dies on a Ludus server's read-only `$HOME`), then the `ansible` provisioner
+  runs the two-line `ansible/ngen.yml`, which `import_playbook`s the collection's
+  `ngen.yml` play.
 
 ## Requirements
 
