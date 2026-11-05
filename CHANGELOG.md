@@ -65,8 +65,10 @@ has no release tag yet.
   `win2022-server-x64-appxfix`, `win10-22h2-x64-enterprise-appxfix`, `win2022-exchange2019-x64`,
   `macos-sequoia-15` and `ninjasploitable`, which are what `templates/` now ships. `templates/README.md`
   and `source.yml` are trimmed to match, and the `badsectorlabs.ludus_flarevm` mock-role (only the
-  `flare-vm` play applied it) is dropped from `.ansible-lint`. The shared `get_sybers.templates`
-  collection roles are unchanged; `metasploitable_provision` now has no in-tree consumer.
+  `flare-vm` play applied it) is dropped from `.ansible-lint`. In the shared `get_sybers.templates`
+  collection, the now-orphaned `metasploitable_provision` role and its `provision.yml` playbook are
+  removed (recorded in a collection changelog fragment); `windows_ngen` and `macos_template` are
+  unchanged.
 
 ### Removed — single range size, single Exchange server
 

@@ -18,13 +18,11 @@ build through the native Ansible mechanism — `requirements.yml` +
 | --- | --- | --- |
 | role | `get_sybers.templates.macos_template` | `templates/macos-*/roles/macos_template/` (×5, identical) |
 | module | `get_sybers.templates.proxmox_iso_download` | `.../macos_template/library/proxmox_iso_download.py` (×5) |
-| role | `get_sybers.templates.windows_ngen` | `templates/win*/ansible/ngen.yml` (×3, identical) |
-| role | `get_sybers.templates.metasploitable_provision` | `templates/metasploitable-*/ansible/provision.yml` (×2, identical) |
+| role | `get_sybers.templates.windows_ngen` | `templates/win*/ansible/ngen.yml` (×2, identical) |
 | playbook | `playbooks/build.yml` | `templates/macos-*/build.yml` (×5) + `macos_template_vars.yml` (×5) |
 | playbook | `playbooks/ngen.yml` | thin play around `windows_ngen` |
-| playbook | `playbooks/provision.yml` | thin play around `metasploitable_provision` |
 
-The three roles and the module are referenced by FQCN; the playbooks are invoked
+The two roles and the module are referenced by FQCN; the playbooks are invoked
 by their collection-qualified name (the collection name followed by the playbook
 stem). Each consuming template's build definition holds the exact command.
 
@@ -40,8 +38,6 @@ installs it at build time, then refers to its content by FQCN:
 - **Windows** (`templates/win*`): the Packer `ansible` provisioner sets
   `galaxy_file = requirements.yml` and runs the two-line `ansible/ngen.yml`,
   which `import_playbook`s the collection's `ngen.yml` play.
-- **Metasploitable** (`templates/metasploitable-*`): `scripts/import.sh` installs
-  the collection and invokes the collection's `provision.yml` play.
 
 ## Requirements
 
