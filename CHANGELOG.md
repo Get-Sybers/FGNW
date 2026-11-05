@@ -53,6 +53,9 @@ shfmt, actionlint) are already covered by prek + conform and are not duplicated.
   `ANSIBLE_LOCAL_TEMP` / `ANSIBLE_PERSISTENT_CONTROL_PATH_DIR` /
   `ANSIBLE_SSH_CONTROL_PATH_DIR` under `ansible_home` (linter T017), matching the
   macOS template.
+- Documented in `doc/ludus-source-ci.md`, linked from `doc/index.md`. The house
+  standards under `doc/standards/` are carried verbatim from their source and
+  are left unchanged.
 
 ### Fixed — Packer template library: structure, native variables, build method
 
