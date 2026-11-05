@@ -15,6 +15,9 @@ ignore: |
   changelogs/changelog.yaml
   changelogs/.plugin-cache.yaml
   tests/output/
+  # Vendored, known-clean Ludus source the linter's self-tests mutate; held to
+  # scripts/ludus_source_lint.py, not this repo's YAML style.
+  tests/fixtures/
   # A third-party role bundled verbatim (PROVENANCE.md); its YAML style is
   # upstream's, not reformatted here.
   blueprints/FGNW/campaign/ansible/roles/wireshark/

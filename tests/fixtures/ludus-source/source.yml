@@ -1,0 +1,10 @@
+# source.yml: repo-level metadata read by `ludus source list` (ParseSourceManifest in
+# ludus-api/source_schema.go). Only manifest_version is required; authors, homepage
+# and license are inherited by every blueprint in this source.
+manifest_version: 1
+name: "LudusPlusPlus"
+description: "Packer templates, blueprints, and Ansible content for Ludus, with CI that enforces the native Ludus template and source conventions."
+authors:
+  - "Get-Sybers"
+homepage: https://github.com/Get-Sybers/LudusPlusPlus
+# license: <SPDX identifier>   # set once a LICENSE file is added to the repository

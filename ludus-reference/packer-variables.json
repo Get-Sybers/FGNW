@@ -1,0 +1,113 @@
+{
+  "_comment": "How the Ludus server invokes Packer for a template build. Derived from buildVMFromTemplateWithPacker() in ludus-api/api_template_management.go and the 'Creating Your Own Templates' section of docs/docs/using-ludus/templates.md. Regenerate with `make update-reference`.",
+  "command": "packer build -on-error=cleanup <template.pkr.hcl>",
+  "working_directory": "the directory that contains the template's .pkr.hcl file (relative paths in the template resolve from here)",
+  "cli_variables": [
+    {
+      "name": "proxmox_url",
+      "type": "string",
+      "example": "https://<proxmox>:8006/api2/json",
+      "set_by": "-var",
+      "description": "Proxmox API URL (server config proxmox_url + /api2/json)"
+    },
+    {
+      "name": "proxmox_host",
+      "type": "string",
+      "example": "ludus",
+      "set_by": "-var",
+      "description": "Proxmox node name to build on (server config proxmox_node)"
+    },
+    {
+      "name": "proxmox_skip_tls_verify",
+      "type": "bool",
+      "example": "true",
+      "set_by": "-var",
+      "description": "Whether to accept the Proxmox API certificate without verification (server config proxmox_invalid_cert)"
+    },
+    {
+      "name": "proxmox_pool",
+      "type": "string",
+      "example": "SHARED",
+      "set_by": "-var",
+      "description": "Always SHARED: templates must live in the SHARED pool to be usable by every Ludus user"
+    },
+    {
+      "name": "proxmox_storage_pool",
+      "type": "string",
+      "example": "local",
+      "set_by": "-var",
+      "description": "VM disk storage pool (server config proxmox_vm_storage_pool)"
+    },
+    {
+      "name": "proxmox_storage_format",
+      "type": "string",
+      "example": "qcow2",
+      "set_by": "-var",
+      "description": "VM disk format for the storage pool (server config proxmox_vm_storage_format)"
+    },
+    {
+      "name": "iso_storage_pool",
+      "type": "string",
+      "example": "local",
+      "set_by": "-var",
+      "description": "Storage pool ISOs are downloaded to (server config proxmox_iso_storage_pool)"
+    },
+    {
+      "name": "ansible_home",
+      "type": "string",
+      "example": "/opt/ludus/users/<user>/.ansible",
+      "set_by": "-var",
+      "description": "Writable ANSIBLE_HOME for the building user; everything outside the install dir is read-only"
+    },
+    {
+      "name": "ludus_nat_interface",
+      "type": "string",
+      "example": "vmbr1000",
+      "set_by": "-var",
+      "description": "Bridge templates are built on (server config ludus_nat_interface)"
+    }
+  ],
+  "environment_variables": [
+    {
+      "name": "proxmox_password",
+      "type": "string",
+      "sensitive": true,
+      "set_by": "PKR_VAR_proxmox_password=\"\"",
+      "optional": true,
+      "description": "Declared by the documented required block; Ludus sets it to an empty string so the Proxmox plugin falls back to the PROXMOX_TOKEN environment variable. Must be sensitive and never have a default."
+    },
+    {
+      "name": "proxmox_username",
+      "type": "string",
+      "set_by": "PKR_VAR_proxmox_username=\"\"",
+      "optional": true,
+      "description": "Declared by the documented required block; Ludus sets it to an empty string so the Proxmox plugin falls back to the PROXMOX_USERNAME environment variable (the user's API token id). Never give it a default."
+    }
+  ],
+  "process_environment": {
+    "PACKER_PLUGIN_PATH": "/opt/ludus/resources/packer/plugins (plugins are pre-installed; templates must not rely on `packer init`)",
+    "PROXMOX_USERNAME": "<user API token id> (read by the Proxmox plugin when `username` is empty)",
+    "PROXMOX_TOKEN": "<user API token secret> (read by the Proxmox plugin when `password`/`token` are empty)",
+    "PACKER_CONFIG_DIR": "/opt/ludus/users/<user>/packer",
+    "PACKER_CACHE_DIR": "/opt/ludus/users/<user>/packer/packer_cache",
+    "ANSIBLE_ROLES_PATH": "user roles dir, then the instance-wide global roles dir (inherited by Ansible provisioners; do not override)",
+    "ANSIBLE_COLLECTIONS_PATH": "user collections dir, then the instance-wide global collections dir (inherited by Ansible provisioners; do not override)",
+    "CHECKPOINT_DISABLE": "1",
+    "PACKER_LOG_PATH": "/opt/ludus/users/<user>/packer/log-history/<template>-<timestamp>.log",
+    "TMPDIR": "/opt/ludus/users/<user>/packer/tmp",
+    "PACKER_LOG": "1"
+  },
+  "documented_required_block": [
+    "proxmox_url",
+    "proxmox_host",
+    "proxmox_username",
+    "proxmox_password",
+    "proxmox_storage_pool",
+    "proxmox_storage_format",
+    "proxmox_skip_tls_verify",
+    "proxmox_pool",
+    "iso_storage_pool",
+    "ansible_home",
+    "ludus_nat_interface"
+  ]
+}

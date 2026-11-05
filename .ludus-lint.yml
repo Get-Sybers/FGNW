@@ -1,0 +1,12 @@
+---
+# Configuration for scripts/ludus_source_lint.py. Every key is optional.
+
+# Template names blueprints in this source may reference beyond what this source,
+# the Ludus builtins, and the Bad Sector Labs source provide (e.g. templates from
+# another source your Ludus server has registered).
+known_templates: []
+
+# Per-rule severity overrides: error | warning | info | off
+# Example:
+#   T015: off      # silence the performance-option recommendations
+severity: {}
