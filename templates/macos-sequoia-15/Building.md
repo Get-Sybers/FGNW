@@ -84,5 +84,13 @@ Intel hosts. `get_sybers.templates` goes to 0.2.0.
   `import` content (`pvesm set local --content ...,import`). Both are asserted with a
   remedy message.
 - Credentials must be printable ASCII (they are typed through the console).
-- The Tahoe/Sequoia/Sonoma/Ventura templates share the role and media layout but
-  were not re-run here; their READMEs say so.
+- This Sequoia template shares the role and media layout but was not re-run in
+  FGNW#19 (its README says so); the other macOS versions validated there were
+  removed from this source in FGNW#21.
+- The build storage must be one the Ludus build token can allocate on. Ludus
+  grants its users `Datastore.AllocateSpace` on its own VM and ISO storages only,
+  so the role now checks each local candidate's effective privileges
+  (`/access/permissions`) and skips the ones it cannot use instead of failing at
+  VM creation; on a stock Ludus node that typically selects the `local` dir
+  storage over a bare `local-zfs`. The template's collection dependency is pinned
+  to a commit, not `main`, so a build is reproducible.

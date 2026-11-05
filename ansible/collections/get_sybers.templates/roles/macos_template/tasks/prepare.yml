@@ -89,26 +89,72 @@
     headers: "{{ macos_template_auth_headers }}"
     validate_certs: "{{ macos_template_validate_certs }}"
   register: macos_template_storages
-- name: "prepare | Pick the storage the install runs on (explicit, else local when the pool is networked)"
+- name: "prepare | Rank the node's local storages by free space and note whether the template pool is networked"
   ansible.builtin.set_fact:
-    macos_template_build_storage_resolved: >-
-      {{ macos_template_build_storage if (macos_template_build_storage | length > 0)
-         else (__local_candidates[0].storage if (__pool_is_network and (__local_candidates | length > 0))
-               else macos_template_storage_pool) }}
+    macos_template_pool_is_network: "{{ (__pool_entry.type | default('')) in macos_template_network_storage_types }}"
+    macos_template_local_candidates: "{{ __local_candidates | map(attribute='storage') | list }}"
   vars:
     __pool_entry: "{{ macos_template_storages.json.data | selectattr('storage', 'equalto', macos_template_storage_pool) | list | first | default({}) }}"
-    __pool_is_network: "{{ (__pool_entry.type | default('')) in macos_template_network_storage_types }}"
     __local_candidates: >-
       {{ macos_template_storages.json.data
          | selectattr('active', 'defined') | selectattr('active', 'equalto', 1)
          | selectattr('type', 'in', macos_template_local_storage_types)
          | sort(attribute='avail', reverse=true) | list }}
+# Ludus grants its users rights on its own VM and ISO storages only, so a local
+# storage picked for the install must also be one the build token can allocate
+# on - otherwise VM creation fails with a Proxmox permission error. The API
+# reports the caller's own effective privileges per path, so every candidate
+# (and an explicit override) is checked before it is chosen.
+- name: "prepare | Check which candidate storages the build token can allocate on"
+  no_log: true
+  ansible.builtin.uri:
+    url: "{{ macos_template_api_host }}/api2/json/access/permissions?path=/storage/{{ __storage }}"
+    method: GET
+    headers: "{{ macos_template_auth_headers }}"
+    validate_certs: "{{ macos_template_validate_certs }}"
+  loop: "{{ (([macos_template_build_storage] if (macos_template_build_storage | length > 0) else []) + macos_template_local_candidates) | unique }}"
+  loop_control:
+    loop_var: __storage
+  register: macos_template_storage_perms
+- name: "prepare | Record the storages the build token holds Datastore.AllocateSpace on"
+  ansible.builtin.set_fact:
+    macos_template_allocatable_storages: >-
+      {%- set __ok = [] -%}
+      {%- for __r in (macos_template_storage_perms.results | default([])) -%}
+        {%- set __privs = (__r.json.data | default({})) | dict2items | map(attribute='value') | first | default({}) -%}
+        {%- if 'Datastore.AllocateSpace' in __privs -%}{%- set _ = __ok.append(__r.__storage) -%}{%- endif -%}
+      {%- endfor -%}
+      {{ __ok }}
+- name: "prepare | Refuse an explicit build storage the build token cannot allocate on"
+  when: macos_template_build_storage | length > 0
+  ansible.builtin.assert:
+    that: macos_template_build_storage in macos_template_allocatable_storages
+    fail_msg: >-
+      macos_template_build_storage is '{{ macos_template_build_storage }}', but the build token has no
+      Datastore.AllocateSpace on /storage/{{ macos_template_build_storage }}. Grant it to the Ludus
+      user or group (the PVEDatastoreUser role is enough) or pick a storage the token can use.
+    quiet: true
+- name: "prepare | Pick the storage the install runs on (explicit, else the roomiest allocatable local storage when the pool is networked)"
+  ansible.builtin.set_fact:
+    macos_template_build_storage_resolved: >-
+      {{ macos_template_build_storage if (macos_template_build_storage | length > 0)
+         else (__usable[0] if (macos_template_pool_is_network and (__usable | length > 0))
+               else macos_template_storage_pool) }}
+    macos_template_skipped_storages: "{{ macos_template_local_candidates | reject('in', macos_template_allocatable_storages) | list }}"
+  vars:
+    __usable: "{{ macos_template_local_candidates | select('in', macos_template_allocatable_storages) | list }}"
 - name: "prepare | Report the build storage decision"
   ansible.builtin.debug:
     msg: >-
       Installing on storage '{{ macos_template_build_storage_resolved }}'
       {{ '(the template pool)' if macos_template_build_storage_resolved == macos_template_storage_pool
          else '(local; FINALIZE moves the disk to ' ~ macos_template_storage_pool ~ ')' }}.
+      {{ ('Skipped (no Datastore.AllocateSpace for the build token): ' ~ (macos_template_skipped_storages | join(', ')) ~ '.')
+         if (macos_template_skipped_storages | length > 0) else '' }}
+      {{ 'WARNING: the template pool is networked and no local storage is usable by the build token, so the install runs on the pool
+      and its APFS seal may take hours - grant Datastore.AllocateSpace on a local storage or set macos_template_build_storage.'
+         if (macos_template_pool_is_network and macos_template_build_storage | length == 0
+             and macos_template_build_storage_resolved == macos_template_storage_pool) else '' }}
 # --- Recovery boot disk --------------------------------------------------------
 # OpenCore/OVMF cannot boot the installer ISO itself: it is an Apple Partition
 # Map image, invisible to UEFI. Its BaseSystem.dmg (the Recovery image) is a GPT

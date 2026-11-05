@@ -1,0 +1,13 @@
+---
+bugfixes:
+  - >-
+    macos_template - the local build storage is chosen only among storages the
+    build token can allocate on. PREPARE asks the Proxmox API for the token's
+    effective privileges on each local candidate (``/access/permissions``) and
+    skips any without ``Datastore.AllocateSpace`` (Ludus grants its users its own
+    VM and ISO storages only, so the roomiest local storage - a bare ``local-zfs``
+    for example - was often one the token could not use, and VM creation failed
+    with a permission error). An explicit ``macos_template_build_storage`` the
+    token cannot allocate on now fails fast with the privilege to grant; when no
+    local storage is usable the install falls back to the template pool with a
+    warning instead of failing.

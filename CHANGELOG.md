@@ -33,6 +33,25 @@ has no release tag yet.
   dir outside the repo tree, so `../../ansible/collections/get_sybers.templates` did not resolve and
   the install would have failed anyway.
 
+### Fixed — macOS template builds unattended on a stock Ludus node
+
+- **`get_sybers.templates.macos_template` picks a build storage the Ludus token can use.** The
+  role installs on the local storage with the most free space when the template pool is networked,
+  but Ludus grants its users `Datastore.AllocateSpace` on its own VM and ISO storages only, so on a
+  stock node the roomiest local storage (a bare `local-zfs`) was one the build token could not
+  allocate on and VM creation failed with a Proxmox permission error — the build was not unattended
+  after all. PREPARE now checks each candidate's effective privileges (`/access/permissions`) and
+  skips the unusable ones, reporting what it skipped; an explicit `build_storage_pool` the token
+  cannot use fails fast naming the privilege to grant, and with no usable local storage the install
+  falls back to the pool with a warning (collection changelog fragment).
+- **`templates/macos-sequoia-15/requirements.yml` pins the collection to a commit.** The build
+  installs `get_sybers.templates` from this repository at build time; it tracked `main`, so a build
+  was not reproducible and could pick up collection changes the installed template was never tested
+  with. It is now pinned to a 40-hex commit SHA (the repo's pin discipline for git sources), to be
+  bumped when the collection changes.
+- `templates/macos-sequoia-15/Building.md` no longer refers to the macOS templates removed in #21;
+  the host prerequisites in the template and role READMEs document the storage privilege.
+
 ### Added — Ludus-source CI: convention linter, Packer smoke, reference drift
 
 Brings the native Ludus-source CI from the LudusPlusPlus source into FGNW, as an
@@ -55,8 +74,15 @@ shfmt, actionlint) are already covered by prek + conform and are not duplicated.
   validates here validates on a Ludus server. This covers the class of defects —
   truncated builds, missing Ludus variables — that `conform` does not.
 - **`.github/workflows/ludus-source.yml`** — a new required check
-  (`ludus-source-green`, registered in `.github/rulesets/main.json`) running the
-  linter + self-tests and the Packer smoke on every PR and push.
+  (`ludus-source-green`, registered in `.github/rulesets/main.json`) running, on
+  every PR and push, the linter + self-tests, the Packer smoke, and a
+  `reference-check` that re-derives `ludus-reference/` from the exact upstream
+  commits each file records as its `provenance` (not `main`) and fails on any
+  mismatch — so a hand-edit or a stale reference file is caught on the pull
+  request, while upstream Ludus advancing stays the weekly drift job's concern.
+  `update_ludus_reference.py` normalises the copied range-config schema (no
+  trailing whitespace, one final newline) so the committed copy is hook-clean and
+  round-trips through the check.
 - **`.github/workflows/ludus-reference-drift.yml`** — a weekly job that
   re-derives `ludus-reference/` from upstream Ludus `main`
   (`scripts/update_ludus_reference.py`, `make update-reference`) and opens a

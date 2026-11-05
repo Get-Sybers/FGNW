@@ -305,8 +305,16 @@ def generate(out: Path, ludus_ref: str, bsl_ref: str) -> None:
         }
         for name, data in files.items():
             (out / name).write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-        shutil.copyfile(ludus / "ludus-server" / "ansible" / "user-files" / "range-config.jsonschema", out / "range-config.jsonschema")
-        json.loads((out / "range-config.jsonschema").read_text(encoding="utf-8"))  # must be valid JSON
+        schema_path = out / "range-config.jsonschema"
+        shutil.copyfile(ludus / "ludus-server" / "ansible" / "user-files" / "range-config.jsonschema", schema_path)
+        schema = schema_path.read_text(encoding="utf-8")
+        json.loads(schema)  # must be valid JSON
+        # Normalise to the repo's editorconfig / pre-commit rules (no trailing
+        # whitespace, exactly one final newline) so the committed copy is
+        # hook-clean by construction and round-trips through --check and the
+        # weekly drift job; upstream ships it with trailing whitespace and no
+        # final newline, which the pre-commit hooks would otherwise rewrite.
+        schema_path.write_text("\n".join(line.rstrip() for line in schema.split("\n")).rstrip("\n") + "\n", encoding="utf-8")
 
 
 def normalise(name: str, text: str) -> str:
