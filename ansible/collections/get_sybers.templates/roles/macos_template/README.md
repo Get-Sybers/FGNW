@@ -145,8 +145,11 @@ localhost; FINALIZE converts to a template **only** if provisioning succeeded (o
 was explicitly skipped), so a half-configured VM is never templated — just re-run
 to resume.
 
-Validated on Proxmox VE 9.2 / Ludus 2.3 with macOS Monterey 12.7.1 and
-LongQT-OpenCore v0.7 (Intel host, Ceph RBD template pool, local ZFS build storage).
+Builds macOS Sequoia 15.4 end-to-end on a stock Ludus 2.3 node (Proxmox VE 9.2,
+Intel host, Ceph RBD template pool, `local` dir build storage) with LongQT-OpenCore
+v0.7 - one unattended `ludus templates build`, template `BUILT` in pool `SHARED`, a
+clone that reports its IP through the guest agent and accepts SSH as `localuser`.
+The same role installs macOS Monterey 12.7.1 the same way.
 The screen probes assume the 1280x800 console the `vmware` VGA gives OpenCore and
 Recovery; a different `macos_template_vga` may need the coordinates in
 `files/console/macos_unattended.py` adjusted.
