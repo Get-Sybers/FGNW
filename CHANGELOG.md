@@ -18,6 +18,25 @@ has no release tag yet.
 
 ## [Unreleased]
 
+### Fixed — macOS template builds unattended on a stock Ludus node
+
+- **`get_sybers.templates.macos_template` picks a build storage the Ludus token can use.** The
+  role installs on the local storage with the most free space when the template pool is networked,
+  but Ludus grants its users `Datastore.AllocateSpace` on its own VM and ISO storages only, so on a
+  stock node the roomiest local storage (a bare `local-zfs`) was one the build token could not
+  allocate on and VM creation failed with a Proxmox permission error — the build was not unattended
+  after all. PREPARE now checks each candidate's effective privileges (`/access/permissions`) and
+  skips the unusable ones, reporting what it skipped; an explicit `build_storage_pool` the token
+  cannot use fails fast naming the privilege to grant, and with no usable local storage the install
+  falls back to the pool with a warning (collection changelog fragment).
+- **`templates/macos-sequoia-15/requirements.yml` pins the collection to a commit.** The build
+  installs `get_sybers.templates` from this repository at build time; it tracked `main`, so a build
+  was not reproducible and could pick up collection changes the installed template was never tested
+  with. It is now pinned to a 40-hex commit SHA (the repo's pin discipline for git sources), to be
+  bumped when the collection changes.
+- `templates/macos-sequoia-15/Building.md` no longer refers to the macOS templates removed in #21;
+  the host prerequisites in the template and role READMEs document the storage privilege.
+
 ### Fixed — Packer template library: structure, native variables, build method
 
 - **`templates/ninjasploitable/ninjasploitable-x64-server.pkr.hcl` had a truncated `build` block** —

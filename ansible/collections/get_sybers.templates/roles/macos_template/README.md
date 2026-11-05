@@ -62,10 +62,17 @@ crawls - on Ceph RBD, ~20 ms per write, ~100-200 writes/s - and sits at that
 screen for hours; on a local zvol the same install finishes in ~15 minutes. So
 when the Ludus template pool is a networked type (`macos_template_network_storage_types`)
 the role installs on the local storage with the most free space
-(`macos_template_local_storage_types`) and FINALIZE moves the finished disk (and
-the EFI vars disk) to the template pool. Set `macos_template_build_storage` to
-force a storage. The system disk is built with `cache=unsafe` (no flushes) and
-templated with `macos_template_disk_cache_final` (`writeback`).
+(`macos_template_local_storage_types`) **that the build token can allocate on**, and
+FINALIZE moves the finished disk (and the EFI vars disk) to the template pool.
+Ludus grants its users rights on its own VM and ISO storages only, so the role asks
+the API for the token's effective privileges on each candidate
+(`GET /access/permissions?path=/storage/<id>`) and skips any without
+`Datastore.AllocateSpace` - it reports what it skipped, and falls back to the pool
+(slow, with a warning) when no local storage is usable. Set
+`macos_template_build_storage` to force a storage; the build then refuses to run if
+the token cannot allocate on it, naming the privilege to grant. The system disk is
+built with `cache=unsafe` (no flushes) and templated with
+`macos_template_disk_cache_final` (`writeback`).
 
 ### Build-host requirements
 
@@ -77,6 +84,10 @@ templated with `macos_template_disk_cache_final` (`writeback`).
 - The Proxmox token needs the usual VM admin rights plus `VM.Console` (in
   `PVEVMAdmin`) and `Datastore.AllocateTemplate` on the ISO storage (already
   required for the ISO downloads).
+- For a fast install when the template pool is networked, the token also needs
+  `Datastore.AllocateSpace` on one local storage (the `PVEDatastoreUser` role on
+  `/storage/<id>` for the Ludus users group). Ludus does not grant this by
+  default; without it the role still builds, on the pool, slowly.
 
 Ludus's own macOS deploy path drove several of these — without them a built
 template will not deploy with `ludus range deploy`:

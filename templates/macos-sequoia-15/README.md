@@ -70,8 +70,13 @@ sha256sum macOS-Sequoia-15.4.iso
 - A local storage (ZFS/LVM-thin/dir) with ~90 GiB free when the Ludus pool is
   networked (Ceph RBD, NFS): the installer's final APFS seal is a stream of small
   synchronous writes that crawls for hours on networked storage, so the role
-  installs locally and FINALIZE moves the finished disk to the pool. Set
-  `build_storage_pool` to force a storage.
+  installs locally and FINALIZE moves the finished disk to the pool. The Ludus
+  build token must hold `Datastore.AllocateSpace` on that storage - Ludus grants
+  its users its own VM and ISO storages only, so the role checks each local
+  storage's effective privileges and uses the roomiest one the token can allocate
+  on (a `local` dir storage usually qualifies; a bare `local-zfs` usually does
+  not), falling back to the pool with a warning. Set `build_storage_pool` to force
+  a storage; the build refuses to run if the token cannot allocate on it.
 
 ```bash
 ludus templates add -d templates/macos-sequoia-15
