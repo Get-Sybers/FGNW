@@ -18,6 +18,24 @@ has no release tag yet.
 
 ## [Unreleased]
 
+### Fixed — Packer template library: structure, native variables, build method
+
+- **`templates/ninjasploitable/ninjasploitable-x64-server.pkr.hcl` had a truncated `build` block** —
+  an unterminated block that failed `packer validate` and `ludus templates build`. Restored it with
+  the native `ansible` provisioners that run `ansible/ninjasploitable-bake.yml` (bake the
+  vulnerable-service + AD-join packages and themed web content, #365/#461) and
+  `ansible/reset-ssh-host-keys.yml`. Added `templates/ninjasploitable/requirements.yml` so the
+  provisioner's `galaxy_file` installs `community.general` (apache2_module) and `community.mysql`
+  (mysql_user/mysql_db), and corrected an invalid FQCN in the bake play (`ansible.mysql.*` →
+  `community.mysql.*`).
+- **`win2022-server-x64-appxfix` and `win2022-exchange2019-x64` omitted required Ludus variables.**
+  `ludus-packer` mandates the full proxmox variable block in every template; both declared only 9 of
+  11. Added the `proxmox_username` / `proxmox_password` declarations and wired them into the
+  `proxmox-iso` source — without the source wiring `packer validate` fails with "username must be
+  specified" / "password or token must be specified".
+- `win10-22h2-x64-enterprise-appxfix`: `packer fmt` whitespace normalisation (no functional change).
+- All five Packer templates now pass `packer validate` and `packer fmt -check`.
+
 ### Changed — macOS templates build unattended
 
 - **`ludus templates build -n macos-*-template` now produces the template in one run with no
