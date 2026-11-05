@@ -51,6 +51,13 @@ variable "proxmox_url" {
 variable "proxmox_host" {
   type = string
 }
+variable "proxmox_username" {
+  type = string
+}
+variable "proxmox_password" {
+  type      = string
+  sensitive = true
+}
 variable "proxmox_storage_pool" {
   type = string
 }
