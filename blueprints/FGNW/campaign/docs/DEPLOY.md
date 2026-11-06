@@ -86,8 +86,8 @@ Phase 2 calls `get_sybers.range.ludus_testing`, which issues `ludus testing star
 tags belong to `testing.yml` (a separate Ludus playbook) — they are not part of
 `ludus range deploy`. Every VM in all three range configs has
 `testing: {snapshot: true, block_internet: true}`, so start-testing snapshots and seals
-every VM, with no egress carve-outs. Verify with `ludus testing status` after Phase 2
-completes.
+every VM; the one carve-out Phase 2 opens is Nexus (`ludus_testing_allow_ips: [192.0.2.2]`).
+Verify with `ludus testing status` after Phase 2 completes.
 Testing tags **not used**: `stop-testing` (run manually between scenario iterations),
 `allow-ip`, `deny-ip`, `deny-domain`.
 
@@ -104,7 +104,9 @@ still starts only inside the sealed range (final Phase 5).
 
 - Every VM in the range configs now has `testing: {snapshot: true, block_internet: true}`.
 - `ludus testing start` (Phase 2) snapshots all VMs and blocks all internet.
-- Containment seals the range completely — no egress carve-outs.
+- Containment seals the range; the only carve-out Phase 2 opens is Nexus. Anything else the
+  VMs must still reach (a collector outside the range) is the operator's allow-list, re-applied
+  after every `testing start` — see [`isolate-testing.md`](isolate-testing.md).
 - `ludus testing stop` reverts all VMs to the pre-Phase-2 snapshot (repeatable scenario runs).
 **Why `ludus range deploy` alone does not stand up the scenario:**
 `ludus range deploy` runs only the `roles:` declared per-VM in the range config. Everything

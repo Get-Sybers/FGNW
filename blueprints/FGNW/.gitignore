@@ -4,3 +4,7 @@
 # dir instead — see campaign/deploy-tasks/phase3-ad.yml), but stale copies still exist on
 # servers that ran the old code, and nothing in this blueprint should ever commit a .bak.
 *.bak
+# The operator's egress allow-list for a contained range (campaign/docs/isolate-testing.md):
+# it names the operator's own collectors, so it never enters the public tree.
+# testing-allow.txt.example beside it is the template to copy.
+testing-allow.txt

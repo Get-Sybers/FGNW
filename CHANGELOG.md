@@ -18,6 +18,20 @@ has no release tag yet.
 
 ## [Unreleased]
 
+### Added — contained-range operations doc and the operator egress allow-list
+
+- `blueprints/FGNW/campaign/docs/isolate-testing.md` states, from the Ludus playbooks that
+  implement testing mode, what `ludus testing start` and `stop` do on the range router and the
+  two consequences for a collector outside the range: every `testing allow` must be re-issued
+  after each `start` (`stop` flushes `LUDUS_TESTING` and `start` rebuilds it from the range
+  config alone), and a client must be installed by a role at deploy time, because `stop` reverts
+  every VM to the snapshot taken at `start`. `blueprints/FGNW/testing-allow.txt.example` is the
+  template for the operator's `ludus testing allow -f` list (one IP or domain per line);
+  `testing-allow.txt` itself is gitignored because it names the operator's own collectors.
+  `DEPLOY.md` no longer says containment has no egress carve-outs: Phase `2` has allow-listed
+  Nexus (`192.0.2.2`) since it moved to `get_sybers.range.ludus_testing`. Indexed from
+  `campaign/Index.md` and `doc/index.md`.
+
 ### Changed — the Exchange role docs state the verified deploy as fact
 
 - `ansible/roles/get_sybers.range_exchange/README.md` no longer says the vendored installer is
