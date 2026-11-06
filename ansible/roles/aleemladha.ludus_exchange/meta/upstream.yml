@@ -1,0 +1,93 @@
+---
+schema_version: 1
+role: aleemladha.ludus_exchange
+baseline: aleemladha/ludus_exchange — Exchange 2016/2019 install for Ludus ranges
+status: vendored
+derived_from:
+  - name: aleemladha/ludus_exchange
+    url: https://github.com/aleemladha/ludus_exchange
+    commit: 319bb51d9f774e0150468af17ceb7de80576879d
+    commit_is: branch-head
+    branch: main
+    licence: GPL-3.0-only
+    licence_holder: aleemladha
+    licence_note: >-
+      Upstream ships no LICENSE file; the licence is the one its meta/main.yml
+      galaxy_info declares (GPLv3). The vendored role keeps that meta verbatim.
+    relationship: vendored-verbatim-plus-patch
+    note: >-
+      Carried in-tree because upstream is unmaintained (no commits since
+      2024-10-16, this commit is its HEAD) and Exchange 2019 CU12+ Setup rejects
+      the bare /IAcceptExchangeServerLicenseTerms switch it hardcodes; the
+      blueprint pinned this exact commit from GitHub before vendoring. The
+      directory keeps upstream's author.role_name so Ludus installs it under
+      the name get_sybers.range_exchange include_role's it by. Upstream ships
+      most files with CRLF line endings; the repo's .gitattributes stores them
+      LF, so every sha256 below is of the LF form (verify with
+      `diff --strip-trailing-cr`, see the verify block).
+    vendored:
+      - local: README.md
+        upstream: README.md
+        sha256: 6640f2b87e74008d41806d3accc5dcd6a8c74fdc4072b3aeac61a0355554e11f
+      - local: defaults/main.yml
+        upstream: defaults/main.yml
+        sha256: edb42dcb114ab4773d1e30a84b7eb53b7f3131a36193ce1e0a1e88e1e064652d
+      - local: meta/main.yml
+        upstream: meta/main.yml
+        sha256: 24cee218fc2245f9063486bd7d593c2b975623b6f82d34e51a03f7ad417d0110
+      - local: tasks/main.yml
+        upstream: tasks/main.yml
+        sha256: 405a027db00cf42fa2201ee82f5b3e30c542acb07fa91606e96f93b26fea2c40
+      - local: tasks/ludus-create-mailbox.yml
+        upstream: tasks/ludus-create-mailbox.yml
+        sha256: c313f70eae8d83a7c0593354d69df8c96ac44d347864cb9e18286841c34d4ae5
+      - local: tasks/ludus-download-exchange-2016.yml
+        upstream: tasks/ludus-download-exchange-2016.yml
+        sha256: 7f14138a9718210b6473d612a4e7088507532b14785e506b3018b8049cd797c1
+      - local: tasks/ludus-download-exchange-2019.yml
+        upstream: tasks/ludus-download-exchange-2019.yml
+        sha256: d486eab6f432b85c108d8491ca64048f350345a12b1df03a07481578aa16c211
+      - local: tasks/ludus-exchange-pre.yml
+        upstream: tasks/ludus-exchange-pre.yml
+        sha256: 9bb6a94f44e6474c045b7b9557e3bd75bca9f57eb3866dde9caa31f60712afc2
+      - local: tasks/ludus-exchange-rights.yml
+        upstream: tasks/ludus-exchange-rights.yml
+        sha256: 14c4806c99e5fcda3cab0e693557bc29cac12f4c77f19d44d8ded25201093e58
+      - local: tasks/ludus_sendconnector.yml
+        upstream: tasks/ludus_sendconnector.yml
+        sha256: 5e7de2914c13d36ac386f507bc0d809f44ad5c6ae570b94b4a06c27b9d9856ba
+    derived:
+      - local: tasks/ludus-exchange-2019-install.yml
+        from: tasks/ludus-exchange-2019-install.yml
+        note: >-
+          The only change: the three Setup.exe invocations (PrepareSchema,
+          PrepareAD, Mode:Install) pass
+          /IAcceptExchangeServerLicenseTerms_DiagnosticDataOFF instead of the
+          pre-CU12 /IAcceptExchangeServerLicenseTerms, which Exchange 2019 CU12+
+          Setup refuses ("add the _DiagnosticDataON or _DiagnosticDataOFF
+          parameter"). Diagnostic data is off: an isolated range sends Microsoft
+          nothing. Every other byte is upstream's (LF).
+      - local: tasks/ludus-exchange-2016-install.yml
+        from: tasks/ludus-exchange-2016-install.yml
+        note: same three-line switch change as the 2019 file, kept in step.
+verify: |
+  git clone --depth 1 https://github.com/aleemladha/ludus_exchange /tmp/ludus_exchange
+  # verbatim files — identical to upstream once line endings are normalised
+  for f in README.md defaults/main.yml meta/main.yml tasks/main.yml \
+           tasks/ludus-create-mailbox.yml tasks/ludus-download-exchange-2016.yml \
+           tasks/ludus-download-exchange-2019.yml tasks/ludus-exchange-pre.yml \
+           tasks/ludus-exchange-rights.yml tasks/ludus_sendconnector.yml; do
+    diff --strip-trailing-cr -q "$f" "/tmp/ludus_exchange/$f" || echo "DIFFERS: $f"
+  done
+  # patched files — the ONLY difference from upstream is the license switch
+  for f in tasks/ludus-exchange-2019-install.yml tasks/ludus-exchange-2016-install.yml; do
+    diff --strip-trailing-cr <(sed 's#_DiagnosticDataOFF##' "$f") "/tmp/ludus_exchange/$f" \
+      && echo "OK (only the license switch differs): $f"
+  done
+update: |
+  git clone https://github.com/aleemladha/ludus_exchange /tmp/ludus_exchange
+  rsync -a --exclude .git /tmp/ludus_exchange/ ./
+  find . -type f -exec sed -i 's/\r$//' {} +   # store LF per .gitattributes
+  sed -i 's#/IAcceptExchangeServerLicenseTerms /#/IAcceptExchangeServerLicenseTerms_DiagnosticDataOFF /#g' \
+    tasks/ludus-exchange-2019-install.yml tasks/ludus-exchange-2016-install.yml
+  # then re-record the commit and every sha256 above (LF form)

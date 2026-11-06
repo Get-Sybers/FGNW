@@ -24,6 +24,9 @@ exclude_paths:
   - tests/fixtures/
   # A third-party role bundled verbatim (PROVENANCE.md); linted upstream, not here.
   - blueprints/FGNW/campaign/ansible/roles/wireshark/
+  # aleemladha.ludus_exchange carried verbatim (meta/upstream.yml) plus the one
+  # CU12+ license-switch patch; upstream's style, linted upstream, not here.
+  - ansible/roles/aleemladha.ludus_exchange/
   # INI inventories that the AD-build chain (and its docs) address by these
   # .yml names; they are not YAML and cannot be parsed as such.
   - blueprints/FGNW/campaign/ad/NARUTO/providers/ludus/inventory.yml
@@ -39,13 +42,12 @@ kinds:
 # Roles that Ludus installs on the server from the blueprint's own
 # requirements (blueprints/FGNW/requirements.yml `roles:`) or at template
 # build time; they are not part of this tree, so the plays that apply them are
-# linted against a mock.
-# aleemladha.ludus_exchange is installed from GitHub by
-# blueprints/FGNW/requirements.yml; the campaign plays apply it. (Keep this list
-# free of comment lines: scripts/conform reads it to build the syntax-check stubs.)
+# linted against a mock. (Keep this list free of comment lines: scripts/conform
+# reads it to build the syntax-check stubs.)
+# aleemladha.ludus_exchange is no longer here: it is vendored under
+# ansible/roles/ (meta/upstream.yml), so it resolves as a real role, not a mock.
 mock_roles:
   - geerlingguy.dotfiles
-  - aleemladha.ludus_exchange
 # §18: lowercase letters, digits, underscores; starts with a letter.
 # §28: internal / registered values may carry the double-underscore prefix.
 var_naming_pattern: "^(__)?[a-z][a-z0-9_]*$"

@@ -7,14 +7,17 @@ the forest's AD groups, and builds the cross-forest send-connector mesh. It runs
 and the native child-domain join must already be up. Host identity is derived from
 `inventory_hostname`, so no `role_vars` are required.
 The actual Exchange install is delegated to the **third-party role
-`aleemladha.ludus_exchange`** (installed from its GitHub repository by the blueprint's
-`requirements.yml`), `include_role`'d from `install.yml`. It is deliberately **not** a
+`aleemladha.ludus_exchange`**, vendored at `ansible/roles/aleemladha.ludus_exchange/` (upstream
+is unmaintained; the copy is verbatim except for the Exchange 2019 CU12+ license switch, which
+its `meta/upstream.yml` records) and installed by `ludus source add` under its upstream name.
+It is `include_role`'d from `install.yml` and is deliberately **not** a
 `meta/main.yml` dependency: a meta dependency would run it *before* this role's forest-root
 join, which would break Setup. It is instead invoked at the right point in the sequence and
 only needs to be installed alongside this role. The baked ISO/prereqs marker in the
 `win2022-exchange2019` template makes its `not exchange_installed.exists` gate self-skip the
 download and prerequisite installs, so the deploy-time work is Setup only. **This role does not
-modify `aleemladha.ludus_exchange`.**
+modify `aleemladha.ludus_exchange`**; the vendored copy's single patch lives in that role's own
+tree, not here.
 `main.yml` is the only entry point; it derives the host's forest facts (the `_rex_*`
 `set_fact`s) and then runs the includes below **in order**. Because they consume those derived
 facts, they are not independently invocable.

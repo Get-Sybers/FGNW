@@ -18,6 +18,19 @@ has no release tag yet.
 
 ## [Unreleased]
 
+### Fixed — Exchange 2019 CU15 Setup accepts the license again (role vendored)
+
+- **`aleemladha.ludus_exchange` is vendored at `ansible/roles/aleemladha.ludus_exchange/` with its
+  Setup switch fixed.** A full FGNW deploy reached the last role and Exchange Setup refused in one
+  second: `/IAcceptExchangeServerLicenseTerms` is rejected by Exchange 2019 CU12+, which requires
+  `/IAcceptExchangeServerLicenseTerms_DiagnosticDataOFF` (or `…ON`). Upstream hardcodes the old
+  switch in its PrepareSchema / PrepareAD / Mode:Install commands and is unmaintained (the pinned
+  commit is its HEAD), so the role is now carried in-tree: byte-identical to the pinned commit
+  except those six lines (2016 + 2019 task files), with every file's hash and the patch recorded
+  in `meta/upstream.yml` for `scripts/check-upstream.py`. The directory keeps upstream's
+  `author.role_name`, so Ludus installs it under the name `get_sybers.range_exchange` already
+  uses; the git pin is gone from `blueprints/FGNW/requirements.yml`. Diagnostic data is off.
+
 ### Fixed — the appxfix images disable the Edge updater's scheduled tasks too
 
 - **`remove-appx-sysprep-blockers.ps1` (win2022-server-x64-appxfix, win2022-exchange2019-x64,
