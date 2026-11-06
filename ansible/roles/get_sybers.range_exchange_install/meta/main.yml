@@ -1,0 +1,28 @@
+---
+# Get-Sybers-namespaced meta for the vendored Exchange installer. The task
+# logic under tasks/ is aleemladha/ludus_exchange carried verbatim (plus the
+# CU12+ license-switch patch) — see meta/upstream.yml. Only this meta is ours,
+# so Ludus installs the role as get_sybers.range_exchange_install, the name
+# get_sybers.range_exchange include_role's it by. Licence stays GPL-3.0-only:
+# the vendored code is GPLv3 upstream.
+galaxy_info:
+  author: Get-Sybers
+  namespace: get_sybers
+  role_name: range_exchange_install
+  description: >
+    Install Microsoft Exchange Server 2019 (or 2016) on a Windows host — the
+    Setup delegate get_sybers.range_exchange include_role's after it has joined
+    the host to the forest root. Vendored from aleemladha/ludus_exchange
+    (unmaintained) with the Exchange 2019 CU12+ license switch; see
+    meta/upstream.yml. FGNW
+  license: GPL-3.0-only
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Windows
+      versions:
+        - "2019"
+        - "2022"
+  galaxy_tags:
+    - windows
+    - exchange
+dependencies: []

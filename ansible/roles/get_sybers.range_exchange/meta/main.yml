@@ -4,7 +4,7 @@ galaxy_info:
   namespace: get_sybers
   description: >
     Install and configure real Exchange Server 2019 on an FGNW -mail VM at the Ludus
-    user-defined-roles stage: forest-root domain-join, Setup (via aleemladha.ludus_exchange,
+    user-defined-roles stage: forest-root domain-join, Setup (via get_sybers.range_exchange_install,
     which self-skips the ISO/prereqs baked into the win2022-exchange2019 template), the org's
     Accepted Domain, group mail-enable, and the cross-forest send-connector mesh. Source-delivered
     port of campaign/ansible/FGNW-exchange.yml (4 plays). Run LAST on each -mail VM, after AD.

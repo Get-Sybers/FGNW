@@ -26,3 +26,4 @@ ignores:
   - ".venv"
   - "tests/fixtures" # vendored Ludus-source fixtures (held to the Ludus linter)
   - "ludus-reference" # generated Ludus reference data (make update-reference)
+  - "ansible/roles/get_sybers.range_exchange_install" # third-party role carried verbatim (meta/upstream.yml); upstream's markdown, not reformatted

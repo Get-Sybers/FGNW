@@ -87,7 +87,7 @@
   tasks:
     - name: Install Exchange + enable user mailboxes for this forest
       ansible.builtin.include_role:
-        name: aleemladha.ludus_exchange
+        name: get_sybers.range_exchange_install
       no_log: true
     - name: "Register the org as an Authoritative Accepted Domain (if not already): {{ __me.domain }}"
       ansible.windows.win_shell: |

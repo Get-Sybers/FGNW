@@ -8,12 +8,11 @@ roles:
   # its FINALIZE phase, so that role would be redundant here.
   - name: geerlingguy.dotfiles
     version: 1.3.2
-  # Third-party roles the campaign plays apply, installed from their GitHub repositories
-  # (a pinned commit or tag); this source carries no copy of them.
-  - name: aleemladha.ludus_exchange
-    src: https://github.com/aleemladha/ludus_exchange.git
-    scm: git
-    version: 319bb51d9f774e0150468af17ceb7de80576879d
+  # get_sybers.range_exchange_install is no longer installed from GitHub: upstream is
+  # unmaintained and its Setup switch fails on Exchange 2019 CU12+, so the role
+  # is vendored at ansible/roles/get_sybers.range_exchange_install/ (provenance and the
+  # one patch in its meta/upstream.yml) and `ludus source add` installs it from
+  # there under the same name.
 collections:
   - name: ansible.windows
     version: 2.7.0

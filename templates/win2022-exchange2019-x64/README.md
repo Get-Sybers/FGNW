@@ -3,7 +3,7 @@ at build time**, derived from
 [`win2022-server-x64-appxfix`](../win2022-server-x64-appxfix/) (which itself removes the
 Edge AppX sysprep blocker). Built for the FGNW `*-owa` hosts so
 that a range deploy only has to run the **AD-bound** half of the Exchange install.
-Everything the deploy-time `aleemladha.ludus_exchange` role would otherwise download and
+Everything the deploy-time `get_sybers.range_exchange_install` role would otherwise download and
 install that does **not** need Active Directory, done once in the image:
 
 - The full Exchange 2019 **Windows feature set** (`Install-WindowsFeature …`: `Web-*`,
@@ -15,7 +15,7 @@ install that does **not** need Active Directory, done once in the image:
   (sha256 `07c3fc16…629ae`, verified on download), where the role looks for it.
 - A completion marker at `C:\ludus\exchange_prereqs_complete.txt`.
 `/PrepareSchema`, `/PrepareAD`, `/Mode:Install /Role:Mailbox`, and mailbox/send-connector
-creation — all of which require the host to be domain-joined. `aleemladha.ludus_exchange`
+creation — all of which require the host to be domain-joined. `get_sybers.range_exchange_install`
 sees the marker + staged media and **skips its prereq + download blocks**, running only
 these AD-bound steps.
 The bake (`ansible/exchange-bake.yml`) is gated on the **same marker file the deploy role

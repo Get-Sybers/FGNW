@@ -27,7 +27,7 @@ repositories by `blueprints/FGNW/requirements.yml` unless marked bundled):
 
 | Role | Origin / license |
 | --- | --- |
-| `aleemladha.ludus_exchange` | <https://github.com/aleemladha/ludus_exchange>, commit `319bb51d`; GPL-3.0 |
+| `get_sybers.range_exchange_install` | bundled (vendored at `ansible/roles/`, `meta/upstream.yml`); from <https://github.com/aleemladha/ludus_exchange> commit `319bb51d`, GPL-3.0, + the CU12+ license-switch patch |
 | `wireshark` | bundled; MIT (`meta/main.yml`) |
 
 ---

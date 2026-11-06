@@ -38,12 +38,13 @@ containment later removes internet and silently breaks live-only fixes). Then re
 - **Contained and a package step needs Nexus/internet:** `ludus testing start` blocks 192.0.2.2
   too. Surgically `ludus testing allow -i 192.0.2.2` → do the work → `ludus testing deny -i
   192.0.2.2`. Do NOT `ludus testing stop` (reverts snapshots).
-- **Role can't find `aleemladha.ludus_exchange`:** it is installed from
-  GitHub by `blueprints/FGNW/requirements.yml` (`ansible-galaxy role install -r
-  blueprints/FGNW/requirements.yml -p /opt/ludus/users/range-admin/.ansible/roles`); export
+- **Role can't find `get_sybers.range_exchange_install`:** it is a source role vendored at
+  `ansible/roles/`, installed by `ludus source add` into
+  `/opt/ludus/users/range-admin/.ansible/roles`; export
   `ANSIBLE_ROLES_PATH=/opt/ludus/users/range-admin/.ansible/roles` before a direct
-  `ansible-playbook` run.
-- **⚠️ Exchange ISO must be staged.** The `aleemladha.ludus_exchange` role uses an Exchange 2019
+  `ansible-playbook` run (`ludus range deploy` sets it automatically). If it is missing,
+  re-run `ludus source add <sourceID> --all --force`.
+- **⚠️ Exchange ISO must be staged.** The `get_sybers.range_exchange_install` role uses an Exchange 2019
   ISO at `/opt/ludus/resources/iso/` when present; if it is absent, Phase 4b falls back to the
   role's ~6 GB live-internet fetch, which runs *after* Phase 2 containment and cannot succeed.
   Stage the ISO before Phase 4b, or deploy with `-e range_skip_exchange=true`.

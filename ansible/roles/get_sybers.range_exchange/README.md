@@ -7,14 +7,17 @@ the forest's AD groups, and builds the cross-forest send-connector mesh. It runs
 and the native child-domain join must already be up. Host identity is derived from
 `inventory_hostname`, so no `role_vars` are required.
 The actual Exchange install is delegated to the **third-party role
-`aleemladha.ludus_exchange`** (installed from its GitHub repository by the blueprint's
-`requirements.yml`), `include_role`'d from `install.yml`. It is deliberately **not** a
+`get_sybers.range_exchange_install`**, vendored at `ansible/roles/get_sybers.range_exchange_install/` (upstream
+is unmaintained; the copy is verbatim except for the Exchange 2019 CU12+ license switch, which
+its `meta/upstream.yml` records) and installed by `ludus source add` under its upstream name.
+It is `include_role`'d from `install.yml` and is deliberately **not** a
 `meta/main.yml` dependency: a meta dependency would run it *before* this role's forest-root
 join, which would break Setup. It is instead invoked at the right point in the sequence and
 only needs to be installed alongside this role. The baked ISO/prereqs marker in the
 `win2022-exchange2019` template makes its `not exchange_installed.exists` gate self-skip the
 download and prerequisite installs, so the deploy-time work is Setup only. **This role does not
-modify `aleemladha.ludus_exchange`.**
+modify `get_sybers.range_exchange_install`**; the vendored copy's single patch lives in that role's own
+tree, not here.
 `main.yml` is the only entry point; it derives the host's forest facts (the `_rex_*`
 `set_fact`s) and then runs the includes below **in order**. Because they consume those derived
 facts, they are not independently invocable.
@@ -22,7 +25,7 @@ facts, they are not independently invocable.
 | include | what it does |
 | --- | --- |
 | `join.yml` | leave the child domain, free the stale forest-wide SPN, join the forest root |
-| `install.yml` | install Exchange via `aleemladha.ludus_exchange`, then register the org's Authoritative Accepted Domain |
+| `install.yml` | install Exchange via `get_sybers.range_exchange_install`, then register the org's Authoritative Accepted Domain |
 | `org-config.yml` | mail-enable every AD group as a distribution group, then build the cross-forest send-connector mesh |
 | name | default purpose |
 
@@ -33,7 +36,7 @@ facts, they are not independently invocable.
 | `range_exchange_org_map` | see `defaults/main.yml` | Per-forest org label + primary SMTP (mail) domain. |
 | `range_exchange_forest_root_map` | see `defaults/main.yml` | Forest root each host joins and authenticates against. |
 | `range_exchange_orgs` | see `defaults/main.yml` | Cross-forest send-connector mesh: each org's SMTP domain + mail-server IP. |
-| `range_exchange_iso_url` | Exchange 2019 CU15 ISO URL | Passed to `aleemladha.ludus_exchange`; self-skipped when baked prereqs are present. |
+| `range_exchange_iso_url` | Exchange 2019 CU15 ISO URL | Passed to `get_sybers.range_exchange_install`; self-skipped when baked prereqs are present. |
 | `range_exchange_nexus_dotnet` | Nexus `ndp48…` URL | .NET 4.8 prereq URL (self-skipped when baked). |
 | `range_exchange_nexus_vcredist` | Nexus `vcredist2013_x64` URL | VC++ 2013 prereq URL (self-skipped when baked). |
 | `range_exchange_nexus_rewrite` | Nexus `rewrite_amd64` URL | IIS URL Rewrite prereq URL (self-skipped when baked). |

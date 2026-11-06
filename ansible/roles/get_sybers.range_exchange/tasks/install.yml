@@ -1,7 +1,7 @@
 ---
 - name: "install | Range_exchange(install) | install Exchange 2019 + enable user mailboxes"
   ansible.builtin.include_role:
-    name: aleemladha.ludus_exchange
+    name: get_sybers.range_exchange_install
   vars:
     ludus_os_version: "2022"
     ludus_exchange_iso_url: "{{ range_exchange_iso_url }}"

@@ -128,7 +128,7 @@
               Exchange 2019 CU15 prerequisites + media baked into this template at build time (
               Windows features, .NET 4.8, VC++ 2013, URL Rewrite, UCMA 4.0 installed;
               media staged at {{ ex_dir }}\{{ ex_iso_name }}.
-              The deploy-time aleemladha.ludus_exchange role skips prereqs on this marker and
+              The deploy-time get_sybers.range_exchange_install role skips prereqs on this marker and
               runs only the AD-bound steps (/PrepareSchema, /PrepareAD, /Mode:Install, mailboxes).
     - name: "Bake: report (already baked)"
       ansible.builtin.debug:
