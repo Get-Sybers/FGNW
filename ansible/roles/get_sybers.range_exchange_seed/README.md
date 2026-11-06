@@ -12,6 +12,9 @@ end-of-seed marker first and **skips delivery when it is present**; the marker i
 marker) is seeded again on the next run. Set `range_exchange_seed_force=true` to deliver the
 corpus again — which **duplicates every message**.
 
+On a deployed FGNW range the role delivered every message the filter selected for the Leaf forest
+in a single run with no failed send, then wrote the marker.
+
 | name | default | purpose |
 | --- | --- | --- |
 | `range_exchange_seed_admin_password` | `password` | Shared lab forest-root Administrator password used to send as each mailbox. |
@@ -21,7 +24,7 @@ corpus again — which **duplicates every message**.
 | `range_exchange_seed_org_map` | see `defaults/main.yml` | Per-forest mail (recipient) domain, keyed by `-mail` suffix. |
 | `range_exchange_seed_forest_root_map` | see `defaults/main.yml` | Forest root each host authenticates against when sending. |
 
-The `_rxs_*` variables (derived identity, loaded corpus, filtered recipient list) are
+The `__rxs_*` variables (derived identity, loaded corpus, filtered recipient list) are
 `set_fact` intermediates, not inputs, and are excluded from `meta/argument_specs.yml`.
 This role is **content seeding**, not a security-control change — it introduces no new host
 weakness of its own. What it does contribute to the range's deliberately-weak posture:

@@ -6,10 +6,11 @@ the forest's AD groups, and builds the cross-forest send-connector mesh. It runs
 `-mail` VM at the Ludus `user-defined-roles` stage (S2), **last** in the role order — AD, DNS
 and the native child-domain join must already be up. Host identity is derived from
 `inventory_hostname`, so no `role_vars` are required.
-The actual Exchange install is delegated to the **third-party role
-`get_sybers.range_exchange_install`**, vendored at `ansible/roles/get_sybers.range_exchange_install/` (upstream
-is unmaintained; the copy is verbatim except for the Exchange 2019 CU12+ license switch, which
-its `meta/upstream.yml` records) and installed by `ludus source add` under its upstream name.
+The actual Exchange install is delegated to **`get_sybers.range_exchange_install`**, the
+third-party installer vendored at `ansible/roles/get_sybers.range_exchange_install/` (upstream
+`aleemladha/ludus_exchange` is unmaintained; the copy is verbatim except for the Exchange 2019
+CU12+ license switch, which its `meta/upstream.yml` records) and installed by `ludus source add`
+under that name, alongside this role.
 It is `include_role`'d from `install.yml` and is deliberately **not** a
 `meta/main.yml` dependency: a meta dependency would run it *before* this role's forest-root
 join, which would break Setup. It is instead invoked at the right point in the sequence and
@@ -18,7 +19,7 @@ only needs to be installed alongside this role. The baked ISO/prereqs marker in 
 download and prerequisite installs, so the deploy-time work is Setup only. **This role does not
 modify `get_sybers.range_exchange_install`**; the vendored copy's single patch lives in that role's own
 tree, not here.
-`main.yml` is the only entry point; it derives the host's forest facts (the `_rex_*`
+`main.yml` is the only entry point; it derives the host's forest facts (the `__rex_*`
 `set_fact`s) and then runs the includes below **in order**. Because they consume those derived
 facts, they are not independently invocable.
 
@@ -27,8 +28,15 @@ facts, they are not independently invocable.
 | `join.yml` | leave the child domain, free the stale forest-wide SPN, join the forest root |
 | `install.yml` | install Exchange via `get_sybers.range_exchange_install`, then register the org's Authoritative Accepted Domain |
 | `org-config.yml` | mail-enable every AD group as a distribution group, then build the cross-forest send-connector mesh |
-| name | default purpose |
 
+The role has run end to end on a deployed FGNW range, applied by
+`ludus range deploy --only-roles get_sybers.range_exchange,get_sybers.range_exchange_seed -t user-defined-roles`
+against `konoha-mail`. The forest-root join, Setup from the baked media (`/PrepareSchema`,
+`/PrepareAD`, the Mailbox-role install), the Accepted Domain, the group mail-enable and the
+send-connector mesh all completed with `failed=0`, and OWA served its logon page as Exchange 2019
+CU15 (`15.2.1748.10`) afterwards.
+
+| name | default | purpose |
 | --- | --- | --- |
 | `range_exchange_admin_password` | `password` | Shared lab domain-admin (forest-root Administrator) password. |
 | `range_exchange_domainjoin_map` | see `defaults/main.yml` | Forest-ROOT join target (domain + DC IP) per `-mail` host. |
@@ -41,7 +49,8 @@ facts, they are not independently invocable.
 | `range_exchange_nexus_vcredist` | Nexus `vcredist2013_x64` URL | VC++ 2013 prereq URL (self-skipped when baked). |
 | `range_exchange_nexus_rewrite` | Nexus `rewrite_amd64` URL | IIS URL Rewrite prereq URL (self-skipped when baked). |
 | `range_exchange_nexus_ucma` | Nexus `UcmaRuntimeSetup` URL | UCMA 4.0 runtime prereq URL (self-skipped when baked). |
-The maps are keyed by the `-mail` suffix derived from the VM name; the `_rex_*` variables are
+
+The maps are keyed by the `-mail` suffix derived from the VM name; the `__rex_*` variables are
 `set_fact` intermediates, not inputs, and are excluded from `meta/argument_specs.yml`.
 Standing up Exchange is itself the point: it adds a large, historically vulnerable service to
 the range and wires it for cross-forest mail. It hardens nothing.

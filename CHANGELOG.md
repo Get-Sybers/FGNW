@@ -18,6 +18,17 @@ has no release tag yet.
 
 ## [Unreleased]
 
+### Changed — the Exchange role docs state the verified deploy as fact
+
+- `ansible/roles/get_sybers.range_exchange/README.md` no longer says the vendored installer is
+  installed "under its upstream name" (it has been `get_sybers.range_exchange_install` since the
+  vendoring), its inputs table renders again (its header row had been folded into the include
+  table above it), and both Exchange READMEs spell the derived-fact prefixes as the code does
+  (`__rex_*`, `__rxs_*`). Both READMEs now state that the roles ran end to end on a deployed
+  range: the forest-root join, Setup from the baked media, the Accepted Domain, the group
+  mail-enable, the send-connector mesh and the full mail seed completed with no failed task, and
+  OWA served its logon page as Exchange 2019 CU15 afterwards.
+
 ### Fixed — Exchange 2019 CU15 Setup accepts the license again (role vendored)
 
 - **The Exchange installer is vendored at `ansible/roles/get_sybers.range_exchange_install/` with
