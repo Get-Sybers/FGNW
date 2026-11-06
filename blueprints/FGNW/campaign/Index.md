@@ -83,6 +83,7 @@ blueprints/FGNW/
 | [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md) | Failure runbook — rangeState=ERROR recovery, Nexus issues, Exchange errors, AD build failures, sysmon_linux timing | When something breaks |
 | [`docs/deploy-verification-checklist.md`](docs/deploy-verification-checklist.md) | Post-deploy checks — per-subsystem pass/fail assertions | After every full deploy |
 | [`docs/CLIENT-DEPLOY.md`](docs/CLIENT-DEPLOY.md) | Client-side deploy path (Ludus CLI over the v2 API) — builds the range VMs + native AD and containment; the scenario tail runs server-side via `deploy.yml` | When driving the range build from a client |
+| [`docs/isolate-testing.md`](docs/isolate-testing.md) | Contained-range operations — what `ludus testing start`/`stop` do on the router, why every `testing allow` must be re-issued after `start`, the operator allow-list (`testing-allow.txt`, gitignored; `.example` is the template), and why a collector's client goes in before containment | Before Phase 2; whenever the range re-enters testing mode |
 | Doc | What it covers | |
 
 | --- | --- |
