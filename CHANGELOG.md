@@ -18,6 +18,21 @@ has no release tag yet.
 
 ## [Unreleased]
 
+### Fixed — the appxfix images disable the Edge updater's scheduled tasks too
+
+- **`remove-appx-sysprep-blockers.ps1` (win2022-server-x64-appxfix, win2022-exchange2019-x64,
+  win10-22h2-x64-enterprise-appxfix) now disables the `MicrosoftEdgeUpdateTaskMachineCore` /
+  `…UA` scheduled tasks and sets the per-app update policy, not only the two services.** The
+  tasks launch `MicrosoftEdgeUpdate.exe` directly, so on a deployed clone the updater still ran
+  with the services disabled, installed a newer Edge, and Edge's installer registered the
+  `Microsoft.MicrosoftEdge.Stable` sparse package for the logged-on user; the first deploy-time
+  Sysprep then failed on it ("installed for a user, but not provisioned for all users",
+  0x80073cf2) and fell back to Ludus's remove-and-retry rescue, costing a full extra Sysprep
+  cycle on the DCs that had run longest before their batch. The win10 image had no updater
+  handling at all. A running updater is stopped, the tasks are stopped and disabled, and
+  `UpdateDefault`, `Update{56EB18F8-…}` (the Stable channel) and `AutoUpdateCheckPeriodMinutes`
+  are set to 0. Rebuild the three templates to pick it up.
+
 ### Changed — template docs state the build status as fact
 
 - `templates/macos-sequoia-15/README.md`, its `Building.md` and the `macos_template` role README no
