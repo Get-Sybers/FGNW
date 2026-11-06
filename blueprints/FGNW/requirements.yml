@@ -8,9 +8,9 @@ roles:
   # its FINALIZE phase, so that role would be redundant here.
   - name: geerlingguy.dotfiles
     version: 1.3.2
-  # aleemladha.ludus_exchange is no longer installed from GitHub: upstream is
+  # get_sybers.range_exchange_install is no longer installed from GitHub: upstream is
   # unmaintained and its Setup switch fails on Exchange 2019 CU12+, so the role
-  # is vendored at ansible/roles/aleemladha.ludus_exchange/ (provenance and the
+  # is vendored at ansible/roles/get_sybers.range_exchange_install/ (provenance and the
   # one patch in its meta/upstream.yml) and `ludus source add` installs it from
   # there under the same name.
 collections:

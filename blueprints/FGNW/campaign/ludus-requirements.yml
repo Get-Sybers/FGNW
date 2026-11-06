@@ -208,7 +208,7 @@ ludus_deploy_tags:
       note: >-
         plays 37–39 — every `roles:` entry in each VM's range config block runs here.
         This is the sole authoring point: all get_sybers.* task-roles plus
-        jasonmull.ludus_ghosts_client / aleemladha.ludus_exchange are applied here,
+        jasonmull.ludus_ghosts_client / get_sybers.range_exchange_install are applied here,
         per-VM, in the order they appear. (The GHOSTS server is not a VM: phase 1b
         creates it as a get_sybers.lxc container.)
         See local_task_roles above for the full list.

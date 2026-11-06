@@ -135,7 +135,7 @@ ansible-playbook deploy.yml -e range_fresh=true
    and documented, never as a manual live-only command that containment would later break.
 4. **Contain immediately after VM deploy** — Phase 2 runs directly after Phase 1.
 5. **Exchange is default** — Phase 4b runs by default; `-e range_skip_exchange=true` opts
-   out. ⚠️ The `aleemladha.ludus_exchange` role uses an Exchange 2019 ISO cached at
+   out. ⚠️ The `get_sybers.range_exchange_install` role uses an Exchange 2019 ISO cached at
    `/opt/ludus/resources/iso` when it is present and otherwise attempts a ~6 GB download, which
    Phase-2 containment blocks. Stage the ISO before Phase 4b, or deploy with
    `-e range_skip_exchange=true`. See TROUBLESHOOTING.md.
@@ -389,10 +389,10 @@ ansible-playbook -i /tmp/infra-inv.yml FGNW-owa-cert.yml
 
 Both playbooks need `ANSIBLE_ROLES_PATH=/opt/ludus/users/range-admin/.ansible/roles`
 exported first when run directly via `ansible-playbook` (not through `ludus range deploy`,
-which sets this automatically) — otherwise the `aleemladha.ludus_exchange` role, which `blueprints/FGNW/requirements.yml`
-installs from its GitHub repository, won't resolve.
+which sets this automatically) — otherwise the `get_sybers.range_exchange_install` role, which
+`ludus source add` installs from this source (`ansible/roles/`) into that path, won't resolve.
 
-- **Cached ISO — avoid the ~6 GB download.** The `aleemladha.ludus_exchange` role caches the
+- **Cached ISO — avoid the ~6 GB download.** The `get_sybers.range_exchange_install` role caches the
   Exchange 2019 CU15 ISO (~6.0 GB) at
   `/opt/ludus/resources/iso/ExchangeServer2019-x64-cu15.iso` and guards its download step with
   `when: not exchange_iso_check.stat.exists`, so when the ISO is staged there the download is

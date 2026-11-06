@@ -7,7 +7,7 @@ fail_fast: false
 # byte-for-byte (sha256 / manifest recorded in the role's meta/upstream.yml,
 # BOMs and all); the formatting hooks must not touch them or the recorded
 # hashes stop matching the committed bytes.
-exclude: (^|/)(testdata|vendor|third_party|node_modules|files/upstream|files/subscriptions)/|^ansible/roles/aleemladha\.ludus_exchange/
+exclude: (^|/)(testdata|vendor|third_party|node_modules|files/upstream|files/subscriptions)/|^ansible/roles/get_sybers\.range_exchange_install/
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0

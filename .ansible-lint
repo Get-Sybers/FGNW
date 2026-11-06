@@ -26,7 +26,7 @@ exclude_paths:
   - blueprints/FGNW/campaign/ansible/roles/wireshark/
   # aleemladha.ludus_exchange carried verbatim (meta/upstream.yml) plus the one
   # CU12+ license-switch patch; upstream's style, linted upstream, not here.
-  - ansible/roles/aleemladha.ludus_exchange/
+  - ansible/roles/get_sybers.range_exchange_install/
   # INI inventories that the AD-build chain (and its docs) address by these
   # .yml names; they are not YAML and cannot be parsed as such.
   - blueprints/FGNW/campaign/ad/NARUTO/providers/ludus/inventory.yml

@@ -1,6 +1,6 @@
 ---
 schema_version: 1
-role: aleemladha.ludus_exchange
+role: get_sybers.range_exchange_install
 baseline: aleemladha/ludus_exchange — Exchange 2016/2019 install for Ludus ranges
 status: vendored
 derived_from:
@@ -13,18 +13,20 @@ derived_from:
     licence_holder: aleemladha
     licence_note: >-
       Upstream ships no LICENSE file; the licence is the one its meta/main.yml
-      galaxy_info declares (GPLv3). The vendored role keeps that meta verbatim.
+      galaxy_info declares (GPLv3). This vendored copy stays GPL-3.0-only — the
+      task logic is upstream's GPLv3 code.
     relationship: vendored-verbatim-plus-patch
     note: >-
       Carried in-tree because upstream is unmaintained (no commits since
       2024-10-16, this commit is its HEAD) and Exchange 2019 CU12+ Setup rejects
       the bare /IAcceptExchangeServerLicenseTerms switch it hardcodes; the
-      blueprint pinned this exact commit from GitHub before vendoring. The
-      directory keeps upstream's author.role_name so Ludus installs it under
-      the name get_sybers.range_exchange include_role's it by. Upstream ships
-      most files with CRLF line endings; the repo's .gitattributes stores them
-      LF, so every sha256 below is of the LF form (verify with
-      `diff --strip-trailing-cr`, see the verify block).
+      blueprint pinned this exact commit from GitHub before vendoring. The role
+      is renamed to the house namespace (get_sybers.range_exchange_install) by
+      rewriting meta/main.yml only — Ludus installs it under that name, which
+      get_sybers.range_exchange include_role's; every task file is upstream's.
+      Upstream ships most files with CRLF line endings; the repo's
+      .gitattributes stores them LF, so every sha256 below is of the LF form
+      (verify with `diff --strip-trailing-cr`, see the verify block).
     vendored:
       - local: README.md
         upstream: README.md
@@ -32,9 +34,6 @@ derived_from:
       - local: defaults/main.yml
         upstream: defaults/main.yml
         sha256: edb42dcb114ab4773d1e30a84b7eb53b7f3131a36193ce1e0a1e88e1e064652d
-      - local: meta/main.yml
-        upstream: meta/main.yml
-        sha256: 24cee218fc2245f9063486bd7d593c2b975623b6f82d34e51a03f7ad417d0110
       - local: tasks/main.yml
         upstream: tasks/main.yml
         sha256: 405a027db00cf42fa2201ee82f5b3e30c542acb07fa91606e96f93b26fea2c40
@@ -57,6 +56,13 @@ derived_from:
         upstream: tasks/ludus_sendconnector.yml
         sha256: 5e7de2914c13d36ac386f507bc0d809f44ad5c6ae570b94b4a06c27b9d9856ba
     derived:
+      - local: meta/main.yml
+        from: meta/main.yml
+        note: >-
+          Rewritten to the house namespace (author Get-Sybers, namespace
+          get_sybers, role_name range_exchange_install) so Ludus installs the
+          role as get_sybers.range_exchange_install. Licence kept GPL-3.0-only.
+          No task logic here — this is the only metadata change.
       - local: tasks/ludus-exchange-2019-install.yml
         from: tasks/ludus-exchange-2019-install.yml
         note: >-
@@ -73,7 +79,8 @@ derived_from:
 verify: |
   git clone --depth 1 https://github.com/aleemladha/ludus_exchange /tmp/ludus_exchange
   # verbatim files — identical to upstream once line endings are normalised
-  for f in README.md defaults/main.yml meta/main.yml tasks/main.yml \
+  # (meta/main.yml is excluded: it is our namespace rewrite, see derived below)
+  for f in README.md defaults/main.yml tasks/main.yml \
            tasks/ludus-create-mailbox.yml tasks/ludus-download-exchange-2016.yml \
            tasks/ludus-download-exchange-2019.yml tasks/ludus-exchange-pre.yml \
            tasks/ludus-exchange-rights.yml tasks/ludus_sendconnector.yml; do

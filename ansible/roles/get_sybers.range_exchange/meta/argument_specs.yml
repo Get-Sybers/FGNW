@@ -4,8 +4,8 @@ argument_specs:
     short_description: Install and configure real Exchange 2019 on an FGNW -mail VM (forest-root join, org config, connector mesh)
     description:
       - Derives this host's forest identity from its VM name, joins it to the forest root, installs Exchange Server 2019 by include_role of the vendored
-        third-party C(aleemladha.ludus_exchange) (which self-skips the ISO/prereqs baked into the win2022-exchange2019 template and runs Setup only), registers
-        the org's Accepted Domain, mail-enables the forest's AD groups and builds the cross-forest send-connector mesh.
+        third-party C(get_sybers.range_exchange_install) (which self-skips the ISO/prereqs baked into the win2022-exchange2019 template and runs Setup
+        only), registers the org's Accepted Domain, mail-enables the forest's AD groups and builds the cross-forest send-connector mesh.
       - Runs on each -mail VM LAST in the role order (AD must be up), at the Ludus user-defined-roles stage (S2).
     options:
       range_exchange_admin_password:
@@ -40,8 +40,8 @@ argument_specs:
         type: str
         default: https://download.microsoft.com/download/7/0/a/70a4d908-eacb-426e-ad9f-e7768e27f873/ExchangeServer2019-x64-cu15.iso
         description:
-          - Exchange 2019 CU15 ISO URL passed through to aleemladha.ludus_exchange. Unreachable once the range is contained; the baked-prereqs marker self-skips
-            the download.
+          - Exchange 2019 CU15 ISO URL passed through to get_sybers.range_exchange_install. Unreachable once the range is contained;
+            the baked-prereqs marker self-skips the download.
       range_exchange_nexus_dotnet:
         type: str
         default: http://192.0.2.2:8081/repository/raw-hosted/tools/exchange/ndp48-x86-x64-allos-enu.exe
