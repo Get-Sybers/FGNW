@@ -1,6 +1,7 @@
 ---
 galaxy_info:
   author: Get-Sybers
+  namespace: get_sybers
   description: >
     Point an apt-based range VM at the Nexus apt proxies (192.0.2.2:8081) instead of the stock
     public repos, so apt works inside the contained range: Debian -> debian-proxy /

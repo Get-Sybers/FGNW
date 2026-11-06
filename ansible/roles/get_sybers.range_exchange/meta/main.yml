@@ -1,6 +1,7 @@
 ---
 galaxy_info:
   author: Get-Sybers
+  namespace: get_sybers
   description: >
     Install and configure real Exchange Server 2019 on an FGNW -mail VM at the Ludus
     user-defined-roles stage: forest-root domain-join, Setup (via aleemladha.ludus_exchange,

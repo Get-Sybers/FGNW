@@ -1,6 +1,7 @@
 ---
 galaxy_info:
   author: Get-Sybers
+  namespace: get_sybers
   description: >
     Set the domain default password policy on a DC, loosened to admit the lab's short
     contract passwords (used ahead of get_sybers.range_ad_mgmt). Source-delivered adaptation

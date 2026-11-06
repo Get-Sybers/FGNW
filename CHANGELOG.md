@@ -33,6 +33,16 @@ has no release tag yet.
   `UpdateDefault`, `Update{56EB18F8-…}` (the Stable channel) and `AutoUpdateCheckPeriodMinutes`
   are set to 0. Rebuild the three templates to pick it up.
 
+### Fixed — the range roles install under the name the range config uses
+
+- **`get_sybers.range_ad_mgmt`, `range_exchange`, `range_exchange_seed`, `range_nexus_apt` and
+  `range_password_policy` declare `galaxy_info.namespace: get_sybers`.** Ludus names an installed
+  source role `<namespace>.<role_name>` and falls back to `galaxy_info.author` when there is no
+  namespace, so these five — whose author is `Get-Sybers` — landed on the server as
+  `Get-Sybers.range_*`, and `ludus range config set` of the FGNW blueprint refused the config with
+  *the role 'get_sybers.range_password_policy' does not exist on the Ludus server*. The other
+  roles already carried the namespace. Re-add the source's roles with `--force` after updating.
+
 ### Changed — template docs state the build status as fact
 
 - `templates/macos-sequoia-15/README.md`, its `Building.md` and the `macos_template` role README no
