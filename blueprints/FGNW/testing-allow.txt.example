@@ -1,0 +1,20 @@
+# Operator egress allow-list for a contained FGNW range. Applied with
+#
+#   ludus testing allow -f blueprints/FGNW/testing-allow.txt
+#
+# after EVERY `ludus testing start` -- `ludus testing stop` flushes the list and
+# `testing start` rebuilds the router chain from the range config alone.
+# See campaign/docs/isolate-testing.md.
+#
+# One IP or domain per line, starting at column 1. Lines that do not begin with
+# an IP or domain (comments, blank lines) are ignored. Copy this file to
+# testing-allow.txt (gitignored: it names YOUR collectors) and edit the entries.
+
+# A collector outside the range that the VMs report to (Velociraptor frontend,
+# SIEM forwarder, ...). Replace the RFC 5737 placeholder with your server's IP.
+203.0.113.10
+
+# Nexus -- only needed when a campaign or role step that pulls from it runs
+# while testing is on. deploy.yml's Phase 2 already allow-lists it; a range
+# contained by hand does not have it until this file is applied.
+192.0.2.2
