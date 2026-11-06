@@ -3,6 +3,44 @@ if (-not (Test-Path 'C:\ludus')) {
     New-Item -ItemType Directory -Path 'C:\ludus' | Out-Null
 }
 Start-Transcript -Path C:\ludus\setup-log.txt -Append
+Write-Output '=== remove-appx-sysprep-blockers: disabling the Edge updater (services, scheduled tasks, policy) ==='
+# Removing the blockers at bake time is not enough on its own: the Edge updater
+# (two services plus the MicrosoftEdgeUpdateTaskMachineCore / ...UA scheduled
+# tasks, which launch MicrosoftEdgeUpdate.exe directly) still runs on a clone,
+# installs a newer Edge, and Edge's installer registers the
+# Microsoft.MicrosoftEdge.Stable sparse package for the logged-on user - which the
+# next sysprep fails on ("installed for a user, but not provisioned for all
+# users", 0x80073cf2). All three doors are closed here: services, tasks, and the
+# update policy for both the default and the Stable-channel app id.
+Get-Process -Name 'MicrosoftEdgeUpdate' -ErrorAction SilentlyContinue |
+    Stop-Process -Force -ErrorAction SilentlyContinue
+foreach ($svc in @('edgeupdate', 'edgeupdatem')) {
+    if (Get-Service -Name $svc -ErrorAction SilentlyContinue) {
+        Stop-Service  -Name $svc -Force        -ErrorAction SilentlyContinue
+        Set-Service   -Name $svc -StartupType Disabled -ErrorAction SilentlyContinue
+        Write-Output ("Disabled service: {0}" -f $svc)
+    } else {
+        Write-Output ("Service not present (ok): {0}" -f $svc)
+    }
+}
+$updateTasks = @(Get-ScheduledTask -TaskName 'MicrosoftEdgeUpdate*' -ErrorAction SilentlyContinue)
+if ($updateTasks.Count -eq 0) {
+    Write-Output 'No EdgeUpdate scheduled task present (ok).'
+}
+foreach ($task in $updateTasks) {
+    $task | Stop-ScheduledTask -ErrorAction SilentlyContinue
+    $task | Disable-ScheduledTask | Out-Null
+    Write-Output ("Disabled scheduled task: {0}" -f $task.TaskName)
+}
+$regPath = 'HKLM:\SOFTWARE\Policies\Microsoft\EdgeUpdate'
+if (-not (Test-Path $regPath)) {
+    New-Item -Path $regPath -Force | Out-Null
+}
+New-ItemProperty -Path $regPath -Name 'UpdateDefault' -Value 0 -PropertyType DWord -Force | Out-Null
+# {56EB18F8-B008-4CBD-B6D2-8C97FE7E9062} is the Edge Stable channel app id.
+New-ItemProperty -Path $regPath -Name 'Update{56EB18F8-B008-4CBD-B6D2-8C97FE7E9062}' -Value 0 -PropertyType DWord -Force | Out-Null
+New-ItemProperty -Path $regPath -Name 'AutoUpdateCheckPeriodMinutes' -Value 0 -PropertyType DWord -Force | Out-Null
+Write-Output 'Set EdgeUpdate policy: UpdateDefault=0, Update{Stable}=0, AutoUpdateCheckPeriodMinutes=0.'
 Write-Output '=== remove-appx-sysprep-blockers: state before removal ==='
 function Get-Blockers {
     $provisionedNames = @(Get-AppxProvisionedPackage -Online | ForEach-Object { $_.DisplayName })

@@ -6,9 +6,13 @@ radius and survives upgrades.
 **The only functional change from stock** is one added provisioner, run as the
 final build step: `scripts/remove-appx-sysprep-blockers.ps1`, which (a) removes
 **every** AppX package meeting the installed-but-not-provisioned blocker
-condition (not just Edge, by name) and (b) disables the EdgeUpdate service pair
-(`edgeupdate` / `edgeupdatem`) and sets `UpdateDefault=0` policy so the updater
-cannot re-register a per-user Edge AppX between clone and sysprep. Everything
+condition (not just Edge, by name) and (b) disables the Edge updater completely —
+the `edgeupdate` / `edgeupdatem` services, the `MicrosoftEdgeUpdateTaskMachine*`
+scheduled tasks (which launch `MicrosoftEdgeUpdate.exe` on their own, so disabling
+the services alone leaves the updater running on a clone) and the update policy
+(`UpdateDefault=0`, `Update{<Stable app id>}=0`, `AutoUpdateCheckPeriodMinutes=0`)
+— so the updater cannot install a newer Edge and re-register a per-user Edge AppX
+between clone and sysprep. Everything
 else is the stock build with the shared `../common`, `../scripts` and
 `../ansible` files vendored into `iso/`, `scripts/` and `ansible/` so the
 directory is self-contained for `ludus templates add -d`.
