@@ -1,9 +1,112 @@
 ---
-# macOS branch: Thunderbird itself was installed as a Homebrew cask in Phase 1c
-# (FGNW-mac-dev.yml -> homebrew_casks: [thunderbird]), because Phase 2 containment
-# seals internet egress and a `brew install --cask` would fail at this point. This
-# branch only drops the enterprise policies.json alongside the app bundle, which
-# Thunderbird reads at launch.
+# macOS branch: install Thunderbird.app from the DMG cached on the range Nexus (raw-hosted)
+# when the app is absent or not the pinned version, then drop the enterprise policies.json
+# alongside the bundle (Thunderbird reads it at launch). A Homebrew cask cannot do this inside
+# Phase 2 containment, and nothing earlier in the campaign stages the app, so the role brings
+# its own installer the same way the Windows branch does.
+- name: "macos | Read the installed Thunderbird version (empty when absent)"
+  ansible.builtin.command:
+    argv:
+      - defaults
+      - read
+      - "{{ fgnw_thunderbird_mac_app }}/Contents/Info.plist"
+      - CFBundleShortVersionString
+  register: __fgnw_thunderbird_installed
+  changed_when: false
+  failed_when: false
+
+- name: "macos | Decide whether to install: absent, or not version {{ fgnw_thunderbird_version }}"
+  ansible.builtin.set_fact:
+    __fgnw_thunderbird_install: >-
+      {{ not ((__fgnw_thunderbird_installed.rc | default(1)) == 0
+              and ((__fgnw_thunderbird_installed.stdout | trim) == (fgnw_thunderbird_version | string)
+                   or (__fgnw_thunderbird_installed.stdout | trim).startswith((fgnw_thunderbird_version | string) ~ '.'))) }}
+
+- name: "macos | Install Thunderbird from Nexus, version {{ fgnw_thunderbird_version }}"
+  when: __fgnw_thunderbird_install | bool
+  block:
+    - name: "macos | Ensure the staging directory exists"
+      ansible.builtin.file:
+        path: "{{ fgnw_thunderbird_mac_staging_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: "macos | Fetch the DMG from Nexus (sha512-pinned)"
+      ansible.builtin.get_url:
+        url: "{{ fgnw_thunderbird_nexus_tools_url }}/{{ fgnw_thunderbird_mac_dmg }}"
+        dest: "{{ fgnw_thunderbird_mac_staging_dir }}/{{ fgnw_thunderbird_mac_dmg }}"
+        checksum: "sha512:{{ fgnw_thunderbird_mac_sha512 }}"
+        mode: "0644"
+
+    - name: "macos | Attach the DMG"
+      ansible.builtin.command:
+        argv:
+          - hdiutil
+          - attach
+          - "-nobrowse"
+          - "-readonly"
+          - "-mountpoint"
+          - "{{ fgnw_thunderbird_mac_staging_dir }}/mnt"
+          - "{{ fgnw_thunderbird_mac_staging_dir }}/{{ fgnw_thunderbird_mac_dmg }}"
+      become: true
+      changed_when: true
+
+    - name: "macos | Replace any previous app bundle"
+      ansible.builtin.file:
+        path: "{{ fgnw_thunderbird_mac_app }}"
+        state: absent
+      become: true
+
+    - name: "macos | Copy Thunderbird.app into /Applications"
+      ansible.builtin.command:
+        argv:
+          - ditto
+          - "{{ fgnw_thunderbird_mac_staging_dir }}/mnt/Thunderbird.app"
+          - "{{ fgnw_thunderbird_mac_app }}"
+      become: true
+      changed_when: true
+
+    - name: "macos | Clear a quarantine flag, if any, on the new bundle"
+      ansible.builtin.command:
+        argv:
+          - xattr
+          - "-dr"
+          - com.apple.quarantine
+          - "{{ fgnw_thunderbird_mac_app }}"
+      become: true
+      changed_when: false
+      failed_when: false
+
+  always:
+    - name: "macos | Detach the DMG"
+      ansible.builtin.command:
+        argv:
+          - hdiutil
+          - detach
+          - "{{ fgnw_thunderbird_mac_staging_dir }}/mnt"
+      become: true
+      changed_when: false
+      failed_when: false
+
+    - name: "macos | Remove the staging directory"
+      ansible.builtin.file:
+        path: "{{ fgnw_thunderbird_mac_staging_dir }}"
+        state: absent
+      become: true
+
+- name: "macos | Verify the installed Thunderbird is version {{ fgnw_thunderbird_version }}"
+  ansible.builtin.command:
+    argv:
+      - defaults
+      - read
+      - "{{ fgnw_thunderbird_mac_app }}/Contents/Info.plist"
+      - CFBundleShortVersionString
+  register: __fgnw_thunderbird_verify
+  changed_when: false
+  failed_when: >-
+    not ((__fgnw_thunderbird_verify.stdout | trim) == (fgnw_thunderbird_version | string)
+         or (__fgnw_thunderbird_verify.stdout | trim).startswith((fgnw_thunderbird_version | string) ~ '.'))
+
 - name: "macos | Ensure the Thunderbird enterprise policies dir exists"
   ansible.builtin.file:
     path: "{{ fgnw_thunderbird_mac_distribution_dir }}"

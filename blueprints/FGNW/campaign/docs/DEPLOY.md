@@ -14,7 +14,7 @@ the same name:
 
 | Token | Runs | Phase |
 | --- | --- | --- |
-| `0` | `deploy-tasks/phase0-nexus.yml` | Nexus cache |
+| `0` | `deploy-tasks/phase0-nexus.yml` | Nexus cache — the `get_sybers.infra` seed, then `nexus-cache-thunderbird.yml` (the installers Phase `4e` installs from) |
 | `1` | `deploy-tasks/phase1-vms.yml` | `ludus range deploy` — VM build |
 | `1b` | `deploy-tasks/phase1b-ghost9.yml` | ghost9 CT — the GHOSTS 9.3.0 server, a `get_sybers.lxc` container created from the published ghost9 template (pre-containment) |
 | `1c` | `deploy-tasks/phase1c-macos-base.yml` | macOS dev base — Homebrew + mac-dev-playbook on the Sand macOS hosts (pre-containment; brew/cask fetches need egress) |
@@ -24,13 +24,13 @@ the same name:
 | `4b` | `deploy-tasks/phase4b-exchange.yml` | real Exchange + mail seed on the three remaining Exchange forests (Konoha / Oto / Akatsuki) |
 | `4c` | `deploy-tasks/phase4c-threat.yml` | threat emulation |
 | `4d` | `deploy-tasks/phase4d-mac-services.yml` | macOS service stack — `dsconfigad` AD bind to sunagakure.wind.ninja, then Postfix/Dovecot (Sand mail) + mac browser defaults + mac decoy files + GHOSTS Universal client |
-| `4e` | `deploy-tasks/phase4e-thunderbird.yml` | Thunderbird mail client — enable `MSExchangeIMAP4` on each village Exchange + install/preconfigure Thunderbird on every workstation (Konoha / Oto / Akatsuki Windows ws → village Exchange; Sand macOS ws → Postfix/Dovecot) |
+| `4e` | `deploy-tasks/phase4e-thunderbird.yml` | Thunderbird mail client — enable `MSExchangeIMAP4` on the Leaf Exchange + install/preconfigure Thunderbird from the Nexus-cached installers (Konoha Windows ws → `mail.konohagakure.fire.ninja`; Sand macOS ws → `mail.sunagakure.wind.ninja`, the Postfix/Dovecot Mac; Oto / Akatsuki have no mail server and are skipped) |
 | `5` | `deploy-tasks/phase5-emulation.yml`, then `deploy-tasks/phase5-verify.yml` | GHOSTS emulation, then verification |
 
 Token order is the execution order: `0 1 1b 1c 2 3 4 4b 4c 4d 4e 5`. Resuming at a token
 runs that phase and every phase after it.
 That list is defined once, in `campaign/vars/common.yml`, and loaded by `deploy.yml`.
-The deploy-pipeline version is `version:` in [`blueprint.yml`](../../blueprint.yml) (0.5.0). Bump
+The deploy-pipeline version is `version:` in [`blueprint.yml`](../../blueprint.yml) (0.6.0). Bump
 the minor when the phase sequence or a phase's contract changes, and record the change in the root
 `CHANGELOG.md`.
 
@@ -529,7 +529,7 @@ Or use the client/server orchestrator above — see the invocation sections earl
 
 | | | |
 | --- | --- | --- |
-| 0 | Nexus (once) | `ludus range deploy -t nexus` → `ansible-playbook /opt/ludus/users/range-admin/.ansible/collections/ansible_collections/get_sybers/infra/playbooks/nexus-setup.yml` |
+| 0 | Nexus (once) | `ludus range deploy -t nexus` → `ansible-playbook /opt/ludus/users/range-admin/.ansible/collections/ansible_collections/get_sybers/infra/playbooks/nexus-setup.yml` → `ansible-playbook nexus-cache-thunderbird.yml` (in `campaign/ansible/`; the Thunderbird installers for Phase 4e) |
 | 1 | VMs | `ansible-playbook deploy.yml` (sets `range-config.yml` and deploys it) |
 | 2 | Containment | `ludus testing start` |
 | 3 | AD build | Promotion / child domains / joins / the fire↔oto trust are **native** — they run in phase 1 `ludus range deploy` (see `range-config.yml`). Phase-3 tail only: materialize inventory → run `tgtdelegation.yml → ad-data.yml (fgnw_ad_mgmt content) → lat.yml → reboot.yml` (+ `adcs.yml`). Defender-disable is native now (`windows.gpos: [disable_defender]`, phase 1) |
@@ -537,6 +537,6 @@ Or use the client/server orchestrator above — see the invocation sections earl
 | 4b | Exchange (default) | `FGNW-exchange.yml` → `FGNW-exchange-seed-mail.yml` (`--limit konoha-mail`) → `FGNW-owa-cert.yml` (once) |
 | 4c | Campaign primitives | `FGNW-campaign-setup.yml` (Kerberoast SPN + AS-REP, Leaf) — runs against konoha-dc1 via provider inventory |
 | 4d | macOS services | `FGNW-mac-ad-bind.yml` → `FGNW-mac-mail.yml` (Sand Postfix/Dovecot) → `FGNW-mac-services.yml` |
-| 4e | Thunderbird | `FGNW-thunderbird.yml` (Exchange IMAP enable + Thunderbird on every workstation) |
+| 4e | Thunderbird | `FGNW-thunderbird.yml` (Exchange IMAP enable + Thunderbird on every workstation, installed from the Nexus-cached installers; the clients use the `mail.<domain>` records `dnsforwarder.yml` published in Phase 4) |
 | 5 | Emulation + Verify | `FGNW-ghosts-activity.yml` → `FGNW-verify-connectivity.yml` + `FGNW-verify-emulation.yml` |
 | 7 | Teardown | `ludus range rm` |

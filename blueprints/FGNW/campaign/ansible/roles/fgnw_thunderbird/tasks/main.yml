@@ -5,11 +5,12 @@
 # talks to the Sand Postfix/Dovecot stack) run the same account preconfiguration code path.
 #
 # Install vs. configure:
-#   * Windows path installs Thunderbird via Chocolatey (routed through the range's
-#     Nexus `chocolatey-proxy` repo at deploy time) AND drops the enterprise policies.json.
-#   * macOS path only drops the policies.json: Thunderbird itself is installed as a Homebrew
-#     cask in Phase 1c (`FGNW-mac-dev.yml` -> `homebrew_casks: [thunderbird]`), because
-#     Phase 2 containment seals internet egress and `brew install --cask` would fail here.
+#   * Both paths install Thunderbird from the installer cached on the range Nexus (raw-hosted)
+#     by nexus-cache-thunderbird.yml in Phase 0 — the Windows .exe or the macOS .dmg, pinned by
+#     version + Mozilla's sha512 — because Phase 2 containment seals internet egress and neither
+#     Chocolatey's `thunderbird` package (a stub that downloads from download.mozilla.org at
+#     install time) nor a Homebrew cask can fetch the installer from inside the range.
+#   * Both then drop the enterprise policies.json; the configure step is identical.
 #
 # The policies.json template is OS-agnostic — it's Mozilla's enterprise policy schema and
 # reads the same vars under both branches.

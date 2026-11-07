@@ -18,6 +18,49 @@ has no release tag yet.
 
 ## [Unreleased]
 
+### Fixed — Phase 4e installs Thunderbird inside containment, and its mail names resolve
+
+- **`fgnw_thunderbird` installs from the range Nexus instead of the internet.** The role ran
+  `chocolatey.chocolatey.win_chocolatey` with no source: the community `thunderbird` package is a
+  stub whose install script downloads the installer from `download.mozilla.org` at install time,
+  which Phase 2 containment blocks (Nexus's `chocolatey-proxy` mirrors the package metadata, never
+  that download), and the workstations' Chocolatey knew only the community source anyway. The
+  macOS branch expected a Homebrew cask from Phase 1c that no play installs. Both branches now
+  fetch Mozilla's installer from `raw-hosted/tools/` on the range Nexus, pinned to Mozilla's own
+  `SHA512SUMS`, install it silently when Thunderbird is absent or not
+  `fgnw_thunderbird_version` (142.0), verify the installed version, then write `policies.json`.
+  The Chocolatey vars are gone from the role (`defaults`, `argument_specs.yml`, `README.md`).
+- **`campaign/ansible/nexus-cache-thunderbird.yml` caches both installers on Nexus in Phase 0**,
+  while the controller still has internet, with the pins from the role's defaults;
+  `deploy-tasks/phase0-nexus.yml` runs it after `nexus-seed-all.yml`, and
+  `ludus-requirements.yml` lists the two artifacts. The play lifts `raw-hosted`'s strict
+  content-type validation only for the upload (Nexus classifies the xz-compressed DMG as
+  `application/x-xz` and refuses it under its `.dmg` name) and puts it back.
+- **The mail servers are addressed as `mail.<domain>`, the name the `dnsforwarder` role publishes.**
+  `vars/FGNW-thunderbird-map.yml` named `konoha-mail.konohagakure.fire.ninja` and
+  `suna-mail.sunagakure.wind.ninja`, which exist nowhere in range DNS (the Exchange VM registers
+  as `<range-id>-konoha-mail` in the forest-root zone; the Sand Mac never registers), so every
+  configured client pointed at an unresolvable host. The `dnsforwarder` probe now also accepts
+  TCP 22, so the Sand Postfix/Dovecot Mac, which has no WinRM, gets its
+  `mail.sunagakure.wind.ninja` record the way the Exchange host gets
+  `mail.konohagakure.fire.ninja`.
+- **The Exchange IMAP play now really sets `LoginType: PlainTextLogin`.** `FGNW-thunderbird.yml`
+  ran `Set-ImapSettings` as the local WinRM user, which holds no Exchange RBAC role:
+  `Get-ImapSettings` failed with "the supplied credential … is invalid", the loop ran over
+  nothing and the task reported `IMAP_LOGIN_TYPE_ALREADY_SET`, leaving the server on
+  `SecureLogin` (IMAP advertised `LOGINDISABLED`, so the cleartext login the clients are
+  configured for was refused). The task now runs as the forest-root Administrator with
+  `runas`, the way the other Exchange plays do (`vars/FGNW-thunderbird-imap.yml` carries the
+  map), stops on any error and verifies the login type after setting it.
+- `blueprints/FGNW/blueprint.yml` is 0.6.0: Phase 0 gained a step and Phase 4e's contract changed
+  (it needs the Nexus artifacts, not internet egress). `DEPLOY.md` and `Index.md` describe both.
+- Verified on a contained range (testing mode on, no egress carve-out beyond Nexus): the cache
+  play populated Nexus and skipped the artifact already there; the Windows branch installed
+  142.0 on a workstation wiped beforehand and skipped the four that had it; the macOS branch
+  installed from the DMG; every client's policy names `mail.<domain>`, which resolves from both
+  platforms once `dnsforwarder.yml` has run; and the Exchange IMAP service stopped advertising
+  `LOGINDISABLED` after the elevated task ran.
+
 ### Added — contained-range operations doc and the operator egress allow-list
 
 - `blueprints/FGNW/campaign/docs/isolate-testing.md` states, from the Ludus playbooks that

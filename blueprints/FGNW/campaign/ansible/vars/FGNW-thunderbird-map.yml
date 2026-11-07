@@ -1,10 +1,15 @@
 ---
 # Village AD domain → the FQDN of its mail server. Keyed by `ad_domain` from
 # content/ghosts/persona-timelines.yml so a workstation's mail server is derived
-# from its persona's domain (no per-host mapping to drift). Change the server
-# shortname here if a village mail server is ever renamed.
+# from its persona's domain (no per-host mapping to drift).
+#
+# The name is `mail.<domain>`: the A record the dnsforwarder role (Phase 4) publishes on
+# each village DC for the VM at 10.<range>.<village VLAN>.20. No other name for the mail
+# servers exists in range DNS — the VMs themselves register under their Ludus hostnames
+# (`<range-id>-konoha-mail`, in the forest-root zone for Exchange) and the Sand Mac never
+# registers at all — so a workstation configured with any other name cannot resolve it.
 __fgnw_village_mail_fqdn:
-  konohagakure.fire.ninja: "konoha-mail.konohagakure.fire.ninja"
-  sunagakure.wind.ninja: "suna-mail.sunagakure.wind.ninja"
+  konohagakure.fire.ninja: "mail.konohagakure.fire.ninja"
+  sunagakure.wind.ninja: "mail.sunagakure.wind.ninja"
 # Oto and Akatsuki have no mail server, so they are absent here; FGNW-thunderbird.yml
 # skips any workstation whose ad_domain is not a key in this map.

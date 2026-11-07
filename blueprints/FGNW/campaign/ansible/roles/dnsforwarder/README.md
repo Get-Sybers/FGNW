@@ -4,7 +4,9 @@ Cross-village name resolution for the range's domain controllers. On every DC th
 publishes a DNS conditional forwarder for each other AD domain of the range, pointing at that
 domain's DC, and registers the forest's `mail` A record when the forest's mail server is up. The
 outcome is that a host in one village resolves the names, and the mail server, of every other
-village.
+village. That `mail.<domain>` record is the only name range DNS has for a mail server (the
+Exchange VM registers under its Ludus hostname in the forest-root zone; the Sand Mac never
+registers), and it is what `vars/FGNW-thunderbird-map.yml` configures the Thunderbird clients with.
 
 ## What it does
 
@@ -14,11 +16,12 @@ village.
    than the DC's own (`ansible_facts['domain']`), forwarding to `hostvars[dc_host]['ansible_host']`.
 3. Looks the DC's own domain up in `dnsforwarder_mail_owa_vlan_octet`. When the domain has an
    entry, the role composes the mail server's address as `10.<range>.<octet>.20`, where
-   `<range>` is the second octet of the DC's own `ansible_host`, and probes TCP 5986 on it for
-   three seconds.
-4. When the probe answers, `ansible.windows.win_dns_record` registers `mail.<domain>` as an A
+   `<range>` is the second octet of the DC's own `ansible_host`, and probes it for three seconds
+   on TCP 5986 (an Exchange host), then on TCP 22 (the Sand Postfix/Dovecot Mac, which runs no
+   WinRM).
+4. When either probe answers, `ansible.windows.win_dns_record` registers `mail.<domain>` as an A
    record for that address in the DC's own zone. A domain without an entry in the map, or a mail
-   host that does not answer on 5986, gets no record from this role.
+   host that answers on neither port, gets no record from this role.
 
 The `dnsforwarder_domains` default lists the six domains of the range.
 

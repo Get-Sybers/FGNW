@@ -24,11 +24,15 @@
   ansible.builtin.set_fact:
     __dnsforwarder_owa_ip: 10.{{ ansible_host.split('.')[1] }}.{{ __dnsforwarder_owa_octet }}.20
   when: __dnsforwarder_owa_octet != ''
-- name: Probe whether this forest's -owa VM is deployed (TCP 5986)
+- name: Probe whether this forest's mail VM is deployed (TCP 5986 on an Exchange host, 22 on the Sand Postfix/Dovecot Mac)
   ansible.windows.win_shell: |
-    $c = New-Object System.Net.Sockets.TcpClient
-    try { $ok = $c.ConnectAsync("{{ __dnsforwarder_owa_ip }}", 5986).Wait(3000) } catch { $ok = $false } finally { $c.Close() }
-    if ($ok) { "OWA_PRESENT" } else { "OWA_ABSENT" }
+    $ok = $false
+    foreach ($port in 5986, 22) {
+      $c = New-Object System.Net.Sockets.TcpClient
+      try { if ($c.ConnectAsync("{{ __dnsforwarder_owa_ip }}", $port).Wait(3000) -and $c.Connected) { $ok = $true } } catch { $ok = $ok } finally { $c.Close() }
+      if ($ok) { break }
+    }
+    if ($ok) { "MAIL_PRESENT" } else { "MAIL_ABSENT" }
   register: __dnsforwarder_owa_probe
   changed_when: false
   failed_when: false
@@ -45,4 +49,4 @@
   failed_when: false
   when:
     - __dnsforwarder_owa_octet != ''
-    - "'OWA_PRESENT' in (__dnsforwarder_owa_probe.stdout | default(''))"
+    - "'MAIL_PRESENT' in (__dnsforwarder_owa_probe.stdout | default(''))"

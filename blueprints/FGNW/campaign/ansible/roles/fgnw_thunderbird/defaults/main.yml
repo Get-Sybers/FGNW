@@ -5,14 +5,38 @@
 #
 # Everything below is a lab-safe installer / path / protocol default that holds across villages.
 
-# --- Windows install (chocolatey through Nexus `chocolatey-proxy`) ---
-fgnw_thunderbird_choco_package: thunderbird
-fgnw_thunderbird_choco_version: ""   # empty => latest from Nexus mirror
-fgnw_thunderbird_ignore_checksums: true
+# --- Installer source: the range Nexus (raw-hosted) ---
+# Both installers are cached on Nexus before containment by
+# campaign/ansible/nexus-cache-thunderbird.yml (Phase 0) and fetched from there by this role,
+# because Phase 2 seals internet egress: neither Chocolatey (whose community `thunderbird`
+# package only downloads the installer from download.mozilla.org at install time) nor Homebrew
+# can reach Mozilla from a contained range. The sha512 pins are Mozilla's own, from
+# https://archive.mozilla.org/pub/thunderbird/releases/<version>/SHA512SUMS. Bump the version
+# and both pins together, then re-run the Phase 0 cache play before the next containment.
+fgnw_thunderbird_version: "142.0"
+fgnw_thunderbird_nexus_tools_url: http://192.0.2.2:8081/repository/raw-hosted/tools
+fgnw_thunderbird_win_installer: "thunderbird-{{ fgnw_thunderbird_version }}-win64-en-US.exe"
+fgnw_thunderbird_win_sha512: 4b382ac48c9f4d4f9ba1dffa730120d6147d18812298b2da5f50d5dfdf4ae28640a20140aa6f9f35812188764bc6ef11028d0ff9a8e95a2bcca266193d5eb75e
+fgnw_thunderbird_mac_dmg: "thunderbird-{{ fgnw_thunderbird_version }}-mac-en-US.dmg"
+fgnw_thunderbird_mac_sha512: df3c0fabcd7e278f9b66fba5b78c3a5a50bf02999f0719734d1547369b4830b1948070a03286651b0569d1d422dc636bef16899e853bb456adbd638a7e81564a
+# Upstream locations, read only by the Phase 0 cache play on the controller (never by a VM).
+fgnw_thunderbird_win_upstream_url: "https://download.mozilla.org/?product=thunderbird-{{ fgnw_thunderbird_version }}&os=win64&lang=en-US"
+fgnw_thunderbird_mac_upstream_url: "https://download.mozilla.org/?product=thunderbird-{{ fgnw_thunderbird_version }}&os=osx&lang=en-US"
+
+# --- Windows install ---
+# Mozilla's installer switches: silent, never a reboot, keep distribution\ (policies.json)
+# across upgrades, no Maintenance Service (the sealed range cannot update anyway).
+fgnw_thunderbird_win_install_dir: 'C:\Program Files\Mozilla Thunderbird'
+fgnw_thunderbird_win_install_args: "/S /PreventRebootRequired=true /RemoveDistributionDir=false /MaintenanceService=false"
+fgnw_thunderbird_win_staging_dir: 'C:\Windows\Temp\fgnw-thunderbird'
+
+# --- macOS install ---
+fgnw_thunderbird_mac_app: /Applications/Thunderbird.app
+fgnw_thunderbird_mac_staging_dir: /private/tmp/fgnw-thunderbird
 
 # --- Where Thunderbird reads policies.json on each OS ---
-fgnw_thunderbird_win_distribution_dir: 'C:\Program Files\Mozilla Thunderbird\distribution'
-fgnw_thunderbird_mac_distribution_dir: /Applications/Thunderbird.app/Contents/Resources/distribution
+fgnw_thunderbird_win_distribution_dir: "{{ fgnw_thunderbird_win_install_dir }}\\distribution"
+fgnw_thunderbird_mac_distribution_dir: "{{ fgnw_thunderbird_mac_app }}/Contents/Resources/distribution"
 
 # --- Protocol defaults ---
 # Plaintext IMAP 143 + SMTP 25 is the range-wide default. It matches the Sand Postfix/Dovecot

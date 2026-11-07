@@ -1,0 +1,7 @@
+---
+# Play variables of FGNW-thunderbird.yml's first play (Exchange IMAP enable), loaded with
+# vars_files. The Exchange cmdlets run as the forest-root Administrator (runas), the same
+# map the other Exchange plays carry; the Sand mail host is a Mac and is not in
+# [exchange_servers].
+fgnw_exchange_forest_root_map:
+  konoha-mail: fire.ninja

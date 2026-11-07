@@ -120,9 +120,11 @@ All 28 `FGNW-*.yml` playbooks live in `ansible/`. They run against the infra inv
 | `FGNW-exchange-seed-mail.yml` | 4b | Real SMTP mail delivery of the quote corpus to all Exchange mailboxes (NOT idempotent) |
 | `FGNW-owa-cert.yml` | 4b | Issues OWA cert matching `mail.<domain>` and trusts it on workstations (UNTESTED) |
 | `FGNW-campaign-setup.yml` | 4c | Plants LOE-3 primitives: Kerberoastable SPN + AS-REP account on `konoha-dc1` |
+| `FGNW-thunderbird.yml` | 4e | Enables IMAP4 on the Leaf Exchange, then installs and preconfigures Thunderbird (from the Nexus-cached installers) on the Konoha workstations and suna-ws1 against `mail.<domain>` |
 | `FGNW-ghosts-activity.yml` | 5 | Renders and deploys GHOSTS persona timelines to all GHOSTS workstations |
 | `FGNW-verify-connectivity.yml` | 5 | Read-only: checks HTTP targets (attacker tool-cache, ninjasploitable intake, per-forest OWA); fails the play if any check misses |
 | `FGNW-verify-emulation.yml` | 5 | Read-only: queries GHOSTS API per persona; fails if any host is unregistered or stale |
+| `nexus-cache-thunderbird.yml` | 0 | Caches the Thunderbird Windows installer and macOS DMG on the range Nexus (`raw-hosted/tools/`, sha512-pinned) before containment, for Phase 4e |
 | `get_sybers.lxc.deploy_ghost9_range` (imported) | 1b | The `get_sybers.lxc` collection's play, run by its collection-qualified name: the GHOSTS server CT from the ghost9 template (`lxc_preflight` → `lxc_ghost9` `container` → `lxc_guest` `baseline` → `lxc_ghost9` `server`); `-t destroy` removes it |
 | `ghost9-verify.yml` | 1b | Read-only: GHOSTS API v9 + `/api/machines` + UI `:4200` on the range VLAN |
 | `ghost9-emulation-proof.yml` | — | Writes machine/timeline/activity records through the real client API routes to prove a server executes the FGNW emulation (point it at a server under test, never a live range) |
