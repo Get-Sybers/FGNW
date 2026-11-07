@@ -3,9 +3,10 @@ argument_specs:
   main:
     short_description: Install + preconfigure Thunderbird on an FGNW workstation
     description:
-      - Installs Thunderbird (chocolatey on Windows; pre-staged Homebrew cask on macOS)
-        and drops an enterprise policies.json that preconfigures the mail account against
-        the host's village mail server.
+      - Installs Thunderbird from the installer cached on the range Nexus (raw-hosted) by
+        nexus-cache-thunderbird.yml in Phase 0 — the Windows .exe or the macOS .dmg, pinned by
+        version and Mozilla's sha512 — and drops an enterprise policies.json that preconfigures
+        the mail account against the host's village mail server.
       - Required vars (no defaults, by design) are the five identity + routing vars.
     options:
       fgnw_thunderbird_user:
@@ -23,7 +24,7 @@ argument_specs:
       fgnw_thunderbird_imap_server:
         type: str
         required: true
-        description: "IMAP server hostname (e.g. `konoha-mail.konohagakure.fire.ninja`)."
+        description: "IMAP server hostname (e.g. `mail.konohagakure.fire.ninja`)."
       fgnw_thunderbird_smtp_server:
         type: str
         required: true
@@ -41,15 +42,47 @@ argument_specs:
       fgnw_thunderbird_authentication:
         type: str
         default: password-cleartext
-      fgnw_thunderbird_choco_package:
+      fgnw_thunderbird_version:
         type: str
-        default: thunderbird
-      fgnw_thunderbird_choco_version:
+        default: "142.0"
+        description: "Thunderbird release to install; the installed version is compared against it."
+      fgnw_thunderbird_nexus_tools_url:
         type: str
-        default: ""
-      fgnw_thunderbird_ignore_checksums:
-        type: bool
-        default: true
+        default: http://192.0.2.2:8081/repository/raw-hosted/tools
+        description: "Where the cached installers are served from (Nexus raw-hosted, tools/)."
+      fgnw_thunderbird_win_installer:
+        type: str
+        default: "thunderbird-{{ fgnw_thunderbird_version }}-win64-en-US.exe"
+      fgnw_thunderbird_win_sha512:
+        type: str
+        description: "Mozilla's sha512 of the Windows installer (SHA512SUMS for the release)."
+      fgnw_thunderbird_mac_dmg:
+        type: str
+        default: "thunderbird-{{ fgnw_thunderbird_version }}-mac-en-US.dmg"
+      fgnw_thunderbird_mac_sha512:
+        type: str
+        description: "Mozilla's sha512 of the macOS DMG (SHA512SUMS for the release)."
+      fgnw_thunderbird_win_upstream_url:
+        type: str
+        description: "Mozilla download URL of the Windows installer; read only by the Phase 0 cache play."
+      fgnw_thunderbird_mac_upstream_url:
+        type: str
+        description: "Mozilla download URL of the macOS DMG; read only by the Phase 0 cache play."
+      fgnw_thunderbird_win_install_dir:
+        type: str
+        default: 'C:\Program Files\Mozilla Thunderbird'
+      fgnw_thunderbird_win_install_args:
+        type: str
+        default: "/S /PreventRebootRequired=true /RemoveDistributionDir=false /MaintenanceService=false"
+      fgnw_thunderbird_win_staging_dir:
+        type: str
+        default: 'C:\Windows\Temp\fgnw-thunderbird'
+      fgnw_thunderbird_mac_app:
+        type: str
+        default: /Applications/Thunderbird.app
+      fgnw_thunderbird_mac_staging_dir:
+        type: str
+        default: /private/tmp/fgnw-thunderbird
       fgnw_thunderbird_win_distribution_dir:
         type: str
         default: 'C:\Program Files\Mozilla Thunderbird\distribution'

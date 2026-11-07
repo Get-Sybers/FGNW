@@ -6,6 +6,9 @@
 #     services and set LoginType=PlainTextLogin on each.
 #   * The Sand Postfix/Dovecot stack (`fgnw_mac_mail_server`, phase 4d) is standing by the
 #     time the Sand workstation (suna-ws1) gets its Thunderbird client here.
+#   * The installers are already on the range Nexus (phase 0, nexus-cache-thunderbird.yml) and
+#     `mail.<domain>` resolves on each village DC (phase 4, dnsforwarder.yml), so the role
+#     installs and configures inside containment without any egress carve-out.
 #
 # Order within the phase: one playbook (FGNW-thunderbird.yml) runs all three internal plays
 # (exchange IMAP enable, Windows workstation clients, Sand macOS workstation client).

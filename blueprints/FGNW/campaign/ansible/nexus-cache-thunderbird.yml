@@ -1,0 +1,162 @@
+---
+# Phase 0 — cache the Thunderbird installers on the range Nexus (raw-hosted, tools/) so Phase 4e
+# can install them inside containment. Runs on the controller, which still has internet in
+# Phase 0, with the Nexus admin password Ludus generated when it deployed the Nexus VM.
+#
+# The version, file names and sha512 pins are the fgnw_thunderbird role's defaults (one source
+# of truth with the role that consumes them); every download is verified against Mozilla's
+# pin before upload, and an artifact Nexus already serves is left alone. raw-hosted's strict
+# content-type validation is lifted for the upload and put back: the DMG is an xz-compressed
+# disk image that Nexus classifies as application/x-xz and would otherwise refuse under its
+# .dmg name.
+- name: Cache the Thunderbird installers on the range Nexus (raw-hosted)
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files:
+    - roles/fgnw_thunderbird/defaults/main.yml
+  vars:
+    nexus_cache_thunderbird_url: http://192.0.2.2:8081
+    nexus_cache_thunderbird_repo: raw-hosted
+    nexus_cache_thunderbird_dir: tools
+    nexus_cache_thunderbird_admin_password_file: /opt/ludus/install/nexus-admin-password
+    nexus_cache_thunderbird_workdir: "{{ lookup('ansible.builtin.env', 'HOME') }}/.FGNW-deploy/nexus-cache"
+    __nexus_cache_thunderbird_artifacts:
+      - name: "{{ fgnw_thunderbird_win_installer }}"
+        url: "{{ fgnw_thunderbird_win_upstream_url }}"
+        sha512: "{{ fgnw_thunderbird_win_sha512 }}"
+      - name: "{{ fgnw_thunderbird_mac_dmg }}"
+        url: "{{ fgnw_thunderbird_mac_upstream_url }}"
+        sha512: "{{ fgnw_thunderbird_mac_sha512 }}"
+    __nexus_cache_thunderbird_repo_api: >-
+      {{ nexus_cache_thunderbird_url }}/service/rest/v1/repositories/raw/hosted/{{ nexus_cache_thunderbird_repo }}
+  tasks:
+    - name: Read the Nexus admin password Ludus generated
+      ansible.builtin.set_fact:
+        __nexus_cache_thunderbird_password: "{{ lookup('ansible.builtin.file', nexus_cache_thunderbird_admin_password_file) | trim }}"
+      no_log: true
+
+    - name: Ensure the owner-only work directory exists
+      ansible.builtin.file:
+        path: "{{ nexus_cache_thunderbird_workdir }}"
+        state: directory
+        mode: "0700"
+
+    - name: Ask Nexus which artifacts it already serves
+      ansible.builtin.uri:
+        url: "{{ nexus_cache_thunderbird_url }}/repository/{{ nexus_cache_thunderbird_repo }}/{{ nexus_cache_thunderbird_dir }}/{{ item['name'] }}"
+        method: HEAD
+        status_code: [200, 404]
+      loop: "{{ __nexus_cache_thunderbird_artifacts }}"
+      loop_control:
+        label: "{{ item['name'] }}"
+      register: __nexus_cache_thunderbird_present
+
+    - name: Select the artifacts Nexus does not serve yet
+      ansible.builtin.set_fact:
+        __nexus_cache_thunderbird_missing: >-
+          {{ __nexus_cache_thunderbird_present['results'] | selectattr('status', 'equalto', 404) | map(attribute='item') | list }}
+
+    - name: Report what is already cached
+      ansible.builtin.debug:
+        msg: >-
+          Already on Nexus: {{ __nexus_cache_thunderbird_artifacts | map(attribute='name') | list
+          | difference(__nexus_cache_thunderbird_missing | map(attribute='name') | list) | join(', ') | default('none', true) }};
+          to cache: {{ __nexus_cache_thunderbird_missing | map(attribute='name') | join(', ') | default('none', true) }}
+
+    - name: Download the missing installers from Mozilla (sha512-pinned)
+      ansible.builtin.get_url:
+        url: "{{ item['url'] }}"
+        dest: "{{ nexus_cache_thunderbird_workdir }}/{{ item['name'] }}"
+        checksum: "sha512:{{ item['sha512'] }}"
+        mode: "0600"
+        timeout: 120
+      loop: "{{ __nexus_cache_thunderbird_missing }}"
+      loop_control:
+        label: "{{ item['name'] }}"
+      retries: 3
+      delay: 10
+      register: __nexus_cache_thunderbird_download
+      until: __nexus_cache_thunderbird_download is succeeded
+
+    - name: Upload the missing installers
+      when: __nexus_cache_thunderbird_missing | length > 0
+      block:
+        - name: Read the raw-hosted repository settings
+          ansible.builtin.uri:
+            url: "{{ __nexus_cache_thunderbird_repo_api }}"
+            url_username: admin
+            url_password: "{{ __nexus_cache_thunderbird_password }}"
+            force_basic_auth: true
+            return_content: true
+          register: __nexus_cache_thunderbird_repo_cfg
+
+        - name: Derive the update body (same settings, validation off)
+          ansible.builtin.set_fact:
+            __nexus_cache_thunderbird_repo_body: >-
+              {{ __nexus_cache_thunderbird_repo_cfg['json']
+                 | dict2items | selectattr('key', 'in', ['name', 'online', 'storage', 'cleanup', 'component', 'raw'])
+                 | items2dict }}
+            __nexus_cache_thunderbird_strict: "{{ __nexus_cache_thunderbird_repo_cfg['json']['storage']['strictContentTypeValidation'] }}"
+
+        - name: Lift strict content-type validation on raw-hosted for the upload
+          ansible.builtin.uri:
+            url: "{{ __nexus_cache_thunderbird_repo_api }}"
+            method: PUT
+            url_username: admin
+            url_password: "{{ __nexus_cache_thunderbird_password }}"
+            force_basic_auth: true
+            body_format: json
+            body: "{{ __nexus_cache_thunderbird_repo_body | combine({'storage': {'strictContentTypeValidation': false}}, recursive=true) }}"
+            status_code: [204]
+          when: __nexus_cache_thunderbird_strict | bool
+
+        # The body is the file itself; without an explicit type the module declares
+        # application/x-www-form-urlencoded, which Nexus's raw upload rejects with a 500.
+        - name: Upload each installer to raw-hosted (PUT)
+          ansible.builtin.uri:
+            url: "{{ nexus_cache_thunderbird_url }}/repository/{{ nexus_cache_thunderbird_repo }}/{{ nexus_cache_thunderbird_dir }}/{{ item['name'] }}"
+            method: PUT
+            src: "{{ nexus_cache_thunderbird_workdir }}/{{ item['name'] }}"
+            headers:
+              Content-Type: application/octet-stream
+            url_username: admin
+            url_password: "{{ __nexus_cache_thunderbird_password }}"
+            force_basic_auth: true
+            status_code: [201]
+            timeout: 600
+          loop: "{{ __nexus_cache_thunderbird_missing }}"
+          loop_control:
+            label: "{{ item['name'] }}"
+
+      always:
+        - name: Restore strict content-type validation on raw-hosted
+          ansible.builtin.uri:
+            url: "{{ __nexus_cache_thunderbird_repo_api }}"
+            method: PUT
+            url_username: admin
+            url_password: "{{ __nexus_cache_thunderbird_password }}"
+            force_basic_auth: true
+            body_format: json
+            body: "{{ __nexus_cache_thunderbird_repo_body | combine({'storage': {'strictContentTypeValidation': true}}, recursive=true) }}"
+            status_code: [204]
+          when:
+            - __nexus_cache_thunderbird_repo_body is defined
+            - __nexus_cache_thunderbird_strict | bool
+
+        - name: Remove the downloaded installers from the controller
+          ansible.builtin.file:
+            path: "{{ nexus_cache_thunderbird_workdir }}/{{ item['name'] }}"
+            state: absent
+          loop: "{{ __nexus_cache_thunderbird_missing }}"
+          loop_control:
+            label: "{{ item['name'] }}"
+
+    - name: Verify Nexus serves every artifact
+      ansible.builtin.uri:
+        url: "{{ nexus_cache_thunderbird_url }}/repository/{{ nexus_cache_thunderbird_repo }}/{{ nexus_cache_thunderbird_dir }}/{{ item['name'] }}"
+        method: HEAD
+        status_code: [200]
+      loop: "{{ __nexus_cache_thunderbird_artifacts }}"
+      loop_control:
+        label: "{{ item['name'] }}"
