@@ -18,6 +18,27 @@ has no release tag yet.
 
 ## [Unreleased]
 
+### Fixed — GHOSTS user-emulation timelines render, and personas auto-logon
+
+- **`ansible/templates/FGNW-ghosts.timeline.json.j2` now renders valid JSON.** The template embedded its
+  prose explanations as raw text inside the JSON (a bare `{` and running prose, not Jinja `{# #}`
+  comments), so every rendered `timeline.json` was malformed: the GHOSTS client threw
+  `JsonReaderException` and crash-looped in `Orchestrator.Run`, no timeline ever loaded, and the
+  emulation produced no activity at all. Every comment block is now a real `{# … #}` Jinja comment and
+  the stray `{` markers inside the event objects are gone; the rendered output is valid JSON across the
+  plain, admin, recon/DoS and lunch-plus-night-shift persona shapes.
+- **`content/ghosts/persona-timelines.yml`: correct the child-domain NetBIOS names.** The `konoha-*`
+  personas said `KONOHA`, `oto-ws1` said `OTO` and `suna-ws1` said `SUNA`, but the real NetBIOS names are
+  `KONOHAGAKURE`, `OTOGAKURE` and `SUNAGAKURE`, so `FGNW-persona-autologon.yml` could not translate the
+  persona account to a SID and no Leaf, Oto or Sand persona logged in (only Akatsuki, which matched).
+- **`content/ghosts/persona-overrides.yml`: quote the `active_hours` times.** `05:00:00` / `00:00:00` /
+  `23:59:00` were unquoted, so YAML parsed them as sexagesimal integers and the active-hours to UTC
+  conversion in `FGNW-ghosts-activity.yml` crashed (`list object has no element 1`) for `konoha-ws5` and
+  `suna-ws1`.
+- **`FGNW-ghosts-activity.yml`: derive the timezone offset reliably.** The `fgnw_ghosts_tz_offset` default
+  used `now(fmt='%z')`, which returns an empty string on a naive-datetime controller, so the active-hours
+  conversion crashed before any client started; it now defaults to `lookup('ansible.builtin.pipe', 'date +%z')`.
+
 ### Fixed — Sand macOS hosts bind to the child domain (join account + resolver)
 
 - **`FGNW-mac-ad-bind.yml` binds with the child domain's `Administrator`, not `domainadmin`.**
