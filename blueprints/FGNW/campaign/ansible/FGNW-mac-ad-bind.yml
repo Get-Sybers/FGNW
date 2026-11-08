@@ -67,6 +67,7 @@
           - "{{ __mac_primary_service.stdout | trim }}"
           - "{{ __sand_dc_ip }}"
       when: __sand_dc_ip not in (__mac_current_dns.stdout_lines | map('trim') | list)
+      changed_when: true
       become: true
 
     - name: Run the dsconfigad wrapper
