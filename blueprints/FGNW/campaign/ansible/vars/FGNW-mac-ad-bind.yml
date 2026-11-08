@@ -1,4 +1,10 @@
 ---
 # Play variables of FGNW-mac-ad-bind.yml, loaded with vars_files.
-__lab_admin_user: domainadmin
+#
+# sunagakure.wind.ninja is a CHILD domain, stood up by the ludus_child_domain role. Ludus
+# creates the `domainadmin` principal only in the primary domains it builds directly, so a
+# child domain never gets one — its Domain Admins are the built-in `Administrator` (lab
+# password) and the Gaara persona. Bind with Administrator; `domainadmin` does not exist
+# here and dsconfigad -add fails with "Authentication server encountered an error (5202)".
+__lab_admin_user: Administrator
 __lab_admin_password: password

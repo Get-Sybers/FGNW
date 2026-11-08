@@ -18,6 +18,23 @@ has no release tag yet.
 
 ## [Unreleased]
 
+### Fixed — Sand macOS hosts bind to the child domain (join account + resolver)
+
+- **`FGNW-mac-ad-bind.yml` binds with the child domain's `Administrator`, not `domainadmin`.**
+  `sunagakure.wind.ninja` is a child domain stood up by the `ludus_child_domain` role, and Ludus
+  creates the `domainadmin` principal only in the primary domains it builds directly — the child
+  has none, so `dsconfigad -add` failed with `Authentication server encountered an error (5202)`.
+  The play and `vars/FGNW-mac-ad-bind.yml` now join as the child's built-in `Administrator`, a
+  Domain Admin of `sunagakure.wind.ninja`, with the lab password.
+- **The play points each Sand Mac's resolver at the Sand child DC before binding.** Ludus hands
+  the macOS hosts the range router (`10.x.20.254`) as their resolver, which does not serve the
+  Sand AD SRV records (and testing-mode AdGuard does not forward them), so `dsconfigad` on
+  `suna-mail` could not reach the KDC (`Authentication server could not be contacted (5200)`). The
+  play now sets the primary network service's DNS to `10.<second-octet>.20.10` (`suna-dc1`) before
+  the bind — the play-side resolver fix `FGNW-ninjasploitable-join.yml` already uses for the Linux
+  realm-join, and the correct end state for a domain-bound Mac. The `fgnw_mac_dsconfigad` role is
+  unchanged; its docs' example principal is now `Administrator`.
+
 ### Fixed — Phase 4e installs Thunderbird inside containment, and its mail names resolve
 
 - **`fgnw_thunderbird` installs from the range Nexus instead of the internet.** The role ran

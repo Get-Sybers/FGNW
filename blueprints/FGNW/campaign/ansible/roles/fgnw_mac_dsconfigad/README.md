@@ -33,7 +33,7 @@ networking.
 | `fgnw_mac_dsconfigad_domain` | no | `sunagakure.wind.ninja` | AD domain to bind to. |
 | `fgnw_mac_dsconfigad_computer` | no | `{{ (inventory_hostname \| upper)[:15] }}` | AD computer object name; AD caps the pre-Windows-2000 name at 15 characters. |
 | `fgnw_mac_dsconfigad_ou` | no | `""` | Optional OU path; empty means Apple's default (the domain's Computers container). |
-| `fgnw_mac_dsconfigad_admin_user` | no (asserted when binding) | `""` | AD principal allowed to join computers, e.g. `domainadmin`. The play supplies it. |
+| `fgnw_mac_dsconfigad_admin_user` | no (asserted when binding) | `""` | AD principal allowed to join computers, e.g. `Administrator`. The play supplies it. |
 | `fgnw_mac_dsconfigad_admin_password` | no (asserted when binding) | `""` | That principal's password. Secret: the play supplies it; never set it in defaults. |
 
 The two credentials default to empty strings so the role can be included on an already-bound host
@@ -73,7 +73,7 @@ From `FGNW-mac-ad-bind.yml`:
   hosts: macos_dev
   gather_facts: true
   vars:
-    __lab_admin_user: domainadmin
+    __lab_admin_user: Administrator
     __lab_admin_password: password
   tasks:
     - name: Run the dsconfigad wrapper

@@ -3,20 +3,73 @@
 # idempotent, so this play is safe to re-run.
 #
 # Preconditions this play relies on (the deploy orchestrator sequences them):
-#   * Phase 3 has run — the Sand child DC (suna-dc1) and its parent (wind-dc1) exist,
-#     and `domainadmin` (the Ludus/Shinju default admin principal, created by the
-#     range_ad_mgmt role) is a member of Domain Admins on sunagakure.wind.ninja.
+#   * Phase 3 has run — the Sand child DC (suna-dc1) and its parent (wind-dc1) exist.
+#     sunagakure is a CHILD domain, so it has no `domainadmin` (Ludus creates that only in
+#     the primary domains it builds directly); the bind uses the child's built-in
+#     `Administrator`, a Domain Admin of sunagakure.wind.ninja. See vars/FGNW-mac-ad-bind.yml.
 #   * Containment is up but the DC is reachable on vlan 20 (internal), which it is —
 #     only internet egress is sealed; VLAN traffic is unaffected.
 #
-# Admin principal: `domainadmin` + the lab-wide `password`, same hardcoded pattern the
-# other campaign plays use (FGNW-exchange.yml uses `__lab_admin_password: password`).
+# DNS: dsconfigad discovers the KDC through the system resolver, but Ludus hands the Sand
+# macOS hosts the range router (10.x.20.254) as their resolver, which does not serve the AD
+# SRV records (and the testing-mode AdGuard does not forward them), so the bind cannot reach
+# the KDC ("Authentication server could not be contacted (5200)"). This play points each
+# host's resolver at the Sand child DC (10.<second-octet>.20.10) before the bind — the same
+# play-side resolver fix FGNW-ninjasploitable-join.yml applies for the Linux realm-join, and
+# the correct end state for a domain-bound Mac anyway.
+#
+# Admin principal: `Administrator` + the lab-wide `password`, the hardcoded pattern the other
+# campaign plays use (FGNW-exchange.yml uses `__lab_admin_password: password`).
 - name: AD-bind the Sand macOS hosts to sunagakure.wind.ninja
   hosts: macos_dev
   gather_facts: true
   vars_files:
     - vars/FGNW-mac-ad-bind.yml
   tasks:
+    - name: Derive the Sand child DC address from the range's second octet
+      ansible.builtin.set_fact:
+        __sand_dc_ip: "10.{{ ansible_host.split('.')[1] }}.20.10"
+
+    - name: Find the primary network service (the default-route interface)
+      ansible.builtin.shell: |
+        set -o pipefail
+        dev=$(route -n get default 2>/dev/null | awk '/interface:/{print $2; exit}')
+        networksetup -listnetworkserviceorder | awk -v d="$dev" '
+          /^\([0-9]+\)/{name=$0; sub(/^\([0-9]+\) /,"",name)}
+          $0 ~ ("Device: " d "\\)"){print name; exit}'
+      args:
+        executable: /bin/bash
+      register: __mac_primary_service
+      changed_when: false
+      become: true
+
+    - name: Assert the primary network service was found
+      ansible.builtin.assert:
+        that: __mac_primary_service.stdout | trim | length > 0
+        fail_msg: Could not determine the primary macOS network service for the default route.
+        quiet: true
+
+    - name: Read the current resolvers on that service
+      ansible.builtin.command:
+        argv:
+          - /usr/sbin/networksetup
+          - -getdnsservers
+          - "{{ __mac_primary_service.stdout | trim }}"
+      register: __mac_current_dns
+      changed_when: false
+      become: true
+
+    - name: Point the resolver at the Sand child DC so dsconfigad can reach the KDC
+      ansible.builtin.command:
+        argv:
+          - /usr/sbin/networksetup
+          - -setdnsservers
+          - "{{ __mac_primary_service.stdout | trim }}"
+          - "{{ __sand_dc_ip }}"
+      when: __sand_dc_ip not in (__mac_current_dns.stdout_lines | map('trim') | list)
+      changed_when: true
+      become: true
+
     - name: Run the dsconfigad wrapper
       ansible.builtin.include_role:
         name: fgnw_mac_dsconfigad
