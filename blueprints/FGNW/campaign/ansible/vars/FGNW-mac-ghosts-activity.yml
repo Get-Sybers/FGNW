@@ -1,0 +1,5 @@
+---
+# Play variables of FGNW-mac-ghosts-activity.yml, loaded with vars_files.
+# The range second octet is derived per-host from ansible_host (the real IP the infra inventory
+# sets after RANGENUMBER substitution), matching FGNW-ghosts-activity.yml and fgnw_mac_ghosts_client.
+range_second_octet: "{{ ansible_host.split('.')[1] }}"

@@ -13,6 +13,12 @@
   args:
     chdir: "{{ ansible_dir }}"
   changed_when: true
+- name: "deploy-tasks | phase5-emulation | FGNW-mac-ghosts-activity.yml"
+  ansible.builtin.command:
+    argv: [ansible-playbook, -i, "{{ __tmp_infra_inv }}", FGNW-mac-ghosts-activity.yml]
+  args:
+    chdir: "{{ ansible_dir }}"
+  changed_when: true
 - name: "deploy-tasks | phase5-emulation | FGNW-ghosts-npc-setup.yml"
   ansible.builtin.command:
     argv: [ansible-playbook, -i, "{{ __tmp_infra_inv }}", FGNW-ghosts-npc-setup.yml]
