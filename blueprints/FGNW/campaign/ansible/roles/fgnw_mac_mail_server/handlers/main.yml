@@ -1,16 +1,35 @@
 ---
-- name: Restart postfix
-  ansible.builtin.command:
-    argv: [postfix, reload]
+# Reload a service after a config or plist change. A full launchd bootout + bootstrap re-registers
+# the (possibly changed) plist and restarts the daemon, which re-reads its config files on start.
+# More robust than `kickstart`, which cannot pick up a changed plist. bootout is asynchronous, so
+# the reload waits for the service to fully unload before bootstrapping (an immediate bootstrap
+# races and fails with "Input/output error"). The initial load is done by the bootstrap task.
+- name: Restart dovecot
+  ansible.builtin.shell: |
+    set -uo pipefail
+    label='{{ fgnw_mac_mail_server_dovecot_label }}'
+    launchctl bootout "system/${label}" 2>/dev/null || true
+    for _ in $(seq 1 15); do
+      launchctl print "system/${label}" >/dev/null 2>&1 || break
+      sleep 1
+    done
+    launchctl bootstrap system "/Library/LaunchDaemons/${label}.plist"
+  args:
+    executable: /bin/bash
   changed_when: true
   become: true
 
-- name: Restart dovecot
-  ansible.builtin.command:
-    argv: [brew, services, restart, dovecot]
+- name: Restart postfix
+  ansible.builtin.shell: |
+    set -uo pipefail
+    label='{{ fgnw_mac_mail_server_postfix_label }}'
+    launchctl bootout "system/${label}" 2>/dev/null || true
+    for _ in $(seq 1 15); do
+      launchctl print "system/${label}" >/dev/null 2>&1 || break
+      sleep 1
+    done
+    launchctl bootstrap system "/Library/LaunchDaemons/${label}.plist"
+  args:
+    executable: /bin/bash
   changed_when: true
-  # become: true so the restart targets the system LaunchDaemon domain the "Start Dovecot"
-  # task in tasks/main.yml loaded under sudo — without it, this handler would hit the
-  # per-user LaunchAgent domain instead and could spawn a conflicting user-level instance
-  # while leaving the running (root) dovecot untouched. Must match the start task's `become`.
   become: true

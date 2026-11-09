@@ -1,11 +1,13 @@
 ---
 argument_specs:
   main:
-    short_description: Configure and start Postfix + Dovecot on the Sand macOS mail server and seed its mailboxes
+    short_description: Build and run Postfix + Dovecot on the Sand macOS mail server and seed its mailboxes
     description:
-      - Resolves the Homebrew prefix, intersects content/OWA/user-inboxes.yml with the AD users of the Sand domain,
-        writes the Postfix and Dovecot configs, creates a nologin account and Maildir per user, then enables and
-        starts both daemons. A changed config notifies the Restart postfix / Restart dovecot handler.
+      - Builds Dovecot from the source cached on the range Nexus (the Sand macs have no Homebrew and
+        no egress), writes its config and a virtual-user passwd-file of the Sand AD users with their
+        AD passwords, runs the stock Postfix binary from a writable alternate config directory
+        (Apple's /etc/postfix is SIP-locked), and loads both as LaunchDaemons. A changed config
+        notifies the Restart dovecot / Restart postfix handler.
       - Every input has a lab-safe default; the caller (FGNW-mac-mail.yml) passes nothing.
     options:
       fgnw_mac_mail_server_domain:
@@ -27,17 +29,109 @@ argument_specs:
         type: str
         default: "{{ playbook_dir }}/../content/OWA/user-inboxes.yml"
         description:
-          - Controller-side path of the per-user inbox corpus whose keys (sAMAccountNames) become local mail
-            accounts.
-      fgnw_mac_mail_server_user_shell:
+          - Controller-side inbox corpus whose keys (sAMAccountNames) select which Sand users get a mailbox.
+      fgnw_mac_mail_server_ad_config_file:
         type: str
-        default: /sbin/nologin
+        default: "{{ playbook_dir }}/../ad/NARUTO/data/config.json"
         description:
-          - Login shell of the seeded mail accounts (nologin, so they are mail-only).
-      fgnw_mac_mail_server_user_password_default:
+          - Controller-side AD config; the ground truth for domain membership and each user's password.
+      fgnw_mac_mail_server_dovecot_version:
         type: str
-        default: Changeme1!
-        no_log: true
+        default: "2.3.21"
         description:
-          - Password set on every seeded account (SHA-512 hashed); the IMAP/SMTP AUTH credential the Thunderbird
-            client uses. Lab placeholder; override it from the play for anything but the sealed range.
+          - Dovecot version to build. Must be 2.3.x; 2.4 changed the config syntax this role writes.
+      fgnw_mac_mail_server_dovecot_tarball:
+        type: str
+        default: "dovecot-{{ fgnw_mac_mail_server_dovecot_version }}.tar.gz"
+        description:
+          - Source tarball file name, fetched from the Nexus and cached there by nexus-cache-dovecot.yml.
+      fgnw_mac_mail_server_dovecot_sha256:
+        type: str
+        default: 05b11093a71c237c2ef309ad587510721cc93bbee6828251549fc1586c36502d
+        description:
+          - sha256 pin of the source tarball, verified on download.
+      fgnw_mac_mail_server_dovecot_upstream_url:
+        type: str
+        default: "https://dovecot.org/releases/2.3/{{ fgnw_mac_mail_server_dovecot_tarball }}"
+        description:
+          - Upstream source URL; read ONLY by the Phase 0 cache play on the controller, never by a VM.
+      fgnw_mac_mail_server_nexus_tools_url:
+        type: str
+        default: "http://{{ nexus_host | default('192.0.2.2') }}:{{ nexus_port | default('8081') }}/repository/raw-hosted/tools"
+        description:
+          - Range Nexus raw-hosted tools/ URL the mail host fetches the source from.
+      fgnw_mac_mail_server_dovecot_prefix:
+        type: str
+        default: /usr/local/fgnw-dovecot
+        description:
+          - Install prefix for the from-source Dovecot; also holds dovecot.conf, dovecot-users and the Maildir tree.
+      fgnw_mac_mail_server_mail_user:
+        type: str
+        default: _fgnwmail
+        description:
+          - Dedicated service user that owns the virtual Maildirs (and Dovecot's internal processes).
+      fgnw_mac_mail_server_mail_uid:
+        type: int
+        default: 5000
+        description:
+          - UID/GID for the mail service user and group.
+      fgnw_mac_mail_server_login_user:
+        type: str
+        default: _fgnwnull
+        description:
+          - Unprivileged user for Dovecot's login processes (distinct from the mail user).
+      fgnw_mac_mail_server_login_uid:
+        type: int
+        default: 5001
+        description:
+          - UID/GID for the login user and group.
+      fgnw_mac_mail_server_dovecot_group:
+        type: str
+        default: dovecot
+        description:
+          - Group the built-in Dovecot service listeners default to; created because macOS has no such group.
+      fgnw_mac_mail_server_dovecot_gid:
+        type: int
+        default: 5002
+        description:
+          - GID for the dovecot group.
+      fgnw_mac_mail_server_vmail_dir:
+        type: str
+        default: "{{ fgnw_mac_mail_server_dovecot_prefix }}/vmail"
+        description:
+          - Base directory for the virtual mailboxes; one Maildir per user beneath it.
+      fgnw_mac_mail_server_postfix_dir:
+        type: str
+        default: /usr/local/fgnw-postfix/conf
+        description:
+          - Writable Postfix config directory (main.cf + master.cf); run as postfix -c <dir>.
+      fgnw_mac_mail_server_postfix_queue_dir:
+        type: str
+        default: /private/var/spool/postfix
+        description:
+          - Postfix queue directory; also where Dovecot's LMTP/auth sockets live (postfix chroots here).
+      fgnw_mac_mail_server_postfix_data_dir:
+        type: str
+        default: /var/lib/postfix
+        description:
+          - Postfix data directory.
+      fgnw_mac_mail_server_postfix_owner:
+        type: str
+        default: _postfix
+        description:
+          - Postfix mail_owner; also the owner of the Dovecot LMTP/auth sockets.
+      fgnw_mac_mail_server_postfix_setgid_group:
+        type: str
+        default: _postdrop
+        description:
+          - Postfix setgid_group.
+      fgnw_mac_mail_server_dovecot_label:
+        type: str
+        default: com.fgnw.dovecot
+        description:
+          - LaunchDaemon label for the Dovecot service.
+      fgnw_mac_mail_server_postfix_label:
+        type: str
+        default: com.fgnw.postfix
+        description:
+          - LaunchDaemon label for the Postfix service.

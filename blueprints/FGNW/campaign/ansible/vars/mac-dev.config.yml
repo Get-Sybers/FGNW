@@ -30,7 +30,6 @@ homebrew_installed_packages:
   - htop
   - jq
   - nmap
-  - dovecot
 
 homebrew_cask_appdir: /Applications
 # Casks give the GHOSTS browser handlers something to drive. Thunderbird is included here

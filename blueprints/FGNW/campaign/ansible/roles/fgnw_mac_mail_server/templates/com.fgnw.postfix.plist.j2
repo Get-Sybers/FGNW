@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- {{ ansible_managed }} -->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>{{ fgnw_mac_mail_server_postfix_label }}</string>
+  <!-- Apple's Postfix 3.2 has no `postfix start-fg`; run the master daemon directly in the
+       foreground for launchd to supervise. No -e (exit-time) so it stays up as an SMTP listener;
+       AbandonProcessGroup lets master's children outlive a master restart. -->
+  <key>Program</key><string>/usr/libexec/postfix/master</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>master</string>
+    <string>-c</string>
+    <string>{{ fgnw_mac_mail_server_postfix_dir }}</string>
+  </array>
+  <key>AbandonProcessGroup</key><true/>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>StandardErrorPath</key><string>{{ fgnw_mac_mail_server_postfix_dir }}/postfix.stderr.log</string>
+</dict>
+</plist>

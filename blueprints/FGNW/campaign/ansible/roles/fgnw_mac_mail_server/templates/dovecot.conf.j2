@@ -1,0 +1,50 @@
+{{ ansible_managed | comment }}
+# FGNW Sand mail server — Dovecot (built from source, plaintext IMAP + LMTP). Managed by the
+# fgnw_mac_mail_server role; edit the role, not this file. macOS-specific settings are noted.
+protocols = imap lmtp
+listen = *
+ssl = no
+disable_plaintext_auth = no
+auth_mechanisms = plain login
+# Deliver/authenticate by the local part only: Thunderbird logs in as "gaara" while LMTP receives
+# "gaara@sunagakure.wind.ninja"; without this they resolve to different mailboxes.
+auth_username_format = %Ln
+# macOS: setrlimit(RLIMIT_DATA) fails (Invalid argument) and crashes the child services -> disable.
+default_vsz_limit = 0
+log_path = {{ fgnw_mac_mail_server_dovecot_prefix }}/dovecot.log
+mail_location = maildir:{{ fgnw_mac_mail_server_vmail_dir }}/%u/Maildir
+mail_uid = {{ fgnw_mac_mail_server_mail_user }}
+mail_gid = {{ fgnw_mac_mail_server_mail_user }}
+first_valid_uid = 500
+default_internal_user = {{ fgnw_mac_mail_server_mail_user }}
+default_login_user = {{ fgnw_mac_mail_server_login_user }}
+passdb {
+  driver = passwd-file
+  args = scheme=PLAIN username_format=%u {{ fgnw_mac_mail_server_dovecot_prefix }}/dovecot-users
+}
+userdb {
+  driver = static
+  args = uid={{ fgnw_mac_mail_server_mail_user }} gid={{ fgnw_mac_mail_server_mail_user }} home={{ fgnw_mac_mail_server_vmail_dir }}/%u allow_all_users=yes
+}
+service imap-login {
+  inet_listener imap {
+    port = 143
+  }
+  inet_listener imaps {
+    port = 0
+  }
+}
+service lmtp {
+  unix_listener {{ fgnw_mac_mail_server_postfix_queue_dir }}/private/dovecot-lmtp {
+    mode = 0600
+    user = {{ fgnw_mac_mail_server_postfix_owner }}
+    group = {{ fgnw_mac_mail_server_postfix_owner }}
+  }
+}
+service auth {
+  unix_listener {{ fgnw_mac_mail_server_postfix_queue_dir }}/private/auth {
+    mode = 0660
+    user = {{ fgnw_mac_mail_server_postfix_owner }}
+    group = {{ fgnw_mac_mail_server_postfix_owner }}
+  }
+}

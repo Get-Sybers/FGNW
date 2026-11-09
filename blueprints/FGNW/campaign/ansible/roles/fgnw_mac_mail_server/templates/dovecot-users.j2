@@ -1,0 +1,6 @@
+# FGNW Sand mailbox passwords (managed by fgnw_mac_mail_server) -- do not edit by hand.
+# One line per Sand user: <local-part>:<plaintext password>. The password is the user's own AD
+# password from ad/NARUTO/data/config.json, so IMAP/SMTP auth matches the domain account.
+{% for u in fgnw_mac_mail_server_mailbox_users %}
+{{ u.name }}:{{ u.password }}
+{% endfor %}
