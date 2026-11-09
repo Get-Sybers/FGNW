@@ -1,0 +1,117 @@
+---
+# Seed the macOS flagship GHOSTS Universal client (Gaara / Hidden Sand) with FGNW persona browsing
+# activity -- the realistic-browser parallel to FGNW-ghosts-activity.yml, which drives the Windows
+# ghosts.exe personas. Runs in Phase 5, after the Mac client is installed (Phase 1c prestage +
+# Phase 4d service). It renders a browser-only timeline (BrowserChrome over the attacker sinkhole
+# plus the persona's themed sites, driving a VISIBLE Chrome for Testing in the GUI session) and
+# restarts the LaunchAgent so it loads. macos_dev hosts with no GHOSTS persona are skipped.
+- name: Seed the macOS flagship GHOSTS client with FGNW persona activity
+  hosts: macos_dev
+  gather_facts: false
+  vars_files:
+    - vars/FGNW-mac-ghosts-activity.yml
+    - roles/fgnw_mac_ghosts_client/defaults/main.yml
+  tasks:
+    - name: Load persona timeline data (generated baseline)
+      ansible.builtin.include_vars:
+        file: "{{ playbook_dir }}/../content/ghosts/persona-timelines.yml"
+        name: fgnw_ghosts
+    - name: Load flagship persona overrides (hand-authored)
+      ansible.builtin.include_vars:
+        file: "{{ playbook_dir }}/../content/ghosts/persona-overrides.yml"
+        name: fgnw_ghosts_ov
+    - name: Seed this macOS persona (skip any macos_dev host that is not a GHOSTS client)
+      when: inventory_hostname in fgnw_ghosts.ghosts_personas
+      block:
+        - name: Resolve this host's persona (baseline) and override
+          ansible.builtin.set_fact:
+            __persona: "{{ fgnw_ghosts.ghosts_personas[inventory_hostname] }}"
+            __ov: "{{ fgnw_ghosts_ov.ghosts_overrides[inventory_hostname] | default({}) }}"
+        - name: Bind the persona fields the macOS timeline template consumes
+          ansible.builtin.set_fact:
+            ghosts_browse_urls: "{{ __persona.browse_urls }}"
+            ghosts_signature_urls: "{{ __ov.signature_urls | default([]) }}"
+            ghosts_pace: "{{ __ov.pace | default('normal') }}"
+            ghosts_chrome_executable: "{{ fgnw_mac_ghosts_client_chrome_binary }}"
+        - name: Resolve the timezone that active_hours are expressed in
+          ansible.builtin.set_fact:
+            fgnw_ghosts_tz_offset: "{{ fgnw_ghosts_tz_offset | default(lookup('ansible.builtin.pipe', 'date +%z'), true) }}"
+        - name: Resolve this persona's local active window
+          ansible.builtin.set_fact:
+            __local_on: "{{ __ov.active_hours.start | default('08:00:00') }}"
+            __local_off: "{{ __ov.active_hours.end | default('18:00:00') }}"
+        - name: Treat a full-day persona as always-on (zeroed UTC times, so GHOSTS never blocks)
+          ansible.builtin.set_fact:
+            ghosts_time_on: "00:00:00"
+            ghosts_time_off: "00:00:00"
+          when:
+            - (__local_on.split(':')[0] | int) * 60 + (__local_on.split(':')[1] | int) == 0
+            - (__local_off.split(':')[0] | int) * 60 + (__local_off.split(':')[1] | int) >= 1439
+        - name: Otherwise convert the local active window into the UTC window GHOSTS expects
+          ansible.builtin.set_fact:
+            ghosts_time_on: "{{ '%02d:%02d:00' | format(__on_utc | int // 60, __on_utc | int % 60) }}"
+            ghosts_time_off: "{{ '%02d:%02d:00' | format(__off_utc | int // 60, __off_utc | int % 60) }}"
+          vars:
+            __tz_sign: "{{ 1 if fgnw_ghosts_tz_offset[0] == '+' else -1 }}"
+            __tz_min: "{{ (__tz_sign | int) * ((fgnw_ghosts_tz_offset[1:3] | int) * 60 + (fgnw_ghosts_tz_offset[3:5] | int)) }}"
+            __on_min: "{{ (__local_on.split(':')[0] | int) * 60 + (__local_on.split(':')[1] | int) }}"
+            __off_min: "{{ (__local_off.split(':')[0] | int) * 60 + (__local_off.split(':')[1] | int) }}"
+            __on_utc: "{{ ((__on_min | int) - (__tz_min | int)) % 1440 }}"
+            __off_utc: "{{ ((__off_min | int) - (__tz_min | int)) % 1440 }}"
+          when: ghosts_time_on is not defined
+        - name: Show the rendered activity window
+          ansible.builtin.debug:
+            msg: >-
+              {{ inventory_hostname }} ({{ __persona.character | default(inventory_hostname) }}):
+              local {{ __local_on }}-{{ __local_off }} (UTC{{ fgnw_ghosts_tz_offset }}) ->
+              UTC {{ ghosts_time_on }}-{{ ghosts_time_off }}{{ ' (always-on)'
+              if ghosts_time_on == '00:00:00' and ghosts_time_off == '00:00:00' else '' }}
+        - name: Check that the GHOSTS Universal client is installed
+          ansible.builtin.stat:
+            path: "{{ fgnw_mac_ghosts_client_install_dir }}/{{ fgnw_mac_ghosts_client_binary }}"
+          register: __mac_ghosts_bin
+        - name: Fail if the GHOSTS Universal client role has not been applied yet
+          ansible.builtin.fail:
+            msg: >-
+              GHOSTS Universal client is not installed on {{ inventory_hostname }}
+              ({{ fgnw_mac_ghosts_client_install_dir }}/{{ fgnw_mac_ghosts_client_binary }} missing).
+              Deploy the Mac client (fgnw_mac_ghosts_client) before running this playbook.
+          when: not __mac_ghosts_bin.stat.exists
+        - name: Deploy the persona's FGNW GHOSTS timeline (browser-only, visible Chrome)
+          ansible.builtin.template:
+            src: templates/FGNW-ghosts-mac.timeline.json.j2
+            dest: "{{ fgnw_mac_ghosts_client_install_dir }}/config/timeline.json"
+            owner: "{{ fgnw_mac_ghosts_client_run_user }}"
+            group: staff
+            mode: "0644"
+          become: true
+        - name: Restart the GHOSTS LaunchAgent so it loads the new timeline
+          ansible.builtin.shell: |
+            set -euo pipefail
+            uid=$(id -u '{{ fgnw_mac_ghosts_client_run_user }}')
+            label='{{ fgnw_mac_ghosts_client_daemon_label }}'
+            plist="/Library/LaunchAgents/${label}.plist"
+            if launchctl kickstart -k "gui/${uid}/${label}" 2>/dev/null; then
+              echo restarted
+            else
+              launchctl bootout "gui/${uid}/${label}" 2>/dev/null || true
+              launchctl bootstrap "gui/${uid}" "${plist}"
+              echo bootstrapped
+            fi
+          args:
+            executable: /bin/bash
+          register: __mac_ghosts_restart
+          changed_when: true
+          become: true
+        - name: Confirm the GHOSTS Universal client process is running
+          ansible.builtin.shell: |
+            set -o pipefail
+            pgrep -f '{{ fgnw_mac_ghosts_client_binary }}' >/dev/null && echo running || echo stopped
+          args:
+            executable: /bin/bash
+          register: __mac_ghosts_proc
+          changed_when: false
+          retries: 5
+          delay: 3
+          until: "'running' in __mac_ghosts_proc.stdout"
+          become: true

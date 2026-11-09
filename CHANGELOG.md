@@ -18,6 +18,21 @@ has no release tag yet.
 
 ## [Unreleased]
 
+### Added — GHOSTS macOS persona activity is deployed automatically
+
+- **New `ansible/FGNW-mac-ghosts-activity.yml` seeds the macOS persona's browsing timeline.** The
+  Windows GHOSTS personas get their per-persona `timeline.json` from `FGNW-ghosts-activity.yml`, but
+  the macOS persona (Gaara, on `suna-ws1`) had none — the GHOSTS Universal client installed by
+  `fgnw_mac_ghosts_client` sat idle on a fresh deploy. The new play renders a browser-only timeline
+  from the same `content/ghosts/persona-timelines.yml` + `persona-overrides.yml` data, writes it to
+  `<install_dir>/config/timeline.json`, and restarts the LaunchAgent so it loads. It drives a
+  **visible** Chrome for Testing through the `BrowserChrome` handler's `executable-location` arg
+  (never curl), honours the persona's `pace` and `active_hours` (a full-day persona becomes
+  always-on, via zeroed `UtcTimeOn`/`UtcTimeOff`), and is wired into `phase5-emulation.yml` beside
+  the Windows play; macOS hosts with no GHOSTS persona are skipped. A dedicated Mac timeline
+  template, `templates/FGNW-ghosts-mac.timeline.json.j2`, omits the Windows-only `Command`
+  recon/admin legs (those are `ghosts.exe`-only).
+
 ### Fixed — GHOSTS macOS client builds from source, installs from Nexus, drives a real browser
 
 - **`fgnw_mac_ghosts_client` could never install Gaara's client.** Its default tarball URL

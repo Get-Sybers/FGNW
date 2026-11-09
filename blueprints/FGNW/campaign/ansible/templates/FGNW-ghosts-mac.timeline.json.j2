@@ -1,0 +1,58 @@
+{#
+  Fourth Great Ninja War -- macOS persona GHOSTS timeline (browser-only BAU noise).
+  Rendered per macOS GHOSTS-client host by ansible/FGNW-mac-ghosts-activity.yml. The GHOSTS
+  Universal client's BrowserChrome handler drives a VISIBLE Chrome for Testing (via the
+  executable-location HandlerArg; chromedriver is found next to the client binary) in the GUI
+  user's Aqua session -- the realistic-browser parallel to the Windows personas, NOT curl.
+  Only browsing is emitted: the Windows timeline's Command recon/admin legs are ghosts.exe-only.
+  Vars:
+    ghosts_browse_urls        baseline browsing URLs (generated persona-timelines.yml).
+    ghosts_signature_urls     per-character obsession sites; may be empty.
+    ghosts_pace               obsessive | normal | idle -- signature browse-loop speed.
+    ghosts_time_on/off        UTC active window; "00:00:00"/"00:00:00" means always-on (24/7).
+    ghosts_chrome_executable  absolute path to the Chrome-for-Testing binary the client drives.
+    range_second_octet        range number, for the attacker sinkhole 10.<r>.99.50.
+#}
+{%- if ghosts_pace | default('normal') == 'obsessive' %}{% set sig_lo = 60 %}{% set sig_hi = 120 %}
+{%- elif ghosts_pace | default('normal') == 'idle' %}{% set sig_lo = 480 %}{% set sig_hi = 720 %}
+{%- else %}{% set sig_lo = 180 %}{% set sig_hi = 300 %}{% endif %}
+{
+  "Status": "Run",
+  "TimeLineHandlers": [
+    {
+      "HandlerType": "BrowserChrome",
+      "Initial": "about:blank",
+      "UtcTimeOn": "{{ ghosts_time_on | default('00:00:00') }}",
+      "UtcTimeOff": "{{ ghosts_time_off | default('00:00:00') }}",
+      "Loop": true,
+      "HandlerArgs": {
+        "isheadless": "false",
+        "blockimages": "true",
+        "stickiness": 75,
+        "stickiness-depth-min": 5,
+        "stickiness-depth-max": 10,
+        "executable-location": "{{ ghosts_chrome_executable }}"
+      },
+      "TimeLineEvents": [
+        {
+          "Command": "browse",
+          "CommandArgs": ["http://10.{{ range_second_octet }}.99.50/"],
+          "DelayAfter": {{ (range(150, 271) | random) * 1000 }},
+          "DelayBefore": 0
+        }{% for url in ghosts_browse_urls %},
+        {
+          "Command": "browse",
+          "CommandArgs": ["{{ url }}"],
+          "DelayAfter": {{ (range(120, 301) | random) * 1000 }},
+          "DelayBefore": 0
+        }{% endfor %}{% for url in ghosts_signature_urls | default([]) %},
+        {
+          "Command": "browse",
+          "CommandArgs": ["http://{{ url }}"],
+          "DelayAfter": {{ (range(sig_lo, sig_hi + 1) | random) * 1000 }},
+          "DelayBefore": 0
+        }{% endfor %}
+      ]
+    }
+  ]
+}
