@@ -1,29 +1,67 @@
 ---
-# macOS mail server for suna-mail — Postfix (SMTP MTA, built into macOS) + Dovecot (IMAP/SASL,
-# from Homebrew). Replaces the Exchange 2019 + OWA stack the Hidden Sand Village used to run
-# before the conversion. The Sand user mailboxes come from the same AD user list the
-# FGNW-exchange-seed-mail.yml play already consumes (content/OWA/user-inboxes.yml), so the
-# ghosts personas carry across unchanged.
+# macOS mail server for suna-mail — Postfix (SMTP MTA) + Dovecot (IMAP/LMTP/SASL). Replaces the
+# Hidden Sand Village's old Exchange + OWA stack. The Sand mailboxes come from the same AD user
+# list FGNW-exchange-seed-mail.yml consumes (content/OWA/user-inboxes.yml), so the GHOSTS personas
+# carry across unchanged, and IMAP/SMTP auth uses each user's own AD password.
 #
-# Mail protocols — plaintext inside the sealed range, same scheme as the Exchange config
-# this replaces. Phase 2 containment seals internet egress so only VLAN-local traffic reaches
-# these ports.
-#   * SMTP in/out on 25     (postfix; no 587 submission listener)
-#   * IMAP on 143           (dovecot; no ssl_cert, so no STARTTLS; `protocols = imap lmtp`)
-#   * LMTP on a unix socket (dovecot <- postfix mailbox_transport)
-#   * no webmail            -- Thunderbird on suna-ws1 is the Gaara client, driven by
-#                              the unified fgnw_thunderbird role (`FGNW-thunderbird.yml`,
-#                              Phase 4e). That role is pinned to IMAP 143 plain + SMTP 25
-#                              plain, matching this. If OWA-style webmail is ever needed,
-#                              Roundcube drops in beside this; if a real TLS story is
-#                              wanted, add submission to Postfix master.cf and ssl/ssl_cert
-#                              to Dovecot, then flip fgnw_thunderbird_socket_type.
+# Two macOS realities drive this role (validated on the live range), and both differ from a Linux
+# mail host:
+#   * Dovecot ships NO macOS build and the Sand macs have NO Homebrew, so Dovecot is BUILT FROM
+#     SOURCE (Command Line Tools clang) from the tarball cached on the range Nexus by
+#     campaign/ansible/nexus-cache-dovecot.yml (Phase 0). No brew, no cross-compile, no egress.
+#   * Apple's Postfix config under /etc/postfix is SIP-protected (unwritable even as root, pinned
+#     to inet_interfaces=loopback-only), so this role runs the stock Postfix BINARY from a writable
+#     alternate config directory under /usr/local.
+#
+# Protocols — plaintext inside the sealed range (same scheme as the Exchange config it replaces):
+#   * SMTP on 25 (postfix)   * IMAP on 143 (dovecot; ssl=no)   * LMTP on a unix socket
+# matching the fgnw_thunderbird client (IMAP 143 plain + SMTP 25 plain) on suna-ws1.
 fgnw_mac_mail_server_domain: sunagakure.wind.ninja
 fgnw_mac_mail_server_hostname: "{{ inventory_hostname }}.{{ fgnw_mac_mail_server_domain }}"
 fgnw_mac_mail_server_relay_networks: "127.0.0.0/8, 10.0.0.0/8"
 
-# Mailbox corpus is the per-village user list that fgnw_exchange_seed_mail already uses, read
-# from content/OWA/user-inboxes.yml and filtered to this domain.
+# Mailbox corpus — the per-village user list FGNW-exchange-seed-mail already uses, filtered to this
+# domain via the AD config (ground truth for which users belong to the domain, and their passwords).
 fgnw_mac_mail_server_user_corpus_file: "{{ playbook_dir }}/../content/OWA/user-inboxes.yml"
-fgnw_mac_mail_server_user_shell: /sbin/nologin
-fgnw_mac_mail_server_user_password_default: Changeme1!
+fgnw_mac_mail_server_ad_config_file: "{{ playbook_dir }}/../ad/NARUTO/data/config.json"
+
+# --- Dovecot, built from the range Nexus source (no Homebrew) --------------------------------
+# GHOSTS-style pattern: the Dovecot SOURCE tarball is cached on the range Nexus by
+# campaign/ansible/nexus-cache-dovecot.yml (Phase 0, controller-side, egress open) and this role
+# builds it on the mail host. 2.3.x (NOT 2.4, which changed the config syntax this role writes).
+# Plaintext only (--with-ssl=no): the SDK carries no OpenSSL headers and the range is sealed.
+fgnw_mac_mail_server_dovecot_version: "2.3.21"
+fgnw_mac_mail_server_dovecot_tarball: "dovecot-{{ fgnw_mac_mail_server_dovecot_version }}.tar.gz"
+fgnw_mac_mail_server_dovecot_sha256: 05b11093a71c237c2ef309ad587510721cc93bbee6828251549fc1586c36502d
+# Upstream location, read ONLY by the Phase 0 cache play on the controller (never by a VM).
+fgnw_mac_mail_server_dovecot_upstream_url: "https://dovecot.org/releases/2.3/{{ fgnw_mac_mail_server_dovecot_tarball }}"
+# Range Nexus raw-hosted tools/ path (same host digger/thunderbird/ghosts use). nexus_host /
+# nexus_port come from the range/infra environment (192.0.2.2 / 8081 are RFC-5737 placeholders).
+fgnw_mac_mail_server_nexus_tools_url: "http://{{ nexus_host | default('192.0.2.2') }}:{{ nexus_port | default('8081') }}/repository/raw-hosted/tools"
+# Self-contained install prefix for the from-source Dovecot (keeps it out of the system tree; the
+# same fixed prefix on every identical Sand mac template).
+fgnw_mac_mail_server_dovecot_prefix: /usr/local/fgnw-dovecot
+
+# Dovecot service accounts. macOS has no dovecot/dovenull users and the mailboxes are VIRTUAL (not
+# OS accounts), so the role creates a dedicated mail user + a login user + the "dovecot" group the
+# built-in service defaults expect. UIDs/GIDs are in the 5000 service range.
+fgnw_mac_mail_server_mail_user: _fgnwmail
+fgnw_mac_mail_server_mail_uid: 5000
+fgnw_mac_mail_server_login_user: _fgnwnull
+fgnw_mac_mail_server_login_uid: 5001
+fgnw_mac_mail_server_dovecot_group: dovecot
+fgnw_mac_mail_server_dovecot_gid: 5002
+fgnw_mac_mail_server_vmail_dir: "{{ fgnw_mac_mail_server_dovecot_prefix }}/vmail"
+
+# --- Postfix: stock binary, writable ALT config dir (SIP) ------------------------------------
+# /etc/postfix is SIP-protected; the role never touches it. It copies master.cf out and writes its
+# own main.cf here, then runs `postfix -c <dir>`.
+fgnw_mac_mail_server_postfix_dir: /usr/local/fgnw-postfix/conf
+fgnw_mac_mail_server_postfix_queue_dir: /private/var/spool/postfix
+fgnw_mac_mail_server_postfix_data_dir: /var/lib/postfix
+fgnw_mac_mail_server_postfix_owner: _postfix
+fgnw_mac_mail_server_postfix_setgid_group: _postdrop
+
+# --- launchd labels (LaunchDaemons that keep both services up across reboots) ----------------
+fgnw_mac_mail_server_dovecot_label: com.fgnw.dovecot
+fgnw_mac_mail_server_postfix_label: com.fgnw.postfix

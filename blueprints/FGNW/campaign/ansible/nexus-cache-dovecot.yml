@@ -1,0 +1,127 @@
+---
+# Phase 0 — cache the Dovecot SOURCE tarball on the range Nexus (raw-hosted, tools/) so the Sand
+# mail host can build it inside containment. Runs on the controller, which still has internet in
+# Phase 0, with the Nexus admin password Ludus generated when it deployed the Nexus VM.
+#
+# Why the source (not a binary): GHOSTS/digger/thunderbird cache a ready installer, but Dovecot
+# ships no macOS installer, the Sand macs have no Homebrew, and the controller is Linux so it
+# cannot cross-build a macOS binary. The mail host has the Command Line Tools clang, so
+# fgnw_mac_mail_server builds the cached source there (see that role). The version, file name and
+# sha256 pin are the role's defaults (one source of truth). An artifact Nexus already serves is
+# left alone. raw-hosted's strict content-type validation is lifted for the upload and put back
+# (Nexus classifies the .tar.gz as application/x-gtar under its name and would otherwise refuse).
+- name: Cache the Dovecot source on the range Nexus (raw-hosted)
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files:
+    - roles/fgnw_mac_mail_server/defaults/main.yml
+  vars:
+    ncd_url: http://192.0.2.2:8081
+    ncd_repo: raw-hosted
+    ncd_dir: tools
+    ncd_admin_password_file: /opt/ludus/install/nexus-admin-password
+    ncd_workdir: "{{ lookup('ansible.builtin.env', 'HOME') }}/.FGNW-deploy/nexus-cache"
+    ncd_artifact: "{{ fgnw_mac_mail_server_dovecot_tarball }}"
+    ncd_repo_api: "{{ ncd_url }}/service/rest/v1/repositories/raw/hosted/{{ ncd_repo }}"
+  tasks:
+    - name: Read the Nexus admin password Ludus generated
+      ansible.builtin.set_fact:
+        ncd_password: "{{ lookup('ansible.builtin.file', ncd_admin_password_file) | trim }}"
+      no_log: true
+
+    - name: Ensure the owner-only work directory exists
+      ansible.builtin.file:
+        path: "{{ ncd_workdir }}"
+        state: directory
+        mode: "0700"
+
+    - name: Ask Nexus whether it already serves the Dovecot source
+      ansible.builtin.uri:
+        url: "{{ ncd_url }}/repository/{{ ncd_repo }}/{{ ncd_dir }}/{{ ncd_artifact }}"
+        method: HEAD
+        status_code: [200, 404]
+      register: ncd_present
+
+    - name: Cache the source when Nexus does not serve it yet
+      when: ncd_present.status == 404
+      block:
+        - name: Download the Dovecot source from dovecot.org (sha256-pinned)
+          ansible.builtin.get_url:
+            url: "{{ fgnw_mac_mail_server_dovecot_upstream_url }}"
+            dest: "{{ ncd_workdir }}/{{ ncd_artifact }}"
+            checksum: "sha256:{{ fgnw_mac_mail_server_dovecot_sha256 }}"
+            mode: "0600"
+            timeout: 120
+          retries: 3
+          delay: 10
+          register: ncd_download
+          until: ncd_download is succeeded
+
+        - name: Read the raw-hosted repository settings
+          ansible.builtin.uri:
+            url: "{{ ncd_repo_api }}"
+            url_username: admin
+            url_password: "{{ ncd_password }}"
+            force_basic_auth: true
+            return_content: true
+          register: ncd_repo_cfg
+
+        - name: Derive the update body (same settings, writable keys only)
+          ansible.builtin.set_fact:
+            ncd_repo_body: >-
+              {{ ncd_repo_cfg.json | dict2items
+                 | selectattr('key', 'in', ['name', 'online', 'storage', 'cleanup', 'component', 'raw'])
+                 | items2dict }}
+            ncd_strict: "{{ ncd_repo_cfg.json.storage.strictContentTypeValidation }}"
+
+        - name: Lift strict content-type validation on raw-hosted for the upload
+          ansible.builtin.uri:
+            url: "{{ ncd_repo_api }}"
+            method: PUT
+            url_username: admin
+            url_password: "{{ ncd_password }}"
+            force_basic_auth: true
+            body_format: json
+            body: "{{ ncd_repo_body | combine({'storage': {'strictContentTypeValidation': false}}, recursive=true) }}"
+            status_code: [204]
+          when: ncd_strict | bool
+
+        - name: Upload the Dovecot source to raw-hosted (PUT)
+          ansible.builtin.uri:
+            url: "{{ ncd_url }}/repository/{{ ncd_repo }}/{{ ncd_dir }}/{{ ncd_artifact }}"
+            method: PUT
+            src: "{{ ncd_workdir }}/{{ ncd_artifact }}"
+            headers:
+              Content-Type: application/octet-stream
+            url_username: admin
+            url_password: "{{ ncd_password }}"
+            force_basic_auth: true
+            status_code: [201]
+            timeout: 600
+
+      always:
+        - name: Restore strict content-type validation on raw-hosted
+          ansible.builtin.uri:
+            url: "{{ ncd_repo_api }}"
+            method: PUT
+            url_username: admin
+            url_password: "{{ ncd_password }}"
+            force_basic_auth: true
+            body_format: json
+            body: "{{ ncd_repo_body | combine({'storage': {'strictContentTypeValidation': true}}, recursive=true) }}"
+            status_code: [204]
+          when:
+            - ncd_repo_body is defined
+            - ncd_strict | bool
+
+        - name: Remove the downloaded source from the controller
+          ansible.builtin.file:
+            path: "{{ ncd_workdir }}/{{ ncd_artifact }}"
+            state: absent
+
+    - name: Verify Nexus serves the Dovecot source
+      ansible.builtin.uri:
+        url: "{{ ncd_url }}/repository/{{ ncd_repo }}/{{ ncd_dir }}/{{ ncd_artifact }}"
+        method: HEAD
+        status_code: [200]

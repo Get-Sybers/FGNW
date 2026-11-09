@@ -1,75 +1,79 @@
 # fgnw_mac_mail_server
 
-Stands up the **Hidden Sand Village mail server** on macOS: Postfix (built into macOS) as the SMTP
-MTA and Homebrew Dovecot for IMAP and LMTP delivery, the stack that replaced Exchange 2019 and OWA
-for Sunagakure. The outcome is `suna-mail` accepting SMTP on 25 and IMAP on 143 (plaintext, inside
-the sealed range) with a local mailbox for every Sand user of the shared OWA corpus, which the
-unified `fgnw_thunderbird` role on suna-ws1 then logs into (its defaults are pinned to IMAP 143
-plain and SMTP 25 plain to match).
+Stands up the **Hidden Sand Village mail server** on macOS (`suna-mail`): the stock Postfix binary as
+the SMTP MTA and a from-source Dovecot for IMAP and LMTP delivery, the stack that replaced Exchange
+2019 and OWA for Sunagakure. The outcome is `suna-mail` accepting SMTP on 25 and IMAP on 143
+(plaintext, inside the sealed range) with a virtual mailbox for every Sand user of the shared OWA
+corpus, authenticating with that user's own Active Directory password. The unified `fgnw_thunderbird`
+role on `suna-ws1` then logs into it (its defaults are pinned to IMAP 143 plain and SMTP 25 plain to
+match).
 
-It is called by [`FGNW-mac-mail.yml`](../../FGNW-mac-mail.yml) on `macos_dev`, limited to
-`suna-mail` by a `when` on `inventory_hostname`, as step 2 of `deploy-tasks/phase4d-mac-services.yml`.
-Dovecot itself is installed earlier, pre-containment, by `FGNW-mac-dev.yml` (Phase 1c,
-`homebrew_installed_packages`); this role only configures and starts it, because a `brew install`
-cannot reach the internet after Phase 2 containment.
+It is called by [`FGNW-mac-mail.yml`](../../FGNW-mac-mail.yml) on `macos_dev`, limited to `suna-mail`
+by a `when` on `inventory_hostname`, as step 2 of `deploy-tasks/phase4d-mac-services.yml`.
+
+## Why it is built this way
+
+Two macOS realities make this role unlike a Linux mail host, and both were confirmed on the live
+range:
+
+- **Dovecot is built from source.** GHOSTS-style, the Dovecot source tarball is cached on the range
+  Nexus by `campaign/ansible/nexus-cache-dovecot.yml` (Phase 0, controller-side). The Sand macs ship
+  no Homebrew and Phase 2 seals egress, so a `brew install` or a bottle download cannot work inside
+  containment; instead this role builds the cached source with the Command Line Tools `clang`. Only
+  one portability flag is needed (`st_atim`/`st_ctim` → `st_atimespec`/`st_ctimespec`), the build is
+  plaintext-only (`--with-ssl=no`), and the result installs under `/usr/local/fgnw-dovecot`.
+- **Postfix runs from a writable alternate config directory.** Apple's Postfix config under
+  `/etc/postfix` is SIP-protected: unwritable even as root and pinned to `inet_interfaces =
+  loopback-only`. The role never touches it. It copies `master.cf` out to
+  `/usr/local/fgnw-postfix/conf`, writes its own `main.cf` there, and runs `postfix -c <dir>`.
 
 ## What it does
 
-1. Resolves the Homebrew prefix at runtime (`brew --prefix`, `/usr/local` on the x86_64 guests) and
-   derives the Dovecot config path `<prefix>/etc/dovecot/dovecot.conf`.
-2. Loads `fgnw_mac_mail_server_user_corpus_file` and `ad/NARUTO/data/config.json` (relative to the
-   play's directory), intersects the corpus keys with the users of
-   `lab.domains[fgnw_mac_mail_server_domain]` and fails when nothing is left to seed. Same pattern
-   as `fgnw_exchange_seed_mail`.
-3. Writes `/etc/postfix/main.cf`: `myhostname` and `mydomain` from the inputs, `mynetworks` from
-   `fgnw_mac_mail_server_relay_networks`, Maildir delivery handed to Dovecot over LMTP, Dovecot
-   SASL, `maillog_file = /var/log/mail.log`. Notifies `Restart postfix` (`postfix reload`).
-4. Writes `dovecot.conf`: `protocols = imap lmtp`, `mail_location = maildir:~/Maildir`, PAM passdb and
-   passwd userdb, the LMTP and auth sockets under `/var/spool/postfix/private/`, log at
-   `/var/log/dovecot.log`. Notifies `Restart dovecot` (`brew services restart dovecot`).
-5. Creates a local account per user (`fgnw_mac_mail_server_user_shell`, home created, password
-   `fgnw_mac_mail_server_user_password_default` hashed with SHA-512) and a `0700` `~/Maildir`.
-6. Enables `system/org.postfix.master`, runs `postfix start`, and `brew services start dovecot` as
-   root so Dovecot lands in the system LaunchDaemon domain (the only one allowed to bind 25 and 143).
+1. Loads the OWA inbox corpus and `ad/NARUTO/data/config.json`, and builds the Sand mailbox list:
+   every corpus user who belongs to `fgnw_mac_mail_server_domain`, paired with that user's AD
+   password. Fails cleanly when the intersection is empty.
+2. Creates the Dovecot service accounts with the `ansible.builtin.group` and `ansible.builtin.user`
+   modules: a dedicated mail user (`_fgnwmail`), a login user (`_fgnwnull`), and the `dovecot` group
+   the built-in service listeners expect (macOS has none of these).
+3. Fetches the Dovecot source from the Nexus (sha256-pinned) and builds it, guarded by a `creates`
+   on the installed binary so the slow build runs only once.
+4. Writes `dovecot.conf` (plaintext `imap lmtp`, `auth_username_format = %Ln`, `default_vsz_limit =
+   0`, a `passwd-file` passdb and `static` userdb for virtual Maildirs) and the `dovecot-users`
+   passwd-file (`0640`, group-readable by the auth worker). Notifies `Restart dovecot`.
+5. Writes the Postfix `main.cf` in the alt config dir (LMTP delivery to Dovecot, empty
+   `local_recipient_maps` so the virtual users are accepted, Dovecot SASL) and copies out
+   `master.cf`. Stops and disables the stock loopback Postfix. Notifies `Restart postfix`.
+6. Installs a LaunchDaemon for each service (`com.fgnw.dovecot`, `com.fgnw.postfix`) and loads them
+   with the official `community.general.launchd` module (`state: started`), so both bind their
+   privileged ports and survive reboots. The stock Apple Postfix daemon is unloaded with the same
+   module and then persistently disabled.
 
 ## Inputs
 
-| Variable | Required | Default | Description |
-| --- | --- | --- | --- |
-| `fgnw_mac_mail_server_domain` | no | `sunagakure.wind.ninja` | Mail domain (`mydomain`) and the `config.json` domain whose users are seeded. |
-| `fgnw_mac_mail_server_hostname` | no | `{{ inventory_hostname }}.{{ fgnw_mac_mail_server_domain }}` | Postfix `myhostname` and SMTP banner. |
-| `fgnw_mac_mail_server_relay_networks` | no | `127.0.0.0/8, 10.0.0.0/8` | Postfix `mynetworks` (relay without authentication). |
-| `fgnw_mac_mail_server_user_corpus_file` | no | `{{ playbook_dir }}/../content/OWA/user-inboxes.yml` | Controller-side inbox corpus whose keys become local mail accounts. |
-| `fgnw_mac_mail_server_user_shell` | no | `/sbin/nologin` | Shell of the seeded accounts (mail-only). |
-| `fgnw_mac_mail_server_user_password_default` | no | `Changeme1!` | Password of every seeded account; the Thunderbird IMAP/SMTP credential. Lab placeholder. |
+All inputs have lab-safe defaults and the caller passes nothing; see
+[`meta/argument_specs.yml`](meta/argument_specs.yml) for the full list. The ones most likely to be
+overridden:
 
-The `fgnw_mac_mail_server_*` facts the tasks register or set (`brew_prefix`, `dovecot_conf`,
-`inbox_data`, `ad_config`, `domain_users`, `users`, `postfix_enable`, `postfix_start`,
-`dovecot_start`) are internal, not inputs.
+| Variable | Default | Description |
+| --- | --- | --- |
+| `fgnw_mac_mail_server_domain` | `sunagakure.wind.ninja` | Mail domain and the `config.json` domain whose users are seeded. |
+| `fgnw_mac_mail_server_dovecot_version` | `2.3.21` | Dovecot version to build (2.3.x only). |
+| `fgnw_mac_mail_server_dovecot_prefix` | `/usr/local/fgnw-dovecot` | Dovecot install prefix and mailbox root. |
+| `fgnw_mac_mail_server_postfix_dir` | `/usr/local/fgnw-postfix/conf` | Writable Postfix config directory. |
 
 ## Privilege and platforms
 
-- `brew --prefix` runs as the SSH user (Homebrew refuses to run as root); every other task and both
-  handlers run with `become: true` (sudo via the inventory's `ansible_become_pass`).
-- Platform: macOS on x86_64 (Homebrew under `/usr/local`; the prefix is resolved, not assumed).
-- Prerequisites: Dovecot installed by Homebrew, the AD config and the OWA corpus on the controller,
-  and at least one corpus user in the Sand domain.
+- Every task runs with `become: true` (sudo via the inventory's `ansible_become_pass`).
+- Platform: macOS on x86_64 (SIP enabled, no Homebrew). The build needs the Command Line Tools.
+- Prerequisites: the Dovecot source cached on the Nexus (Phase 0), the AD config and OWA corpus on
+  the controller, and at least one corpus user in the Sand domain.
 
 ## Idempotence
 
-Yes, with one honest exception. The configs are rewritten only when they differ (the handlers fire
-only then), accounts and Maildirs are created only when missing, `postfix start` and
-`brew services start` report `ok` when the daemon is already running, and the user task re-applies
-the same password (a fresh SHA-512 salt each run, same credential). The
-`launchctl enable system/org.postfix.master` task reports `changed` on every run because its
-`changed_when` is `rc == 0`.
-
-## Failure and rollback
-
-The assert stops the role cleanly when there is no Sand user to seed. A failure later leaves every
-config already written in place: nothing is rolled back and no backup copies are kept. Handlers run
-at the end of the play, so a run that fails after notifying one leaves the running daemon on its
-previous configuration until the next successful run.
+Yes. The source build is skipped once the binary exists (`creates`), the service accounts report
+`changed` only when actually created, configs are rewritten only when they differ (the handlers fire
+only then), and `community.general.launchd` (`state: started`) loads each daemon only when it is not
+already running. The passwd-file is written with `no_log`.
 
 ## Example invocation
 

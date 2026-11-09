@@ -90,6 +90,9 @@ nexus:
         - path: tools/chromedriver-mac-x64.zip
           populated_by: "campaign/ansible/nexus-cache-ghosts-universal.yml (matching chromedriver, mac-x64)"
           consumed_by: fgnw_mac_ghosts_client — Selenium driver for BrowserChrome
+        - path: tools/dovecot-{{ fgnw_mac_mail_server_dovecot_version }}.tar.gz
+          populated_by: "campaign/ansible/nexus-cache-dovecot.yml (Dovecot source; run by phase0-nexus.yml)"
+          consumed_by: fgnw_mac_mail_server — built from source on suna-mail (no mac binary/Homebrew; sha256 pinned)
   known_gap: No Nexus proxy exists for the Ubuntu base-OS apt repos (archive.ubuntu.com) — Kali now has kali-proxy (
     Exchange-2019 prerequisite installers (.NET 4.8, VC++ redist, IIS URL Rewrite, UCMA). Anything needing those hits raw internet during Phase 1/3 (normal
     networking), i.e. before Phase 5 containment cuts internet access.

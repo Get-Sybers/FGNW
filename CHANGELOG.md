@@ -18,6 +18,28 @@ has no release tag yet.
 
 ## [Unreleased]
 
+### Fixed — the Sand (Sunagakure) macOS mail server now actually stands up
+
+- **`fgnw_mac_mail_server` could never work on the Sand macs, and is rewritten.** The old role
+  `brew install`-ed Dovecot (the Sand macs have no Homebrew), created OS mailbox accounts, and
+  wrote `/etc/postfix/main.cf` — all impossible on a SIP-enabled, Homebrew-less macOS guest. The
+  rewritten role builds Dovecot from source with the Command Line Tools clang (one macOS
+  portability flag, plaintext `--with-ssl=no`); serves virtual mailboxes from a `passwd-file` of
+  the Sand AD users with their own AD passwords (so IMAP/SMTP auth matches the domain account); and
+  runs the stock Postfix binary from a writable alternate config directory under `/usr/local`,
+  because Apple's `/etc/postfix` is SIP-locked. Both services run as LaunchDaemons. Validated end
+  to end on the live range (SMTP to LMTP to Dovecot Maildir to IMAP).
+- **Service start/restart go through the official `community.general.launchd` module.** Loading both
+  daemons (`state: started`), the restart-on-config-change handlers (`state: restarted`), and
+  retiring the stock Apple Postfix daemon (`state: unloaded`) now use the module instead of
+  hand-rolled `launchctl` shell. Only the from-source Dovecot build (no module compiles from source)
+  and the persistent `launchctl disable` of the SIP-protected Apple daemon remain shell/command.
+  Verified on the live range: both daemons cycle cleanly and re-runs report no change.
+- **New `ansible/nexus-cache-dovecot.yml` (Phase 0) caches the Dovecot source on the Nexus**, the
+  same pattern as the Thunderbird and GHOSTS caches, so the mail host builds inside containment with
+  no egress. Wired into `phase0-nexus.yml`; `dovecot` is dropped from the Phase 1c Homebrew package
+  list and the artifact is documented in `ludus-requirements.yml`.
+
 ### Added — GHOSTS macOS persona activity is deployed automatically
 
 - **New `ansible/FGNW-mac-ghosts-activity.yml` seeds the macOS persona's browsing timeline.** The

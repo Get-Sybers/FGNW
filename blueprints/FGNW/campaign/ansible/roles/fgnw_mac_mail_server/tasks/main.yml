@@ -1,181 +1,206 @@
 ---
-# Stand up Postfix (built-in) + Dovecot (brew-installed in Phase 1c via mac-dev-playbook's
-# `homebrew_installed_packages`) on the Sand mail server, seed per-user mailboxes from the
-# shared OWA corpus, and leave logs under /var/log/mail.log for GHOSTS to pick up.
-# Idempotent — a re-run only overwrites config and re-seeds missing mailboxes.
-#
-# NOTE: this role does NOT install dovecot. Phase 2 containment seals internet egress,
-# so a brew install here would fail; the install is done pre-containment in Phase 1c by
-# FGNW-mac-dev.yml.
+# Stand up the Sand mail server on suna-mail: Dovecot (IMAP/LMTP, built from the Nexus source) +
+# Postfix (SMTP, stock binary run from a writable alt config dir because /etc/postfix is SIP-locked).
+# Mailboxes are VIRTUAL (a passwd-file of the Sand AD users with their AD passwords, delivered to
+# Maildirs under a dedicated mail user). Idempotent: the slow source build is guarded by `creates`,
+# and a re-run only rewrites config and reloads the services. See the role defaults for the why.
 
-# --- Resolve the Homebrew prefix at runtime -------------------------------------------------
-# macOS guests on Proxmox are x86_64 (OpenCore/VirtualSMC), so brew's prefix is /usr/local;
-# on Apple Silicon it would be /opt/homebrew. Homebrew's dovecot reads its config from
-# <brew_prefix>/etc/dovecot/dovecot.conf.
-#
-# IMPORTANT: `brew --prefix FORMULA` returns the formula's opt-prefix
-# (e.g. /usr/local/opt/dovecot), NOT the Homebrew prefix. We need the latter, so this
-# intentionally runs `brew --prefix` with no formula argument.
-- name: Resolve the Homebrew prefix
-  ansible.builtin.command:
-    argv: [brew, --prefix]
-  register: fgnw_mac_mail_server_brew_prefix
-  changed_when: false
-
-- name: Set the dovecot config path from the resolved prefix
-  ansible.builtin.set_fact:
-    fgnw_mac_mail_server_dovecot_conf: "{{ fgnw_mac_mail_server_brew_prefix.stdout | trim }}/etc/dovecot/dovecot.conf"
-
-# --- Build the per-domain Sand user list from the two source corpora -----------------------
-# Mirror of the Windows fgnw_exchange_seed_mail pattern: intersect user-inboxes.yml keys with
-# the AD config's lab.domains[<domain>].users keys. user-inboxes.yml's top-level key is
-# `user_inboxes` (keys = sAMAccountNames; values = per-user message lists, not profiles), and
-# the AD config is the ground truth for which of those users belong to this domain.
-- name: Load the shared OWA user corpus
+# --- Mailbox user list (AD domain users ∩ inbox corpus, with their AD passwords) ---------------
+- name: Load the shared OWA inbox corpus
   ansible.builtin.include_vars:
     file: "{{ fgnw_mac_mail_server_user_corpus_file }}"
     name: fgnw_mac_mail_server_inbox_data
 
-- name: Load the AD config (domain membership ground truth)
+- name: Load the AD config (domain membership + per-user passwords)
   ansible.builtin.include_vars:
-    file: "{{ playbook_dir }}/../ad/NARUTO/data/config.json"
+    file: "{{ fgnw_mac_mail_server_ad_config_file }}"
     name: fgnw_mac_mail_server_ad_config
+  no_log: true
 
-- name: Collect this domain's AD user sAMAccountNames
+- name: Build the Sand mailbox list (local part + AD password) for every corpus user in this domain
   ansible.builtin.set_fact:
-    fgnw_mac_mail_server_domain_users: >-
-      {{ (fgnw_mac_mail_server_ad_config.lab.domains[fgnw_mac_mail_server_domain].users | default({})).keys() | list }}
+    fgnw_mac_mail_server_mailbox_users: >-
+      {{ fgnw_mac_mail_server_mailbox_users | default([])
+         + [{'name': item.key, 'password': item.value.password}] }}
+  loop: >-
+    {{ (fgnw_mac_mail_server_ad_config.lab.domains[fgnw_mac_mail_server_domain].users | default({}))
+       | dict2items
+       | selectattr('key', 'in', (fgnw_mac_mail_server_inbox_data.user_inboxes | default({})).keys() | list)
+       | list }}
+  loop_control:
+    label: "{{ item.key }}"
+  no_log: true
 
-- name: Intersect the inbox corpus with this domain's AD users
-  ansible.builtin.set_fact:
-    fgnw_mac_mail_server_users: >-
-      {{ (fgnw_mac_mail_server_inbox_data.user_inboxes | default({}))
-         | dict2items
-         | selectattr('key', 'in', fgnw_mac_mail_server_domain_users)
-         | map(attribute='key') | list }}
-
-- name: Assert this host has at least one Sand user to seed
+- name: Assert this host has at least one Sand mailbox user to serve
   ansible.builtin.assert:
-    that: fgnw_mac_mail_server_users | length > 0
+    that: (fgnw_mac_mail_server_mailbox_users | default([])) | length > 0
     fail_msg: >-
-      No seedable users for {{ inventory_hostname }}: no key in content/OWA/user-inboxes.yml
-      matches a user of domain '{{ fgnw_mac_mail_server_domain }}' in ad/NARUTO/data/config.json
-      ({{ fgnw_mac_mail_server_domain_users | length }} users found in that domain).
+      No seedable Sand mailboxes for {{ inventory_hostname }}: no key in content/OWA/user-inboxes.yml
+      matches a user of domain '{{ fgnw_mac_mail_server_domain }}' in ad/NARUTO/data/config.json.
     quiet: true
 
-# --- Postfix main.cf -------------------------------------------------------------------------
-- name: Install the Postfix main.cf
-  ansible.builtin.copy:
-    dest: /etc/postfix/main.cf
-    owner: root
-    group: wheel
-    mode: "0644"
-    content: |
-      myhostname = {{ fgnw_mac_mail_server_hostname }}
-      mydomain = {{ fgnw_mac_mail_server_domain }}
-      myorigin = $mydomain
-      mydestination = $myhostname, localhost.$mydomain, localhost, $mydomain
-      inet_interfaces = all
-      inet_protocols = ipv4
-      mynetworks = {{ fgnw_mac_mail_server_relay_networks }}
-      home_mailbox = Maildir/
-      smtpd_banner = $myhostname ESMTP
-      maillog_file = /var/log/mail.log
-      # Hand local delivery off to Dovecot's LDA so IMAP and SMTP share mailbox state.
-      mailbox_transport = lmtp:unix:private/dovecot-lmtp
-      smtpd_sasl_type = dovecot
-      smtpd_sasl_path = private/auth
-      smtpd_sasl_auth_enable = yes
-      smtpd_recipient_restrictions =
-        permit_mynetworks,
-        permit_sasl_authenticated,
-        reject_unauth_destination
+# --- Dovecot service accounts (macOS has no dovecot/dovenull; mailboxes are virtual) -----------
+- name: Create the Dovecot service groups
+  ansible.builtin.group:
+    name: "{{ item.name }}"
+    gid: "{{ item.gid }}"
+  loop:
+    - { name: "{{ fgnw_mac_mail_server_mail_user }}", gid: "{{ fgnw_mac_mail_server_mail_uid }}" }
+    - { name: "{{ fgnw_mac_mail_server_login_user }}", gid: "{{ fgnw_mac_mail_server_login_uid }}" }
+    - { name: "{{ fgnw_mac_mail_server_dovecot_group }}", gid: "{{ fgnw_mac_mail_server_dovecot_gid }}" }
+  loop_control:
+    label: "{{ item.name }}"
   become: true
-  notify: Restart postfix
 
-# --- Dovecot ---------------------------------------------------------------------------------
-- name: Install the Dovecot config at the resolved prefix
-  ansible.builtin.copy:
-    dest: "{{ fgnw_mac_mail_server_dovecot_conf }}"
+- name: Create the Dovecot service users (nologin, no home; distinct mail and login accounts)
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    uid: "{{ item.uid }}"
+    group: "{{ item.name }}"
+    shell: /usr/bin/false
+    home: /var/empty
+    create_home: false
+  loop:
+    - { name: "{{ fgnw_mac_mail_server_mail_user }}", uid: "{{ fgnw_mac_mail_server_mail_uid }}" }
+    - { name: "{{ fgnw_mac_mail_server_login_user }}", uid: "{{ fgnw_mac_mail_server_login_uid }}" }
+  loop_control:
+    label: "{{ item.name }}"
+  become: true
+
+# --- Directories (after the users exist, so vmail can be owned by the mail user) ---------------
+- name: Create the Dovecot install, source, vmail, and Postfix alt-config directories
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default('wheel') }}"
+    mode: "{{ item.mode | default('0755') }}"
+  loop:
+    - { path: "{{ fgnw_mac_mail_server_dovecot_prefix }}" }
+    - { path: "{{ fgnw_mac_mail_server_dovecot_prefix }}/.src", mode: "0700" }
+    - path: "{{ fgnw_mac_mail_server_vmail_dir }}"
+      owner: "{{ fgnw_mac_mail_server_mail_user }}"
+      group: "{{ fgnw_mac_mail_server_mail_user }}"
+      mode: "0700"
+    - { path: "{{ fgnw_mac_mail_server_postfix_dir }}" }
+  loop_control:
+    label: "{{ item.path }}"
+  become: true
+
+# --- Build Dovecot from the Nexus source ------------------------------------------------------
+- name: Fetch the Dovecot source from the range Nexus (sha256-pinned)
+  ansible.builtin.get_url:
+    url: "{{ fgnw_mac_mail_server_nexus_tools_url }}/{{ fgnw_mac_mail_server_dovecot_tarball }}"
+    dest: "{{ fgnw_mac_mail_server_dovecot_prefix }}/.src/{{ fgnw_mac_mail_server_dovecot_tarball }}"
+    checksum: "sha256:{{ fgnw_mac_mail_server_dovecot_sha256 }}"
+    mode: "0644"
+  become: true
+
+- name: Build Dovecot from source with the Command Line Tools clang (only when the binary is absent)
+  ansible.builtin.shell: |
+    set -euo pipefail
+    cd '{{ fgnw_mac_mail_server_dovecot_prefix }}/.src'
+    rm -rf 'dovecot-{{ fgnw_mac_mail_server_dovecot_version }}'
+    /usr/bin/tar xzf '{{ fgnw_mac_mail_server_dovecot_tarball }}'
+    cd 'dovecot-{{ fgnw_mac_mail_server_dovecot_version }}'
+    ./configure --prefix='{{ fgnw_mac_mail_server_dovecot_prefix }}' \
+      --with-ssl=no --without-pam --without-lucene --without-sqlite --without-mysql --without-pgsql \
+      CPPFLAGS='-Dst_atim=st_atimespec -Dst_ctim=st_ctimespec -Dst_mtim=st_mtimespec'
+    make -j"$(sysctl -n hw.ncpu)"
+    make install
+  args:
+    executable: /bin/bash
+    creates: "{{ fgnw_mac_mail_server_dovecot_prefix }}/sbin/dovecot"
+  become: true
+
+# --- Dovecot config + virtual-user passwd-file ------------------------------------------------
+- name: Install the Dovecot config
+  ansible.builtin.template:
+    src: dovecot.conf.j2
+    dest: "{{ fgnw_mac_mail_server_dovecot_prefix }}/dovecot.conf"
     owner: root
     group: wheel
     mode: "0644"
-    content: |
-      protocols = imap lmtp
-      listen = *
-      mail_location = maildir:~/Maildir
-      log_path = /var/log/dovecot.log
-      auth_mechanisms = plain login
-      passdb { driver = pam }
-      userdb { driver = passwd }
-      service lmtp {
-        unix_listener /var/spool/postfix/private/dovecot-lmtp {
-          mode = 0600
-          user = _postfix
-          group = _postfix
-        }
-      }
-      service auth {
-        unix_listener /var/spool/postfix/private/auth {
-          mode = 0660
-          user = _postfix
-          group = _postfix
-        }
-      }
   become: true
   notify: Restart dovecot
 
-# --- Seed mailboxes --------------------------------------------------------------------------
-- name: Ensure a local mail account exists for every Sand user in the corpus
-  ansible.builtin.user:
+- name: Install the Dovecot virtual-user passwd-file (readable by the auth worker)
+  ansible.builtin.template:
+    src: dovecot-users.j2
+    dest: "{{ fgnw_mac_mail_server_dovecot_prefix }}/dovecot-users"
+    owner: root
+    group: "{{ fgnw_mac_mail_server_mail_user }}"
+    mode: "0640"
+  no_log: true
+  become: true
+  notify: Restart dovecot
+
+# --- Postfix config in the writable alt directory (SIP-locked /etc/postfix) --------------------
+- name: Copy the stock Postfix master.cf into the writable alt config dir
+  ansible.builtin.copy:
+    src: /etc/postfix/master.cf
+    dest: "{{ fgnw_mac_mail_server_postfix_dir }}/master.cf"
+    remote_src: true
+    owner: root
+    group: wheel
+    mode: "0644"
+  become: true
+  notify: Restart postfix
+
+- name: Install the Postfix main.cf (alt config dir)
+  ansible.builtin.template:
+    src: postfix-main.cf.j2
+    dest: "{{ fgnw_mac_mail_server_postfix_dir }}/main.cf"
+    owner: root
+    group: wheel
+    mode: "0644"
+  become: true
+  notify: Restart postfix
+
+- name: Unload the stock Postfix LaunchDaemon so our alt-config instance can own port 25
+  community.general.launchd:
+    name: com.apple.postfix.master
+    state: unloaded
+  become: true
+
+- name: Persistently disable the stock Postfix LaunchDaemon so it stays down across reboots
+  # `launchctl disable` writes launchd's override database, not the SIP-protected system plist, so
+  # it survives reboots — something community.general.launchd cannot express for an Apple daemon
+  # (its `enabled: false` would try to rewrite the read-only plist). Best-effort; already-disabled
+  # is fine.
+  ansible.builtin.command:
+    argv: [launchctl, disable, system/com.apple.postfix.master]
+  changed_when: false
+  failed_when: false
+  become: true
+
+# --- LaunchDaemons (keep both services up across reboots) -------------------------------------
+- name: Install the Dovecot and Postfix LaunchDaemon plists
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "/Library/LaunchDaemons/{{ item.label }}.plist"
+    owner: root
+    group: wheel
+    mode: "0644"
+  loop:
+    - { src: com.fgnw.dovecot.plist.j2, label: "{{ fgnw_mac_mail_server_dovecot_label }}" }
+    - { src: com.fgnw.postfix.plist.j2, label: "{{ fgnw_mac_mail_server_postfix_label }}" }
+  loop_control:
+    label: "{{ item.label }}"
+  become: true
+  notify:
+    - Restart dovecot
+    - Restart postfix
+
+- name: Ensure the Dovecot and Postfix LaunchDaemons are loaded and running
+  # community.general.launchd `started` is idempotent: it loads + starts a daemon only when it is
+  # not already running, so it bootstraps on first deploy and no-ops on re-runs. A config change is
+  # handled separately by the Restart handlers (the module's `restarted` state). `name` resolves
+  # `<name>.plist` under /Library/LaunchDaemons.
+  community.general.launchd:
     name: "{{ item }}"
-    shell: "{{ fgnw_mac_mail_server_user_shell }}"
-    create_home: true
-    password: "{{ fgnw_mac_mail_server_user_password_default | password_hash('sha512') }}"
-    state: present
-  loop: "{{ fgnw_mac_mail_server_users }}"
-  loop_control:
-    label: "{{ item }}"
-  become: true
-
-- name: Ensure every seeded user has a Maildir
-  ansible.builtin.file:
-    path: "/Users/{{ item }}/Maildir"
-    state: directory
-    owner: "{{ item }}"
-    group: staff
-    mode: "0700"
-  loop: "{{ fgnw_mac_mail_server_users }}"
-  loop_control:
-    label: "{{ item }}"
-  become: true
-
-- name: Load Postfix via launchd (built-in daemon)
-  ansible.builtin.command:
-    argv: [launchctl, enable, system/org.postfix.master]
-  register: fgnw_mac_mail_server_postfix_enable
-  changed_when: fgnw_mac_mail_server_postfix_enable.rc == 0
-  failed_when: false
-  become: true
-
-- name: Start Postfix
-  ansible.builtin.command:
-    argv: [postfix, start]
-  register: fgnw_mac_mail_server_postfix_start
-  changed_when: "'already running' not in (fgnw_mac_mail_server_postfix_start.stderr | default(''))"
-  failed_when: >-
-    fgnw_mac_mail_server_postfix_start.rc != 0
-    and 'already running' not in (fgnw_mac_mail_server_postfix_start.stderr | default(''))
-  become: true
-
-- name: Start Dovecot (brew-installed launchd service)
-  ansible.builtin.command:
-    argv: [brew, services, start, dovecot]
-  register: fgnw_mac_mail_server_dovecot_start
-  changed_when: "'Successfully started' in (fgnw_mac_mail_server_dovecot_start.stdout | default(''))"
-  failed_when: false
-  # become: true so `brew services start` registers dovecot as a system LaunchDaemon under
-  # /Library/LaunchDaemons (needed to bind the privileged ports 25/143/587). Without it,
-  # the service lands as a per-user LaunchAgent that can't bind those ports. The restart
-  # dovecot handler is intentionally kept in step.
+    state: started
+  loop:
+    - "{{ fgnw_mac_mail_server_dovecot_label }}"
+    - "{{ fgnw_mac_mail_server_postfix_label }}"
   become: true

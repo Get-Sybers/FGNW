@@ -1,0 +1,28 @@
+{{ ansible_managed | comment }}
+# FGNW Sand mail server — Postfix main.cf for a WRITABLE alternate config dir (Apple's
+# /etc/postfix is SIP-locked). Run as: postfix -c {{ fgnw_mac_mail_server_postfix_dir }} start-fg
+config_directory = {{ fgnw_mac_mail_server_postfix_dir }}
+queue_directory = {{ fgnw_mac_mail_server_postfix_queue_dir }}
+data_directory = {{ fgnw_mac_mail_server_postfix_data_dir }}
+mail_owner = {{ fgnw_mac_mail_server_postfix_owner }}
+setgid_group = {{ fgnw_mac_mail_server_postfix_setgid_group }}
+myhostname = {{ fgnw_mac_mail_server_hostname }}
+mydomain = {{ fgnw_mac_mail_server_domain }}
+myorigin = $mydomain
+mydestination = $myhostname, localhost.$mydomain, localhost, $mydomain
+inet_interfaces = all
+inet_protocols = ipv4
+mynetworks = {{ fgnw_mac_mail_server_relay_networks }}
+smtpd_banner = $myhostname ESMTP
+# Hand local delivery to Dovecot LMTP so IMAP and SMTP share mailbox state. local_recipient_maps is
+# emptied so Postfix accepts the VIRTUAL Sand users (not OS accounts) and lets Dovecot validate.
+mailbox_transport = lmtp:unix:private/dovecot-lmtp
+local_recipient_maps =
+# SASL via Dovecot's auth socket (private/auth), for authenticated SMTP submission.
+smtpd_sasl_type = dovecot
+smtpd_sasl_path = private/auth
+smtpd_sasl_auth_enable = yes
+smtpd_recipient_restrictions =
+  permit_mynetworks,
+  permit_sasl_authenticated,
+  reject_unauth_destination
