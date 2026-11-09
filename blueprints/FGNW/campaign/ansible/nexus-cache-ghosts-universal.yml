@@ -77,9 +77,11 @@
           register: ncgu_cft
 
         - name: Download Chrome + chromedriver (mac-x64) for the channel
-          when: item in ncgu_missing
+          when: item.1 in ncgu_missing
+          vars:
+            ncgu_dls: "{{ ncgu_cft.json.channels[fgnw_mac_ghosts_client_chrome_channel].downloads }}"
           ansible.builtin.get_url:
-            url: "{{ (ncgu_cft.json.channels[fgnw_mac_ghosts_client_chrome_channel].downloads[item.0] | selectattr('platform', 'equalto', 'mac-x64') | first).url }}"
+            url: "{{ (ncgu_dls[item.0] | selectattr('platform', 'equalto', 'mac-x64') | first).url }}"
             dest: "{{ ncgu_workdir }}/{{ item.1 }}"
             mode: "0644"
           loop:
