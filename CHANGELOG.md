@@ -18,6 +18,22 @@ has no release tag yet.
 
 ## [Unreleased]
 
+### Fixed — GHOSTS macOS client builds from source, installs from Nexus, drives a real browser
+
+- **`fgnw_mac_ghosts_client` could never install Gaara's client.** Its default tarball URL
+  (`ghosts-client-universal-osx-x64-<ver>.tar.gz` on github.com) is a 404 — GHOSTS ships no macOS
+  build (only linux/win universal + lite) — and its launchd plist ran `<install_dir>/ghosts`, a
+  binary that does not exist (the apphost is `Ghosts.Client.Universal`). The role now installs the
+  client, Chrome for Testing and chromedriver from the range Nexus, runs `Ghosts.Client.Universal`,
+  and loads it as a LaunchAgent in the GUI user's session so the `BrowserChrome` handler drives a
+  **visible** Chrome (realistic browsing, the macOS parallel to the Windows personas) rather than a
+  root LaunchDaemon with no GUI session.
+- **New `nexus-cache-ghosts-universal.yml` (Phase 0) builds and stages the macOS client.** Since
+  there is no upstream macOS artifact, it builds the osx-x64 Universal client from `cmu-sei/GHOSTS`
+  source (self-contained .NET), downloads Chrome for Testing + the matching chromedriver (mac-x64),
+  and uploads all three to the Nexus `tools/` path, skipping any already cached. Wired into
+  `phase0-nexus.yml`; the three artifacts are documented in `ludus-requirements.yml`.
+
 ### Fixed — GHOSTS user-emulation timelines render, and personas auto-logon
 
 - **`ansible/templates/FGNW-ghosts.timeline.json.j2` now renders valid JSON.** The template embedded its

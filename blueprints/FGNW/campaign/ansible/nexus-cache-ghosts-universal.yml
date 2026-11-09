@@ -1,0 +1,136 @@
+---
+# Phase 0 — build the GHOSTS Universal macOS client from source and cache it, with the browser it
+# drives (Chrome for Testing + chromedriver), on the range Nexus (raw-hosted, tools/) so Phase 1c
+# can install them inside containment. Runs on the controller, which still has internet in Phase 0.
+#
+# Why build: GHOSTS ships NO prebuilt macOS client (only linux/win universal + lite). The client's
+# csproj DOES target osx-x64 on .NET, so this publishes it self-contained. The browser is Chrome
+# for Testing + the matching chromedriver (Google's automation build, versioned together).
+#
+# Idempotent: each artifact Nexus already serves is left alone; the (slow) .NET build runs only
+# when the client tarball is missing. raw-hosted's strict content-type validation is lifted for the
+# uploads and put back (Nexus classifies these as application/x-xz / application/zip under their names).
+- name: Build + cache the GHOSTS Universal macOS client and browser on the range Nexus
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files:
+    - roles/fgnw_mac_ghosts_client/defaults/main.yml
+  vars:
+    ncgu_url: http://192.0.2.2:8081
+    ncgu_repo: raw-hosted
+    ncgu_dir: tools
+    ncgu_pw_file: /opt/ludus/install/nexus-admin-password
+    ncgu_workdir: "{{ lookup('ansible.builtin.env', 'HOME') }}/.FGNW-deploy/nexus-cache-ghosts"
+    ncgu_api: "{{ ncgu_url }}/service/rest/v1/repositories/raw/hosted/{{ ncgu_repo }}"
+    ncgu_artifacts:
+      - "{{ fgnw_mac_ghosts_client_tarball_name }}"
+      - "{{ fgnw_mac_ghosts_client_chrome_zip }}"
+      - "{{ fgnw_mac_ghosts_client_chromedriver_zip }}"
+  tasks:
+    - name: Read the Nexus admin password Ludus generated
+      ansible.builtin.set_fact:
+        ncgu_password: "{{ lookup('ansible.builtin.file', ncgu_pw_file) | trim }}"
+      no_log: true
+
+    - name: Ensure the owner-only work directory exists
+      ansible.builtin.file: { path: "{{ ncgu_workdir }}", state: directory, mode: "0700" }
+
+    - name: Ask Nexus which artifacts it already serves
+      ansible.builtin.uri:
+        url: "{{ ncgu_url }}/repository/{{ ncgu_repo }}/{{ ncgu_dir }}/{{ item }}"
+        method: HEAD
+        status_code: [200, 404]
+      loop: "{{ ncgu_artifacts }}"
+      register: ncgu_present
+
+    - name: Select the artifacts Nexus does not serve yet
+      ansible.builtin.set_fact:
+        ncgu_missing: "{{ ncgu_present.results | selectattr('status', 'equalto', 404) | map(attribute='item') | list }}"
+
+    - name: Report
+      ansible.builtin.debug:
+        msg: "to cache: {{ ncgu_missing | join(', ') | default('none', true) }}"
+
+    - name: Build the client and fetch the browser for the missing artifacts
+      when: ncgu_missing | length > 0
+      block:
+        - name: Build the osx-x64 Universal client from source (when its tarball is missing)
+          when: fgnw_mac_ghosts_client_tarball_name in ncgu_missing
+          ansible.builtin.shell: |
+            set -euo pipefail
+            cd '{{ ncgu_workdir }}'
+            export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1
+            [ -x dotnet/dotnet ] || { curl -sSL https://dot.net/v1/dotnet-install.sh -o di.sh; bash di.sh --channel 10.0 --install-dir "$PWD/dotnet"; }
+            [ -d ghosts-src/.git ] || git clone --depth 1 '{{ fgnw_mac_ghosts_client_source_repo }}' ghosts-src
+            rm -rf build
+            ./dotnet/dotnet publish ghosts-src/src/Ghosts.Client.Universal/Ghosts.Client.Universal.csproj \
+              -c Release -f net10.0 -r osx-x64 --self-contained true -p:PublishGeckoDriver=false -o build
+            tar czf '{{ fgnw_mac_ghosts_client_tarball_name }}' -C build .
+          args: { executable: /bin/bash, creates: "{{ ncgu_workdir }}/{{ fgnw_mac_ghosts_client_tarball_name }}" }
+
+        - name: Resolve Chrome for Testing download URLs (when Chrome/chromedriver are missing)
+          when: (fgnw_mac_ghosts_client_chrome_zip in ncgu_missing) or (fgnw_mac_ghosts_client_chromedriver_zip in ncgu_missing)
+          ansible.builtin.uri:
+            url: https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json
+            return_content: true
+          register: ncgu_cft
+
+        - name: Download Chrome + chromedriver (mac-x64) for the channel
+          when: item in ncgu_missing
+          ansible.builtin.get_url:
+            url: "{{ (ncgu_cft.json.channels[fgnw_mac_ghosts_client_chrome_channel].downloads[item.0] | selectattr('platform', 'equalto', 'mac-x64') | first).url }}"
+            dest: "{{ ncgu_workdir }}/{{ item.1 }}"
+            mode: "0644"
+          loop:
+            - [chrome, "{{ fgnw_mac_ghosts_client_chrome_zip }}"]
+            - [chromedriver, "{{ fgnw_mac_ghosts_client_chromedriver_zip }}"]
+          loop_control: { label: "{{ item.1 }}" }
+
+        - name: Read the raw-hosted repository settings
+          ansible.builtin.uri:
+            url: "{{ ncgu_api }}"
+            url_username: admin
+            url_password: "{{ ncgu_password }}"
+            force_basic_auth: true
+            return_content: true
+          register: ncgu_repo_cfg
+
+        - name: Lift strict content-type validation for the uploads
+          ansible.builtin.uri:
+            url: "{{ ncgu_api }}"
+            method: PUT
+            url_username: admin
+            url_password: "{{ ncgu_password }}"
+            force_basic_auth: true
+            body_format: json
+            body: >-
+              {{ (ncgu_repo_cfg.json | dict2items | selectattr('key', 'in', ['name', 'online', 'storage', 'cleanup', 'component', 'raw']) | items2dict)
+                 | combine({'storage': {'strictContentTypeValidation': false}}, recursive=true) }}
+            status_code: [204]
+          when: ncgu_repo_cfg.json.storage.strictContentTypeValidation | bool
+
+        - name: Upload each missing artifact to raw-hosted (octet-stream)
+          ansible.builtin.uri:
+            url: "{{ ncgu_url }}/repository/{{ ncgu_repo }}/{{ ncgu_dir }}/{{ item }}"
+            method: PUT
+            url_username: admin
+            url_password: "{{ ncgu_password }}"
+            force_basic_auth: true
+            src: "{{ ncgu_workdir }}/{{ item }}"
+            headers: { Content-Type: application/octet-stream }
+            status_code: [201, 204]
+          loop: "{{ ncgu_missing }}"
+
+        - name: Restore strict content-type validation
+          ansible.builtin.uri:
+            url: "{{ ncgu_api }}"
+            method: PUT
+            url_username: admin
+            url_password: "{{ ncgu_password }}"
+            force_basic_auth: true
+            body_format: json
+            body: >-
+              {{ (ncgu_repo_cfg.json | dict2items | selectattr('key', 'in', ['name', 'online', 'storage', 'cleanup', 'component', 'raw']) | items2dict) }}
+            status_code: [204]
+          when: ncgu_repo_cfg.json.storage.strictContentTypeValidation | bool

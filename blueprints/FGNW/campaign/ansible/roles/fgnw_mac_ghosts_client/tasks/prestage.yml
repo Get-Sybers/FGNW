@@ -1,7 +1,6 @@
 ---
-# Pre-containment half of fgnw_mac_ghosts_client. Runs in Phase 1c, while egress is still
-# open, to fetch the GHOSTS Universal client tarball from github.com and extract it into
-# place with the ApiRootUrl already pointed at the ghost9 CT.
+# Install the GHOSTS Universal client and its browser on macOS, all from the range Nexus (no
+# internet needed). Replaces the old github.com get_url of a non-existent osx tarball.
 - name: "prestage | Ensure ghosts install, config, and log dirs exist"
   ansible.builtin.file:
     path: "{{ item }}"
@@ -15,18 +14,39 @@
     - "{{ fgnw_mac_ghosts_client_log_dir }}"
   become: true
 
-- name: "prestage | Fetch the GHOSTS Universal client tarball"
+- name: "prestage | Fetch the client + browser artifacts from the range Nexus"
   ansible.builtin.get_url:
-    url: "{{ fgnw_mac_ghosts_client_tarball_url }}"
-    dest: "/tmp/ghosts-client.tar.gz"
+    url: "{{ fgnw_mac_ghosts_client_nexus_base }}/{{ item }}"
+    dest: "/tmp/{{ item }}"
     mode: "0644"
+  loop:
+    - "{{ fgnw_mac_ghosts_client_tarball_name }}"
+    - "{{ fgnw_mac_ghosts_client_chrome_zip }}"
+    - "{{ fgnw_mac_ghosts_client_chromedriver_zip }}"
   become: true
 
-- name: "prestage | Extract the GHOSTS client"
-  ansible.builtin.unarchive:
-    src: "/tmp/ghosts-client.tar.gz"
-    dest: "{{ fgnw_mac_ghosts_client_install_dir }}"
-    remote_src: true
+- name: "prestage | Extract the Universal client (BSD tar; the unarchive module wants GNU tar)"
+  ansible.builtin.command:
+    argv: [/usr/bin/tar, xzf, "/tmp/{{ fgnw_mac_ghosts_client_tarball_name }}", -C, "{{ fgnw_mac_ghosts_client_install_dir }}"]
+  changed_when: true
+  become: true
+
+- name: "prestage | Install Chrome for Testing + chromedriver and clear quarantine"
+  ansible.builtin.shell: |
+    set -euo pipefail
+    idir='{{ fgnw_mac_ghosts_client_install_dir }}'
+    rm -rf "$idir/chrome" "$idir/chromedriver" /tmp/cftx
+    mkdir -p "$idir/chrome" /tmp/cftx
+    /usr/bin/unzip -oq "/tmp/{{ fgnw_mac_ghosts_client_chrome_zip }}" -d /tmp/cftx
+    /usr/bin/unzip -oq "/tmp/{{ fgnw_mac_ghosts_client_chromedriver_zip }}" -d /tmp/cftx
+    mv "/tmp/cftx/chrome-mac-x64/Google Chrome for Testing.app" "$idir/chrome/"
+    mv /tmp/cftx/chromedriver-mac-x64/chromedriver "$idir/chromedriver"
+    chmod +x "$idir/chromedriver" '{{ fgnw_mac_ghosts_client_chrome_binary }}'
+    xattr -dr com.apple.quarantine "$idir/chrome" "$idir/chromedriver" 2>/dev/null || true
+    rm -rf /tmp/cftx
+  args:
+    executable: /bin/bash
+  changed_when: true
   become: true
 
 - name: "prestage | Point the client at the ghost9 API"
@@ -34,4 +54,10 @@
     path: "{{ fgnw_mac_ghosts_client_install_dir }}/config/application.json"
     regexp: '"ApiRootUrl":\s*"[^"]*"'
     replace: '"ApiRootUrl": "{{ fgnw_mac_ghosts_client_api_url }}"'
+  become: true
+
+- name: "prestage | Hand the install + log dirs to the GUI run-user (client runs as that user)"
+  ansible.builtin.command:
+    argv: [chown, -R, "{{ fgnw_mac_ghosts_client_run_user }}:staff", "{{ fgnw_mac_ghosts_client_install_dir }}", "{{ fgnw_mac_ghosts_client_log_dir }}"]
+  changed_when: true
   become: true

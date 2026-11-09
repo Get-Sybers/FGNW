@@ -1,33 +1,47 @@
 ---
-# GHOSTS v9 Universal client for macOS. The Universal client is officially cross-platform
-# (Windows / Linux / macOS; see https://cmu-sei.github.io/GHOSTS/quickstart/) and is the one
-# we use on the Sand workstation to replace the .NET-Framework Windows client that the
-# jasonmull.ludus_ghosts_client role installs.
+# GHOSTS v9 Universal client for macOS, installed from the range Nexus (isolation-friendly).
 #
-# The GHOSTS API endpoint is the same ghost9 CT the rest of the range reports to — the API
-# URL is set in the blueprint's global_role_vars.ghosts_config_replace line.
+# IMPORTANT: GHOSTS publishes NO prebuilt macOS client — the v9.0.0 release ships universal/lite
+# clients only for linux-x64/arm64 and win-x64/x86. The old default here
+# (ghosts-client-universal-osx-x64-<ver>.tar.gz on github.com) was a 404, so the Mac client could
+# never install. The osx-x64 client is BUILT FROM SOURCE, and the browser it drives
+# (Chrome for Testing + chromedriver) is downloaded, by campaign/ansible/nexus-cache-ghosts-universal.yml
+# (Phase 0, controller-side); all three land on the range Nexus raw-hosted tools/ path. This role
+# installs them from the Nexus, so the Mac needs no internet (pre- or post-containment).
 fgnw_mac_ghosts_client_version: v9.0.0
-fgnw_mac_ghosts_client_tarball_url: >-
-  {{ 'https://github.com/cmu-sei/GHOSTS/releases/download/' ~ fgnw_mac_ghosts_client_version
-     ~ '/ghosts-client-universal-osx-x64-' ~ fgnw_mac_ghosts_client_version ~ '.tar.gz' }}
+
+# Range Nexus raw-hosted source — the same tools/ path digger and thunderbird use. nexus_host /
+# nexus_port come from the range/infra environment (192.0.2.2 / 8081 are RFC-5737 placeholders).
+fgnw_mac_ghosts_client_nexus_base: "http://{{ nexus_host | default('192.0.2.2') }}:{{ nexus_port | default('8081') }}/repository/raw-hosted/tools"
+fgnw_mac_ghosts_client_tarball_name: ghosts-client-universal-osx-x64.tar.gz
+fgnw_mac_ghosts_client_chrome_zip: chrome-mac-x64.zip
+fgnw_mac_ghosts_client_chromedriver_zip: chromedriver-mac-x64.zip
+
+# Upstream sources, consumed ONLY by nexus-cache-ghosts-universal.yml (never by this role, which
+# installs from the Nexus): the GHOSTS source to build the osx-x64 client, and the Chrome-for-Testing
+# channel for the matching Chrome + chromedriver.
+fgnw_mac_ghosts_client_source_repo: https://github.com/cmu-sei/GHOSTS.git
+fgnw_mac_ghosts_client_chrome_channel: Stable
 
 fgnw_mac_ghosts_client_install_dir: /usr/local/ghosts
+# The published apphost is Ghosts.Client.Universal (NOT "ghosts" — the old plist ran a file that
+# does not exist). BrowserChrome finds chromedriver next to the binary (AppDomain base dir).
+fgnw_mac_ghosts_client_binary: Ghosts.Client.Universal
 fgnw_mac_ghosts_client_config_dir: /etc/ghosts
 fgnw_mac_ghosts_client_log_dir: /var/log/ghosts
 fgnw_mac_ghosts_client_daemon_label: com.cmu.sei.ghosts
 
-# ApiRootUrl is substituted so the macOS client reports to the same ghost9 CT as every other
-# GHOSTS client. The range's second octet is derived per-host from `ansible_host` (which the
-# materialized infra inventory sets to the real IP after RANGENUMBER substitution), matching
-# the pattern FGNW-ghosts-activity.yml and FGNW-exchange.yml use. Using
-# `range_second_octet | default('2')` here would silently point every range at 10.2.99.51 —
-# which is wrong on any range whose second octet is not 2 — because no play on this role's
-# code path (FGNW-mac-prestage.yml, phase1c-macos-base.yml) defines range_second_octet.
+# The client runs as the Mac's GUI console user (a LaunchAgent in that user's Aqua session), NOT as
+# a root LaunchDaemon, so the BrowserChrome handler drives a VISIBLE Chrome in that session — the
+# macOS parallel to the Windows personas' autologon desktop (realistic browser telemetry, not curl).
+fgnw_mac_ghosts_client_run_user: localuser
+fgnw_mac_ghosts_client_chrome_binary: "{{ fgnw_mac_ghosts_client_install_dir }}/chrome/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"
+
+# ApiRootUrl is substituted so the macOS client reports to the same ghost9 CT as every other GHOSTS
+# client. The range second octet is derived per-host from ansible_host (the real IP the infra
+# inventory sets after RANGENUMBER substitution), matching FGNW-ghosts-activity.yml.
 fgnw_mac_ghosts_client_api_url: "http://10.{{ ansible_host.split('.')[1] }}.99.51:5000/api"
 
-# Phase selector. The role is called twice during a deploy:
-#   * Phase 1c (pre-containment): `prestage` fetches the tarball + extracts it + rewrites
-#     the ApiRootUrl. github.com is only reachable at this point.
-#   * Phase 4d (post-containment): `service` writes the launchd plist and bootstraps it.
-# Default `all` runs both — safe for a manual re-run on a host that has egress.
+# Phase selector. prestage installs the client + browser from the Nexus; service installs the
+# LaunchAgent and bootstraps it into the GUI session. Default `all` runs both.
 fgnw_mac_ghosts_client_phase: all
