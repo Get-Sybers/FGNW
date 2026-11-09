@@ -32,9 +32,9 @@ range:
 1. Loads the OWA inbox corpus and `ad/NARUTO/data/config.json`, and builds the Sand mailbox list:
    every corpus user who belongs to `fgnw_mac_mail_server_domain`, paired with that user's AD
    password. Fails cleanly when the intersection is empty.
-2. Creates the Dovecot service accounts with `dscl`: a dedicated mail user (`_fgnwmail`), a login
-   user (`_fgnwnull`), and the `dovecot` group the built-in service listeners expect (macOS has
-   none of these).
+2. Creates the Dovecot service accounts with the `ansible.builtin.group` and `ansible.builtin.user`
+   modules: a dedicated mail user (`_fgnwmail`), a login user (`_fgnwnull`), and the `dovecot` group
+   the built-in service listeners expect (macOS has none of these).
 3. Fetches the Dovecot source from the Nexus (sha256-pinned) and builds it, guarded by a `creates`
    on the installed binary so the slow build runs only once.
 4. Writes `dovecot.conf` (plaintext `imap lmtp`, `auth_username_format = %Ln`, `default_vsz_limit =
@@ -43,8 +43,10 @@ range:
 5. Writes the Postfix `main.cf` in the alt config dir (LMTP delivery to Dovecot, empty
    `local_recipient_maps` so the virtual users are accepted, Dovecot SASL) and copies out
    `master.cf`. Stops and disables the stock loopback Postfix. Notifies `Restart postfix`.
-6. Installs a LaunchDaemon for each service (`com.fgnw.dovecot`, `com.fgnw.postfix`) and bootstraps
-   them into the system domain, so both bind their privileged ports and survive reboots.
+6. Installs a LaunchDaemon for each service (`com.fgnw.dovecot`, `com.fgnw.postfix`) and loads them
+   with the official `community.general.launchd` module (`state: started`), so both bind their
+   privileged ports and survive reboots. The stock Apple Postfix daemon is unloaded with the same
+   module and then persistently disabled.
 
 ## Inputs
 
@@ -68,10 +70,10 @@ overridden:
 
 ## Idempotence
 
-Yes. The source build is skipped once the binary exists (`creates`), the `dscl` accounts report
+Yes. The source build is skipped once the binary exists (`creates`), the service accounts report
 `changed` only when actually created, configs are rewritten only when they differ (the handlers fire
-only then), and the LaunchDaemons are bootstrapped only when not already loaded. The passwd-file is
-written with `no_log`.
+only then), and `community.general.launchd` (`state: started`) loads each daemon only when it is not
+already running. The passwd-file is written with `no_log`.
 
 ## Example invocation
 

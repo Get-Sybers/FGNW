@@ -157,17 +157,19 @@
   become: true
   notify: Restart postfix
 
-- name: Stop the stock loopback Postfix (best-effort) so the alt-config instance owns port 25
-  ansible.builtin.command:
-    argv: [postfix, stop]
-  changed_when: false
-  failed_when: false
+- name: Unload the stock Postfix LaunchDaemon so our alt-config instance can own port 25
+  community.general.launchd:
+    name: com.apple.postfix.master
+    state: unloaded
   become: true
 
-- name: Disable the stock Postfix LaunchDaemon (best-effort)
+- name: Persistently disable the stock Postfix LaunchDaemon so it stays down across reboots
+  # `launchctl disable` writes launchd's override database, not the SIP-protected system plist, so
+  # it survives reboots — something community.general.launchd cannot express for an Apple daemon
+  # (its `enabled: false` would try to rewrite the read-only plist). Best-effort; already-disabled
+  # is fine.
   ansible.builtin.command:
-    argv: [launchctl, "{{ item }}", system/com.apple.postfix.master]
-  loop: [bootout, disable]
+    argv: [launchctl, disable, system/com.apple.postfix.master]
   changed_when: false
   failed_when: false
   become: true
@@ -190,23 +192,15 @@
     - Restart dovecot
     - Restart postfix
 
-- name: Check which mail LaunchDaemons are already loaded
-  ansible.builtin.command:
-    argv: [launchctl, print, "system/{{ item }}"]
+- name: Ensure the Dovecot and Postfix LaunchDaemons are loaded and running
+  # community.general.launchd `started` is idempotent: it loads + starts a daemon only when it is
+  # not already running, so it bootstraps on first deploy and no-ops on re-runs. A config change is
+  # handled separately by the Restart handlers (the module's `restarted` state). `name` resolves
+  # `<name>.plist` under /Library/LaunchDaemons.
+  community.general.launchd:
+    name: "{{ item }}"
+    state: started
   loop:
     - "{{ fgnw_mac_mail_server_dovecot_label }}"
     - "{{ fgnw_mac_mail_server_postfix_label }}"
-  register: fgnw_mac_mail_server_loaded
-  changed_when: false
-  failed_when: false
-  become: true
-
-- name: Bootstrap the mail LaunchDaemons that are not loaded yet
-  ansible.builtin.command:
-    argv: [launchctl, bootstrap, system, "/Library/LaunchDaemons/{{ item.item }}.plist"]
-  loop: "{{ fgnw_mac_mail_server_loaded.results }}"
-  loop_control:
-    label: "{{ item.item }}"
-  when: item.rc != 0
-  changed_when: true
   become: true
