@@ -7,8 +7,8 @@
 # Packer is fetched from releases.hashicorp.com exactly like the Ludus
 # installer does, verified against the published SHA256SUMS; plugins are
 # installed with `packer plugins install <source> v<version>` (the command the
-# Ludus server runs), falling back to the GitHub release archive when the
-# GitHub API is unreachable.
+# Ludus server runs), falling back to fetching the plugin through the GitHub
+# release API (binary + checksum) when GitHub's asset CDN returns 504s.
 #
 # Usage: scripts/install_ludus_packer.sh [tools-dir]      (default: <repo>/.tools)
 set -euo pipefail
@@ -58,6 +58,44 @@ sha256_check() { # <file> <expected>
     return 1
   }
 }
+# --- GitHub release assets via the API (resilient to releases/download 504s) ---
+# GitHub's asset CDN (https://github.com/<owner>/<repo>/releases/download/...)
+# has intermittently returned HTTP 504 for both plugin binaries and their
+# SHA256SUMS files, while api.github.com and its per-asset download endpoint
+# stay reachable. The plugin fallback below fetches everything through the API.
+# Unauthenticated on public repos; a token in PACKER_GITHUB_API_TOKEN or
+# GITHUB_TOKEN, when set, is sent only to lift the anonymous rate limit and is
+# never written anywhere.
+gh_release_json() { # <owner> <repo> <version> <dest-file>
+  local tok="${PACKER_GITHUB_API_TOKEN:-${GITHUB_TOKEN:-}}" auth=()
+  [[ -n $tok ]] && auth=(-H "Authorization: Bearer $tok")
+  curl -fsSL -o "$4" -H "Accept: application/vnd.github+json" "${auth[@]}" \
+    "https://api.github.com/repos/$1/$2/releases/tags/v$3"
+}
+gh_asset_field() { # <asset-name> <release-json> <id|digest> -> prints value or nothing
+  python3 -c 'import json, sys
+name, path, field = sys.argv[1], sys.argv[2], sys.argv[3]
+try:
+    assets = json.load(open(path)).get("assets", [])
+except Exception:
+    sys.exit(0)
+for a in assets:
+    if a.get("name") == name:
+        if field == "digest":
+            d = a.get("digest") or ""
+            if d.startswith("sha256:"):
+                print(d.split(":", 1)[1])
+        else:
+            print(a.get(field, ""))
+        break' "$1" "$2" "$3"
+}
+gh_asset_download() { # <owner> <repo> <asset-id> <dest>
+  local tok="${PACKER_GITHUB_API_TOKEN:-${GITHUB_TOKEN:-}}" auth=()
+  [[ -n $tok ]] && auth=(-H "Authorization: Bearer $tok")
+  curl -fsSL -o "$4" -H "Accept: application/octet-stream" "${auth[@]}" \
+    "https://api.github.com/repos/$1/$2/releases/assets/$3"
+}
+
 unzip_to() { # <zip> <dir>
   if command -v unzip > /dev/null 2>&1; then unzip -qq -o "$1" -d "$2"; else python3 -c 'import sys,zipfile; zipfile.ZipFile(sys.argv[1]).extractall(sys.argv[2])' "$1" "$2"; fi
 }
@@ -89,7 +127,7 @@ packer version
 
 # --- Plugins -----------------------------------------------------------------
 install_plugin() { # <source like github.com/owner/name> <version>
-  local source="$1" version="$2" name owner repo zip sums expected tmp binary
+  local source="$1" version="$2" name owner repo zip sums expected tmp binary rjson zip_id sums_id
   name="${source##*/}"
   owner="$(basename "$(dirname "$source")")"
   repo="packer-plugin-$name"
@@ -101,15 +139,28 @@ install_plugin() { # <source like github.com/owner/name> <version>
   if packer plugins install "$source" "v$version"; then
     return 0
   fi
-  echo "packer plugins install failed (GitHub API unreachable?); falling back to the release archive"
+  echo "packer plugins install failed (GitHub asset CDN unreachable?); fetching the plugin via the GitHub release API"
   binary="${repo}_v${version}_${PLUGIN_API}_${OS}_${ARCH}"
   zip="$TOOLS/downloads/${binary}.zip"
-  sums="$TOOLS/downloads/${repo}_v${version}_SHA256SUMS"
-  curl -fsSL -o "$zip" "https://github.com/$owner/$repo/releases/download/v$version/${binary}.zip"
-  curl -fsSL -o "$sums" "https://github.com/$owner/$repo/releases/download/v$version/${repo}_v${version}_SHA256SUMS"
-  expected="$(awk -v f="${binary}.zip" '$2==f {print $1}' "$sums")"
+  rjson="$TOOLS/downloads/${repo}_v${version}_release.json"
+  gh_release_json "$owner" "$repo" "$version" "$rjson"
+  zip_id="$(gh_asset_field "${binary}.zip" "$rjson" id)"
+  [[ -n $zip_id ]] || {
+    echo "release v$version has no asset ${binary}.zip" >&2
+    return 1
+  }
+  gh_asset_download "$owner" "$repo" "$zip_id" "$zip"
+  # Checksum: the per-asset API digest when present, else the SHA256SUMS asset
+  # (fetched through the same API endpoint, not the 504-prone asset CDN).
+  expected="$(gh_asset_field "${binary}.zip" "$rjson" digest)"
+  if [[ -z $expected ]]; then
+    sums="$TOOLS/downloads/${repo}_v${version}_SHA256SUMS"
+    sums_id="$(gh_asset_field "${repo}_v${version}_SHA256SUMS" "$rjson" id)"
+    [[ -n $sums_id ]] && gh_asset_download "$owner" "$repo" "$sums_id" "$sums"
+    expected="$(awk -v f="${binary}.zip" '$2==f {print $1}' "$sums" 2> /dev/null)"
+  fi
   [[ -n $expected ]] || {
-    echo "no checksum for ${binary}.zip" >&2
+    echo "no checksum available for ${binary}.zip (no API digest and no SHA256SUMS)" >&2
     return 1
   }
   sha256_check "$zip" "$expected"

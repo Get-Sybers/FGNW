@@ -18,6 +18,21 @@ has no release tag yet.
 
 ## [Unreleased]
 
+### Fixed — Packer plugin install survives GitHub asset-CDN 504s
+
+- **`scripts/install_ludus_packer.sh` fetches plugin binaries and checksums through the GitHub
+  release API when the asset CDN fails.** GitHub's `releases/download/...` asset CDN began returning
+  HTTP 504 for the Packer plugin assets (both the binaries and their `SHA256SUMS`) around 2026-11-09
+  06:00 UTC, failing the `packer-smoke` job (and its `ludus-source-green` rollup) on the merge of
+  #41 (`0efa249`) — even though nothing in the repo changed: the job's inputs were byte-identical to
+  the 15+ runs that passed over the preceding three days, and the identical branch code passed eight
+  minutes earlier. When `packer plugins install` fails, the fallback now pulls the binary from the
+  `api.github.com` per-asset endpoint (which stays reachable when the CDN 504s) and verifies it
+  against the release's per-asset `digest`, falling back to the `SHA256SUMS` asset (also via the API)
+  for releases without a digest. The checksum gate is unchanged. Unauthenticated on public repos; an
+  optional `PACKER_GITHUB_API_TOKEN`/`GITHUB_TOKEN` is used only to lift the anonymous rate limit and
+  is never stored.
+
 ### Fixed — the Sand (Sunagakure) macOS mail server now actually stands up
 
 - **`fgnw_mac_mail_server` could never work on the Sand macs, and is rewritten.** The old role
