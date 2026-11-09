@@ -4,7 +4,7 @@ ghosts_personas:
     character: Naruto Uzumaki
     sam: naruto.uzumaki
     ad_domain: konohagakure.fire.ninja
-    netbios: KONOHA
+    netbios: KONOHAGAKURE
     homepage: http://www.konoha-portal.leaf
     has_owa_inbox: true
     browse_urls:
@@ -21,7 +21,7 @@ ghosts_personas:
     character: Shikamaru Nara
     sam: shikamaru.nara
     ad_domain: konohagakure.fire.ninja
-    netbios: KONOHA
+    netbios: KONOHAGAKURE
     homepage: http://www.konoha-portal.leaf
     has_owa_inbox: true
     browse_urls:
@@ -38,7 +38,7 @@ ghosts_personas:
     character: Kakashi Hatake
     sam: kakashi.hatake
     ad_domain: konohagakure.fire.ninja
-    netbios: KONOHA
+    netbios: KONOHAGAKURE
     homepage: http://www.konoha-portal.leaf
     has_owa_inbox: true
     browse_urls:
@@ -55,7 +55,7 @@ ghosts_personas:
     character: Tsunade
     sam: tsunade
     ad_domain: konohagakure.fire.ninja
-    netbios: KONOHA
+    netbios: KONOHAGAKURE
     homepage: http://www.konoha-portal.leaf
     has_owa_inbox: true
     browse_urls:
@@ -72,7 +72,7 @@ ghosts_personas:
     character: Might Guy
     sam: might.guy
     ad_domain: konohagakure.fire.ninja
-    netbios: KONOHA
+    netbios: KONOHAGAKURE
     homepage: http://www.konoha-portal.leaf
     has_owa_inbox: true
     browse_urls:
@@ -89,7 +89,7 @@ ghosts_personas:
     character: Orochimaru
     sam: orochimaru
     ad_domain: otogakure.ninja
-    netbios: OTO
+    netbios: OTOGAKURE
     homepage: http://www.konoha-portal.leaf
     has_owa_inbox: false
     browse_urls:
@@ -140,7 +140,7 @@ ghosts_personas:
     character: Gaara
     sam: gaara
     ad_domain: sunagakure.wind.ninja
-    netbios: SUNA
+    netbios: SUNAGAKURE
     homepage: http://www.suna-portal.sand
     # has_owa_inbox gates the authenticated-EWS mail event in the Windows GHOSTS timeline
     # (templates/FGNW-ghosts.timeline.json.j2), so it is false for workstations whose village

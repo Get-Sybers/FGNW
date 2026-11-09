@@ -61,7 +61,7 @@ ghosts_overrides:
   konoha-ws5:
     signature_urls: [www.mightyguy-youth.com, www.springtimeofyouth.net]
     pace: obsessive
-    active_hours: { start: 05:00:00, end: 21:00:00 }
+    active_hours: { start: "05:00:00", end: "21:00:00" }
     note: Starts absurdly early (5am), obsessive youth-power sites; the Monday-morning spam persona.
     beliefs:
       - { name: Hard work and youth surpass natural talent, likelihood: 0.99 }
@@ -133,7 +133,7 @@ ghosts_overrides:
   suna-ws1:
     signature_urls: [www.gaara-for-kazekage.com, www.kazekage-office.gov.sand]
     pace: normal
-    active_hours: { start: 00:00:00, end: 23:59:00 }
+    active_hours: { start: "00:00:00", end: "23:59:00" }
     note: Kazekage; account active 24/7 (no anomaly flagged because it's consistent).
     admin_activity: true
     beliefs:

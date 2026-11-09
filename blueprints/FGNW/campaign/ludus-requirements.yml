@@ -81,6 +81,15 @@ nexus:
         - path: tools/thunderbird-{{ fgnw_thunderbird_version }}-mac-en-US.dmg
           populated_by: "campaign/ansible/nexus-cache-thunderbird.yml (run by phase0-nexus.yml after nexus-seed-all.yml)"
           consumed_by: fgnw_thunderbird, macOS branch (fgnw_thunderbird_mac_dmg, sha512 from Mozilla's SHA512SUMS)
+        - path: tools/ghosts-client-universal-osx-x64.tar.gz
+          populated_by: "campaign/ansible/nexus-cache-ghosts-universal.yml (built from cmu-sei/GHOSTS source for osx-x64; run by phase0-nexus.yml)"
+          consumed_by: fgnw_mac_ghosts_client, macOS (no prebuilt GHOSTS macOS client exists upstream)
+        - path: tools/chrome-mac-x64.zip
+          populated_by: "campaign/ansible/nexus-cache-ghosts-universal.yml (Chrome for Testing, mac-x64)"
+          consumed_by: fgnw_mac_ghosts_client — the browser BrowserChrome drives for the Gaara persona
+        - path: tools/chromedriver-mac-x64.zip
+          populated_by: "campaign/ansible/nexus-cache-ghosts-universal.yml (matching chromedriver, mac-x64)"
+          consumed_by: fgnw_mac_ghosts_client — Selenium driver for BrowserChrome
   known_gap: No Nexus proxy exists for the Ubuntu base-OS apt repos (archive.ubuntu.com) — Kali now has kali-proxy (
     Exchange-2019 prerequisite installers (.NET 4.8, VC++ redist, IIS URL Rewrite, UCMA). Anything needing those hits raw internet during Phase 1/3 (normal
     networking), i.e. before Phase 5 containment cuts internet access.

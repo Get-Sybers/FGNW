@@ -1,57 +1,74 @@
 ---
 argument_specs:
   main:
-    short_description: Install the GHOSTS Universal client on macOS and run it as a launchd daemon
+    short_description: Install the GHOSTS Universal client and its Chrome on macOS from the range Nexus
     description:
-      - The prestage half downloads and extracts the GHOSTS Universal client tarball and points its ApiRootUrl at
-        the ghost9 API; the service half writes /Library/LaunchDaemons/<label>.plist and bootstraps it; `all`
-        runs both.
-      - Every input has a lab-safe default; the callers pass only the phase.
+      - GHOSTS ships no prebuilt macOS client, so the osx-x64 client is built from source and cached,
+        with Chrome for Testing + chromedriver, on the range Nexus by nexus-cache-ghosts-universal.yml.
+      - The prestage half installs the client and browser from the Nexus and points ApiRootUrl at the
+        ghost9 API; the service half writes a LaunchAgent and bootstraps it into the GUI user's session
+        so the BrowserChrome handler drives a visible browser; `all` runs both.
+      - Every input has a lab-safe default; callers pass only the phase.
     options:
       fgnw_mac_ghosts_client_version:
         type: str
         default: v9.0.0
-        description:
-          - GHOSTS release tag the tarball URL is built from.
-      fgnw_mac_ghosts_client_tarball_url:
+        description: [GHOSTS version label (informational).]
+      fgnw_mac_ghosts_client_nexus_base:
         type: str
-        default: >-
-          {{ 'https://github.com/cmu-sei/GHOSTS/releases/download/' ~ fgnw_mac_ghosts_client_version
-             ~ '/ghosts-client-universal-osx-x64-' ~ fgnw_mac_ghosts_client_version ~ '.tar.gz' }}
-        description:
-          - URL of the osx-x64 Universal client release tarball; derived from the version unless overridden.
+        description: [Range Nexus raw-hosted tools/ base URL the client and browser are fetched from; the default uses nexus_host/nexus_port.]
+      fgnw_mac_ghosts_client_tarball_name:
+        type: str
+        default: ghosts-client-universal-osx-x64.tar.gz
+        description: [Nexus file name of the built osx-x64 client tarball.]
+      fgnw_mac_ghosts_client_chrome_zip:
+        type: str
+        default: chrome-mac-x64.zip
+        description: [Nexus file name of the Chrome for Testing (mac-x64) zip.]
+      fgnw_mac_ghosts_client_chromedriver_zip:
+        type: str
+        default: chromedriver-mac-x64.zip
+        description: [Nexus file name of the matching chromedriver (mac-x64) zip.]
+      fgnw_mac_ghosts_client_source_repo:
+        type: str
+        default: https://github.com/cmu-sei/GHOSTS.git
+        description: [GHOSTS source the cache play builds the osx-x64 client from; used only by nexus-cache-ghosts-universal.yml.]
+      fgnw_mac_ghosts_client_chrome_channel:
+        type: str
+        default: Stable
+        description: [Chrome for Testing channel the cache play downloads; used only by the cache play.]
       fgnw_mac_ghosts_client_install_dir:
         type: str
         default: /usr/local/ghosts
-        description:
-          - Directory the tarball is extracted into; the daemon runs <install_dir>/ghosts from there.
+        description: [Directory the client is extracted into; BrowserChrome finds chromedriver here.]
+      fgnw_mac_ghosts_client_binary:
+        type: str
+        default: Ghosts.Client.Universal
+        description: [Published apphost name the LaunchAgent runs (not "ghosts", which does not exist).]
       fgnw_mac_ghosts_client_config_dir:
         type: str
         default: /etc/ghosts
-        description:
-          - Configuration directory created alongside the install.
+        description: [Configuration directory created alongside the install.]
       fgnw_mac_ghosts_client_log_dir:
         type: str
         default: /var/log/ghosts
-        description:
-          - Directory the daemon's stdout.log and stderr.log are written to.
+        description: [Directory the client's stdout.log and stderr.log are written to.]
       fgnw_mac_ghosts_client_daemon_label:
         type: str
         default: com.cmu.sei.ghosts
-        description:
-          - launchd label; also the basename of the plist under /Library/LaunchDaemons.
+        description: [launchd label; also the plist basename under /Library/LaunchAgents.]
+      fgnw_mac_ghosts_client_run_user:
+        type: str
+        default: localuser
+        description: [GUI console user the LaunchAgent runs as, so BrowserChrome drives a visible browser in that user's Aqua session.]
+      fgnw_mac_ghosts_client_chrome_binary:
+        type: str
+        description: [Path to the Chrome binary the timeline's BrowserChrome executable-location points at; the default is under install_dir/chrome.]
       fgnw_mac_ghosts_client_api_url:
         type: str
-        description:
-          - ApiRootUrl written into config/application.json. The default (defaults/main.yml, not repeated here
-            because a templated spec default is rendered at validation time) derives the range's second octet from
-            ansible_host (an IPv4 address in the materialised infra inventory) so the client reports to the same
-            ghost9 CT as every other GHOSTS client. The default is rendered when this spec is validated, so
-            ansible_host must be a dotted IPv4 address whenever the role is included without this input set.
+        description: [ApiRootUrl written into config/application.json; the default derives the range second octet from ansible_host (a dotted IPv4).]
       fgnw_mac_ghosts_client_phase:
         type: str
         default: all
         choices: [prestage, service, all]
-        description:
-          - Which half runs. The prestage half needs internet egress (GitHub); the service half needs a completed
-            prestage on the same host.
+        description: [Which half runs; both use the Nexus, so neither needs internet.]

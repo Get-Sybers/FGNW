@@ -28,3 +28,9 @@
   args:
     chdir: "{{ ansible_dir }}"
   changed_when: true
+- name: "deploy-tasks | phase0-nexus | Build + cache the GHOSTS Universal macOS client on Nexus (nexus-cache-ghosts-universal.yml, before containment)"
+  ansible.builtin.command:
+    argv: [ansible-playbook, nexus-cache-ghosts-universal.yml]
+  args:
+    chdir: "{{ ansible_dir }}"
+  changed_when: true
