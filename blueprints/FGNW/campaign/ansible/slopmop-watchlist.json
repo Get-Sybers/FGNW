@@ -1,0 +1,10 @@
+[
+  {"value": "10.1.99.99", "type": "IPv4", "attribution": "SLOPMOP-KALI-ATTACKER"},
+  {"value": "198.51.100.99", "type": "IPv4", "attribution": "STORM-0940"},
+  {"value": "198.51.100.128", "type": "IPv4", "attribution": "STORM-0940"},
+  {"value": "graph.microsoft.com", "type": "Domain", "attribution": "STORM-0940"},
+  {"value": "login.microsoftonline.com", "type": "Domain", "attribution": "STORM-0940"},
+  {"value": "suna-keyvault.vault.azure.net", "type": "Domain", "attribution": "STORM-0940"},
+  {"value": "konoha-secrets.vault.azure.net", "type": "Domain", "attribution": "STORM-0940"},
+  {"value": "fire-prod-kv.vault.azure.net", "type": "Domain", "attribution": "STORM-0940"}
+]
