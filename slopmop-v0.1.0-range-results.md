@@ -56,7 +56,8 @@
 **Actual**: Only IPv4 `10.1.10.10` and GUID `77afbe83-...` extracted from that file. The FQDN hostnames in CSV columns are not recognised as Domain indicators.
 
 **Reproducer**: The file `ad-discovery.csv` contains:
-```
+
+```csv
 "JB-KONOHA-DC1","JB-konoha-dc1.konohagakure.fire.ninja","Windows Server 2022 Standard Evaluation","10.1.10.10","77afbe83-321e-4b5e-8be6-8d19141ab256","True"
 ```
 
