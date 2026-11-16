@@ -5,7 +5,7 @@
 - **OS**: Proxmox VE 8.x (Debian 12 / Linux 7.0.14-8-pve), x86_64
 - **Binary**: built from source (`git clone --branch v0.1.0 --depth 1`, commit 60b6e5c0)
 - **Go toolchain**: 1.27.4 (fetched by the module), host Go 1.23.4
-- **Range**: FGNW Ludus cyber range (range_id JB, second_octet 1, on beef-pi)
+- **Range**: FGNW Ludus cyber range (range_id JB, second_octet 1)
 - **Artefacts copied from**: kali (10.1.99.99) via Ansible fetch, konoha-ws1 (10.1.10.21) via Ansible fetch
 
 ## 2. Runs tested
