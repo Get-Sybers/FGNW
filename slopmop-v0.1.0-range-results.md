@@ -12,16 +12,16 @@
 
 | Run | Scenario | Folder size |
 | --- | --- | --- |
-| kali | Linux attack chain: nmap recon, ldapsearch AD enum, certipy ADCS enum, impacket DCSync/psexec/wmiexec, exfil listener — across two subnets (Sand 10.1.20.0/24, Fire/Konoha 10.1.10.0/24). 4 shell scripts + 27 output files. | 31 files, 60 KB |
-| ws1 | Windows attack chain: AD discovery via PSRemoting, lateral movement to mail server, collection+zip, defense evasion (base64 obfuscation), exfiltration, LOLBin techniques (certutil, bitsadmin, wmic, schtasks, reg Run key, mshta, rundll32), .NET in-memory techniques (Add-Type C#, Reflection assembly load, download cradles, WMI/COM abuse). Output files only — commands ran via Ansible win_shell, no .ps1 scripts on disk. | 53 files (41 top-level + 12 in collection subdirs), 148 KB |
-| combined | Both runs in kali/ and ws1/ subdirectories under one folder. | 84 files, 760 KB |
+| kali | Linux attack chain: nmap recon, ldapsearch AD enum, certipy ADCS enum, impacket DCSync/psexec/wmiexec, exfil listener — across two subnets (Sand 10.1.20.0/24, Fire/Konoha 10.1.10.0/24). Plus STORM-0940 artefacts: password spray script, ARTEX-style structured agent log (.jsonl with 12 entries). 10 scripts + 33 output files. | 43 files |
+| ws1 | Windows attack chain: AD discovery via PSRemoting, lateral movement to mail server, collection+zip, defense evasion (base64 obfuscation), exfiltration, LOLBin techniques (certutil, bitsadmin, wmic, schtasks, reg Run key, mshta, rundll32), .NET in-memory techniques (Add-Type C#, Reflection assembly load, download cradles, WMI/COM abuse). Plus STORM-0940 artefacts: Entra ID/OAuth abuse, Key Vault bulk reads, email collection via Graph, Graph API exfiltration to C2. 9 scripts + 62 output files. | 71 files |
+| combined | Both runs in kali/ and ws1/ subdirectories under one folder. | 114 files |
 
 ## 3. Results table
 
 | ID | Result | Notes |
 | --- | --- | --- |
 | **A1** | PASS | 7 rows, all 5 script rows match expected tools/tactics/transforms/outputs/intel. Steps 1–4 in correct order. |
-| **A2** | PASS | finding list: STORM-0940 on 144.172.64.99 and .128; 4 tactic rows at correct severities; indicator types include GUID, GraphEndpoint, EntraLoginEndpoint, KeyVaultEndpoint, OAuthScope. report list: 6 files, 4 scripts, 2 outputs, 17 indicators, 4 tactics, 2 intel hits. campaign list: STORM-0940, 3 indicators. All match the brief. |
+| **A2** | PASS | finding list: STORM-0940 on 198.51.100.99 and .128; 4 tactic rows at correct severities; indicator types include GUID, GraphEndpoint, EntraLoginEndpoint, KeyVaultEndpoint, OAuthScope. report list: 6 files, 4 scripts, 2 outputs, 17 indicators, 4 tactics, 2 intel hits. campaign list: STORM-0940, 3 indicators. All match the brief. |
 | **A3** | PASS | All 5 error cases return the expected exit code (1 or 2), error message on stderr, nothing on stdout. |
 | **B1** | PASS | 84 files listed exactly once with `-r`. sha256 verified on a 10-file sample, 0 mismatches. Roles: 4 scripts (.sh), 78 outputs (.txt/.log/.csv/.bin), 2 other (.zip, correctly noted `binary`). |
 | **B2** | PASS | Steps 1–4 ordered by timestamp embedded in filename (`20261116_HHMMSS`). Order matches execution order: nmap Sand → ldapsearch Sand → nmap Fire → ldapsearch Fire. |
@@ -29,8 +29,8 @@
 | **B4** | PASS | All tools mapped to `Discovery`. No tool appeared in `tools` without contributing a tactic. |
 | **B5** | PASS | 3/4 scripts linked to their outputs: step01→nmap-recon (via `-oN`), step02→ldapsearch-enum (via `>` redirect), step01b→nmap-recon-fire (via `-oN`). step02b produced no link because the script has no redirect — the output was captured by Ansible's task runner externally. This is correct behaviour. |
 | **B6** | FAIL | See §5 below. kali: 30 indicators found. ws1: 13 indicators found. FQDNs in AD discovery CSV (konohagakure.fire.ninja) not extracted as Domain indicators — only the IP and GUID from that file were found. Domain names appear in LDAP referral URLs but not as standalone Domain findings. |
-| **B7** | PASS | 5 files with attacker IP 10.1.99.99 attributed to SLOPMOP-KALI-ATTACKER. Verified with `grep -rl`: exact match, no misses, no false positives. |
-| **B8** | NOT RUN | The range used Ansible playbooks (YAML), not an AI agent framework. No structured JSON/XML agent logs were produced. slopMop extracted commands from the nmap output's JSON-like structured fields and from the ad-discovery CSV, but there is no ARTEX-style structured log to test against. |
+| **B7** | PASS | Watchlist expanded to 8 entries (SLOPMOP-KALI-ATTACKER + 7 STORM-0940 domains/IPs). Kali: 4 attributed findings (1 SLOPMOP-KALI-ATTACKER, 3 STORM-0940). WS1: 7 attributed findings (1 SLOPMOP-KALI-ATTACKER, 6 STORM-0940 on graph.microsoft.com, login.microsoftonline.com, vault.azure.net endpoints, 198.51.100.128). |
+| **B8** | PASS | ARTEX-style `.jsonl` structured agent log (12 entries) deployed to kali. slopMop extracted 12 tools (nmap, ldapsearch, crackmapexec, impacket-secretsdump, impacket-psexec, Connect-MgGraph, Get-MgUser, Add-MgApplicationPassword, New-MgRoleManagementDirectoryRoleAssignment, Invoke-RestMethod, Get-AzKeyVaultSecret, curl), 5 tactics (Discovery, CredentialAccess, LateralMovement, Persistence, Exfiltration), and 12 indicators (GraphEndpoint, GUIDs, IPv4, URLs) from the `"command"` field in each JSON line. STORM-0940 attribution matched on 2 indicators (graph.microsoft.com, 198.51.100.128). |
 | **B9** | PASS | kali `report list` (31 files, 4 scripts, 27 outputs, 30 indicators, 1 tactic, 1 intel hit) agrees with `file list` and `finding list` counts. Combined folder: `report list` returns all zeros because K1 (no `-r`). |
 | **B10** | FAIL | See §6 below. |
 | **C1** | PASS | 84 files hashed before and after a full set of commands. All sha256 identical, all mtimes identical, no files created in the artefact folder. |
@@ -74,30 +74,43 @@ The domain `konohagakure.fire.ninja` appears six times in the CSV but is not fou
 
 ## 5. Numbers
 
-### Kali run
+### Kali run (post-STORM-0940 artefacts)
 
-| Metric | Found | Expected | Notes |
-| --- | --- | --- | --- |
-| Tools | 2/2 | nmap, ldapsearch | |
-| Tactics | 1/1 | Discovery | Only recon tools in scripts |
-| IPv4 indicators | 18 | 18 | All subnet hosts from nmap output + script targets |
-| URL indicators | 6 | 6 | LDAP URIs from scripts + nmap.org URLs from output |
-| Domain indicators | 1 | 3 | Found: nmap.org. Missed: sunagakure.wind.ninja, konohagakure.fire.ninja (embedded in LDAP referral URLs, not standalone) |
-| MD5 indicators | 3 | 3 | NTLM hashes from DCSync output |
-| Intel hits | 1/1 | 10.1.99.99 attributed correctly | |
+| Metric | Value | Notes |
+| --- | --- | --- |
+| Files | 43 | 10 scripts, 33 outputs (was 31 files pre-STORM) |
+| Tools in scripts | 19 | nmap, ldapsearch, certipy, impacket-*, crackmapexec, plus ARTEX JSONL tools |
+| Tactics | 5 | Discovery, CredentialAccess, LateralMovement, Persistence, Exfiltration |
+| IPv4 indicators | 20 | Subnet hosts + STORM-0940 C2 (198.51.100.x) |
+| URL indicators | 8 | LDAP URIs, nmap.org, Graph API, C2 URLs |
+| Domain indicators | 2 | graph.microsoft.com via ARTEX JSONL |
+| GraphEndpoint | 2 | graph.microsoft.com from ARTEX structured log |
+| GUID indicators | 4 | Entra role/app/tenant IDs from ARTEX log |
+| Email indicators | 1 | admin@ from ARTEX log |
+| MD5 indicators | 3 | NTLM hashes from DCSync output |
+| Intel hits | 4 | 1 SLOPMOP-KALI-ATTACKER, 3 STORM-0940 |
+| Findings | 43 | Up from ~15 pre-STORM |
 
-### WS1 run
+### WS1 run (post-STORM-0940 artefacts)
 
-| Metric | Found | Expected | Notes |
-| --- | --- | --- | --- |
-| Tools | 0 | 0 | No scripts on disk — expected |
-| Tactics | 0 | 0 | No scripts → no tactics — expected |
-| IPv4 indicators | 5 | 5 | 10.1.99.99, 10.1.10.10, .20, .21, .254 |
-| URL indicators | 2 | 2 | Attacker URLs from bitsadmin and exfil logs |
-| Domain indicators | 0 | 1+ | konohagakure.fire.ninja not extracted from ad-discovery.csv |
-| Base64Blob | 4 | 4 | Defense evasion and certutil encode/decode evidence |
-| EncodedCommand | 1 | 1 | schtasks base64 payload |
-| Intel hits | 1/1 | 10.1.99.99 in 4 files (bitsadmin ×3, exfil-log ×1) |
+| Metric | Value | Notes |
+| --- | --- | --- |
+| Files | 71 | 9 scripts, 62 outputs (was 53 files pre-STORM) |
+| Tools in scripts | 80+ | AD recon, Defender kill, LOLBin, .NET, Entra, KeyVault, Graph, email cmdlets |
+| Tactics | 8/8 | All MITRE tactics: Discovery, CredentialAccess, LateralMovement, Execution, Persistence, DefenseEvasion, Collection, Exfiltration |
+| IPv4 indicators | 14 | Range hosts + STORM-0940 C2 |
+| GraphEndpoint | 17 | graph.microsoft.com across 4 scripts + output logs |
+| KeyVaultEndpoint | 3 | suna-keyvault, konoha-secrets, fire-prod-kv (.vault.azure.net) |
+| EntraLoginEndpoint | 2 | login.microsoftonline.com |
+| OAuthScope | 1 | graph.microsoft.com/.default |
+| JWT | 1 | Fake bearer token (eyJhbG...) |
+| Domain indicators | 10 | .onmicrosoft.com tenants, vault endpoints, blob storage |
+| Email indicators | 3 | admin@, gaara.sabaku@, naruto.uzumaki@ |
+| GUID indicators | 6 | Global Admin role, tenant, app, SP IDs |
+| Base64Blob | 5 | Defense evasion + certutil evidence |
+| EncodedCommand | 1 | schtasks base64 payload |
+| Intel hits | 7 | 1 SLOPMOP-KALI-ATTACKER, 6 STORM-0940 |
+| Findings | 79 | Up from ~13 pre-STORM |
 
 ## 6. Lists
 
@@ -119,7 +132,7 @@ None that would mislead an analyst. The nmap.org URLs and the GUID from Runspace
 
 ### Command field names in structured logs (B8)
 
-NOT RUN — no AI agent framework structured logs.
+ARTEX-style `.jsonl` file with `"command"` field. slopMop recognised the `command` field name from its `command_fields` list in `formats.json` and extracted all 12 commands. Tools detected: nmap, ldapsearch, crackmapexec, impacket-secretsdump, impacket-psexec, Connect-MgGraph, Get-MgUser, Add-MgApplicationPassword, New-MgRoleManagementDirectoryRoleAssignment, Invoke-RestMethod, Get-AzKeyVaultSecret, curl. Each command mapped to the correct tactic.
 
 ### Unsupported languages and formats (B10)
 
@@ -136,7 +149,7 @@ NOT RUN — no AI agent framework structured logs.
 | ID | Impact |
 | --- | --- |
 | K1 | **High**. Our artefacts span two hosts (kali/, ws1/) in subdirectories and ws1 has collection_*/ subdirectories. `finding list` and `report list` returned zero results on the combined folder. We had to run them per-subfolder, and the collection subdirectory files (systeminfo.txt, ipconfig.txt, processes.csv, etc.) were invisible to finding/report. |
-| K2 | **Low**. Our scripts used only `nmap` and `ldapsearch`, both correctly mapped to Discovery. No `az` or HTTP calls in scripts to trigger the over-broad tactic assignment. |
+| K2 | **Medium**. STORM-0940 scripts now exercise cloud cmdlets (Connect-MgGraph, Get-AzKeyVaultSecret, Invoke-RestMethod, etc.) and slopMop maps them to multiple tactics. The tactic assignment is command-name-based (K2), so `Invoke-RestMethod` → Exfiltration even when used for data retrieval. Acceptable for STORM-0940 where the intent is exfiltration, but would over-classify defensive scripts. |
 | K3 | **None**. Our watchlist used exact IPs (10.1.99.99). No CIDR ranges in the watchlist. |
 | K4 | **None**. We used `-o json` for comparisons, which avoids the display quirk. |
 | K5 | **None**. No quoted command paths in our scripts. |
@@ -154,3 +167,22 @@ NOT RUN — no AI agent framework structured logs.
 **DCSync NTLM hashes correctly identified as MD5 indicators.** The impacket-secretsdump output includes `Administrator:500:aad3b435b51404eeaad3b435b51404ee:8846f7eaee8fb117ad06bdd830b7586c:::` and slopMop extracted all three hash components (2 MD5, 1 SHA256-prefix). An analyst could use these for credential monitoring.
 
 **Binary file handling is clean.** The .bin exfiltration captures and .zip collection archives were listed with their hashes and sizes, with note `binary`, no crash.
+
+## 9. STORM-0940 coverage (slopMop#7)
+
+Six gaps identified in the original test data were filled with `slopmop-storm0940-artefacts.yml`:
+
+| Gap | Playbook step | Host | Result |
+| --- | --- | --- | --- |
+| Cloud identity / Entra ID | step11 entra-oauth.ps1 | ws1 | 10 indicators (GraphEndpoint, EntraLoginEndpoint, OAuthScope, GUIDs, JWT). Tactics: Exfiltration, Persistence. |
+| ARTEX structured agent logs | step12 artex-logs.sh | kali | 12-entry `.jsonl` → 12 tools, 5 tactics, 12 indicators. B8 now PASS. |
+| Password spray | step11 password-spray.sh | kali | crackmapexec not installed on kali (command not found), but script text parsed: tool=crackmapexec, tactic=CredentialAccess. |
+| Key Vault bulk reads | step12 keyvault-reads.ps1 | ws1 | 3 KeyVaultEndpoint indicators (suna-keyvault, konoha-secrets, fire-prod-kv), 6 total. Tactics: CredentialAccess, LateralMovement. |
+| Email / mailbox collection | step13 email-collection.ps1 | ws1 | 3 Email indicators, Graph message URLs, Search-Mailbox cmdlet. Tactics: Collection, Exfiltration, LateralMovement. |
+| Graph API exfiltration | step14 graph-exfil.ps1 | ws1 | 7 Graph endpoints, C2 URL, azcopy reference. Tactic: Exfiltration. |
+
+**Watchlist attribution**: expanded from 1 entry (SLOPMOP-KALI-ATTACKER) to 8 entries (+ 2 STORM-0940 IPs, 5 STORM-0940 domains). Kali: 4 attributed findings. WS1: 7 attributed findings.
+
+**Indicator type coverage**: all indicator types in slopMop's `indicators.json` that apply to STORM-0940 are now exercised: GraphEndpoint, EntraLoginEndpoint, KeyVaultEndpoint, OAuthScope, JWT, Email, GUID, IPv4, URL, Domain, Base64Blob, EncodedCommand.
+
+**Tactic coverage**: WS1 now hits all 8 MITRE tactics. Kali hits 5/8. Combined: 8/8.
