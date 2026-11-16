@@ -1,5 +1,5 @@
 ---
-- name: "slopMop | Install attack tools on Kali"
+- name: "SlopMop | Install attack tools on Kali"
   hosts: kali
   become: true
   gather_facts: true
@@ -21,7 +21,7 @@
         dest: /usr/local/bin/certipy
         state: link
 
-- name: "slopMop | Configure evidence capture on attack platforms"
+- name: "SlopMop | Configure evidence capture on attack platforms"
   hosts: kali:attacker
   become: true
   gather_facts: false
@@ -41,7 +41,7 @@
         owner: "{{ ansible_user }}"
         mode: "0755"
 
-- name: "slopMop | Verify tools on Kali"
+- name: "SlopMop | Verify tools on Kali"
   hosts: kali
   gather_facts: false
   tasks:

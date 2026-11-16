@@ -1,5 +1,5 @@
 ---
-- name: "slopMop | Create DCSync service account on Sand (adconnectdump fixture)"
+- name: "SlopMop | Create DCSync service account on Sand (adconnectdump fixture)"
   hosts: suna-dc1
   gather_facts: false
   vars:
@@ -67,7 +67,7 @@
         ansible_become_user: "{{ sand_admin }}"
         ansible_become_password: "{{ sand_admin_password }}"
 
-- name: "slopMop | Create helpdesk user in nested group on Leaf"
+- name: "SlopMop | Create helpdesk user in nested group on Leaf"
   hosts: konoha-dc1
   gather_facts: false
   vars:
