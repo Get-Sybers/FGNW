@@ -94,7 +94,7 @@ These findings apply to both main and v0.5.0 (identical engine).
 
 ### What it gets wrong
 
-**IP false positives (4 of 14 IPv4 indicators)**
+#### IP false positives (4 of 14 IPv4 indicators)
 
 | False positive | Source | Root cause |
 | --- | --- | --- |
@@ -106,14 +106,14 @@ These findings apply to both main and v0.5.0 (identical engine).
 Root cause: IPv4 regex matches `\d+.\d+.\d+.\d+` without CSV column context
 or reserved-range filtering.
 
-**Username false positives (10 of 14 exposed usernames)**
+#### Username false positives (10 of 14 exposed usernames)
 
 Windows built-in groups and error fragments extracted as usernames by parsing
 `DOMAIN\name` patterns without a built-in group allowlist: `The`, `This`,
 `Local`, `NETWORK`, `NT`, `NTLM`, `Authenticated`, `Users`, `Administrators`,
 `SYSTEM`. Only 4 of 14 are real users.
 
-**Masking over-aggression (2 cases)**
+#### Masking over-aggression (2 cases)
 
 Keyword `password` in a Key Vault secret name (`smtp-password`) and an email
 search filter (`subject eq 'password reset'`) triggers masking where no

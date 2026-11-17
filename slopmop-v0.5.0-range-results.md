@@ -90,7 +90,7 @@ PowerShell `Get-Content` and line numbers, then compared to report claims.
 
 ### False positives
 
-**IP indicators from software version strings (4 of 14 IPv4)**
+#### IP indicators from software version strings (4 of 14 IPv4)
 
 | Reported IP | Actual value | Source field |
 | --- | --- | --- |
@@ -101,7 +101,7 @@ PowerShell `Get-Content` and line numbers, then compared to report claims.
 
 The IPv4 regex matches any `\d+.\d+.\d+.\d+` without CSV column context.
 
-**Username false positives (10 of 14 exposed usernames)**
+#### Username false positives (10 of 14 exposed usernames)
 
 | Reported | Actual source | Classification |
 | --- | --- | --- |
@@ -119,7 +119,7 @@ The IPv4 regex matches any `\d+.\d+.\d+.\d+` without CSV column context.
 Legitimate usernames (4): `administrator`, `localuser`, `naruto.uzumaki`,
 `Administrator`.
 
-**Masking over-aggression (2 cases)**
+#### Masking over-aggression (2 cases)
 
 - `smtp-password` (Key Vault secret **name**) → `smtp-pa*****d (8 chars)` —
   the word "password" in the name triggers masking.
