@@ -93,6 +93,18 @@
       lxc_ghost9_range_storage: "{{ ghost9_ct_storage }}"
       lxc_ghost9_range_template_image: "{{ __g9_ext.template_image }}"
       lxc_ghost9_range_template_version: "{{ __g9_ext.template_version | string }}"
+      # Ollama LLM backend for this range (optional; pulled from the range Nexus at
+      # deploy time because the ghost9 CT is internet-isolated). Passed through from
+      # the blueprint's ludus_extensions.ghost9; a range without a local LLM omits
+      # the block and ollama stays disabled. lxc_ghost9_apt_proxy_base lets the
+      # server install zstd from the range Nexus Debian proxy to extract the archives.
+      lxc_ghost9_ollama_enabled: "{{ __g9_ext.ollama_enabled | default(false) }}"
+      lxc_ghost9_ollama_version: "{{ __g9_ext.ollama_version | default('0.40.17') }}"
+      lxc_ghost9_ollama_model: "{{ __g9_ext.ollama_model | default('gemma4:31b') }}"
+      lxc_ghost9_ollama_checksum: "{{ __g9_ext.ollama_checksum | default('') }}"
+      lxc_ghost9_ollama_url: "{{ __g9_ext.ollama_url | default('') }}"
+      lxc_ghost9_ollama_model_archive: "{{ __g9_ext.ollama_model_archive | default('') }}"
+      lxc_ghost9_apt_proxy_base: "{{ __g9_ext.apt_proxy_base | default('') }}"
       pve_api_host: "{{ ghost9_ct_api_host }}"
       pve_api_user: "{{ ghost9_ct_api_user }}"
       pve_api_token_id: "{{ ghost9_ct_api_token_id }}"

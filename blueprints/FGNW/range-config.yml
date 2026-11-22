@@ -633,19 +633,34 @@ ludus:
       - name: get_sybers.range_nexus_apt
 ludus_extensions:
   ghost9:
-    vlan: 99
-    ip_last_octet: 51
+    vlan: 90
+    ip_last_octet: 109
     hostname_suffix: ghost9
     api_port: 5000
     ui_port: 4200
-    cores: 4
-    memory_mb: 6144
-    rootfs_gb: 20
+    cores: 8
+    memory_mb: 49152
+    rootfs_gb: 50
     # The get_sybers.lxc ghost9 LXC template (Debian 13, GHOSTS 9.3.0 / API v9, with
-    # n8n and Grafana as native systemd services) as its GHCR OCI image, pinned by
-    # digest: this digest is the v0.1.1 tag of ghcr.io/get-sybers/lxc/ghost9.
+    # n8n and Grafana as native systemd services) as its GHCR OCI image.
     # template_version is the template release the marker inside the guest
     # (/etc/get-sybers-lxc-template) must carry; raise both together, and remove the
     # node's cached local:vztmpl/ghost9.tar first (lxc_guest pulls only when it is absent).
-    template_image: "ghcr.io/get-sybers/lxc/ghost9@sha256:37ff20ad1b59e9b95ae83ee9d28f2e2079da16fbf0afbce4b4a9bd69e088044c"
-    template_version: "0.1.1"
+    template_image: "ghcr.io/get-sybers/lxc/ghost9:v0.1.4"
+    template_version: "0.1.4"
+    # --- Ollama LLM backend, pulled from the range Nexus at deploy time ---------
+    # This range runs the GHOSTS content engine on a local Ollama model. The ghost9
+    # CT is internet-isolated on VLAN 90, so the Ollama binary and the gemma4:31b
+    # archive live in the range Nexus (ludusnat 192.0.2.2:8081) and are pulled from
+    # there — the template ships model-less for easier hardening. apt_proxy_base lets
+    # the server install zstd (to extract the .tar.zst archives) from the Nexus
+    # Debian proxy, since the isolated CT has no public mirror (the same Nexus the
+    # range VMs reach via the get_sybers.range_nexus_apt role above). Drop this block
+    # or set ollama_enabled: false for a range that runs GHOSTS without a local LLM.
+    ollama_enabled: true
+    ollama_version: "0.40.17"
+    ollama_model: "gemma4:31b"
+    ollama_checksum: "sha256:1df9d6228bac5a22e420b242708c0d10e5b886db97bab99d446a41760f4e79af"
+    ollama_url: "http://192.0.2.2:8081/repository/raw-hosted/bin/ollama-linux-amd64-0.40.17.tar.zst"
+    ollama_model_archive: "http://192.0.2.2:8081/repository/raw-hosted/models/ollama-gemma4-31b.tar.zst"
+    apt_proxy_base: "http://192.0.2.2:8081/repository"
